@@ -27,7 +27,7 @@ return new class extends Migration
             $table->boolean('flag_abnormal')->default(false); // Calculated in app logic
             $table->text('notes')->nullable();
             $table->timestamps();
-             $table->index(['tenant_id','patient_id','nurse_id'], 'patient_nurse_vitals_index');
+            $table->index(['tenant_id', 'patient_id', 'nurse_id'], 'patient_nurse_vitals_index');
             $table->index('tenant_id', 'vitals_tenant_id_index');
         });
     }

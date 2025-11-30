@@ -4,13 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Carbon\Carbon;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 class Subscription extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use BelongsToTenant, HasFactory;
 
     protected $fillable = [
         'plan',
@@ -42,19 +40,27 @@ class Subscription extends Model
 
     // Constants for subscription plans
     const PLAN_BASIC = 'basic';
+
     const PLAN_STANDARD = 'standard';
+
     const PLAN_PREMIUM = 'premium';
+
     const PLAN_ENTERPRISE = 'enterprise';
 
     // Constants for subscription status
     const STATUS_ACTIVE = 'active';
+
     const STATUS_INACTIVE = 'inactive';
+
     const STATUS_CANCELLED = 'cancelled';
+
     const STATUS_EXPIRED = 'expired';
+
     const STATUS_SUSPENDED = 'suspended';
 
     // Constants for billing cycles
     const BILLING_MONTHLY = 'monthly';
+
     const BILLING_YEARLY = 'yearly';
 
     /**
@@ -65,7 +71,7 @@ class Subscription extends Model
         parent::boot();
 
         static::creating(function ($subscription) {
-            if (empty($subscription->amount) && !empty($subscription->plan)) {
+            if (empty($subscription->amount) && ! empty($subscription->plan)) {
                 $subscription->amount = $subscription->getPlanAmount();
             }
         });
@@ -82,7 +88,7 @@ class Subscription extends Model
      */
     public function getPlanAmount()
     {
-        return match($this->plan) {
+        return match ($this->plan) {
             self::PLAN_BASIC => 15000,
             self::PLAN_STANDARD => 30000,
             self::PLAN_PREMIUM => 60000,
@@ -97,7 +103,7 @@ class Subscription extends Model
     public function isActive()
     {
         return $this->status === self::STATUS_ACTIVE &&
-               (!$this->ends_at || $this->ends_at->isFuture());
+               (! $this->ends_at || $this->ends_at->isFuture());
     }
 
     /**
@@ -138,7 +144,7 @@ class Subscription extends Model
      */
     public function getDefaultFeatures()
     {
-        return match($this->plan) {
+        return match ($this->plan) {
             self::PLAN_BASIC => [
                 'max_users' => 10,
                 'max_storage' => 1024, // 1GB
@@ -183,6 +189,7 @@ class Subscription extends Model
     public function hasFeature($feature)
     {
         $features = $this->getPlanFeatures();
+
         return isset($features[$feature]) && $features[$feature];
     }
 
@@ -191,14 +198,14 @@ class Subscription extends Model
      */
     public function getNextBillingDate()
     {
-        if (!$this->isActive()) {
+        if (! $this->isActive()) {
             return null;
         }
 
         $billingCycle = $this->billing_cycle;
         $startDate = $this->starts_at;
 
-        return match($billingCycle) {
+        return match ($billingCycle) {
             self::BILLING_MONTHLY => $startDate->copy()->addMonth(),
             self::BILLING_YEARLY => $startDate->copy()->addYear(),
             default => null,
@@ -210,7 +217,7 @@ class Subscription extends Model
      */
     public function getPlanDisplayName()
     {
-        return match($this->plan) {
+        return match ($this->plan) {
             self::PLAN_BASIC => 'Basic',
             self::PLAN_STANDARD => 'Standard',
             self::PLAN_PREMIUM => 'Premium',
@@ -224,7 +231,7 @@ class Subscription extends Model
      */
     public function getStatusDisplayName()
     {
-        return match($this->status) {
+        return match ($this->status) {
             self::STATUS_ACTIVE => 'Active',
             self::STATUS_INACTIVE => 'Inactive',
             self::STATUS_CANCELLED => 'Cancelled',
@@ -240,10 +247,10 @@ class Subscription extends Model
     public function scopeActive($query)
     {
         return $query->where('status', self::STATUS_ACTIVE)
-                    ->where(function ($q) {
-                        $q->whereNull('ends_at')
-                          ->orWhere('ends_at', '>', now());
-                    });
+            ->where(function ($q) {
+                $q->whereNull('ends_at')
+                    ->orWhere('ends_at', '>', now());
+            });
     }
 
     /**
@@ -260,8 +267,8 @@ class Subscription extends Model
     public function scopeExpiringSoon($query, $days = 7)
     {
         return $query->where('ends_at', '<=', now()->addDays($days))
-                    ->where('ends_at', '>', now())
-                    ->where('status', self::STATUS_ACTIVE);
+            ->where('ends_at', '>', now())
+            ->where('status', self::STATUS_ACTIVE);
     }
 
     /**

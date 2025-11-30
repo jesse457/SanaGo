@@ -24,18 +24,25 @@ class Medications extends Component
 
     // Selected patient & their prescriptions
     public ?int $selectedPatientId = null;
+
     public $selectedPatient = null;
+
     public $patientPrescriptions = [];
 
     // Selected prescription & its items for dispensing
     public ?int $selectedPrescriptionId = null;
+
     public $selectedPrescription = null;
+
     public $prescriptionItemsToDispense = []; // Collection of PrescriptionItem models
 
     // Dispense modal state & inputs
     public bool $showDispenseModal = false;
+
     public array $dispensedQuantities = []; // keyed by prescription_item_id => int (This will be NEWLY issued amount)
+
     public array $pharmacistNotes = []; // keyed by prescription_item_id => string
+
     public array $availableToDispense = []; // To display remaining quantity to user
 
     protected $listeners = ['refreshPatients' => '$refresh'];
@@ -93,6 +100,7 @@ class Medications extends Component
     {
         if (! $this->selectedPatient) {
             $this->patientPrescriptions = [];
+
             return;
         }
         $this->patientPrescriptions = $this->selectedPatient
@@ -116,6 +124,7 @@ class Medications extends Component
                 ->warning()
                 ->text(__('pharmacist.medications_component.alert_prescription_not_found'))
                 ->show();
+
             return;
         }
         $this->selectedPrescriptionId = $prescription->id;
@@ -150,6 +159,7 @@ class Medications extends Component
                 ->error()
                 ->text(__('pharmacist.medications_component.alert_no_prescription_selected'))
                 ->show();
+
             return;
         }
 
@@ -167,7 +177,7 @@ class Medications extends Component
 
             if ($newlyIssued > 0) {
                 // If a new amount is entered, validate it
-                $rules["dispensedQuantities.{$id}"] = ['required', 'integer', 'min:1', 'max:' . $remaining];
+                $rules["dispensedQuantities.{$id}"] = ['required', 'integer', 'min:1', 'max:'.$remaining];
                 $messages["dispensedQuantities.{$id}.min"] = __('pharmacist.medications_component.validation_quantity_min_for', ['medication' => $item->medication->name]);
                 $messages["dispensedQuantities.{$id}.max"] = __('pharmacist.medications_component.validation_quantity_max_for', ['medication' => $item->medication->name, 'remaining' => $remaining]);
                 $anyDispensed = true;
@@ -181,6 +191,7 @@ class Medications extends Component
                 ->info()
                 ->text(__('pharmacist.medications_component.alert_no_new_items_to_dispense'))
                 ->show();
+
             return;
         }
 
@@ -202,6 +213,7 @@ class Medications extends Component
                         $item->notes = $notes;
                         $item->save();
                     }
+
                     continue;
                 }
 
@@ -214,7 +226,7 @@ class Medications extends Component
                     throw new \Exception(__('pharmacist.medications_component.exception_insufficient_stock', [
                         'medication' => $med->name,
                         'available' => $med->stock_quantity,
-                        'required' => $newlyIssued
+                        'required' => $newlyIssued,
                     ]));
                 }
 
@@ -245,7 +257,7 @@ class Medications extends Component
                         'pharmacist' => $pharmacistName,
                         'quantity' => $newlyIssued,
                         'medication' => $med->name,
-                        'prescription_id' => $this->selectedPrescriptionId
+                        'prescription_id' => $this->selectedPrescriptionId,
                     ]),
                     [
                         'pharmacist_id' => $pharmacistId,
@@ -259,7 +271,7 @@ class Medications extends Component
             // Update prescription status
             $this->selectedPrescription->refresh(); // Get the latest dispensed quantities
             $allFullyDispensed = $this->selectedPrescription->items->every(function ($it) {
-                return ($it->quantity_prescribed <= ($it->dispensed_quantity ?? 0));
+                return $it->quantity_prescribed <= ($it->dispensed_quantity ?? 0);
             });
             // NOTE: It's best practice to store status in a consistent format (e.g., English or a short code)
             // and translate it only when displaying to the user.
@@ -276,7 +288,7 @@ class Medications extends Component
             $this->loadPatientPrescriptions();
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Dispensation failed: ' . $e->getMessage());
+            Log::error('Dispensation failed: '.$e->getMessage());
             // The exception message is now already localized before being thrown.
             LivewireAlert::title(__('pharmacist.medications_component.alert_title_error'))
                 ->error()

@@ -1,8 +1,8 @@
 <?php
 
 use App\Livewire\About;
-use App\Livewire\Auth\Login;
 use App\Livewire\Auth\ForgotPassword;
+use App\Livewire\Auth\Login;
 use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Blog;
 use App\Livewire\BookDemo;
@@ -20,7 +20,6 @@ use App\Livewire\Pricing;
 use App\Livewire\SendFeedback;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
-
 
 Route::middleware(['web', 'universal'])->group(function () {
 
@@ -50,14 +49,14 @@ Route::middleware(['web', 'universal'])->group(function () {
                     abort(400);
                 }
                 Session::put('locale', $locale);
+
                 return redirect()->back();
             })->name('language.switch');
-
 
             // --- AUTHENTICATED LANDLORD ROUTES ---
             Route::middleware([
                 'role:landlord',
-                'auth'
+                'auth',
             ])->name('landlord.')->group(function () {
 
                 Route::get('/dashboard', Dashboard::class)->name('dashboard');

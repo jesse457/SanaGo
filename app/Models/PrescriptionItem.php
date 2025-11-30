@@ -8,7 +8,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 class PrescriptionItem extends Model
 {
-    use HasFactory,BelongsToTenant; // No BelongsToTenant directly as it's through Prescription
+    use BelongsToTenant,HasFactory; // No BelongsToTenant directly as it's through Prescription
 
     protected $fillable = [
         'prescription_id',

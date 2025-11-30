@@ -46,10 +46,10 @@ return [
             'throw' => false,
             'report' => false,
         ],
-          'central_public' => [
+        'central_public' => [
             'driver' => 'local',
             'root' => public_path(), // This points to the main /public directory
-            'url' => env('APP_URL') , // Adjust this if your 'public' is a subdirectory
+            'url' => env('APP_URL'), // Adjust this if your 'public' is a subdirectory
             'visibility' => 'public',
         ],
 

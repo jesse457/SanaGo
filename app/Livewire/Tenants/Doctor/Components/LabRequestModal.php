@@ -17,6 +17,7 @@ use Livewire\Component;
 class LabRequestModal extends Component
 {
     use UserActivitiesTrait;
+
     public $recordId;
 
     public $testId;
@@ -81,7 +82,7 @@ class LabRequestModal extends Component
             // Dispatch event to notify the lab technician via websockets
             SendLabRequest::dispatch(
                 $labRequest->id,
-                $patient->first_name . ' ' . $patient->last_name,
+                $patient->first_name.' '.$patient->last_name,
                 $labTest->test_name,
                 $this->labTechId
             );
@@ -90,7 +91,7 @@ class LabRequestModal extends Component
             $this->dispatch('close-lab-modal');
             $this->dispatch('refresh');
         } catch (\Throwable $th) {
-            Log::error('Error saving lab request: ' . $th->getMessage());
+            Log::error('Error saving lab request: '.$th->getMessage());
             LivewireAlert::title('Error')->text('Failed to send lab request.')->error()->show();
         }
     }

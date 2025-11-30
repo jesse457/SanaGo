@@ -11,7 +11,6 @@ use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
-use phpDocumentor\Reflection\Types\Collection;
 
 #[Layout('components.layouts.pharmacist')]
 class Dashboard extends Component
@@ -53,7 +52,7 @@ class Dashboard extends Component
      * Loads the data for the dashboard summary cards.
      * This method is called on mount and can be re-called if needed.
      */
-    public function loadDashboardData() : void
+    public function loadDashboardData(): void
     {
         $today = Carbon::today();
 
@@ -78,7 +77,7 @@ class Dashboard extends Component
     /**
      * Computed property for Medication Stock Levels table.
      */
-    public function getMedicationsProperty() : LengthAwarePaginator
+    public function getMedicationsProperty(): LengthAwarePaginator
     {
         $query = Medication::query();
 
@@ -102,7 +101,7 @@ class Dashboard extends Component
         $this->resetPage();
     }
 
-    public function render() : View
+    public function render(): View
     {
         // No additional data needed for the render method now.
         // All necessary data is loaded in mount().

@@ -120,8 +120,9 @@ class CreateNewUser extends Component
      * Updated hook - runs in real-time when a public property is updated.
      * This is used for real-time validation, especially for file uploads.
      *
-     * @param string $propertyName The name of the property that was updated.
+     * @param  string  $propertyName  The name of the property that was updated.
      * @return void
+     *
      * @throws ValidationException|\Throwable
      */
     public function updated($propertyName)

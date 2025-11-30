@@ -73,7 +73,7 @@ class RecordVitals extends Component
 
             if ($patient) {
                 $this->selectedPatientId = $patient->id;
-                $this->selectedPatientName = $patient->first_name . ' ' . $patient->last_name;
+                $this->selectedPatientName = $patient->first_name.' '.$patient->last_name;
             }
         }
     }
@@ -94,7 +94,7 @@ class RecordVitals extends Component
         if ($this->selectedPatientId) {
             $patient = Patient::find($this->selectedPatientId);
             if ($patient) {
-                $this->selectedPatientName = $patient->first_name . ' ' . $patient->last_name;
+                $this->selectedPatientName = $patient->first_name.' '.$patient->last_name;
             } else {
                 $this->selectedPatientName = 'N/A';
                 $this->selectedPatientId = null; // Reset if patient not found
@@ -197,7 +197,7 @@ class RecordVitals extends Component
             $this->resetValidation(); // Clear validation errors
 
         } catch (\Exception $e) {
-            Log::error('Error saving vitals: ' . $e->getMessage(), ['patient_id' => $this->selectedPatientId, 'user_id' => Auth::id()]);
+            Log::error('Error saving vitals: '.$e->getMessage(), ['patient_id' => $this->selectedPatientId, 'user_id' => Auth::id()]);
         }
     }
 

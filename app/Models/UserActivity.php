@@ -19,7 +19,7 @@ class UserActivity extends Model implements CipherSweetEncrypted
         'activity_type',
         'description',
         'ip_address',
-         'tenant_id',
+        'tenant_id',
         'user_agent',
         'properties',
     ];
@@ -27,14 +27,13 @@ class UserActivity extends Model implements CipherSweetEncrypted
     protected $casts = [
         'properties' => 'array',
     ];
+
     /**
      * Configure CipherSweet encryption for this model.
      *
      * Fields added with ->addField(...) should correspond to text columns
      * in your DB to store ciphertext. For exact-match searchable fields,
      * add a BlindIndex.
-     *
-     * @param EncryptedRow $encryptedRow
      */
     public static function configureCipherSweet(EncryptedRow $encryptedRow): void
     {
@@ -45,6 +44,7 @@ class UserActivity extends Model implements CipherSweetEncrypted
         // If you want case-insensitive or transformed blind indexes, define
         // transformations via BlindIndex options (see CipherSweet docs).
     }
+
     /**
      * Get the user that performed the activity.
      */

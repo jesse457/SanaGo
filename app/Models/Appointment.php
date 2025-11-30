@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use App\Traits\TracksRevenue;
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
@@ -21,7 +19,7 @@ class Appointment extends Model
     protected $fillable = [
         'patient_id',
         'doctor_id',
-            'tenant_id',
+        'tenant_id',
         'appointment_date',
         'appointment_time', // Represents check-in/scheduled arrival time
         'price',

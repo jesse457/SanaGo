@@ -18,21 +18,31 @@ class ManageTenants extends Component
 
     // Modal properties
     public $showEditModal = false;
+
     public $showDeleteModal = false;
+
     public $showViewModal = false;
 
     // Edit form properties
     public $tenantName;
+
     public $contactEmail;
+
     public $subscriptionTier = 'Basic';
+
     public $subscriptionStatus = 'Trialing'; // NEW: Subscription Status
+
     public $nextRenewalDate;                 // NEW: Next Renewal Date
+
     public $generatedDomain;
 
     // Selected tenant for actions
     public $selectedTenant = null;
+
     public $selectedTenantDomain = null;
+
     public $viewing = null;
+
     public $editing = null;
 
     public function viewTenant($id)
@@ -154,7 +164,7 @@ class ManageTenants extends Component
 
         // If a search term is provided, add where clauses
         if ($this->search) {
-            $term = '%' . strtolower($this->search) . '%';
+            $term = '%'.strtolower($this->search).'%';
             $query->where(function ($q) use ($term) {
                 // Use a proper WHERE clause for JSONB data
                 $q->where('data->name', 'ilike', $term)

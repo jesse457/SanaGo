@@ -40,7 +40,7 @@ class Tenant extends BaseTenant
         });
     }
 
-       /**
+    /**
      * Get the subscription associated with the tenant.
      */
     public function subscription()
@@ -78,6 +78,7 @@ class Tenant extends BaseTenant
     public function canAccessFeature($feature)
     {
         $subscription = $this->activeSubscription();
+
         return $subscription ? $subscription->hasFeature($feature) : false;
     }
 
@@ -87,6 +88,7 @@ class Tenant extends BaseTenant
     public function getMaxUsers()
     {
         $subscription = $this->activeSubscription();
+
         return $subscription ? $subscription->max_users : 5; // Default for free plan
     }
 
@@ -96,9 +98,7 @@ class Tenant extends BaseTenant
     public function getMaxStorage()
     {
         $subscription = $this->activeSubscription();
+
         return $subscription ? $subscription->max_storage : 512; // Default for free plan
     }
-
- 
-
 }

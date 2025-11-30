@@ -3,7 +3,6 @@
 namespace App\Livewire\Tenants\Receptionist;
 
 use App\Models\FeedBack;
-use App\Models\Tenant;
 use Illuminate\Support\Facades\Auth;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
@@ -59,7 +58,7 @@ class ReceptionistFeedBack extends Component
 
         // Reset the form fields for a new submission
         $this->reset(['subject', 'category', 'priority', 'department', 'message']);
- }
+    }
 
     public function render()
     {

@@ -13,15 +13,21 @@ use Livewire\Component;
 class Profile extends Component
 {
     use UserActivitiesTrait;
+
     // Editable profile fields
     public $name;
+
     public $email;
+
     public $phone_number;
+
     public $address;
 
     // Password fields
     public $current_password;
+
     public $new_password;
+
     public $new_password_confirmation;
 
     public function mount()
@@ -37,7 +43,7 @@ class Profile extends Component
     {
         $this->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . Auth::id(),
+            'email' => 'required|email|unique:users,email,'.Auth::id(),
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
         ]);
@@ -68,8 +74,9 @@ class Profile extends Component
 
         $user = Auth::user();
 
-        if (!Hash::check($this->current_password, $user->password)) {
+        if (! Hash::check($this->current_password, $user->password)) {
             $this->addError('current_password', 'Your current password is incorrect.');
+
             return;
         }
 

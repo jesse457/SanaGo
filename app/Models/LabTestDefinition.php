@@ -23,14 +23,13 @@ class LabTestDefinition extends Model implements CipherSweetEncrypted
         'units', // Example of a new field
 
     ];
+
     /**
      * Configure CipherSweet encryption for this model.
      *
      * Fields added with ->addField(...) should correspond to text columns
      * in your DB to store ciphertext. For exact-match searchable fields,
      * add a BlindIndex.
-     *
-     * @param EncryptedRow $encryptedRow
      */
     public static function configureCipherSweet(EncryptedRow $encryptedRow): void
     {
@@ -43,6 +42,7 @@ class LabTestDefinition extends Model implements CipherSweetEncrypted
         // If you want case-insensitive or transformed blind indexes, define
         // transformations via BlindIndex options (see CipherSweet docs).
     }
+
     public function labRequests()
     {
         return $this->hasMany(LabRequest::class);

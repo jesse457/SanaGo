@@ -12,7 +12,7 @@ class Ward extends Model
 
     protected $fillable = [
         'name',
-         'tenant_id',
+        'tenant_id',
         'ward_number',
         'department_id',
         'description',

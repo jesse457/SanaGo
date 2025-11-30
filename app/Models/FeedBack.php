@@ -9,6 +9,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 class FeedBack extends Model
 {
     use BelongsToTenant, HasFactory;
+
     protected $fillable = [
         'subject',
         'category',
@@ -16,18 +17,20 @@ class FeedBack extends Model
         'response',
         'response_draft',
         'user_id',
-        'status'
+        'status',
     ];
-     // helper: has a published response
+
+    // helper: has a published response
     public function hasResponse(): bool
     {
-        return !empty($this->response);
+        return ! empty($this->response);
     }
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
+
     // helper: formatted response or fallback
     public function getResponseOrFallbackAttribute()
     {

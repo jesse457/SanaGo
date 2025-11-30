@@ -15,7 +15,7 @@ class Vital extends Model
         'medical_record_id',
         'nurse_id',
         'recorded_at',
-         'tenant_id',
+        'tenant_id',
         'temperature_celsius',
         'blood_pressure_systolic',
         'blood_pressure_diastolic',

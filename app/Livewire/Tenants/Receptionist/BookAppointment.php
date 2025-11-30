@@ -2,18 +2,17 @@
 
 namespace App\Livewire\Tenants\Receptionist;
 
-use App\Jobs\SendAppointmentReminder;
-use Livewire\Component;
-use Livewire\Attributes\Layout;
-use App\Models\User;
-use App\Models\Patient;
 use App\Models\Appointment;
+use App\Models\Patient;
+use App\Models\User;
 use App\Traits\UserActivitiesTrait;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.receptionist')]
 class BookAppointment extends Component
@@ -21,16 +20,24 @@ class BookAppointment extends Component
     use UserActivitiesTrait;
 
     public string $patientSearch = '';
+
     public ?int $selectedPatientId = null;
+
     public string $selectedPatientName = '';
+
     public ?int $doctorId = null;
+
     public string $appointmentDate;
+
     public string $appointmentTime; // Represents scheduled arrival time (H:i)
+
     public ?string $reasonForVisit = null;
+
     public ?float $price = null;
 
     public array $doctors = [];
-    public  $foundPatients = [];
+
+    public $foundPatients = [];
 
     // Updated validation rules
     protected array $rules = [
@@ -55,7 +62,7 @@ class BookAppointment extends Component
                 ->with(['department:id,name'])
                 ->orderBy('name')
                 ->get()
-                ->map(fn($d) => [
+                ->map(fn ($d) => [
                     'id' => $d->id,
                     'name' => $d->name,
                     'email' => $d->email,
@@ -73,7 +80,7 @@ class BookAppointment extends Component
             $this->foundPatients = Patient::where(function ($q) use ($term) {
                 try {
                     $terms = explode(' ', $term);
-                 if (count($terms) === 2) {
+                    if (count($terms) === 2) {
                         $q->WhereBlind('first_name', 'first_name_index', $terms[0]);
                         $q->WhereBlind('last_name', 'last_name_index', $terms[1]);
                     } else {
@@ -86,10 +93,10 @@ class BookAppointment extends Component
                     }
                 } catch (\Throwable $e) {
                     // Log error if blind index fails but continue without it
-                    Log::warning('Blind index search failed: ' . $e->getMessage());
+                    Log::warning('Blind index search failed: '.$e->getMessage());
                 }
             })
-             ->orWhere('patient_uid', 'ilike', "%{$term}%") // Add non-blind search for patient ID
+                ->orWhere('patient_uid', 'ilike', "%{$term}%") // Add non-blind search for patient ID
                 ->limit(10)
                 ->get();
         } else {
@@ -123,12 +130,13 @@ class BookAppointment extends Component
         $patient = Patient::find($this->selectedPatientId);
         $doctor = User::find($this->doctorId);
 
-        if (!$patient || !$doctor) {
+        if (! $patient || ! $doctor) {
             LivewireAlert::title('Error')->text('Selected patient or doctor not found')->error()->show();
+
             return;
         }
 
-        $appointmentDateTime = Carbon::createFromFormat('Y-m-d H:i', $this->appointmentDate . ' ' . $this->appointmentTime);
+        $appointmentDateTime = Carbon::createFromFormat('Y-m-d H:i', $this->appointmentDate.' '.$this->appointmentTime);
         $nextPosition = null;
         try {
             DB::transaction(function () use ($doctor, $patient, $appointmentDateTime) {
@@ -177,17 +185,20 @@ class BookAppointment extends Component
                 );
             }, 5); // Retry 5 times on deadlock
         } catch (\RuntimeException $e) {
-            Log::warning('Appointment booking blocked due to conflict: ' . $e->getMessage());
+            Log::warning('Appointment booking blocked due to conflict: '.$e->getMessage());
             LivewireAlert::title('Conflict')->text($e->getMessage())->warning()->show();
+
             return;
         } catch (\Throwable $e) {
             Log::error('Queue booking failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             LivewireAlert::title('Server Error')->text('Unable to add patient to the queue. Please try again.')->error()->show();
+
             return;
         }
 
         LivewireAlert::title('Success')->success()->text("{$patient->first_name} has been added to the doctor's queue at position #{$nextPosition}.")->show();
         $this->resetForm();
+
         return redirect()->route('receptionist.appointments');
     }
 

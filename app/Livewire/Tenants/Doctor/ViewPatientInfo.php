@@ -3,18 +3,17 @@
 namespace App\Livewire\Tenants\Doctor;
 
 use App\Models\Admission;
-use App\Models\Patient as PatientModel;
 use App\Models\Attachment;
-use App\Models\MedicalRecordAttachment;
 use App\Models\MedicalRecord;
+use App\Models\MedicalRecordAttachment;
+use App\Models\Patient as PatientModel;
 use App\Traits\UserActivitiesTrait;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Validation\Rule;
 
 #[Layout('components.layouts.doctor')]
 class ViewPatientInfo extends Component
@@ -22,28 +21,40 @@ class ViewPatientInfo extends Component
     use UserActivitiesTrait;
 
     public PatientModel $patient;
+
     public ?Admission $admission;
 
     public bool $showLabModal = false;
+
     public bool $showPrescriptionModal = false;
+
     public bool $showEditConsultationModal = false;
+
     public int $activeRecordId = 0;
 
     // Edit consultation form properties
     public ?MedicalRecord $editingRecord = null;
+
     public string $diagnosis_text = '';
+
     public string $treatment_plan = '';
+
     public string $complaint = '';
+
     public string $general_notes = '';
 
     // Attachment preview state
     public ?string $attachmentPreviewUrl = null;
+
     public ?string $attachmentPreviewMime = null;
+
     public bool $showAttachmentPreview = false;
+
     public int $previewingAttachmentId = 0;
 
     // Loading states
     public bool $isUpdatingConsultation = false;
+
     public bool $isRequestingAdmission = false;
 
     protected $listeners = [
@@ -99,8 +110,9 @@ class ViewPatientInfo extends Component
             'general_notes' => 'nullable|string',
         ]);
 
-        if (!$this->editingRecord) {
+        if (! $this->editingRecord) {
             $this->isUpdatingConsultation = false;
+
             return;
         }
 
@@ -125,7 +137,7 @@ class ViewPatientInfo extends Component
         $patientName = $this->patient->first_name ?? $this->patient->name ?? null;
 
         $this->logActivity(
-            "Consultation_Updated",
+            'Consultation_Updated',
             "Doctor {$doctorName} (ID: ".Auth::id().") updated consultation for Patient {$patientName} (ID: {$this->patient->id})",
             [
                 'target' => 'MedicalRecord',
@@ -137,7 +149,7 @@ class ViewPatientInfo extends Component
                     'treatment_plan' => $this->treatment_plan,
                     'complaint' => $this->complaint,
                     'general_notes' => $this->general_notes,
-                ]
+                ],
             ]
         );
 
@@ -182,7 +194,7 @@ class ViewPatientInfo extends Component
         $patientName = $this->patient->first_name ?? $this->patient->name ?? null;
 
         $this->logActivity(
-            "Request_for_admission",
+            'Request_for_admission',
             "Doctor {$doctorName} (ID: ".Auth::id().") requested admission for Patient {$patientName} (ID: {$userId})",
             [
                 'target' => 'Patient',
@@ -208,7 +220,7 @@ class ViewPatientInfo extends Component
         $attachment = MedicalRecordAttachment::findOrFail($attachmentId);
 
         // Always use the secure route for local/private disk
-         $this->attachmentPreviewUrl = Storage::disk('s3')->temporaryUrl($attachment->file_path,now()->addMinutes(5));
+        $this->attachmentPreviewUrl = Storage::disk('s3')->temporaryUrl($attachment->file_path, now()->addMinutes(5));
 
         // Mime type best-effort
         try {

@@ -28,7 +28,7 @@ class LabResult extends Component
         // dd($query);
         // Apply search filter
         if ($this->search) {
-           $terms = explode(' ',$this->search);
+            $terms = explode(' ', $this->search);
 
             $query->when($this->search, function ($q) use ($terms) {
                 $q->whereHas('labRequest.patient', function ($patientQuery) use ($terms) {
@@ -40,9 +40,9 @@ class LabResult extends Component
                     } else {
                         // Single term or multiple fragments: match against indexed fields
                         foreach ($terms as $term) {
-                           $patientQuery->whereBlind('first_name', 'first_name_index', $term)
-                                    ->orWhereBlind('last_name', 'last_name_index', $term)
-                                    ->orWhere('patient_uid', 'ILIKE', "%{$this->search}%");
+                            $patientQuery->whereBlind('first_name', 'first_name_index', $term)
+                                ->orWhereBlind('last_name', 'last_name_index', $term)
+                                ->orWhere('patient_uid', 'ILIKE', "%{$this->search}%");
                         }
                     }
                 });
@@ -57,7 +57,7 @@ class LabResult extends Component
 
         // Fetch paginated results
         $results = $query->latest('result_date')->paginate(10);
-// dd($results);
+        // dd($results);
 
         return view('livewire.tenants.lab-technician.lab-result', [
             'results' => $results,

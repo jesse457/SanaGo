@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-       $landlordAdmin = User::factory()->create([
+        $landlordAdmin = User::factory()->create([
             'email' => 'admin@healthnet.test', // Specific email for landlord admin
             'role' => 'landlord',
             'password' => bcrypt('password'), // Default password

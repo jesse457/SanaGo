@@ -6,26 +6,32 @@ use App\Traits\UserActivitiesTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
-use Livewire\Component;
-
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.nurse')]
 class Profile extends Component
 {
-      use UserActivitiesTrait;
+    use UserActivitiesTrait;
+
     // Editable profile fields
     public string $name;
+
     public string $email;
+
     public string $phone_number;
+
     public string $address;
 
     // Password fields
     public string $current_password;
+
     public string $new_password;
+
     public string $new_password_confirmation;
 
     public array $shifts = []; // Read-only shifts
+
     public function mount()
     {
         $user = Auth::user();
@@ -34,10 +40,10 @@ class Profile extends Component
         $this->phone_number = $user->phone_number;
         $this->address = $user->address;
 
-           $this->loadShifts();
+        $this->loadShifts();
     }
 
-     protected function loadShifts()
+    protected function loadShifts()
     {
         // Load user's shifts ordered by date descending, then start_time
         $this->shifts = Auth::user()->shifts()
@@ -46,11 +52,12 @@ class Profile extends Component
             ->get()
             ->toArray();
     }
+
     public function updateProfile()
     {
         $this->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . Auth::id(),
+            'email' => 'required|email|unique:users,email,'.Auth::id(),
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
         ]);
@@ -81,8 +88,9 @@ class Profile extends Component
 
         $user = Auth::user();
 
-        if (!Hash::check($this->current_password, $user->password)) {
+        if (! Hash::check($this->current_password, $user->password)) {
             $this->addError('current_password', 'Your current password is incorrect.');
+
             return;
         }
 
@@ -101,6 +109,7 @@ class Profile extends Component
 
         LivewireAlert::title('Success')->success()->text('Password updated successfully!')->show();
     }
+
     public function render()
     {
         return view('livewire.tenants.nurse.profile');

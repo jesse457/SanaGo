@@ -34,7 +34,6 @@ return new class extends Migration
             // Index for finding all feedback from a specific user within a tenant
             $table->index(['tenant_id', 'user_id'], 'feed_backs_user_id_index');
 
-    
         });
     }
 

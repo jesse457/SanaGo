@@ -12,8 +12,6 @@ use Livewire\WithPagination;
  * Class Feedbacks
  *
  * Displays a simple paginated list of feedback history for the logged-in Doctor.
- *
- * @package App\Livewire\Tenants\Doctor
  */
 #[Layout('components.layouts.doctor')]
 class Feedbacks extends Component
@@ -22,23 +20,18 @@ class Feedbacks extends Component
 
     /**
      * Controls the visibility of the details modal.
-     *
-     * @var bool
      */
     public bool $showModal = false;
 
     /**
      * The specific feedback record currently being viewed in the modal.
-     *
-     * @var FeedBack|null
      */
     public ?FeedBack $modalFeedback = null;
 
     /**
      * Load a specific feedback record into the modal.
      *
-     * @param int $id The ID of the feedback to view.
-     * @return void
+     * @param  int  $id  The ID of the feedback to view.
      */
     public function showFeedback(int $id): void
     {
@@ -54,8 +47,6 @@ class Feedbacks extends Component
 
     /**
      * Close the modal and clear the selected data.
-     *
-     * @return void
      */
     public function closeModal(): void
     {

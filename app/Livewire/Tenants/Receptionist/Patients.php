@@ -14,7 +14,7 @@ use Livewire\WithPagination;
 #[Layout('components.layouts.receptionist')]
 class Patients extends Component
 {
-    use WithPagination,UserActivitiesTrait;
+    use UserActivitiesTrait,WithPagination;
 
     #[Url]
     public $search = '';
@@ -43,8 +43,6 @@ class Patients extends Component
 
     public $address;
 
-
-
     protected $listeners = [
         'deletePatient' => 'deletePatient',
         'cancelDelete' => 'cancelDelete',
@@ -53,7 +51,7 @@ class Patients extends Component
     protected function rules(): array
     {
         return [
-            'patient_uid' => 'required|string|max:191|unique:patients,patient_uid' . ($this->editingPatientId ? (',' . $this->editingPatientId) : ''),
+            'patient_uid' => 'required|string|max:191|unique:patients,patient_uid'.($this->editingPatientId ? (','.$this->editingPatientId) : ''),
             'first_name' => 'required|string|max:191',
             'last_name' => 'nullable|string|max:191',
             'age' => 'nullable|integer',
@@ -96,7 +94,6 @@ class Patients extends Component
         }
 
         $patients = $query->orderBy('created_at', 'desc')->paginate(10);
-
 
         return view('livewire.tenants.receptionist.patients', [
             'patients' => $patients,
@@ -185,7 +182,7 @@ class Patients extends Component
             ]);
             $this->logActivity(
                 'Patient_Updated',
-                'Updated patient ' . $patient->full_name,
+                'Updated patient '.$patient->full_name,
                 [
                     'patient_id' => $patient->id,
                 ]
@@ -201,7 +198,7 @@ class Patients extends Component
             $this->resetValidation();
             $this->resetPage();
         } catch (\Exception $e) {
-            Log::error('Failed to update patient: ' . $e->getMessage(), ['patient_id' => $this->editingPatientId]);
+            Log::error('Failed to update patient: '.$e->getMessage(), ['patient_id' => $this->editingPatientId]);
 
             LivewireAlert::title('Update failed')
                 ->text('Unable to update patient. Try again later.')

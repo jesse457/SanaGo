@@ -3,14 +3,14 @@
 namespace App\Livewire\Tenants\Doctor;
 
 use App\Models\Appointment;
-use Illuminate\Support\Facades\Auth;
-use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
-use Livewire\Attributes\Layout;
-use Livewire\Component;
-use Livewire\Attributes\Computed;
-use Livewire\Attributes\Rule;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Rule;
+use Livewire\Component;
 
 /**
  * DoctorAppointment Component
@@ -61,7 +61,7 @@ class DoctorAppointment extends Component
             ->whereIn('status', ['Scheduled', 'In Consultation', 'Pending']) // Optional: Filter active only
             ->distinct()
             ->pluck('appointment_date')
-            ->map(fn($date) => Carbon::parse($date)->format('Y-m-d'))
+            ->map(fn ($date) => Carbon::parse($date)->format('Y-m-d'))
             ->toArray();
     }
 
@@ -96,11 +96,11 @@ class DoctorAppointment extends Component
 
             foreach ($group as $appointment) {
                 $patientName = $appointment->patient
-                    ? trim($appointment->patient->first_name . ' ' . $appointment->patient->last_name)
+                    ? trim($appointment->patient->first_name.' '.$appointment->patient->last_name)
                     : 'Unknown Patient';
 
                 // determine status color logic backend side for easier maintenance
-                $statusColor = match($appointment->status) {
+                $statusColor = match ($appointment->status) {
                     'In Consultation' => 'yellow',
                     'Completed' => 'green',
                     'Cancelled' => 'red',
@@ -111,7 +111,7 @@ class DoctorAppointment extends Component
                     'id' => $appointment->id,
                     'number' => $appointment->queue_position,
                     'raw_status' => $appointment->status,
-                    'status_label' => __('doctor.status_' . Str::snake($appointment->status)), // Translate here
+                    'status_label' => __('doctor.status_'.Str::snake($appointment->status)), // Translate here
                     'status_color' => $statusColor,
                     'patientName' => $patientName,
                     'time' => Carbon::parse($appointment->appointment_time)->format('H:i'),
@@ -124,7 +124,7 @@ class DoctorAppointment extends Component
             $timeSlotKey = "{$formattedHour}:00";
 
             $processedGroups[$timeSlotKey] = [
-                'hourInt' => (int)$hour,
+                'hourInt' => (int) $hour,
                 'timeSlot' => $timeSlotKey,
                 'hourRange' => "{$formattedHour}:00 - {$formattedHour}:59",
                 'totalPatients' => $group->count(),
@@ -157,8 +157,9 @@ class DoctorAppointment extends Component
         $appointment = Appointment::findOrFail($appointmentId);
 
         // Security Check
-        if ((int)$appointment->doctor_id !== (int)Auth::id()) {
+        if ((int) $appointment->doctor_id !== (int) Auth::id()) {
             LivewireAlert::title('Unauthorized')->text('You cannot manage this appointment.')->error()->show();
+
             return;
         }
 
@@ -182,8 +183,9 @@ class DoctorAppointment extends Component
     {
         $appointment = Appointment::findOrFail($appointmentId);
 
-        if ((int)$appointment->doctor_id !== (int)Auth::id()) {
+        if ((int) $appointment->doctor_id !== (int) Auth::id()) {
             LivewireAlert::title('Unauthorized')->error()->show();
+
             return;
         }
 

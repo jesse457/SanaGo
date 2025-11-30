@@ -19,7 +19,7 @@ return new class extends Migration
             $table->decimal('price', 10, 2)->nullable();
 
             $table->timestamps();
-// For general filtering and relationships on the tenant
+            // For general filtering and relationships on the tenant
             $table->index('tenant_id', 'supplies_tenant_id_index');
             $table->unique(['tenant_id', 'name']);
         });

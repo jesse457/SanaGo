@@ -16,7 +16,6 @@ class CreateLabTestDefinition extends Component
 {
     use UserActivitiesTrait;
 
-
     #[Rule('required|string|max:255')]
     public string $test_name;
 
@@ -28,8 +27,6 @@ class CreateLabTestDefinition extends Component
 
     #[Rule('nullable|string|max:50')]
     public string $units;
-
-
 
     /**
      * Saves a new test or updates an existing one.
@@ -62,7 +59,7 @@ class CreateLabTestDefinition extends Component
             $this->resetForm();
         } catch (\Exception $e) {
             LivewireAlert::title('Error')->text('Server Error please Contact us in Feedback if this error persist')->error()->show();
-            Log::error('Error while savig Lab test' . $e->getMessage());
+            Log::error('Error while savig Lab test'.$e->getMessage());
         }
     }
 

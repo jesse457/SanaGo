@@ -29,7 +29,7 @@ trait TracksRevenue
     {
         try {
             $patientId = $this->getPatientId();
-            if (!$patientId) {
+            if (! $patientId) {
                 return;
             }
 
@@ -63,19 +63,17 @@ trait TracksRevenue
             }
 
         } catch (Exception $e) {
-            Log::error('TracksRevenue Error: ' . $e->getMessage(), [
+            Log::error('TracksRevenue Error: '.$e->getMessage(), [
                 'model' => class_basename($this),
-                'id' => $this->getKey()
+                'id' => $this->getKey(),
             ]);
         }
     }
 
     /**
-     * @param int|string $patientId
-     * @param string $date
-     * @param array<int, string> $columns
-     * @param array<int, float> $amounts
-     * @param string $operation
+     * @param  int|string  $patientId
+     * @param  array<int, string>  $columns
+     * @param  array<int, float>  $amounts
      */
     protected function updateSummaryRecord($patientId, string $date, array $columns, array $amounts, string $operation): void
     {
@@ -90,7 +88,7 @@ trait TracksRevenue
                 'appointment_revenue' => 0,
                 'lab_revenue' => 0,
                 'admission_revenue' => 0,
-                'bed_fee_revenue' => 0
+                'bed_fee_revenue' => 0,
             ]
         );
 
@@ -122,23 +120,24 @@ trait TracksRevenue
     }
 
     /**
-     * @param bool $useOriginal
      * @return array<int, float>
      */
     protected function calculateRevenueAmounts(bool $useOriginal = false): array
     {
         $class = class_basename($this);
-        $val = fn(string $field) => $useOriginal ? $this->getOriginal($field) : $this->getAttribute($field);
+        $val = fn (string $field) => $useOriginal ? $this->getOriginal($field) : $this->getAttribute($field);
 
         if ($class === 'Appointment') {
             $status = (string) $val('status');
             $price = (float) ($val('price') ?? 0);
+
             return [$status === 'Completed' ? $price : 0.0];
         }
 
         if ($class === 'LabResult') {
             $status = (string) $val('status');
             $price = (float) ($val('price') ?? 0);
+
             return [$status === 'Completed' ? $price : 0.0];
         }
 
@@ -150,14 +149,14 @@ trait TracksRevenue
             $status = (string) $val('status');
 
             // Only track revenue if Admitted or Discharged
-            if (!in_array($status, ['Admitted', 'Discharged'])) {
+            if (! in_array($status, ['Admitted', 'Discharged'])) {
                 return [0.0, 0.0];
             }
 
             $startDateRaw = $val('admission_date');
             $dischargeDateRaw = $val('discharge_date');
 
-            if (!$startDateRaw) {
+            if (! $startDateRaw) {
                 return [0.0, 0.0];
             }
 
@@ -199,9 +198,6 @@ trait TracksRevenue
         return [];
     }
 
-    /**
-     * @return int|string|null
-     */
     protected function getPatientId(): int|string|null
     {
         if ($this->getAttribute('patient_id')) {
@@ -244,9 +240,10 @@ trait TracksRevenue
 
     private function resolveDate(mixed $source): string
     {
-        if (!$source) {
+        if (! $source) {
             return Carbon::today()->toDateString();
         }
+
         return Carbon::parse($source)->toDateString();
     }
 }

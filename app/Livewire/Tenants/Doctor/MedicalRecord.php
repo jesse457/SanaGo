@@ -2,14 +2,14 @@
 
 namespace App\Livewire\Tenants\Doctor;
 
+use App\Models\LabRequest;
+use App\Models\LabTestDefinition;
 use App\Models\MedicalRecord as MedicalRecordModel;
 use App\Models\MedicalRecordAttachment;
+use App\Models\Medication;
 use App\Models\Patient;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
-use App\Models\LabRequest;
-use App\Models\Medication;
-use App\Models\LabTestDefinition;
 use App\Models\User;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -29,11 +29,14 @@ class MedicalRecord extends Component
     use WithFileUploads; // Removed UserActivitiesTrait for brevity in snippet, keep if you have it
 
     public ?Patient $patient = null;
+
     public ?MedicalRecordModel $medicalRecord = null;
+
     public Builder|Collection $patientResults;
 
     #[Rule('required|exists:patients,id')]
     public ?int $selectedPatientId = null;
+
     public string $patientQuery = '';
 
     #[Rule('required|string|max:65535')]
@@ -47,21 +50,30 @@ class MedicalRecord extends Component
 
     // --- Prescription State ---
     public Collection $medicationOptions; // List for Dropdown
+
     public string $selectedMedicationId = ''; // Selected Dropdown Value
+
     public array $prescriptionItems = [];
 
     // --- Lab Request State ---
     public Collection $labTestOptions; // List for Dropdown
+
     public Collection $labTechnicianOptions; // List of Lab Technicians
+
     public string $selectedLabTestId = ''; // Selected Dropdown Value
+
     public array $labItems = [];
 
     // --- Attachments ---
     #[Rule('nullable|file|max:10240|mimes:jpg,jpeg,png,pdf')]
     public $attachments = null;
+
     public array $storedAttachments = [];
+
     public array $attachmentUrls = [];
+
     public int $uploadProgress = 0;
+
     public bool $hasUnsavedChanges = false;
 
     public function mount(): void
@@ -79,14 +91,16 @@ class MedicalRecord extends Component
 
     public function updatedSelectedPatientId(): void
     {
-        if (!$this->selectedPatientId) {
+        if (! $this->selectedPatientId) {
             $this->resetContext();
+
             return;
         }
 
         $this->patient = Patient::find($this->selectedPatientId);
-        if (!$this->patient) {
+        if (! $this->patient) {
             $this->selectedPatientId = null;
+
             return;
         }
 
@@ -130,7 +144,9 @@ class MedicalRecord extends Component
 
     public function addMedication()
     {
-        if (empty($this->selectedMedicationId)) return;
+        if (empty($this->selectedMedicationId)) {
+            return;
+        }
 
         // Find the medication object from the collection
         $med = $this->medicationOptions->firstWhere('id', $this->selectedMedicationId);
@@ -157,7 +173,9 @@ class MedicalRecord extends Component
 
     protected function loadDraftPrescriptions()
     {
-        if(!$this->medicalRecord) return;
+        if (! $this->medicalRecord) {
+            return;
+        }
         $prescription = Prescription::with('items.medication')
             ->where('consultation_id', $this->medicalRecord->id)
             ->first();
@@ -179,12 +197,15 @@ class MedicalRecord extends Component
 
     public function addLabTest()
     {
-        if (empty($this->selectedLabTestId)) return;
+        if (empty($this->selectedLabTestId)) {
+            return;
+        }
 
         // Check for duplicates
         foreach ($this->labItems as $item) {
             if ($item['lab_test_definition_id'] == $this->selectedLabTestId) {
                 $this->selectedLabTestId = ''; // Clear selection
+
                 return;
             }
         }
@@ -214,7 +235,9 @@ class MedicalRecord extends Component
 
     protected function loadDraftLabs()
     {
-        if(!$this->medicalRecord) return;
+        if (! $this->medicalRecord) {
+            return;
+        }
         $labs = LabRequest::with('testDefinition')
             ->where('consultation_id', $this->medicalRecord->id)
             ->get();
@@ -225,13 +248,20 @@ class MedicalRecord extends Component
                 'test_name' => $lab->testDefinition->test_name ?? 'Unknown Test', // Changed from 'name' to 'test_name'
                 'urgency' => $lab->urgency_level,
                 'lab_tech_id' => $lab->lab_tech_id, // Added lab technician field
-                'reason' => $lab->reason_for_test
+                'reason' => $lab->reason_for_test,
             ];
         }
     }
 
-    public function saveDraft(): void { $this->saveAll(false); }
-    public function saveAndSign(): void { $this->saveAll(true); }
+    public function saveDraft(): void
+    {
+        $this->saveAll(false);
+    }
+
+    public function saveAndSign(): void
+    {
+        $this->saveAll(true);
+    }
 
     public function saveAll(bool $finalize = false): void
     {
@@ -241,13 +271,13 @@ class MedicalRecord extends Component
         try {
             // 1. Save Medical Record
             $data = [
-                'patient_id'     => $this->selectedPatientId,
-                'doctor_id'      => Auth::id(),
-                'complaint'      => $this->complaint,
+                'patient_id' => $this->selectedPatientId,
+                'doctor_id' => Auth::id(),
+                'complaint' => $this->complaint,
                 'diagnosis_text' => $this->diagnosisText,
-                'general_notes'  => $this->clinicalNotes,
-                'finalized'      => $finalize,
-                'record_type'    => 'consultation',
+                'general_notes' => $this->clinicalNotes,
+                'finalized' => $finalize,
+                'record_type' => 'consultation',
             ];
 
             if ($this->medicalRecord) {
@@ -265,11 +295,13 @@ class MedicalRecord extends Component
                         'patient_id' => $this->selectedPatientId,
                         'doctor_id' => Auth::id(),
                         'prescription_date' => now(),
-                        'status' => 'draft'
+                        'status' => 'draft',
                     ]
                 );
 
-                if ($finalize) $prescription->update(['status' => 'prescribed']);
+                if ($finalize) {
+                    $prescription->update(['status' => 'prescribed']);
+                }
 
                 $prescription->items()->delete();
                 foreach ($this->prescriptionItems as $item) {
@@ -298,7 +330,7 @@ class MedicalRecord extends Component
                     'lab_tech_id' => $lab['lab_tech_id'], // Added lab technician ID
                     'reason_for_test' => $lab['reason'],
                     'request_date' => now(),
-                    'status' => 'requested'
+                    'status' => 'requested',
                 ]);
             }
 
@@ -306,9 +338,9 @@ class MedicalRecord extends Component
             DB::commit();
 
             if ($finalize) {
-                 $this->resetContext();
-                 $this->selectedPatientId = null;
-                 LivewireAlert::title('Success')->text('Consultation finalized.')->success()->show();
+                $this->resetContext();
+                $this->selectedPatientId = null;
+                LivewireAlert::title('Success')->text('Consultation finalized.')->success()->show();
             } else {
                 $this->updatedSelectedPatientId();
                 LivewireAlert::title('Saved')->text('Draft saved.')->success()->show();
@@ -316,7 +348,7 @@ class MedicalRecord extends Component
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Save failed: ' . $e->getMessage());
+            Log::error('Save failed: '.$e->getMessage());
             LivewireAlert::error('Failed to save record.')->show();
         }
     }
@@ -326,6 +358,7 @@ class MedicalRecord extends Component
         $q = trim($this->patientQuery);
         if ($q === '') {
             $this->patientResults = collect();
+
             return;
         }
 
@@ -333,7 +366,7 @@ class MedicalRecord extends Component
         $terms = explode(' ', $this->patientQuery);
         $this->patientResults = Patient::query()
             // Optional: Scope search to patients seen by the current doctor for relevance
-            ->whereHas('appointments', fn($b) => $b->where('doctor_id', $doctorId))
+            ->whereHas('appointments', fn ($b) => $b->where('doctor_id', $doctorId))
             ->where(function ($patientQuery) use ($terms) {
                 if (count($terms) === 2) {
                     // Exact first + last name search (most efficient)
@@ -360,19 +393,23 @@ class MedicalRecord extends Component
         $this->updatedSelectedPatientId();
     }
 
-    public function updatedAttachments(): void {
+    public function updatedAttachments(): void
+    {
         $this->validateOnly('attachments');
         $this->hasUnsavedChanges = true;
     }
 
-    public function removeAttachment(): void {
+    public function removeAttachment(): void
+    {
         $this->attachments = null;
         $this->hasUnsavedChanges = true;
     }
 
     protected function saveAttachments(MedicalRecordModel $record): void
     {
-        if (!$this->attachments) return;
+        if (! $this->attachments) {
+            return;
+        }
         $path = $this->attachments->store('medical_record', 's3');
         MedicalRecordAttachment::create([
             'medical_record_id' => $record->id,
@@ -389,23 +426,27 @@ class MedicalRecord extends Component
         if ($this->medicalRecord === null) {
             $this->storedAttachments = [];
             $this->attachmentUrls = [];
+
             return;
         }
 
         $this->storedAttachments = $this->medicalRecord->attachments->all();
         $this->attachmentUrls = $this->medicalRecord->attachments->map(
-            fn($a) => Storage::disk('s3')->temporaryUrl($a->file_path, now()->addMinutes(20))
+            fn ($a) => Storage::disk('s3')->temporaryUrl($a->file_path, now()->addMinutes(20))
         )->all();
     }
 
     public function removeStoredAttachment(int $index): void
     {
-        if (!isset($this->storedAttachments[$index])) return;
+        if (! isset($this->storedAttachments[$index])) {
+            return;
+        }
         $this->storedAttachments[$index]->delete();
         $this->loadStoredAttachments();
     }
 
-    public function render() {
+    public function render()
+    {
         return view('livewire.tenants.doctor.medical-record');
     }
 }

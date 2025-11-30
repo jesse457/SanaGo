@@ -18,7 +18,7 @@ use Livewire\WithFileUploads;
 #[Layout('components.layouts.lab-technician')]
 class EnterResults extends Component
 {
-    use WithFileUploads,UserActivitiesTrait;
+    use UserActivitiesTrait,WithFileUploads;
 
     public LabRequest $labRequest;
 
@@ -60,22 +60,22 @@ class EnterResults extends Component
             $this->labRequest->update([
                 'status' => 'Completed',
             ]);
-          // Get the price from the definition
-        $currentPrice = $this->labRequest->testDefinition->price ?? 0;
+            // Get the price from the definition
+            $currentPrice = $this->labRequest->testDefinition->price ?? 0;
 
-        $result = LabResult::updateOrCreate(
-            ['lab_request_id' => $this->labRequest->id],
-            [
-                'consultation_id' => $this->labRequest->consultation_id,
-                'lab_technician_id' => Auth::id(),
-                'result_date' => now(),
-                'doctor_id' => $this->labRequest->requested_by_doctor_id,
-                'results_text' => $this->results_text,
-                'analysis_comments' => $this->analysis_comments,
-                'status' => 'Completed',
-                'price' => $currentPrice, // <-- ADD THIS LINE
-            ]
-        );
+            $result = LabResult::updateOrCreate(
+                ['lab_request_id' => $this->labRequest->id],
+                [
+                    'consultation_id' => $this->labRequest->consultation_id,
+                    'lab_technician_id' => Auth::id(),
+                    'result_date' => now(),
+                    'doctor_id' => $this->labRequest->requested_by_doctor_id,
+                    'results_text' => $this->results_text,
+                    'analysis_comments' => $this->analysis_comments,
+                    'status' => 'Completed',
+                    'price' => $currentPrice, // <-- ADD THIS LINE
+                ]
+            );
 
             foreach ($this->attachments as $attachment) {
                 // Change from 'public' to 'local' to use the private disk
@@ -98,10 +98,11 @@ class EnterResults extends Component
                 ]
             );
             LivewireAlert::title('Success')->text('Lab results saved successfully.')->success()->show();
+
             return redirect()->route('lab-technician.lab-results');
         } catch (Exception $e) {
             LivewireAlert::title('Error')->text('Server Error please Contact us in Feedback if this error persist')->error()->show();
-            Log::error('Error while saving Lab results' . $e->getMessage());
+            Log::error('Error while saving Lab results'.$e->getMessage());
         }
     }
 

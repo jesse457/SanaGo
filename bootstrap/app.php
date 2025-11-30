@@ -21,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             // Do NOT put 'universal' here.
             // Do NOT put 'InitializeTenancyByDomain' here if you have a Landing Page.
-            SetLocale::class
+            SetLocale::class,
         ]);
 
         $middleware->alias([

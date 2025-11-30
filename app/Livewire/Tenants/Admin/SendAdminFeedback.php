@@ -37,8 +37,6 @@ class SendAdminFeedback extends Component
     #[Rule('required|in:dashboard,shift-management,create-shifts,revenue-report,setings,user-activities,user-management,create-new-user')]
     public string $category = 'dashboard';
 
-   
-
     /** * @var string The relevant internal department (optional field).
      */
     #[Rule('nullable|max:100')]
@@ -53,8 +51,6 @@ class SendAdminFeedback extends Component
     /** @var bool Flag to track if the form has been submitted (currently unused in the logic). */
     public bool $submitted = false;
 
-
-
     /*
     * NOTE: The methods for handling attachments (removeAttachment, attachment processing in submit)
     * are commented out in the provided code, but the structure is retained for reference.
@@ -62,8 +58,6 @@ class SendAdminFeedback extends Component
 
     /**
      * Handles form submission to create a new feedback record.
-     *
-     * @return void
      */
     public function submit(): void
     {
@@ -91,7 +85,6 @@ class SendAdminFeedback extends Component
 
         // Step 4: Reset the form fields to clear inputs after successful submission.
         $this->reset(['subject', 'category', 'department', 'message']);
-
 
         // Step 5: Display a success notification to the user.
         LivewireAlert::title('Success')->success()->text('Feed Sent successfully. We will get back to you as soon as possible.')->show();

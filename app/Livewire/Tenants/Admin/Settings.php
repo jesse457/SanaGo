@@ -5,9 +5,8 @@ namespace App\Livewire\Tenants\Admin;
 use App\Models\Bed;
 use App\Models\BedType;
 use App\Models\Department;
-use App\Models\Medication;
-use App\Models\Ward;
 use App\Models\Supply;
+use App\Models\Ward;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
@@ -24,87 +23,143 @@ class Settings extends Component
 
     // General Settings
     public $hospitalName;
+
     public $hospitalAddress;
+
     public $hospitalEmail;
+
     public $hospitalLogo;
+
     public $currentLogoUrl;
 
     // Department Management
     public $newDepartmentName;
+
     public $newDepartmentDescription;
+
     // Removed public $departments (moved to render)
     public $searchDepartment = '';
+
     public $editingDepartmentId = null;
+
     public $editDepartmentName;
+
     public $editDepartmentDescription;
+
     public $showDepartmentEditModal = false;
+
     public $showDepartmentDeleteModal = false;
+
     public $deletingDepartmentId;
 
     // Ward Management
     public $newWardName;
+
     public $newWardNumber;
+
     public $newWardDepartmentId;
+
     public $newWardDescription;
+
     // Removed public $wards (moved to render)
     public $searchWard = '';
+
     public $editingWardId = null;
+
     public $editWardName;
+
     public $editWardNumber;
+
     public $editWardDepartmentId;
+
     public $editWardDescription;
+
     public $showWardEditModal = false;
+
     public $showWardDeleteModal = false;
+
     public $deletingWardId;
 
     // Bed Type Management
     public $newBedTypeName;
+
     public $newBedTypeDescription;
+
     public $newBedTypePrice;
+
     // Removed public $bedTypes (moved to render)
     public $searchBedType = '';
+
     public $editingBedTypeId = null;
+
     public $editBedTypeName;
+
     public $editBedTypeDescription;
+
     public $editBedTypePrice;
+
     public $showBedTypeEditModal = false;
+
     public $showBedTypeDeleteModal = false;
+
     public $deletingBedTypeId;
 
     // Bed Management
     public $newBedNumber;
+
     public $newBedWardId;
+
     public $newBedTypeId;
+
     public $newBedIsOccupied = false;
+
     // Removed public $beds (moved to render)
     public $searchBed = '';
+
     public $editingBedId = null;
+
     public $editBedNumber;
+
     public $editBedWardId;
+
     public $editBedTypeId;
+
     public $editBedIsOccupied = false;
+
     public $showBedEditModal = false;
+
     public $showBedDeleteModal = false;
+
     public $deletingBedId;
-
-
 
     // Supply Management
     public $newSupplyName;
+
     public $newSupplyUnitOfMeasure;
+
     public $newSupplyCurrentStock;
+
     public $newSupplyMinStockLevel;
+
     // Removed public $supplies (moved to render)
     public $searchSupply = '';
+
     public $editingSupplyId = null;
+
     public $editSupplyName;
+
     public $editSupplyUnitOfMeasure;
+
     public $editSupplyCurrentStock;
+
     public $editSupplyMinStockLevel;
+
     public $showSupplyEditModal = false;
+
     public $showSupplyDeleteModal = false;
+
     public $deletingSupplyId;
-    
+
     public $tenant;
 
     public function mount()
@@ -113,9 +168,9 @@ class Settings extends Component
         $this->hospitalName = $this->tenant->name ?? '';
         $this->hospitalAddress = $this->tenant->address ?? '';
         $this->hospitalEmail = $this->tenant->contact_email ?? '';
-        
-        $this->currentLogoUrl = $this->tenant?->logo 
-            ? Storage::disk('s3')->temporaryUrl($this->tenant->logo, now()->addMinutes(5)) 
+
+        $this->currentLogoUrl = $this->tenant?->logo
+            ? Storage::disk('s3')->temporaryUrl($this->tenant->logo, now()->addMinutes(5))
             : null;
     }
 
@@ -373,7 +428,7 @@ class Settings extends Component
             'bed_number' => $this->newBedNumber,
             'ward_id' => $this->newBedWardId,
             'bed_type_id' => $this->newBedTypeId,
-            'is_occupied' => (bool)$this->newBedIsOccupied,
+            'is_occupied' => (bool) $this->newBedIsOccupied,
             'tenant_id' => tenant('id'),
         ]);
 
@@ -388,7 +443,7 @@ class Settings extends Component
         $this->editBedNumber = $bed->bed_number;
         $this->editBedWardId = $bed->ward_id;
         $this->editBedTypeId = $bed->bed_type_id;
-        $this->editBedIsOccupied = (bool)$bed->is_occupied;
+        $this->editBedIsOccupied = (bool) $bed->is_occupied;
         $this->showBedEditModal = true;
     }
 
@@ -405,7 +460,7 @@ class Settings extends Component
         $bed->bed_number = $this->editBedNumber;
         $bed->ward_id = $this->editBedWardId;
         $bed->bed_type_id = $this->editBedTypeId;
-        $bed->is_occupied = (bool)$this->editBedIsOccupied;
+        $bed->is_occupied = (bool) $this->editBedIsOccupied;
         $bed->save();
 
         $this->editingBedId = null;
@@ -432,7 +487,6 @@ class Settings extends Component
         LivewireAlert::title('Success')->success()->text('Bed deleted successfully')->show();
     }
 
-    
     // -----------------------
     // Supply CRUD
     // -----------------------
@@ -514,19 +568,19 @@ class Settings extends Component
     public function render()
     {
         return view('livewire.tenants.admin.settings', [
-            'filteredDepartments' => Department::when($this->searchDepartment, fn($q) => $q->where('name', 'like', '%' . $this->searchDepartment . '%'))->get(),
-            
+            'filteredDepartments' => Department::when($this->searchDepartment, fn ($q) => $q->where('name', 'like', '%'.$this->searchDepartment.'%'))->get(),
+
             'filteredWards' => Ward::with('department')
-                ->when($this->searchWard, fn($q) => $q->where('name', 'like', '%' . $this->searchWard . '%'))
+                ->when($this->searchWard, fn ($q) => $q->where('name', 'like', '%'.$this->searchWard.'%'))
                 ->get(),
-                
-            'filteredBedTypes' => BedType::when($this->searchBedType, fn($q) => $q->where('name', 'like', '%' . $this->searchBedType . '%'))->get(),
-            
+
+            'filteredBedTypes' => BedType::when($this->searchBedType, fn ($q) => $q->where('name', 'like', '%'.$this->searchBedType.'%'))->get(),
+
             'filteredBeds' => Bed::with(['ward.department', 'bedType'])
-                ->when($this->searchBed, fn($q) => $q->where('bed_number', 'like', '%' . $this->searchBed . '%'))
+                ->when($this->searchBed, fn ($q) => $q->where('bed_number', 'like', '%'.$this->searchBed.'%'))
                 ->get(),
-             
-            'filteredSupplies' => Supply::when($this->searchSupply, fn($q) => $q->where('name', 'like', '%' . $this->searchSupply . '%'))->get(),
+
+            'filteredSupplies' => Supply::when($this->searchSupply, fn ($q) => $q->where('name', 'like', '%'.$this->searchSupply.'%'))->get(),
         ]);
     }
 }

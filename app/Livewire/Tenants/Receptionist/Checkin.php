@@ -6,8 +6,8 @@ namespace App\Livewire\Tenants\Receptionist;
 
 use App\Models\Admission;
 use App\Models\Patient;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -19,12 +19,17 @@ class Checkin extends Component
     use WithPagination;
 
     public string $search = '';
+
     public int $perPage = 10;
+
     public bool $showNoPatientsMessage = false;
 
     public bool $showAdmissionModal = false;
+
     public ?int $selectedPatientId = null;
+
     public Collection $recentAdmissions;
+
     public ?int $selectedAdmissionId = null;
 
     protected $listeners = ['admissionUpdated' => '$refresh'];
@@ -47,8 +52,9 @@ class Checkin extends Component
     {
         $patient = Patient::find($patientId);
 
-        if (!$patient) {
+        if (! $patient) {
             LivewireAlert::title('Patient Not Found')->warning()->show();
+
             return;
         }
 
@@ -56,6 +62,7 @@ class Checkin extends Component
         if (! $patient->is_admitted_approve) {
             LivewireAlert::title('Invalid Access')->warning()
                 ->text('A Doctor must send a request for this patient before admission.')->show();
+
             return;
         }
 
@@ -67,7 +74,7 @@ class Checkin extends Component
 
         // Pre-select the latest admission for convenience.
         $latest = $this->recentAdmissions->first();
-        if ($latest && !in_array($latest->status, ['Admitted', 'Discharged'])) {
+        if ($latest && ! in_array($latest->status, ['Admitted', 'Discharged'])) {
             $this->selectedAdmissionId = $latest->id;
         } else {
             $this->selectedAdmissionId = null;
@@ -90,30 +97,34 @@ class Checkin extends Component
      */
     public function confirmAdmission(bool $redirectToForm): void
     {
-        if (!$this->selectedPatientId) {
+        if (! $this->selectedPatientId) {
             $this->closeModal();
-            LivewireAlert::title("No Patient Selected")->text('Please select a patient to admit.')->error()->show();
+            LivewireAlert::title('No Patient Selected')->text('Please select a patient to admit.')->error()->show();
+
             return;
         }
 
-        if (!$this->selectedAdmissionId) {
+        if (! $this->selectedAdmissionId) {
             // No admission selected, so we create a new one.
             $this->closeModal();
             $this->redirect(route('receptionist.admit-patient', ['patient' => $this->selectedPatientId]), navigate: true);
+
             return;
         }
 
         $admission = Admission::find($this->selectedAdmissionId);
 
-        if (!$admission) {
+        if (! $admission) {
             $this->closeModal();
-            LivewireAlert::title("Admission Not Found")->text('The selected admission could not be found.')->warning()->show();
+            LivewireAlert::title('Admission Not Found')->text('The selected admission could not be found.')->warning()->show();
+
             return;
         }
 
         if (in_array($admission->status, ['Admitted', 'Discharged'])) {
             $this->closeModal();
-            LivewireAlert::title("Admission Processed")->text('This admission has already been processed.')->warning()->show();
+            LivewireAlert::title('Admission Processed')->text('This admission has already been processed.')->warning()->show();
+
             return;
         }
 
@@ -155,7 +166,7 @@ class Checkin extends Component
                             ->WhereBlind('last_name', 'last_name_index', $terms[1]);
                     } else {
                         foreach ($terms as $term) {
-                            $q->orWhere('patient_uid', 'ilike', '%' . $term . '%')
+                            $q->orWhere('patient_uid', 'ilike', '%'.$term.'%')
                                 ->orWhereBlind('first_name', 'first_name_index', $term)
                                 ->orWhereBlind('last_name', 'last_name_index', $term);
                         }
@@ -168,7 +179,7 @@ class Checkin extends Component
             ->orderBy('created_at', 'desc')
             ->paginate($this->perPage);
 
-        $this->showNoPatientsMessage = $patients->isEmpty() && !empty($this->search);
+        $this->showNoPatientsMessage = $patients->isEmpty() && ! empty($this->search);
 
         return view('livewire.tenants.receptionist.checkin', [
             'patients' => $patients,
@@ -179,8 +190,9 @@ class Checkin extends Component
     public function viewPatientDetails(int $patientId): void
     {
         $admissions = Patient::find($patientId)->load('admissions');
-        if (!$admissions) {
+        if (! $admissions) {
             LivewireAlert::title('Error')->error()->text('This patient does not have any admission records.')->show();
+
             return;
         }
         $this->redirect(route('receptionist.view-admission-details', ['patient' => $patientId]), navigate: true);

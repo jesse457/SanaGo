@@ -6,11 +6,9 @@ use App\Models\FeedBack;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
-use Livewire\WithFileUploads;
-
-use Livewire\Attributes\Layout;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 #[Layout('components.layouts.lab-technician')]
@@ -39,7 +37,6 @@ class SendFeedback extends Component
         // Step 2: Get the authenticated user's ID and tenant ID.
         $userId = Auth::id();
 
-
         try {
             // Step 4: Create a new feedback record using a single creation method for efficiency.
             FeedBack::create([
@@ -55,10 +52,11 @@ class SendFeedback extends Component
             $this->reset(['subject', 'category', 'message']);
 
             LivewireAlert::title('Success')->text('Thank you! Your feedback has been sent successfully.')->success()->show();
+
             return redirect()->route('lab-technician.lab-results');
-            //code...
+            // code...
         } catch (\Exception $e) {
-           Log::error('An Error Occured when saving Feedback',['Error'=>$e->getMessage(),'Trace'=>$e->getTrace()]);
+            Log::error('An Error Occured when saving Feedback', ['Error' => $e->getMessage(), 'Trace' => $e->getTrace()]);
         }
     }
 

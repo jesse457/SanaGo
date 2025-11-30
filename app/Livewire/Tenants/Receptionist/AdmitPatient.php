@@ -5,15 +5,14 @@ namespace App\Livewire\Tenants\Receptionist;
 use App\Models\Admission;
 use App\Models\Bed;
 use App\Models\Patient;
-use App\Models\User;
 use App\Traits\UserActivitiesTrait;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
-use Illuminate\Database\Eloquent\Collection;
 
 #[Layout('components.layouts.receptionist')]
 class AdmitPatient extends Component
@@ -22,6 +21,7 @@ class AdmitPatient extends Component
 
     // The core model is now Admission
     public Admission $admission;
+
     public Patient $patient;
 
     #[Validate('required|exists:beds,id')]
@@ -36,7 +36,7 @@ class AdmitPatient extends Component
     #[Validate('required|integer')]
     public int $observationFee;
 
-    public Collection $availableBeds ;
+    public Collection $availableBeds;
 
     /**
      * Mount the component with an Admission model.
@@ -78,7 +78,7 @@ class AdmitPatient extends Component
                 'reason_for_admission' => $this->reasonForAdmission,
                 'admission_date' => $this->admissionDate,
                 'status' => 'Admitted', // This is the key status change
-                'observation_fee'=>$this->observationFee,
+                'observation_fee' => $this->observationFee,
                 'admitted_by' => Auth::id(), // Track who admitted the patient
             ]);
 
@@ -95,7 +95,7 @@ class AdmitPatient extends Component
             // 5. Log the activity
             $this->logActivity(
                 'Patient_Admission_Confirmed',
-                'Confirmed admission for patient ' . $this->patient->full_name,
+                'Confirmed admission for patient '.$this->patient->full_name,
                 [
                     'patient_id' => $this->patient->id,
                     'admission_id' => $this->admission->id,
@@ -108,10 +108,10 @@ class AdmitPatient extends Component
                 ->text("Patient {$this->patient->full_name} has been successfully admitted.")
                 ->show();
 
-            $this->js('setTimeout(() => window.location.href = "' . route('receptionist.checkin') . '", 2500)');
+            $this->js('setTimeout(() => window.location.href = "'.route('receptionist.checkin').'", 2500)');
 
         } catch (\Exception $e) {
-            Log::error('Admission confirmation failed: ' . $e->getMessage());
+            Log::error('Admission confirmation failed: '.$e->getMessage());
             LivewireAlert::error('Error', 'Failed to admit patient. Please try again.')->show();
         }
     }

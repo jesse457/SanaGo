@@ -3,9 +3,8 @@
 declare(strict_types=1);
 
 // Import necessary classes and controllers for route handling
-use App\Http\Controllers\SseController;
-use App\Livewire\Auth\Login;
 use App\Livewire\Auth\ForgotPassword;
+use App\Livewire\Auth\Login;
 use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Tenants\Admin\AdminFeedbackHistory;
 use App\Livewire\Tenants\Admin\AiAssistant;
@@ -66,11 +65,11 @@ use App\Livewire\Tenants\Receptionist\ViewAdmissionDetails;
 use App\Models\User; // User model for tenant info
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Session;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Session;
 
 /*
 |--------------------------------------------------------------------------
@@ -96,17 +95,18 @@ Route::middleware([
     // Root route for tenants, shows tenant id and user count
     Route::get('/', function () {
         // Placeholder landing page
-        return 'This is your multi-tenant application. The id of the current tenant is ' . tenant('id') . ' ' . User::all()->count() . ' users.';
+        return 'This is your multi-tenant application. The id of the current tenant is '.tenant('id').' '.User::all()->count().' users.';
     })->name('tenant.root');
 
-  // Language switching route - should be outside tenant routes
-        Route::get('/language/{locale}', function (string $locale) {
-            if (! in_array($locale, ['en', 'es', 'fr'])) {
-                abort(400);
-            }
-            Session::put('locale', $locale);
-            return redirect()->back();
-        })->name('language.switch');
+    // Language switching route - should be outside tenant routes
+    Route::get('/language/{locale}', function (string $locale) {
+        if (! in_array($locale, ['en', 'es', 'fr'])) {
+            abort(400);
+        }
+        Session::put('locale', $locale);
+
+        return redirect()->back();
+    })->name('language.switch');
     // Login page route
     Route::get('/login', Login::class)->name('tenant.login');
     Route::get('/forgot-password', ForgotPassword::class)->name('password.request');
@@ -123,35 +123,40 @@ Route::middleware([
             switch ($user->role) {
                 case 'admin':
                     Log::info('Redirecting admin to admin.dashboard');
+
                     return redirect()->route('admin.dashboard');
                 case 'doctor':
                     Log::info('Redirecting doctor to doctor.dashboard');
+
                     return redirect()->route('doctor.dashboard');
                 case 'nurse':
                     Log::info('Redirecting nurse to nurse.dashboard');
+
                     return redirect()->route('nurse.dashboard');
                 case 'lab-technician':
                     Log::info('Redirecting lab technician to lab-technician.dashboard');
+
                     return redirect()->route('lab-technician.dashboard');
                 case 'pharmacist':
                     Log::info('Redirecting pharmacist to pharmacist.dashboard');
+
                     return redirect()->route('pharmacist.dashboard');
                 case 'receptionist':
                     Log::info('Redirecting receptionist to receptionist.dashboard');
+
                     return redirect()->route('receptionist.dashboard');
                 default:
                     Log::info('Redirecting to fallback / route');
+
                     return redirect('/'); // Fallback
             }
         })->name('dashboard');
 
-
-
         // Logout route: logs out user and redirects to login
         Route::post('/logout', function (Request $request) {
             Auth::guard('web')->logout();
-        Session::invalidate();
-        Session::regenerateToken();
+            Session::invalidate();
+            Session::regenerateToken();
 
         })->name('auth.logout');
 
@@ -182,7 +187,6 @@ Route::middleware([
             Route::get('/feedbacks', DoctorFeedbacks::class)->name('feedbacks'); // Doctor feedbacks
             Route::get('/send-feedback', SendFeedback::class)->name('send-feedback'); // Send feedback
             Route::get('/profile', Profile::class)->name('profile'); // List patients
-
 
             Route::get('/lab-request', DoctorLabRequest::class)->name('lab-request'); // List patients
 

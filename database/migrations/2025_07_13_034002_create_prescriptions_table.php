@@ -19,7 +19,7 @@ return new class extends Migration
             $table->text('general_notes')->nullable();
             $table->string('status')->default('Pending');
             $table->timestamps();
-   $table->index('tenant_id', 'prescriptions_tenant_id_index');
+            $table->index('tenant_id', 'prescriptions_tenant_id_index');
             $table->index(['tenant_id', 'patient_id', 'doctor_id']);
         });
     }
