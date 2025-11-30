@@ -18,7 +18,7 @@ class CreateDomainsTable extends Migration
             $table->string('domain', 255)->unique();
             $table->timestamps();
             $table->foreignUuid('tenant_id')->references('id')->on('tenants')->onUpdate('cascade')->onDelete('cascade');
-            
+
         });
     }
 

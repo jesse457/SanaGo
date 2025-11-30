@@ -22,14 +22,12 @@ class Medication extends Model implements CipherSweetEncrypted
         'unit_price_purchase',
     ];
 
-      /**
+    /**
      * Configure CipherSweet encryption for this model.
      *
      * Fields added with ->addField(...) should correspond to text columns
      * in your DB to store ciphertext. For exact-match searchable fields,
      * add a BlindIndex.
-     *
-     * @param EncryptedRow $encryptedRow
      */
     public static function configureCipherSweet(EncryptedRow $encryptedRow): void
     {

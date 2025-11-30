@@ -4,18 +4,20 @@ namespace App\Livewire\Tenants\Doctor;
 
 use App\Models\LabRequest;
 use App\Traits\UserActivitiesTrait;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Computed;
 
 #[Layout('components.layouts.doctor')]
 class DoctorLabRequest extends Component
 {
-    use WithPagination, UserActivitiesTrait;
+    use UserActivitiesTrait, WithPagination;
 
     public string $search = '';
+
     public string $statusFilter = '';
+
     public int $perPage = 10;
 
     protected array $queryString = [
@@ -24,9 +26,7 @@ class DoctorLabRequest extends Component
         'perPage' => ['except' => 10],
     ];
 
-    protected  $listeners = ['refreshLabRequests' => '$refresh'];
-
-
+    protected $listeners = ['refreshLabRequests' => '$refresh'];
 
     public function updatingSearch(): void
     {

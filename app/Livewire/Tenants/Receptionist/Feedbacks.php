@@ -4,10 +4,9 @@ namespace App\Livewire\Tenants\Receptionist;
 
 use App\Models\FeedBack;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Layout;
-
 
 // Specify the layout to use for this Livewire component
 #[Layout('components.layouts.receptionist')]
@@ -16,12 +15,16 @@ class Feedbacks extends Component
     use WithPagination;
 
     public $search = '';
+
     public $filterCategory = '';
+
     public $perPage = 10;
 
     // Modal state
     public $showModal = false;
+
     public $modalFeedback = null; // instance of FeedBack or null
+
     public $modalTitle = 'Feedback Details';
 
     // reply draft bound to textarea
@@ -79,6 +82,7 @@ class Feedbacks extends Component
 
         if (! $this->modalFeedback) {
             session()->flash('error', 'Feedback not found.');
+
             return;
         }
 
@@ -112,9 +116,9 @@ class Feedbacks extends Component
         if ($this->search) {
             $search = $this->search;
             $query->where(function ($q) use ($search) {
-                $q->where('subject', 'ilike', '%' . $search . '%')
-                    ->orWhere('message', 'ilike', '%' . $search . '%')
-                    ->orWhere('response', 'ilike', '%' . $search . '%');
+                $q->where('subject', 'ilike', '%'.$search.'%')
+                    ->orWhere('message', 'ilike', '%'.$search.'%')
+                    ->orWhere('response', 'ilike', '%'.$search.'%');
             });
         }
 

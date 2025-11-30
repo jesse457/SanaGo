@@ -3,9 +3,9 @@
 namespace App\Livewire\LandLord;
 
 use App\Mail\SendCredentials;
+use App\Models\Subscription;
 use App\Models\Tenant;
-use App\Models\User;
-use App\Models\Subscription; // <-- Import the Subscription model
+use App\Models\User; // <-- Import the Subscription model
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -22,15 +22,22 @@ class CreateTenant extends Component
 
     // Properties for the Tenant
     public $tenantName;
+
     public $phoneNumber;
+
     public $address;
+
     public $logo = null;
+
     public $subscriptionTier = Subscription::PLAN_BASIC; // <-- Use model constant for default
+
     public $generatedDomain;
+
     public $hospitalContactEmail;
 
     // Properties for the Tenant's Admin User
     public $adminName;
+
     public $adminEmail;
 
     public function rules()
@@ -63,8 +70,8 @@ class CreateTenant extends Component
     public function updatedTenantName($value)
     {
         $slug = Str::slug($value);
-        $this->generatedDomain = $slug . '.' . config('tenancy.central_domains.0');
-        $this->hospitalContactEmail = 'contact@' . $this->generatedDomain;
+        $this->generatedDomain = $slug.'.'.config('tenancy.central_domains.0');
+        $this->hospitalContactEmail = 'contact@'.$this->generatedDomain;
     }
 
     public function createTenant()
@@ -128,12 +135,12 @@ class CreateTenant extends Component
 
             // 3. Prepare and send the credentials email
             $mailable = new SendCredentials([
-                'subject'  => 'Welcome to ' . $this->tenantName . '!',
-                'view'     => 'emails.welcome',
-                'name'     => $user->name ?? 'User',
-                'email'    => $user->email,
+                'subject' => 'Welcome to '.$this->tenantName.'!',
+                'view' => 'emails.welcome',
+                'name' => $user->name ?? 'User',
+                'email' => $user->email,
                 'password' => $generatedPassword,
-                'login_url' => 'http://' . $this->generatedDomain, // Use tenant's domain for login
+                'login_url' => 'http://'.$this->generatedDomain, // Use tenant's domain for login
             ]);
 
             // Mail::to($user->email)->queue($mailable); // <-- Enabled emailing
@@ -159,7 +166,7 @@ class CreateTenant extends Component
         ];
 
         return view('livewire.land-lord.create-tenant', [
-            'availablePlans' => $availablePlans
+            'availablePlans' => $availablePlans,
         ]);
     }
 }

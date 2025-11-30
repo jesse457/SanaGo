@@ -36,7 +36,7 @@ return new class extends Migration
             $table->unique(['tenant_id', 'phone_number']);
             // Additional indexes for performance
             $table->index('tenant_id', 'users_tenant_id_index'); // Explicit index for tenant_id
-            $table->index(['tenant_id','department_id'], 'users_department_id_index'); // Explicit index for department_id
+            $table->index(['tenant_id', 'department_id'], 'users_department_id_index'); // Explicit index for department_id
             $table->index(['tenant_id', 'role'], 'users_role_index'); // Index for role queries
         });
 

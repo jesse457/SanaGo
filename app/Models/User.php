@@ -26,7 +26,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'is_active',
         'department_id',
-         'tenant_id',
+        'tenant_id',
         'can_assign_shift',
         'profile_picture', // Ensure profile_picture is fillable
         'address', // Add if it's a user property
@@ -73,10 +73,12 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->belongsToMany(UserShift::class);
     }
+
     public function activities()
     {
         return $this->hasMany(UserActivity::class);
     }
+
     public function patients()
     {
         // For doctors: patients under their care

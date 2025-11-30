@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
             $table->foreignId('lab_request_id')->constrained('lab_requests')->cascadeOnDelete();
             $table->foreignId('lab_technician_id')->constrained('users')->cascadeOnDelete(); // Who performed/uploaded
-              $table->foreignId('doctor_id')->nullable()->constrained('users')->cascadeOnDelete();
+            $table->foreignId('doctor_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->foreignId('consultation_id')->constrained('medical_records')->cascadeOnDelete();
             $table->timestamp('result_date')->useCurrent();
             $table->text('results_text')->nullable(); // Form-entered results
@@ -26,7 +26,7 @@ return new class extends Migration
 
             $table->index(['tenant_id', 'lab_technician_id', 'result_date']);
 
-             $table->index(['tenant_id', 'consultation_id', 'doctor_id']);
+            $table->index(['tenant_id', 'consultation_id', 'doctor_id']);
         });
     }
 

@@ -19,7 +19,7 @@ class RoleMiddleware
             if (function_exists('tenant') && tenant()) {
                 return redirect()->route('tenant.login');
             }
-            
+
             // Otherwise, go to central login
             return redirect()->route('login');
         }
@@ -30,7 +30,7 @@ class RoleMiddleware
         if (! $user->is_active) {
             Auth::logout();
             $route = (function_exists('tenant') && tenant()) ? 'tenant.login' : 'login';
-            
+
             return redirect()->route($route)
                 ->with('error', 'Your account was deactivated.');
         }
@@ -40,7 +40,7 @@ class RoleMiddleware
             // Context-aware fallback dashboard
             if (function_exists('tenant') && tenant()) {
                 // Use the generic tenant dashboard route
-                $dashboardRoute = 'dashboard'; 
+                $dashboardRoute = 'dashboard';
             } else {
                 // Central Landlord fallback
                 $dashboardRoute = 'landlord.dashboard';
@@ -48,14 +48,14 @@ class RoleMiddleware
 
             // Or use your specific role match list:
             $redirectRoute = match ($user->role) {
-                'admin'          => 'admin.dashboard',
-                'doctor'         => 'doctor.dashboard',
-                'nurse'          => 'nurse.dashboard',
+                'admin' => 'admin.dashboard',
+                'doctor' => 'doctor.dashboard',
+                'nurse' => 'nurse.dashboard',
                 'lab-technician' => 'lab-technician.dashboard',
-                'pharmacist'     => 'pharmacist.dashboard',
-                'receptionist'   => 'receptionist.dashboard',
-                'landlord'       => 'landlord.dashboard',
-                default          => $dashboardRoute,
+                'pharmacist' => 'pharmacist.dashboard',
+                'receptionist' => 'receptionist.dashboard',
+                'landlord' => 'landlord.dashboard',
+                default => $dashboardRoute,
             };
 
             return redirect()->route($redirectRoute)

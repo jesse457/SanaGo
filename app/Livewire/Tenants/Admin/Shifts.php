@@ -2,16 +2,16 @@
 
 namespace App\Livewire\Tenants\Admin;
 
-use App\Models\User; // Included but not directly used in logic, keeping it for context
+// Included but not directly used in logic, keeping it for context
 use App\Models\UserShift;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
-use Livewire\Component;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Rule;
-use Livewire\WithPagination;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator; // Used for type-hinting paginated results
-use Illuminate\Contracts\View\View; // Used for type-hinting the render return value
-use Illuminate\Database\Eloquent\ModelNotFoundException; // Explicit exception
+use Livewire\Attributes\Rule; // Used for type-hinting paginated results
+use Livewire\Component; // Used for type-hinting the render return value
+use Livewire\WithPagination; // Explicit exception
 
 #[Layout('components.layouts.admin')]
 class Shifts extends Component
@@ -62,8 +62,6 @@ class Shifts extends Component
     /**
      * Runs once immediately after the component is instantiated.
      * Sets the default shift date to today.
-     *
-     * @return void
      */
     public function mount(): void
     {
@@ -75,8 +73,6 @@ class Shifts extends Component
 
     /**
      * Resets the form and opens the modal for creating a new shift.
-     *
-     * @return void
      */
     public function openModal(): void
     {
@@ -86,8 +82,6 @@ class Shifts extends Component
 
     /**
      * Closes the modal and resets the form state.
-     *
-     * @return void
      */
     public function closeModal(): void
     {
@@ -97,8 +91,6 @@ class Shifts extends Component
 
     /**
      * Resets all form properties to their default state.
-     *
-     * @return void
      */
     public function resetForm(): void
     {
@@ -115,9 +107,9 @@ class Shifts extends Component
     /**
      * Loads the data of an existing shift into the form for editing.
      *
-     * @param int $id The ID of the UserShift record to edit.
+     * @param  int  $id  The ID of the UserShift record to edit.
+     *
      * @throws ModelNotFoundException If the shift ID does not exist.
-     * @return void
      */
     public function edit(int $id): void
     {
@@ -138,8 +130,6 @@ class Shifts extends Component
 
     /**
      * Validates the form data and either creates a new shift or updates an existing one.
-     *
-     * @return void
      */
     public function save(): void
     {
@@ -173,9 +163,9 @@ class Shifts extends Component
     /**
      * Deletes a specific shift record and shows a confirmation alert.
      *
-     * @param int $id The ID of the UserShift record to delete.
+     * @param  int  $id  The ID of the UserShift record to delete.
+     *
      * @throws ModelNotFoundException If the shift ID does not exist.
-     * @return void
      */
     public function delete(int $id): void
     {
@@ -194,8 +184,6 @@ class Shifts extends Component
 
     /**
      * Renders the view and supplies the paginated list of shifts.
-     *
-     * @return \Illuminate\Contracts\View\View
      */
     public function render(): View
     {
@@ -210,7 +198,7 @@ class Shifts extends Component
             ->paginate(10);
 
         return \view('livewire.tenants.admin.shifts', [
-            'shifts' => $shifts
+            'shifts' => $shifts,
         ]);
     }
 }

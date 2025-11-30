@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
-             $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
             $table->string('plan'); // basic, standard, premium, enterprise
             $table->string('status')->default('active'); // active, inactive, cancelled, expired, suspended
             $table->decimal('amount', 10, 2); // Monthly/annual amount

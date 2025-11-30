@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Database\Eloquent\Builder;
 
 #[Layout('components.layouts.admin')]
 class RevenueDashboard extends Component
@@ -19,13 +18,19 @@ class RevenueDashboard extends Component
 
     // Aggregate properties (Typed as floats)
     public float $totalRevenue = 0.0;
+
     public float $medicationRevenue = 0.0;
+
     public float $appointmentRevenue = 0.0;
+
     public float $labRevenue = 0.0;
+
     public float $admissionRevenue = 0.0;
+
     public float $bedFeeRevenue = 0.0;
 
     public float $previousTotalRevenue = 0.0;
+
     public float $revenueGrowth = 0.0;
 
     public function mount(): void
@@ -113,6 +118,7 @@ class RevenueDashboard extends Component
     private function getDateRange(): array
     {
         $now = Carbon::now();
+
         return match ($this->timePeriod) {
             'today' => [$now->copy()->startOfDay(), $now->copy()->endOfDay()],
             'week' => [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()],
@@ -127,6 +133,7 @@ class RevenueDashboard extends Component
     private function getPreviousDateRange(): array
     {
         $now = Carbon::now();
+
         return match ($this->timePeriod) {
             'today' => [$now->copy()->subDay()->startOfDay(), $now->copy()->subDay()->endOfDay()],
             'week' => [$now->copy()->subWeek()->startOfWeek(), $now->copy()->subWeek()->endOfWeek()],

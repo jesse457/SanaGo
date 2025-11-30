@@ -6,8 +6,6 @@ use App\Models\User;
 use App\Models\UserShift;
 use App\Traits\UserActivitiesTrait; // <-- Import the activity logging trait
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule as ValidationRule;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Computed;
@@ -21,10 +19,11 @@ use Livewire\WithPagination;
 #[Layout('components.layouts.admin')]
 class UserManagement extends Component
 {
-    // Enables pagination functionality for the user list.
-    use WithPagination;
     // Enables logging activities for admin actions.
     use UserActivitiesTrait;
+
+    // Enables pagination functionality for the user list.
+    use WithPagination;
 
     // --- Search and Filter Properties ---
     /** @var string The search term used to filter users by name or email. */
@@ -76,13 +75,11 @@ class UserManagement extends Component
     public function mount()
     {
         // Initializes the shift history collection to prevent errors if empty.
-        $this->userShiftHistory = new Collection();
+        $this->userShiftHistory = new Collection;
     }
 
     /**
      * Resets all form and temporary state properties.
-     *
-     * @return void
      */
     public function resetForm(): void
     {
@@ -96,7 +93,7 @@ class UserManagement extends Component
             'selected_shift_id',
         ]);
         // Resets the shift history and clears any validation errors.
-        $this->userShiftHistory = new Collection();
+        $this->userShiftHistory = new Collection;
         $this->resetErrorBag();
     }
 
@@ -142,8 +139,7 @@ class UserManagement extends Component
     /**
      * Fetches user data and dispatches an event to open the view modal.
      *
-     * @param int $userId The ID of the user to view.
-     * @return void
+     * @param  int  $userId  The ID of the user to view.
      */
     public function viewUser(int $userId): void
     {
@@ -155,8 +151,7 @@ class UserManagement extends Component
     /**
      * Loads user data into the form properties and prepares the edit modal.
      *
-     * @param int $userId The ID of the user to edit.
-     * @return void
+     * @param  int  $userId  The ID of the user to edit.
      */
     public function editUser(int $userId): void
     {
@@ -185,8 +180,6 @@ class UserManagement extends Component
 
     /**
      * Closes the user edit modal and clears the form state.
-     *
-     * @return void
      */
     public function closeEditModal(): void
     {
@@ -249,8 +242,7 @@ class UserManagement extends Component
     /**
      * Sets the user ID and displays a confirmation alert for deletion.
      *
-     * @param int $userId The ID of the user targeted for deletion.
-     * @return void
+     * @param  int  $userId  The ID of the user targeted for deletion.
      */
     public function viewDeleteUser(int $userId): void
     {
@@ -270,8 +262,6 @@ class UserManagement extends Component
      * Deletes the selected user and logs the action.
      *
      * This method is triggered by the Livewire Alert confirmation.
-     *
-     * @return void
      */
     #[On('deleteUser')]
     public function deleteUser(): void

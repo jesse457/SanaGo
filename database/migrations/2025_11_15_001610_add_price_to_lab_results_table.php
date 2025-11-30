@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-       Schema::table('lab_results', function (Blueprint $table) {
-        $table->decimal('price', 10, 2)->default(0.00)->after('status');
-    });
+        Schema::table('lab_results', function (Blueprint $table) {
+            $table->decimal('price', 10, 2)->default(0.00)->after('status');
+        });
     }
 
     /**

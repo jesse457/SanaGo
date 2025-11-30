@@ -60,8 +60,6 @@ class Profile extends Component
     /**
      * Runs once immediately after the component is instantiated.
      * Initializes form properties with the currently authenticated user's data.
-     *
-     * @return void
      */
     public function mount(): void
     {
@@ -81,8 +79,6 @@ class Profile extends Component
 
     /**
      * Validates and updates the user's name, email, phone number, and address.
-     *
-     * @return void
      */
     public function updateProfile(): void
     {
@@ -90,7 +86,7 @@ class Profile extends Component
         $this->validate([
             'name' => 'required|string|max:255',
             // Unique email check, ignoring the current user's ID
-            'email' => 'required|email|unique:users,email,' . Auth::id(),
+            'email' => 'required|email|unique:users,email,'.Auth::id(),
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
         ]);
@@ -126,8 +122,6 @@ class Profile extends Component
 
     /**
      * Validates the current password and updates the user's password.
-     *
-     * @return void
      */
     public function updatePassword(): void
     {
@@ -142,9 +136,10 @@ class Profile extends Component
         $user = Auth::user();
 
         // 2. Check if the current password is correct using Hash facade
-        if (!Hash::check((string) $this->current_password, $user->password)) {
+        if (! Hash::check((string) $this->current_password, $user->password)) {
             // Add a specific error to the 'current_password' field and stop execution
             $this->addError('current_password', 'Your current password is incorrect.');
+
             return;
         }
 
@@ -176,8 +171,6 @@ class Profile extends Component
 
     /**
      * Renders the view for the profile page.
-     *
-     * @return \Illuminate\Contracts\View\View
      */
     public function render(): View
     {

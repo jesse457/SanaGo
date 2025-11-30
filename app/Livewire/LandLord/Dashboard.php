@@ -2,26 +2,32 @@
 
 namespace App\Livewire\LandLord;
 
-use Livewire\Attributes\Layout;
-use Livewire\Component;
-use App\Models\Tenant;
 use App\Models\Subscription;
-use Illuminate\Support\Facades\App;
+use App\Models\Tenant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 // Use the landlord layout for this Livewire component
 #[Layout('components.layouts.landlord')]
 class Dashboard extends Component
 {
     public $totalTenants;
+
     public $activeSubscriptions;
+
     public $monthlyRevenue;
+
     public $newTenants;
+
     public $recentTenants = [];
+
     public $subscriptionStats = [];
+
     public $revenueChart = [];
+
     public $tenantGrowthChart = [];
 
     public function mount()
@@ -109,9 +115,9 @@ class Dashboard extends Component
 
         // --- Revenue Chart Data (Last 6 Months) ---
         $rawRevenueData = Subscription::select(
-                DB::raw("{$dateGroupingRaw} as period"),
-                DB::raw('SUM(amount) as revenue')
-            )
+            DB::raw("{$dateGroupingRaw} as period"),
+            DB::raw('SUM(amount) as revenue')
+        )
             ->where('created_at', '>=', now()->subMonths(6)->startOfMonth())
             ->where('status', 'active')
             ->groupBy('period')
@@ -128,9 +134,9 @@ class Dashboard extends Component
 
         // --- Tenant Growth Data (Last 6 Months) ---
         $rawTenantData = Tenant::select(
-                DB::raw("{$dateGroupingRaw} as period"),
-                DB::raw('COUNT(*) as count')
-            )
+            DB::raw("{$dateGroupingRaw} as period"),
+            DB::raw('COUNT(*) as count')
+        )
             ->where('created_at', '>=', now()->subMonths(6)->startOfMonth())
             ->groupBy('period')
             ->get()

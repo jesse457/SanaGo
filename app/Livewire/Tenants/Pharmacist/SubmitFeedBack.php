@@ -5,9 +5,7 @@ namespace App\Livewire\Tenants\Pharmacist;
 use App\Models\FeedBack;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
-use Laminas\Diactoros\Response\RedirectResponse;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
@@ -29,7 +27,6 @@ class SubmitFeedBack extends Component
     public string $message = '';
 
     public bool $submitted = false;
-
 
     /**
      * Handles form submission to create a new feedback record.
@@ -56,10 +53,10 @@ class SubmitFeedBack extends Component
 
             LivewireAlert::title(__('pharmacist.create_drugs_component.alert_success'))->success()->text(__('pharmacist.submit_feedback_page.feedback_submitted_successfully'))->show();
 
-             // 9. Redirect to the user management page.
+            // 9. Redirect to the user management page.
             return redirect()->route('pharmacist.feedbacks');
         } catch (\Exception $e) {
-            Log::error('The was a error with ' . $e->getMessage());
+            Log::error('The was a error with '.$e->getMessage());
         }
     }
 

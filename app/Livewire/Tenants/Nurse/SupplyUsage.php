@@ -48,7 +48,7 @@ class SupplyUsage extends Component
 
         // Check if there's enough stock
         if ($supply->current_stock < $quantityUsed) {
-            session()->flash('error', 'Not enough ' . $supply->name . ' in stock. Available: ' . $supply->current_stock);
+            session()->flash('error', 'Not enough '.$supply->name.' in stock. Available: '.$supply->current_stock);
 
             return;
         }
@@ -70,18 +70,17 @@ class SupplyUsage extends Component
         $this->quantitiesUsed[$supplyId] = 0;
         LivewireAlert::title('Success')
             ->success()
-            ->text($quantityUsed . ' ' . $supply->unit_of_measure . ' of ' . $supply->name . ' recorded. Stock: ' . $supply->current_stock)
+            ->text($quantityUsed.' '.$supply->unit_of_measure.' of '.$supply->name.' recorded. Stock: '.$supply->current_stock)
             ->show();
         $this->logActivity(
             'supply_used',
-            Auth::user()->name . ' recorded usage of ' . $quantityUsed . ' ' . $supply->unit_of_measure . ' of ' . $supply->name,
+            Auth::user()->name.' recorded usage of '.$quantityUsed.' '.$supply->unit_of_measure.' of '.$supply->name,
             [
                 'supply_id' => $supply->id,
                 'user_id' => Auth::id(),
                 'quantity_used' => $quantityUsed,
             ]
         );
-
 
     }
 

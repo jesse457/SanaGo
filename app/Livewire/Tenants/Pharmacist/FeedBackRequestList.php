@@ -13,16 +13,15 @@ class FeedBackRequestList extends Component
 {
     use WithPagination;
 
-
     // Modal state
     public bool $showModal = false;
+
     public ?FeedBack $modalFeedback = null; // instance of FeedBack or null
+
     public string $modalTitle = 'Feedback Details';
 
     // reply draft bound to textarea
     public string $replyDraft = '';
-
-
 
     /**
      * Load a feedback for modal view and initialize draft state.
@@ -37,6 +36,7 @@ class FeedBackRequestList extends Component
 
         if (! $this->modalFeedback) {
             session()->flash('error', 'Feedback not found.');
+
             return;
         }
 
@@ -50,23 +50,20 @@ class FeedBackRequestList extends Component
         $this->dispatch('modal-opened', ['id' => $id]);
     }
 
-    public function closeModal() : void
+    public function closeModal(): void
     {
         $this->showModal = false;
         $this->modalFeedback = null;
         $this->replyDraft = '';
     }
 
-
     /**
      * Renders the view with a paginated and filtered list of feedback requests.
-     *
-     * @return \Illuminate\View\View
      */
-    public function render() : \Illuminate\View\View
+    public function render(): \Illuminate\View\View
     {
         $query = FeedBack::query();
-$query->where('user_id',Auth::id());
+        $query->where('user_id', Auth::id());
 
         $feedbacks = $query->paginate(10);
 

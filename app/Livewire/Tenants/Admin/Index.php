@@ -7,40 +7,54 @@ use App\Models\Appointment;
 use App\Models\Bed;
 use App\Models\Department;
 use App\Models\Patient;
-use App\Models\User;
-use App\Models\Supply; // Added Supply Model
+use App\Models\Supply;
+use App\Models\User; // Added Supply Model
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Carbon\Carbon;
 
 #[Layout('components.layouts.admin')]
 class Index extends Component
 {
     // User Info
     public $greeting;
+
     public $userName;
+
     public $userAvatar;
 
     // Metric Cards
     public $dailyTotalRevenue = 0;
+
     public $totalPatientsAdmittedToday = 0;
+
     public $totalAppointmentsToday = 0;
+
     public $totalBeds = 0;
+
     public $totalBedsOccupied = 0;
+
     public $lowStockCount = 0; // New Metric
 
     // Chart Data
     public $patientFlowLabels = [];
+
     public $patientFlowData = [];
+
     public $encounterSummaryLabels = [];
+
     public $encounterSummaryData = [];
 
     // Bottom Section
     public $totalDoctors = 0;
+
     public $totalSystemUsers = 0;
+
     public $totalDepartments = 0;
+
     public $userRoleSummary = [];
+
     public $recentAdmissions = [];
 
     public function mount()
@@ -53,15 +67,15 @@ class Index extends Component
     {
         $hour = date('H');
         $this->greeting = match (true) {
-            $hour < 12 => "Good Morning",
-            $hour < 18 => "Good Afternoon",
-            default => "Good Evening",
+            $hour < 12 => 'Good Morning',
+            $hour < 18 => 'Good Afternoon',
+            default => 'Good Evening',
         };
 
         $user = Auth::user();
         $this->userName = $user->name ?? 'Administrator';
         $this->userAvatar = $user->profile_picture
-            ?? 'https://ui-avatars.com/api/?name=' . urlencode($this->userName) . '&color=7F9CF5&background=EBF4FF';
+            ?? 'https://ui-avatars.com/api/?name='.urlencode($this->userName).'&color=7F9CF5&background=EBF4FF';
     }
 
     public function loadDashboardData()
@@ -98,8 +112,8 @@ class Index extends Component
             $date = Carbon::now()->subMonths($i);
             $labels[] = $date->format('M');
             $data[] = Appointment::whereMonth('appointment_date', $date->month)
-                                 ->whereYear('appointment_date', $date->year)
-                                 ->count();
+                ->whereYear('appointment_date', $date->year)
+                ->count();
         }
         $this->patientFlowLabels = $labels;
         $this->patientFlowData = $data;
@@ -117,7 +131,7 @@ class Index extends Component
         }
 
         // 4. Role Summary
-        $roles = ['doctor', 'nurse', 'pharmacist', 'admin', 'receptionist','lab-technician'];
+        $roles = ['doctor', 'nurse', 'pharmacist', 'admin', 'receptionist', 'lab-technician'];
         foreach ($roles as $role) {
             $usersInRole = User::where('role', $role)->get();
             $count = $usersInRole->count();
@@ -127,7 +141,7 @@ class Index extends Component
                 $this->userRoleSummary[] = [
                     'role_name' => $role,
                     'total_users' => $count,
-                    'active_users' => $active
+                    'active_users' => $active,
                 ];
             }
         }

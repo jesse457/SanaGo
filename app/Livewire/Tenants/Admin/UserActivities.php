@@ -11,7 +11,8 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator; // Used for activities type-hint
+
+// Used for activities type-hint
 
 #[Layout('components.layouts.admin')]
 class UserActivities extends Component
@@ -86,8 +87,7 @@ class UserActivities extends Component
     /**
      * Hook that runs after a public property is updated from the front-end.
      *
-     * @param string $propertyName The name of the property that was updated.
-     * @return void
+     * @param  string  $propertyName  The name of the property that was updated.
      */
     public function updated(string $propertyName): void
     {
@@ -101,8 +101,6 @@ class UserActivities extends Component
 
     /**
      * Clears all filter properties and resets the pagination.
-     *
-     * @return void
      */
     public function clearFilters(): void
     {
@@ -117,8 +115,7 @@ class UserActivities extends Component
      * Fetches the details for a specific activity and dispatches an event
      * to show the details modal on the front-end.
      *
-     * @param int $activityId The ID of the UserActivity record to display.
-     * @return void
+     * @param  int  $activityId  The ID of the UserActivity record to display.
      */
     public function showDetails(int $activityId): void
     {
@@ -128,9 +125,10 @@ class UserActivities extends Component
             ->with(['user:id,name,email,profile_picture'])
             ->find($activityId);
 
-        if (!$activity) {
+        if (! $activity) {
             // Dispatch a notification error if the activity is not found
             $this->dispatch('notify', type: 'error', message: 'Activity not found.');
+
             return;
         }
 
@@ -165,8 +163,6 @@ class UserActivities extends Component
 
     /**
      * Renders the view and supplies data, including the paginated activities list.
-     *
-     * @return \Illuminate\Contracts\View\View
      */
     public function render(): \Illuminate\Contracts\View\View
     {
@@ -184,9 +180,9 @@ class UserActivities extends Component
 
                 // Determine the correct case-insensitive LIKE operator
                 $likeOperator = $isPgsql ? 'ilike' : 'like';
-                $pattern = '%' . $searchTerm . '%';
+                $pattern = '%'.$searchTerm.'%';
 
-                $query->where(function (Builder $q) use ($likeOperator, $pattern, $isPgsql, $searchTerm): void {
+                $query->where(function (Builder $q) use ($likeOperator, $pattern, $isPgsql): void {
                     // 1. Search in the activity description field
                     if ($isPgsql) {
                         // PostgreSQL: uses case-insensitive 'ilike' directly
@@ -201,11 +197,11 @@ class UserActivities extends Component
                         if ($isPgsql) {
                             // PostgreSQL: uses case-insensitive 'ilike' directly
                             $uq->where('name', $likeOperator, $pattern)
-                               ->orWhere('email', $likeOperator, $pattern);
+                                ->orWhere('email', $likeOperator, $pattern);
                         } else {
                             // MySQL/SQLite: uses LOWER() wrapper for case-insensitivity
                             $uq->whereRaw('LOWER(name) like ?', [\mb_strtolower($pattern)])
-                               ->orWhereRaw('LOWER(email) like ?', [\mb_strtolower($pattern)]);
+                                ->orWhereRaw('LOWER(email) like ?', [\mb_strtolower($pattern)]);
                         }
                     });
                 });

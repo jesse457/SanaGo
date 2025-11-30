@@ -3,11 +3,9 @@
 namespace App\Models;
 
 use App\Traits\TracksRevenue;
-use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
-
 
 class Dispensation extends Model
 {

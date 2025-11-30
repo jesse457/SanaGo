@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Tenants\Doctor;
 
-use App\Models\UserActivity;
 use App\Traits\UserActivitiesTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -13,16 +12,22 @@ use Livewire\Component;
 #[Layout('components.layouts.doctor')]
 class Profile extends Component
 {
-     use UserActivitiesTrait;
+    use UserActivitiesTrait;
+
     // Editable profile fields
     public string $name;
+
     public string $email;
+
     public string $phone_number;
+
     public string $address;
 
     // Password fields
     public string $current_password;
+
     public string $new_password;
+
     public string $new_password_confirmation;
 
     public function mount()
@@ -38,7 +43,7 @@ class Profile extends Component
     {
         $this->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . Auth::id(),
+            'email' => 'required|email|unique:users,email,'.Auth::id(),
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
         ]);
@@ -69,8 +74,9 @@ class Profile extends Component
 
         $user = Auth::user();
 
-        if (!Hash::check($this->current_password, $user->password)) {
+        if (! Hash::check($this->current_password, $user->password)) {
             $this->addError('current_password', 'Your current password is incorrect.');
+
             return;
         }
 

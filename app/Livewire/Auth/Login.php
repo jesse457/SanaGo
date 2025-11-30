@@ -35,7 +35,6 @@ class Login extends Component
         'password' => ['required', 'string', 'min:8'],
     ];
 
-
     /* --------------------
        Lifecycle
        -------------------- */
@@ -84,7 +83,7 @@ class Login extends Component
             }
 
             // 7. Regenerate the session for security.
-             Session::regenerate();
+            Session::regenerate();
             Log::info('Login successful', ['email' => $this->email, 'role' => $user->role]);
 
             // 8. Redirect the user to their appropriate dashboard.
@@ -92,7 +91,7 @@ class Login extends Component
         } catch (ValidationException $e) {
             // Re-throw so Livewire can show the message on the form.
             throw $e;
-             Log::error('Login exception', [
+            Log::error('Login exception', [
                 'email' => $this->email,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),

@@ -26,7 +26,6 @@ class Dashboard extends Component
 
     public $dia;
 
-
     public function recordVitalsForPatient(int $patientId)
     {
         // Flash the patient ID to the session. It will only be available for the next request.
@@ -38,7 +37,6 @@ class Dashboard extends Component
 
     public function render()
     {
-
 
         /* KPIs */
         // These KPIs are already correctly counting 'Admitted' from the Admission model.

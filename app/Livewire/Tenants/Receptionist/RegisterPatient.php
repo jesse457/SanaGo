@@ -44,16 +44,12 @@ class RegisterPatient extends Component
     /** @var string Patient's email address */
     public string $email = '';
 
-
     // Data for dropdowns/search results (not used in this component)
     /** @var array List of doctors (not used in this component) */
     public array $doctors = [];
 
     /** @var array Found patients (not used in this component) */
     public array $foundPatients = [];
-
-   
-
 
     /**
      * Defines the validation rules for the component.
@@ -102,9 +98,9 @@ class RegisterPatient extends Component
 
         try {
             // Generate a unique patient UID
-            $patientUid = 'PT-' . Str::upper(Str::random(6));
+            $patientUid = 'PT-'.Str::upper(Str::random(6));
             while (Patient::where('patient_uid', $patientUid)->exists()) {
-                $patientUid = 'PT-' . Str::upper(Str::random(6));
+                $patientUid = 'PT-'.Str::upper(Str::random(6));
             }
 
             // Create the patient record in the database
@@ -135,14 +131,14 @@ class RegisterPatient extends Component
             // Show a success alert to the user
             LivewireAlert::title('Success')
                 ->success()
-                ->text('Patient ' . $this->first_name . ' ' . $this->last_name . ' has been successfully Registered')
+                ->text('Patient '.$this->first_name.' '.$this->last_name.' has been successfully Registered')
                 ->show();
 
             // Reset the form fields
             $this->resetForm();
         } catch (\Exception $e) {
             // Log any errors that occur during registration
-            Log::error('Patient registration failed: ' . $e->getMessage());
+            Log::error('Patient registration failed: '.$e->getMessage());
 
             // Show an error alert to the user
             LivewireAlert::title('Error')

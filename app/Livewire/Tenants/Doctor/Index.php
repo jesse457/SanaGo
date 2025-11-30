@@ -11,14 +11,11 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 // Use the doctor layout for this Livewire component
 #[Layout('components.layouts.doctor')]
 class Index extends Component
 {
-
-
     // Properties to hold data for the doctor dashboard
     public Collection $upcomingAppointments;
 

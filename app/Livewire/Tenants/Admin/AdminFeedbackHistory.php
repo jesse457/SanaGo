@@ -4,7 +4,6 @@ namespace App\Livewire\Tenants\Admin;
 
 use App\Models\FeedBack;
 use Exception;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -16,9 +15,6 @@ class AdminFeedbackHistory extends Component
 {
     // Livewire trait to handle pagination functionality
     use WithPagination;
-
-    
-
 
     // --- Modal State Properties ---
 
@@ -53,15 +49,12 @@ class AdminFeedbackHistory extends Component
         'replyDraft' => 'required|string|max:1000',
     ];
 
-
-
     // --- Modal Control Methods ---
 
     /**
      * Loads a specific feedback record, initializes the modal state, and opens the modal.
      *
-     * @param int $id The ID of the FeedBack record to display.
-     * @return void
+     * @param  int  $id  The ID of the FeedBack record to display.
      */
     public function showFeedback(int $id): void
     {
@@ -71,6 +64,7 @@ class AdminFeedbackHistory extends Component
         // Handle case where feedback is not found
         if (! $feedback) {
             session()->flash('error', 'Feedback not found.');
+
             return;
         }
 
@@ -90,8 +84,6 @@ class AdminFeedbackHistory extends Component
 
     /**
      * Closes the feedback details modal and resets its state variables.
-     *
-     * @return void
      */
     public function closeModal(): void
     {
@@ -105,8 +97,6 @@ class AdminFeedbackHistory extends Component
 
     /**
      * Saves the administrator's reply draft to the selected feedback record.
-     *
-     * @return void
      */
     public function publishReply(): void
     {
@@ -115,6 +105,7 @@ class AdminFeedbackHistory extends Component
         if (is_null($this->modalFeedback)) {
             session()->flash('error', 'Cannot publish reply: No feedback selected.');
             $this->closeModal();
+
             return;
         }
 
@@ -145,8 +136,6 @@ class AdminFeedbackHistory extends Component
 
     /**
      * Renders the view and supplies the paginated list of feedback records.
-     *
-     * @return \Illuminate\Contracts\View\View
      */
     public function render(): View
     {
@@ -155,7 +144,7 @@ class AdminFeedbackHistory extends Component
             // Order by creation date descending (most recent first)
             ->orderBy('created_at', 'desc');
 
-        $query->where('user_id',Auth::id());
+        $query->where('user_id', Auth::id());
 
         $feedbacks = $query->paginate(10);
 

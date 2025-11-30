@@ -70,29 +70,30 @@ class PrescriptionModal extends Component
         $patient = $record->patient;
         DB::beginTransaction();
         try {
-        $pres = $record->prescription()->create([
-            'patient_id' => $record->patient_id,
-            'doctor_id' => Auth::id(),
-            'consultation_id' => $record->id,
-            'prescription_date' => now(),
-            'general_notes' => $this->generalNotes,
-            'status' => 'Pending',
-        ]);
-
-        foreach ($this->items as $i) {
-            $pres->items()->create([
-                'medication_id' => $i['medication_id'],
-                'dosage' => $i['dosage'],
-                'frequency' => $i['frequency'],
-                'duration' => $i['duration'],
-                'quantity_prescribed' => $i['qty'],
-                'notes' => $i['notes'],
+            $pres = $record->prescription()->create([
+                'patient_id' => $record->patient_id,
+                'doctor_id' => Auth::id(),
+                'consultation_id' => $record->id,
+                'prescription_date' => now(),
+                'general_notes' => $this->generalNotes,
+                'status' => 'Pending',
             ]);
-        }
-        DB::commit();
+
+            foreach ($this->items as $i) {
+                $pres->items()->create([
+                    'medication_id' => $i['medication_id'],
+                    'dosage' => $i['dosage'],
+                    'frequency' => $i['frequency'],
+                    'duration' => $i['duration'],
+                    'quantity_prescribed' => $i['qty'],
+                    'notes' => $i['notes'],
+                ]);
+            }
+            DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
             LivewireAlert::title('Error')->text('Failed to save prescription: '.$e->getMessage())->error()->show();
+
             return;
         }
         $doctor = Auth::user()->name;

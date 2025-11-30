@@ -8,14 +8,14 @@ use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
-use phpDocumentor\Reflection\Types\This;
 
 #[Layout('components.layouts.lab-technician')]
 class TestRequest extends Component
 {
-    use WithPagination, UserActivitiesTrait;
+    use UserActivitiesTrait, WithPagination;
 
     public $search = '';
+
     public $statusFilter = '';
 
     // Reset paging when search changes
@@ -36,11 +36,13 @@ class TestRequest extends Component
 
         if (! $labRequest) {
             LivewireAlert::title('Error')->error()->text('Lab request not found.')->show();
+
             return;
         }
 
         if ($labRequest->status === 'In Progress') {
             LivewireAlert::title('Info')->info()->text('Test is already in progress.')->show();
+
             return;
         }
 
@@ -58,35 +60,35 @@ class TestRequest extends Component
         $this->resetPage();
     }
 
-  public function render()
-{
-    $requests = LabRequest::query()->with(['patient', 'testDefinition'])
-        ->when($this->search, function ($query) {
-            $terms = explode(' ', $this->search);
+    public function render()
+    {
+        $requests = LabRequest::query()->with(['patient', 'testDefinition'])
+            ->when($this->search, function ($query) {
+                $terms = explode(' ', $this->search);
 
-            $query->whereHas('patient', function ($patientQuery) use ($terms) {
-                if (count($terms) === 2) {
-                    // Exact first + last name search (most efficient)
-                    $patientQuery->whereBlind('first_name', 'first_name_index', $terms[0])
-                        ->whereBlind('last_name', 'last_name_index', $terms[1]);
-                } else {
-                    // Single term or multiple fragments: match against indexed fields
-                    foreach ($terms as $term) {
-                        $patientQuery->whereBlind('first_name', 'first_name_index', $term)
-                            ->orWhereBlind('last_name', 'last_name_index', $term)
-                            ->orWhere('patient_uid', 'ILIKE', "%{$term}%");
+                $query->whereHas('patient', function ($patientQuery) use ($terms) {
+                    if (count($terms) === 2) {
+                        // Exact first + last name search (most efficient)
+                        $patientQuery->whereBlind('first_name', 'first_name_index', $terms[0])
+                            ->whereBlind('last_name', 'last_name_index', $terms[1]);
+                    } else {
+                        // Single term or multiple fragments: match against indexed fields
+                        foreach ($terms as $term) {
+                            $patientQuery->whereBlind('first_name', 'first_name_index', $term)
+                                ->orWhereBlind('last_name', 'last_name_index', $term)
+                                ->orWhere('patient_uid', 'ILIKE', "%{$term}%");
+                        }
                     }
-                }
-            });
-        })
-        ->when($this->statusFilter, function ($query) {
-            $query->where('status', $this->statusFilter);
-        })
-        ->orderBy('request_date', 'desc')
-        ->paginate(10);
+                });
+            })
+            ->when($this->statusFilter, function ($query) {
+                $query->where('status', $this->statusFilter);
+            })
+            ->orderBy('request_date', 'desc')
+            ->paginate(10);
 
-    return view('livewire.tenants.lab-technician.test-request', [
-        'requests' => $requests,
-    ]);
-}
+        return view('livewire.tenants.lab-technician.test-request', [
+            'requests' => $requests,
+        ]);
+    }
 }

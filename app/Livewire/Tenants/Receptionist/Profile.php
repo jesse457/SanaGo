@@ -5,10 +5,10 @@ namespace App\Livewire\Tenants\Receptionist;
 use App\Traits\UserActivitiesTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Illuminate\Validation\Rule;
 
 #[Layout('components.layouts.receptionist')]
 class Profile extends Component
@@ -17,13 +17,18 @@ class Profile extends Component
 
     // Editable profile fields
     public $name;
+
     public $email;
+
     public $phone_number;
+
     public $address;
 
     // Password fields
     public $current_password;
+
     public $new_password;
+
     public $new_password_confirmation;
 
     // Read-only shifts
@@ -54,7 +59,7 @@ class Profile extends Component
     {
         $this->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required','email', Rule::unique('users','email')->ignore(Auth::id())],
+            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore(Auth::id())],
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
         ]);
@@ -85,8 +90,9 @@ class Profile extends Component
 
         $user = Auth::user();
 
-        if (!Hash::check($this->current_password, $user->password)) {
+        if (! Hash::check($this->current_password, $user->password)) {
             $this->addError('current_password', 'Your current password is incorrect.');
+
             return;
         }
 

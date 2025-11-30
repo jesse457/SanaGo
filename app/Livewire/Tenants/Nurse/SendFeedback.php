@@ -4,15 +4,15 @@ namespace App\Livewire\Tenants\Nurse;
 
 use App\Models\FeedBack;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Livewire\Attributes\Layout;
 
 #[Layout('components.layouts.nurse')]
 class SendFeedback extends Component
 {
-      use WithFileUploads;
+    use WithFileUploads;
 
     // These properties are linked to the form inputs
     #[Rule('required|min:3|max:150')]
@@ -29,8 +29,6 @@ class SendFeedback extends Component
 
     #[Rule('required|min:10')]
     public string $message = '';
-
-
 
     public bool $submitted = false;
 

@@ -41,6 +41,7 @@ class Patient extends Component
     {
         $doctorId = Auth::id(); // Get the current doctor's ID
         $terms = explode(' ', $this->search); // split by spaces
+
         return PatientModel::query()
             // Only patients with appointments or admissions for this doctor
             ->where(function ($q) use ($doctorId) {
@@ -54,7 +55,7 @@ class Patient extends Component
             // Apply search filter if search input is present
             ->when(
                 $this->search,
-                fn($q) => $q
+                fn ($q) => $q
                     ->where(function ($q) use ($terms) {
                         if (count($terms) == 2) {
                             $q->whereBlind('first_name', 'first_name_index', $terms[0])

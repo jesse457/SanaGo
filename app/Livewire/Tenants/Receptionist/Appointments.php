@@ -2,26 +2,24 @@
 
 namespace App\Livewire\Tenants\Receptionist;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Url;
 use App\Models\Appointment;
 use App\Models\User;
 use App\Traits\UserActivitiesTrait;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
-use Jantinnerezo\LivewireAlert\LivewireAlert as LivewireAlertLivewireAlert;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Layout('components.layouts.receptionist')]
 class Appointments extends Component
 {
-    use WithPagination, UserActivitiesTrait;
+    use UserActivitiesTrait, WithPagination;
 
     // Filters (synced to URL)
     #[Url(as: 'date')]
@@ -41,8 +39,11 @@ class Appointments extends Component
 
     // Reschedule modal state & fields
     public bool $showRescheduleModal = false;
+
     public ?int $rescheduleAppointmentId = null;
+
     public ?string $rescheduleDate = null;
+
     public ?string $rescheduleStart = null;
 
     /**
@@ -79,22 +80,22 @@ class Appointments extends Component
             ->with(['patient', 'doctor.department']);
 
         // Apply date filter
-        if (!empty($this->dateFilter)) {
+        if (! empty($this->dateFilter)) {
             $query->whereDate('appointment_date', $this->dateFilter);
         }
 
         // Apply doctor filter
-        if (!empty($this->doctorFilter)) {
+        if (! empty($this->doctorFilter)) {
             $query->where('doctor_id', $this->doctorFilter);
         }
 
         // Apply status filter
-        if (!empty($this->statusFilter)) {
+        if (! empty($this->statusFilter)) {
             $query->where('status', $this->statusFilter);
         }
 
         // Apply patient search filter
-        if (!empty($this->patientSearch)) {
+        if (! empty($this->patientSearch)) {
             // Split on whitespace, remove empty fragments
             $terms = array_filter(array_map('trim', preg_split('/\s+/', $this->patientSearch)));
 
@@ -131,7 +132,6 @@ class Appointments extends Component
         ]);
     }
 
-
     /**
      * Reset all filters and pagination.
      *
@@ -146,7 +146,7 @@ class Appointments extends Component
     /**
      * Reset pagination when any filter changes.
      *
-     * @param string $propertyName
+     * @param  string  $propertyName
      * @return void
      */
     public function updated($propertyName)
@@ -160,15 +160,16 @@ class Appointments extends Component
      * Open the reschedule modal and populate fields with appointment data.
      * The `rescheduleEnd` time field is no longer populated/used.
      *
-     * @param int $appointmentId
+     * @param  int  $appointmentId
      * @return void
      */
     public function openRescheduleModal($appointmentId)
     {
         $appointment = Appointment::find($appointmentId);
 
-        if (!$appointment) {
+        if (! $appointment) {
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Appointment not found.']);
+
             return;
         }
 
@@ -198,6 +199,7 @@ class Appointments extends Component
      * Status is set to 'Waiting' as it is the appropriate initial state in the new model.
      *
      * @return void
+     *
      * @throws \Illuminate\Validation\ValidationException
      */
     public function rescheduleAppointmentConfirm()
@@ -205,15 +207,14 @@ class Appointments extends Component
         try {
             $this->validate();
 
-            if (!$this->rescheduleAppointmentId) {
+            if (! $this->rescheduleAppointmentId) {
                 throw ValidationException::withMessages(['rescheduleAppointmentId' => 'No appointment selected.']);
             }
 
             $appointment = Appointment::with('patient', 'doctor')->find($this->rescheduleAppointmentId);
-            if (!$appointment) {
+            if (! $appointment) {
                 throw ValidationException::withMessages(['rescheduleAppointmentId' => 'Appointment not found.']);
             }
-
 
             $latestAppointment = Appointment::query()
                 ->where('doctor_id', $appointment->doctor_id)
@@ -225,10 +226,9 @@ class Appointments extends Component
             if ($latestAppointment && $latestAppointment->id === $appointment->id) {
                 // If rescheduling to the same date, keep the same position
                 $nextPosition = $appointment->queue_position;
-            }
-            else{
-$lastPosition = $latestAppointment ? $latestAppointment->queue_position : 0;
-            $nextPosition = $lastPosition + 1;
+            } else {
+                $lastPosition = $latestAppointment ? $latestAppointment->queue_position : 0;
+                $nextPosition = $lastPosition + 1;
             }
 
             // Save new values
@@ -253,16 +253,13 @@ $lastPosition = $latestAppointment ? $latestAppointment->queue_position : 0;
         } catch (ValidationException $ve) {
             throw $ve;
         } catch (\Throwable $e) {
-            Log::error('Reschedule failed: ' . $e->getMessage(), ['id' => $this->rescheduleAppointmentId]);
+            Log::error('Reschedule failed: '.$e->getMessage(), ['id' => $this->rescheduleAppointmentId]);
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Failed to reschedule appointment. Please try again.']);
         }
     }
 
     /**
      * Confirms the intent to cancel an appointment via LivewireAlert confirmation.
-     *
-     * @param int $appointmentId
-     * @return void
      */
     public function confirmCancelAppointment(int $appointmentId): void
     {
@@ -276,14 +273,15 @@ $lastPosition = $latestAppointment ? $latestAppointment->queue_position : 0;
     /**
      * Cancel an appointment using the model helper.
      *
-     * @param array $appointmentId
+     * @param  array  $appointmentId
      * @return void
      */
     public function cancelAppointment($appointmentId)
     {
         $appointment = Appointment::findOrFail($appointmentId['id']);
-        if (!$appointment) {
+        if (! $appointment) {
             LivewireAlert::title('Error')->error()->text('Appointment not found.')->show();
+
             return;
         }
 
@@ -291,7 +289,7 @@ $lastPosition = $latestAppointment ? $latestAppointment->queue_position : 0;
 
         $this->logActivity(
             'appointment_cancellation',
-            "Cancellation for appointment ",
+            'Cancellation for appointment ',
             [
                 'appointment_id' => $appointmentId['id'],
             ]
@@ -302,14 +300,15 @@ $lastPosition = $latestAppointment ? $latestAppointment->queue_position : 0;
     /**
      * Confirms an appointment, setting its status to 'Waiting' (Checked-in).
      *
-     * @param int $appointmentId
+     * @param  int  $appointmentId
      * @return void
      */
     public function confirmAppointment($appointmentId)
     {
         $appointment = Appointment::find($appointmentId);
-        if (!$appointment) {
+        if (! $appointment) {
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Appointment not found.']);
+
             return;
         }
 
@@ -328,14 +327,15 @@ $lastPosition = $latestAppointment ? $latestAppointment->queue_position : 0;
     /**
      * Reinstate a canceled appointment to 'Waiting' status.
      *
-     * @param int $appointmentId
+     * @param  int  $appointmentId
      * @return void
      */
     public function reinstateAppointment($appointmentId)
     {
         $appointment = Appointment::find($appointmentId);
-        if (!$appointment) {
+        if (! $appointment) {
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Appointment not found.']);
+
             return;
         }
 
@@ -355,14 +355,14 @@ $lastPosition = $latestAppointment ? $latestAppointment->queue_position : 0;
      * Starts the patient's consultation using the model helper.
      * Sets status to 'In Consultation' and logs actual_start_time.
      *
-     * @param int $appointmentId
      * @return void
      */
     public function startConsultation(int $appointmentId)
     {
         $appointment = Appointment::find($appointmentId);
-        if (!$appointment) {
+        if (! $appointment) {
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Appointment not found.']);
+
             return;
         }
 
@@ -382,14 +382,14 @@ $lastPosition = $latestAppointment ? $latestAppointment->queue_position : 0;
      * Ends the patient's consultation using the model helper.
      * Sets status to 'Completed' and logs actual_end_time.
      *
-     * @param int $appointmentId
      * @return void
      */
     public function endConsultation(int $appointmentId)
     {
         $appointment = Appointment::find($appointmentId);
-        if (!$appointment) {
+        if (! $appointment) {
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Appointment not found.']);
+
             return;
         }
 

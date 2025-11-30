@@ -31,7 +31,6 @@ class Patient extends Model implements CipherSweetEncrypted
         'dob' => 'date',
     ];
 
-
     /**
      * Accessor to combine First and Last name.
      * Allows $patient->name to work in the view.
@@ -40,14 +39,13 @@ class Patient extends Model implements CipherSweetEncrypted
     {
         return "{$this->first_name} {$this->last_name}";
     }
+
     /**
      * Configure CipherSweet encryption for this model.
      *
      * Fields added with ->addField(...) should correspond to text columns
      * in your DB to store ciphertext. For exact-match searchable fields,
      * add a BlindIndex.
-     *
-     * @param EncryptedRow $encryptedRow
      */
     public static function configureCipherSweet(EncryptedRow $encryptedRow): void
     {

@@ -4,9 +4,9 @@ namespace App\Livewire\Tenants\LabTechnician;
 
 use App\Models\FeedBack;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Layout;
 
 #[Layout('components.layouts.lab-technician')]
 class Feedbacks extends Component
@@ -15,17 +15,17 @@ class Feedbacks extends Component
 
     // Modal state
     public $showModal = false;
+
     public $modalFeedback = null; // instance of FeedBack or null
+
     public $modalTitle = 'Feedback Details';
 
     // reply draft bound to textarea
     public $replyDraft = '';
 
-
     protected $rules = [
         'replyDraft' => 'nullable|string|max:5000',
     ];
-
 
     /**
      * Load a feedback for modal view and initialize draft state.
@@ -37,6 +37,7 @@ class Feedbacks extends Component
 
         if (! $this->modalFeedback) {
             session()->flash('error', 'Feedback not found.');
+
             return;
         }
 
@@ -59,7 +60,6 @@ class Feedbacks extends Component
 
     public function render()
     {
-
 
         // build query for top-level feedbacks only if you want (here we show all for the user)
         $query = FeedBack::query()

@@ -16,6 +16,7 @@ class ManageDrugsInventory extends Component
     use WithPagination;
 
     public $search = '';
+
     public $statusFilter = '';
 
     // modal toggle
@@ -26,10 +27,15 @@ class ManageDrugsInventory extends Component
 
     // editable fields
     public $drug_name;
+
     public $dosage_units;
+
     public $price;
+
     public $stock_quantity;
+
     public $min_stock_level;
+
     public $description;
 
     protected $rules = [
@@ -54,7 +60,6 @@ class ManageDrugsInventory extends Component
     /**
      * Opens the edit modal and populates fields for the given drug.
      *
-     * @param int $drugId
      * @return void
      */
     public function viewEditDrug(int $drugId)

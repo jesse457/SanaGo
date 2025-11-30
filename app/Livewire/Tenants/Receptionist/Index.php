@@ -7,24 +7,27 @@ use App\Models\Invoice;
 use App\Models\Patient;
 use App\Models\User;
 use Carbon\Carbon;
-use Livewire\Component;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.receptionist')]
 class Index extends Component
 {
     // Dashboard statistics
     public $totalPatientsRegistered;
+
     public $appointmentsToday;
+
     public $pendingPaymentsList;
+
     public $appointmentsTodayConfirmed;
+
     public $appointmentsTodayPending;
+
     // Dropdown data for forms
     public $patients;
+
     public $doctors;
-
-
 
     /**
      * Initialize dashboard and dropdown data.
@@ -68,7 +71,6 @@ class Index extends Component
         $this->patients = Patient::select('id', 'first_name', 'last_name')->orderBy('first_name')->get();
         $this->doctors = User::select('id', 'name')->where('role', 'doctor')->orderBy('name')->get();
     }
-
 
     /**
      * Render the Livewire component view.

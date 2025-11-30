@@ -4,7 +4,6 @@ namespace App\Livewire\Tenants\LabTechnician;
 
 use App\Models\LabTestDefinition;
 use App\Traits\UserActivitiesTrait;
-use Illuminate\Validation\Rule;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -13,19 +12,22 @@ use Livewire\WithPagination;
 #[Layout('components.layouts.lab-technician')]
 class ManageLabTestDefinitions extends Component
 {
-    use WithPagination, UserActivitiesTrait;
+    use UserActivitiesTrait, WithPagination;
 
     public $search = '';
 
-
-
     public $test_name;
+
     public $description;
+
     public $price;
+
     public $units;
+
     public $testId;
 
     public bool $showTestEditModal = false;
+
     public bool $showTestDeleteModal = false;
 
     public $deletingTestId = null;
@@ -63,6 +65,7 @@ class ManageLabTestDefinitions extends Component
         $this->units = $test->units;
         if (! $test) {
             LivewireAlert::error('Not found', 'Lab test definition not found.');
+
             return;
         }
 
@@ -79,7 +82,7 @@ class ManageLabTestDefinitions extends Component
             'test_name' => $this->test_name,
             'description' => $this->description,
             'price' => $this->price,
-            'units' => $this->units
+            'units' => $this->units,
         ]);
         $this->logActivity(
             'Lab Test Updated',
@@ -102,6 +105,7 @@ class ManageLabTestDefinitions extends Component
     {
         if (! $this->deletingTestId) {
             LivewireAlert::error('Error', 'No test selected for deletion.');
+
             return;
         }
 
@@ -109,6 +113,7 @@ class ManageLabTestDefinitions extends Component
         if (! $model) {
             LivewireAlert::error('Not found', 'Lab test definition not found.');
             $this->showTestDeleteModal = false;
+
             return;
         }
 
@@ -123,14 +128,14 @@ class ManageLabTestDefinitions extends Component
     {
         $query = LabTestDefinition::query();
 
-         if ($this->search) {
-           $terms = explode(' ',$this->search);
+        if ($this->search) {
+            $terms = explode(' ', $this->search);
 
             $query->where(function ($q) use ($terms) {
-               
+
                 // Search by test name (still indexed with blind search)
                 foreach ($terms as $term) {
-                     $q->orWhereBlind('test_name', 'test_name_index', $term);
+                    $q->orWhereBlind('test_name', 'test_name_index', $term);
                 }
             });
         }

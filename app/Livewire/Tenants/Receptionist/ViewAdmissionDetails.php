@@ -19,7 +19,7 @@ use Livewire\WithPagination;
 #[Layout('components.layouts.receptionist')]
 class ViewAdmissionDetails extends Component
 {
-    use WithPagination,UserActivitiesTrait;
+    use UserActivitiesTrait,WithPagination;
 
     public Patient $patient;
 
@@ -36,8 +36,6 @@ class ViewAdmissionDetails extends Component
     public ?Admission $selectedAdmission = null;
 
     public string $currentStatus = 'N/A';
-
-
 
     /**
      * Mount the component, fetching patient and all of their admissions.
@@ -105,11 +103,13 @@ class ViewAdmissionDetails extends Component
         // Basic validation for allowed status changes
         if ($newStatus !== 'Discharged') {
             LivewireAlert::title('Error')->error()->text('Invalid status update requested.')->show();
+
             return;
         }
 
         if ($admissionToUpdate->status === $newStatus) {
             LivewireAlert::title('Error')->error()->text("Patient is already {$newStatus}.")->show();
+
             return;
         }
 
@@ -139,7 +139,7 @@ class ViewAdmissionDetails extends Component
             LivewireAlert::title('Success')->success()->text("Patient '{$this->patient->first_name} {$this->patient->last_name}' successfully {$newStatus}.")->show();
         } catch (\Exception $e) {
             LivewireAlert::title('Success')->success()->text('Failed to update admission status if this error persist contact us')->show();
-            Log::error('Failed to update admission status: ' . $e->getMessage());
+            Log::error('Failed to update admission status: '.$e->getMessage());
         }
     }
 

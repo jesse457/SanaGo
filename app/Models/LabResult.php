@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
-
 class LabResult extends Model
 {
     use BelongsToTenant,HasFactory,TracksRevenue;
@@ -22,7 +21,7 @@ class LabResult extends Model
         'results_text',
         'analysis_comments',
         'status',
-        'price'
+        'price',
     ];
 
     protected $casts = [
@@ -38,10 +37,12 @@ class LabResult extends Model
     {
         return $this->belongsTo(User::class, 'lab_technician_id');
     }
+
     public function doctor()
     {
         return $this->belongsTo(User::class, 'doctor_id');
     }
+
     public function consultation()
     {
         return $this->belongsTo(MedicalRecord::class, 'consultation_id');

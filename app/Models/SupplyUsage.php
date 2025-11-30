@@ -12,7 +12,7 @@ class SupplyUsage extends Model
 
     protected $fillable = [
         'supply_id',
-         'tenant_id',
+        'tenant_id',
         'user_id',
         'patient_id',
         'quantity_used',
