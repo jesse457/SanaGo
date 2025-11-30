@@ -33,7 +33,7 @@ jobs:
           push: true
           tags: ${{ env.IMAGE_NAME }}:latest
           # Pass secrets to Dockerfile for Flux UI installation
-          
+
       - name: Deploy to Production Server
         uses: appleboy/ssh-action@v1.0.3
         with:

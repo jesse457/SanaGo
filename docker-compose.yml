@@ -5,24 +5,24 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ghcr.io/${GITHUB_REPOSITORY:-my-app}:latest
+    # image: ghcr.io/${GITHUB_REPOSITORY:-my-app}:latest
     restart: unless-stopped
     ports:
       - "8000:8000"
+    extra_hosts: # Added for Linux compatibility
+      - "host.docker.internal:host-gateway"
     environment:
       - APP_ENV=local
       - APP_KEY=${APP_KEY}
       - APP_DEBUG=true
-      # Database Config
       - DB_CONNECTION=pgsql
-      - DB_HOST=postgres
+      - DB_HOST=host.docker.internal
       - DB_PORT=5432
-      - DB_DATABASE=laravel
-      - DB_USERNAME=sail
-      - DB_PASSWORD=password
-      # Redis Config
+      - DB_DATABASE=hms
+      - DB_USERNAME=jesse
+      - DB_PASSWORD=secret
       - REDIS_HOST=redis
-      # MinIO / AWS S3 Config
+      - REDIS_PORT=6378
       - FILESYSTEM_DISK=s3
       - AWS_ACCESS_KEY_ID=minioadmin
       - AWS_SECRET_ACCESS_KEY=minioadmin
@@ -32,7 +32,6 @@ services:
       - AWS_ENDPOINT=http://minio:9000
     depends_on:
       - redis
-      - postgres
       - minio
     networks:
       - app_network
@@ -43,8 +42,8 @@ services:
     container_name: minio
     restart: unless-stopped
     ports:
-      - "9000:9000" # API Port (Internal & External access)
-      - "9001:9001" # Console Port (Browser UI)
+      - "9000:9000"
+      - "9001:9001"
     environment:
       - MINIO_ROOT_USER=minioadmin
       - MINIO_ROOT_PASSWORD=minioadmin
@@ -59,8 +58,6 @@ services:
       timeout: 20s
       retries: 3
 
-  # --- Helper to Create Bucket Automatically ---
-  # This runs once to create the 'local-bucket' inside MinIO
   createbuckets:
     image: minio/mc
     depends_on:
@@ -69,26 +66,10 @@ services:
     entrypoint: >
       /bin/sh -c "
       /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
-      /usr/bin/mc mb myminio/local-bucket;
+      /usr/bin/mc mb myminio/local-bucket || true;  # Added || true to prevent crash if exists
       /usr/bin/mc policy set download myminio/local-bucket;
       exit 0;
       "
-    networks:
-      - app_network
-
-  # --- Database (PostgreSQL) ---
-  postgres:
-    image: postgres:15-alpine
-    container_name: postgres
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_DB: laravel
-      POSTGRES_USER: sail
-      POSTGRES_PASSWORD: password
-    volumes:
-      - pgsql_data:/var/lib/postgresql/data
     networks:
       - app_network
 
@@ -98,28 +79,31 @@ services:
     container_name: redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "6378:6379"
     volumes:
       - redis_data:/data
     networks:
       - app_network
-    # 1. Grafana (The Dashboard UI)
+
+  # --- Monitoring Stack ---
+
   grafana:
     image: grafana/grafana:latest
     container_name: monitoring-grafana
     restart: always
     ports:
-      - "3000:3000" # Access at http://your-ip:3000
+      - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-secret}
       - GF_USERS_ALLOW_SIGN_UP=false
     networks:
-      - prod_network
+      - app_network # Changed to app_network
 
-  # 2. Prometheus (Metrics Database)
   prometheus:
     image: prom/prometheus:latest
     container_name: monitoring-prometheus
@@ -131,20 +115,20 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.retention.time=15d'
     networks:
-      - prod_network
+      - app_network # Changed to app_network
 
-  # 3. Loki (Log Aggregation)
   loki:
     image: grafana/loki:latest
     container_name: monitoring-loki
     restart: always
     ports:
       - "3100:3100"
+    volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml
     command: -config.file=/etc/loki/local-config.yaml
     networks:
-      - prod_network
+      - app_network # Changed to app_network
 
-  # 4. Promtail (Log Shipper - sends Docker logs to Loki)
   promtail:
     image: grafana/promtail:latest
     container_name: monitoring-promtail
@@ -152,13 +136,13 @@ services:
     volumes:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./monitoring/promtail-config.yaml:/etc/promtail/config.yml
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml
     command: -config.file=/etc/promtail/config.yml
     networks:
-      - prod_network
+      - app_network # Changed to app_network
 
-  # 5. cAdvisor (Docker Container Stats - CPU/RAM per container)
   cadvisor:
+    # NOTE: Use gcr.io/cadvisor/cadvisor:v0.47.0 or zcube/cadvisor if on Apple Silicon
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: monitoring-cadvisor
     restart: always
@@ -172,9 +156,8 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
     networks:
-      - prod_network
+      - app_network # Changed to app_network
 
-  # 6. Node Exporter (Host Server Stats - Disk Space, Total CPU)
   node-exporter:
     image: prom/node-exporter:latest
     container_name: monitoring-node-exporter
@@ -188,11 +171,11 @@ services:
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
     networks:
-      - prod_network
+      - app_network # Changed to app_network
 
+# --- Volumes & Networks ---
 volumes:
   minio_data:
-  pgsql_data:
   redis_data:
   grafana_data:
   prometheus_data:
