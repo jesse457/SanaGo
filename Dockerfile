@@ -8,31 +8,20 @@ RUN install-php-extensions \
     bcmath \
     zip \
     intl \
- && apt-get update \
- && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     supervisor \
     bash \
     git \
     unzip \
- && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
 # 2. Set working directory
 WORKDIR /app
 
-# 3. Copy Composer files first (for caching)
-COPY composer.json composer.lock ./
 
-# 4. Install Composer Dependencies
-# Note: We need secret mounts if using Flux UI, otherwise just run composer install
-ENV COMPOSER_ALLOW_SUPERUSER=1
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
-# 5. Copy the rest of the application
-COPY . .
-
-# 6. Finish Composer installation
-RUN composer dump-autoload --optimize
-
+COPY . /app
 # 7. Copy Supervisor Config
 COPY octane-supervisor.conf /etc/supervisor/conf.d/octane.conf
 
