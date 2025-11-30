@@ -1,0 +1,202 @@
+services:
+  # --- Application ---
+  frankenphp:
+    container_name: sanago-octane
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/${GITHUB_REPOSITORY:-my-app}:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=local
+      - APP_KEY=${APP_KEY}
+      - APP_DEBUG=true
+      # Database Config
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=laravel
+      - DB_USERNAME=sail
+      - DB_PASSWORD=password
+      # Redis Config
+      - REDIS_HOST=redis
+      # MinIO / AWS S3 Config
+      - FILESYSTEM_DISK=s3
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_BUCKET=local-bucket
+      - AWS_USE_PATH_STYLE_ENDPOINT=true
+      - AWS_ENDPOINT=http://minio:9000
+    depends_on:
+      - redis
+      - postgres
+      - minio
+    networks:
+      - app_network
+
+  # --- File Storage (MinIO) ---
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000" # API Port (Internal & External access)
+      - "9001:9001" # Console Port (Browser UI)
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # --- Helper to Create Bucket Automatically ---
+  # This runs once to create the 'local-bucket' inside MinIO
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/local-bucket;
+      /usr/bin/mc policy set download myminio/local-bucket;
+      exit 0;
+      "
+    networks:
+      - app_network
+
+  # --- Database (PostgreSQL) ---
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: laravel
+      POSTGRES_USER: sail
+      POSTGRES_PASSWORD: password
+    volumes:
+      - pgsql_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  # --- Cache (Redis) ---
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    # 1. Grafana (The Dashboard UI)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: monitoring-grafana
+    restart: always
+    ports:
+      - "3000:3000" # Access at http://your-ip:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-secret}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - prod_network
+
+  # 2. Prometheus (Metrics Database)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: monitoring-prometheus
+    restart: always
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
+    networks:
+      - prod_network
+
+  # 3. Loki (Log Aggregation)
+  loki:
+    image: grafana/loki:latest
+    container_name: monitoring-loki
+    restart: always
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - prod_network
+
+  # 4. Promtail (Log Shipper - sends Docker logs to Loki)
+  promtail:
+    image: grafana/promtail:latest
+    container_name: monitoring-promtail
+    restart: always
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./monitoring/promtail-config.yaml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - prod_network
+
+  # 5. cAdvisor (Docker Container Stats - CPU/RAM per container)
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: monitoring-cadvisor
+    restart: always
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - prod_network
+
+  # 6. Node Exporter (Host Server Stats - Disk Space, Total CPU)
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: monitoring-node-exporter
+    restart: always
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - prod_network
+
+volumes:
+  minio_data:
+  pgsql_data:
+  redis_data:
+  grafana_data:
+  prometheus_data:
+
+networks:
+  app_network:
+    driver: bridge
