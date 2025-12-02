@@ -8,7 +8,7 @@ return [
      *
      * Supported: "boring", "fips", "nacl", "custom"
      */
-    'backend' => env('CIPHERSWEET_BACKEND', 'nacl'),
+    'backend' => env('CIPHERSWEET_BACKEND', 'fips'),
 
     /**
      * Set backend-specific options here. "custom" points to a factory class that returns a

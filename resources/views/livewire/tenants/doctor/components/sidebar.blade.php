@@ -1,13 +1,4 @@
 <aside
-    x-data="{
-        sidebarExpanded: localStorage.getItem('sidebarExpanded') === 'true',
-        mobileOpen: false,
-        toggleSidebar() {
-            this.sidebarExpanded = !this.sidebarExpanded;
-            localStorage.setItem('sidebarExpanded', this.sidebarExpanded);
-        }
-    }"
-    x-init="$watch('sidebarExpanded', value => localStorage.setItem('sidebarExpanded', value))"
     x-cloak
     :class="{
         '-translate-x-full': !mobileOpen,
@@ -15,7 +6,7 @@
         'w-64': sidebarExpanded,
         'w-20': !sidebarExpanded
     }"
-    class="fixed inset-y-0 left-0 bg-white border-r border-gray-200 shadow-xl z-30 transition-all duration-300 ease-in-out flex flex-col lg:translate-x-0"
+    class="fixed inset-y-0 left-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-xl z-50 transition-all duration-300 ease-in-out flex flex-col lg:translate-x-0"
     @keydown.escape.window="mobileOpen = false"
 >
 
@@ -36,7 +27,7 @@
 
     <!-- User Profile Section -->
     <div class="py-6 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-gray-800 dark:to-gray-800 transition-all duration-300 flex flex-col items-center">
-        
+
         <!-- Avatar -->
         <div class="relative inline-block transition-all duration-300 group" :class="sidebarExpanded ? 'mb-3' : 'mb-0'">
             @if(auth()->user()->profile_picture)
@@ -50,7 +41,7 @@
                     {{ substr(auth()->user()->name ?? 'User', 0, 1) }}
                 </div>
             @endif
-            
+
             <!-- Active Status Dot -->
             <span class="absolute bottom-0 right-0 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full transition-all duration-300"
                   :class="sidebarExpanded ? 'w-4 h-4 right-1 bottom-1' : 'w-2.5 h-2.5 right-0 bottom-0'"></span>
@@ -62,7 +53,7 @@
              x-transition:enter-start="opacity-0 transform scale-95"
              x-transition:enter-end="opacity-100 transform scale-100"
              class="text-center overflow-hidden whitespace-nowrap px-2 w-full">
-             
+
             <h3 class="font-bold text-gray-900 dark:text-white truncate max-w-[12rem] mx-auto">{{ auth()->user()->name ?? 'Guest' }}</h3>
             <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mt-1">
                 {{ ucfirst(auth()->user()->role ?? 'Guest') }}

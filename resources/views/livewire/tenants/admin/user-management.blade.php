@@ -1,17 +1,10 @@
 <main class="flex-1 bg-gray-50 dark:bg-gray-900 overflow-y-auto min-h-screen">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 md:p-8">
 
-        {{-- Mobile Sidebar Toggle --}}
-        <div class="lg:hidden flex items-center justify-between py-4 mb-4">
-            <button @click="open = true"
-                class="p-2 -ml-2 rounded-md text-gray-600 bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <x-heroicon-o-bars-3 class="w-6 h-6" />
-            </button>
-            <span class="font-semibold text-gray-800 dark:text-white">{{ __('admin.manage_users_title') }}</span>
-        </div>
+
 
         {{-- Breadcrumbs --}}
-        <nav class="hidden md:flex mb-8" aria-label="Breadcrumb">
+        <nav class="hidden md:flex mb-8 mt-5" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
                 <li class="inline-flex items-center">
                     <a href="{{ route('admin.dashboard') }}"
@@ -34,8 +27,8 @@
         {{-- Header Section --}}
         <div class="sm:flex sm:items-center sm:justify-between mb-8">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-                    {{ __('admin.manage_users_title') }}
+              <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight flex items-center gap-3">
+                     {{ __('admin.manage_users_title') }}
                 </h1>
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     {{ __('admin.manage_users_description') }}

@@ -2,14 +2,12 @@
 
 namespace App\Livewire\LandLord;
 
-use App\Mail\SendCredentials;
 use App\Models\Subscription;
 use App\Models\Tenant;
-use App\Models\User; // <-- Import the Subscription model
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule; // <-- Import Rule for validation
+use Illuminate\Validation\Rule;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -20,7 +18,6 @@ class CreateTenant extends Component
 {
     use WithFileUploads;
 
-    // Properties for the Tenant
     public $tenantName;
 
     public $phoneNumber;
@@ -28,14 +25,13 @@ class CreateTenant extends Component
     public $address;
 
     public $logo = null;
-
-    public $subscriptionTier = Subscription::PLAN_BASIC; // <-- Use model constant for default
-
     public $generatedDomain;
 
     public $hospitalContactEmail;
 
-    // Properties for the Tenant's Admin User
+    // Subscription & Admin
+    public $subscriptionTier = Subscription::PLAN_BASIC;
+    public $billingCycle = Subscription::BILLING_YEARLY; // Added billing cycle selection
     public $adminName;
 
     public $adminEmail;
@@ -43,27 +39,22 @@ class CreateTenant extends Component
     public function rules()
     {
         return [
-            // Tenant Rules
             'tenantName' => 'required|string|max:255',
             'phoneNumber' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
-            'logo' => 'nullable|image|max:1024', // max 1MB
-            'subscriptionTier' => [ // <-- Update validation to use constants
-                'required',
-                Rule::in([Subscription::PLAN_BASIC, Subscription::PLAN_STANDARD, Subscription::PLAN_PREMIUM]),
-            ],
-            'generatedDomain' => [
-                'required',
-                'string',
-                Rule::unique('domains', 'domain'),
-            ],
-            // Admin User Rules
+            'logo' => 'nullable|image|max:1024',
+            'subscriptionTier' => ['required', Rule::in([
+                Subscription::PLAN_BASIC,
+                Subscription::PLAN_STANDARD,
+                Subscription::PLAN_ENTERPRISE
+            ])],
+            'billingCycle' => ['required', Rule::in([
+                Subscription::BILLING_MONTHLY,
+                Subscription::BILLING_YEARLY
+            ])],
+            'generatedDomain' => ['required', 'string', Rule::unique('domains', 'domain')],
             'adminName' => 'required|string|max:255',
-            'adminEmail' => [
-                'required',
-                'email',
-                'max:255',
-            ],
+            'adminEmail' => ['required', 'email', 'max:255'],
         ];
     }
 
@@ -78,95 +69,92 @@ class CreateTenant extends Component
     {
         $this->validate();
 
-        $logoPath = null;
-        if ($this->logo) {
-            $logoPath = $this->logo->store('logos', 's3');
-        }
 
-        // Create the Tenant
+        // 1. Create Tenant
         $tenant = Tenant::create([
             'id' => $this->generatedDomain,
             'name' => $this->tenantName,
             'contact_email' => $this->hospitalContactEmail,
             'phone_number' => $this->phoneNumber,
             'address' => $this->address,
-            'logo' => $logoPath,
-            'subscription_tier' => $this->subscriptionTier, // This is still fine as a quick reference
+            'subscription_tier' => $this->subscriptionTier,
         ]);
 
-        // Create the Tenant's Domain
-        $tenant->domains()->create([
-            'domain' => $this->generatedDomain,
-        ]);
+        $tenant->domains()->create(['domain' => $this->generatedDomain]);
 
-        // Generate a secure password for the admin
-        $generatedPassword = Str::password(16, true, true, true, false);
+        // 2. Setup Context
+        $password = Str::password(16);
 
-        // Run operations within the new tenant's context
-        $tenant->run(function () use ($generatedPassword) {
-
-            // 1. Create the Admin User
+        $tenant->run(function () use ($password) {
+            $logoPath = $this->logo ? $this->logo->store('logos', 's3') : null;
+            // Create Admin
             $user = User::create([
                 'name' => $this->adminName,
                 'email' => $this->adminEmail,
-                'password' => Hash::make('password'), // <-- BUG FIX: Use the generated password
+                'password' => Hash::make('password'),
                 'role' => 'admin',
             ]);
 
-            // 2. Create the initial Subscription
-            $subscription = new Subscription([
-                'plan' => $this->subscriptionTier,
-                'status' => Subscription::STATUS_ACTIVE,
-                'starts_at' => now(),
-                'ends_at' => now()->addYear(), // Default 1-year subscription
-                'billing_cycle' => Subscription::BILLING_YEARLY,
-            ]);
+            // Create Subscription
+            $sub = new Subscription();
+            $sub->plan = $this->subscriptionTier;
+            $sub->billing_cycle = $this->billingCycle;
+            $sub->status = Subscription::STATUS_ACTIVE;
+            $sub->starts_at = now();
 
-            // Get default features for this plan and assign them
-            $defaultFeatures = $subscription->getDefaultFeatures();
-            $subscription->features = $defaultFeatures;
+            // Set End Date based on cycle
+            $sub->ends_at = match ($this->billingCycle) {
+                Subscription::BILLING_MONTHLY => now()->addMonth(),
+                Subscription::BILLING_YEARLY => now()->addYear(),
+            };
 
-            $subscription->amount = $subscription->getPlanAmount();
-            // Populate top-level convenience columns (based on your model's fillable)
-            $subscription->max_users = $defaultFeatures['max_users'] ?? 0;
-            $subscription->max_storage = $defaultFeatures['max_storage'] ?? 0;
+            // Calculate Amount (Model logic)
+            $sub->amount = $sub->getPlanAmount();
 
-            $subscription->save(); // Save the subscription to the tenant's DB
+            // Set Features (Model logic)
+            $features = $sub->getDefaultFeatures();
+            $sub->features = $features;
+            $sub->max_users = $features['max_users'] ?? 0;
+            $sub->max_storage = $features['max_storage'] ?? 0;
 
-            // 3. Prepare and send the credentials email
-            $mailable = new SendCredentials([
-                'subject' => 'Welcome to '.$this->tenantName.'!',
-                'view' => 'emails.welcome',
-                'name' => $user->name ?? 'User',
-                'email' => $user->email,
-                'password' => $generatedPassword,
-                'login_url' => 'http://'.$this->generatedDomain, // Use tenant's domain for login
-            ]);
-
-            // Mail::to($user->email)->queue($mailable); // <-- Enabled emailing
+            $sub->save();
         });
 
-        $this->resetForm();
-        LivewireAlert::title('Success')->success()->text('Tenant created successfully')->show();
+        // 3. Reset & Notify
+        $this->reset();
+        $this->subscriptionTier = Subscription::PLAN_BASIC;
+        $this->billingCycle = Subscription::BILLING_YEARLY;
+
+        LivewireAlert::title('Success')->success()->text('Tenant and Subscription created.')->show();
     }
 
-    private function resetForm()
+    /**
+     * Helper to get plans for the UI
+     */
+    public function getPlansProperty()
     {
-        $this->reset();
-        $this->subscriptionTier = Subscription::PLAN_BASIC; // <-- Use model constant
+        // We create temporary instances to get the data defined in your model
+        $plans = [
+            Subscription::PLAN_BASIC,
+            Subscription::PLAN_STANDARD,
+            Subscription::PLAN_ENTERPRISE,
+        ];
+
+        return collect($plans)->map(function ($plan) {
+            $tempSub = new Subscription(['plan' => $plan]);
+            return [
+                'id' => $plan,
+                'name' => $tempSub->getPlanDisplayName(),
+                'price' => $tempSub->getPlanAmount(),
+                'features' => $tempSub->getDefaultFeatures(),
+            ];
+        });
     }
 
     public function render()
     {
-        // Pass the available plans to the view
-        $availablePlans = [
-            Subscription::PLAN_BASIC,
-            Subscription::PLAN_STANDARD,
-            Subscription::PLAN_PREMIUM,
-        ];
-
         return view('livewire.land-lord.create-tenant', [
-            'availablePlans' => $availablePlans,
+            'plans' => $this->plans // Use the computed property,
         ]);
     }
 }

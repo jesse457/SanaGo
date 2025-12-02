@@ -1,0 +1,35 @@
+# Global options (optional, but good for debugging)
+{
+    debug
+}
+
+# ---------------------------------------------------------------------
+# PHP / Laravel App (Localhost)
+# ---------------------------------------------------------------------
+localhost, *.localhost {
+    encode gzip zstd
+
+    # Points to the 'public' folder relative to where you run Caddy
+    root * public
+
+    # Serve static files (CSS, JS, images)
+    file_server
+
+    # Process PHP files
+    # ERROR FIX: 'php_server' is not standard. Use php_fastcgi.
+    # Adjust the address below to match your setup:
+    # - If using native Linux PHP-FPM: unix//run/php/php8.2-fpm.sock
+    # - If using Docker/Windows: localhost:9000
+    php_server
+}
+
+# ---------------------------------------------------------------------
+# MinIO Local Domain
+# ---------------------------------------------------------------------
+files.localhost {
+    # If you are accessing this in a browser, you want the MinIO CONSOLE port.
+    # Default MinIO Console port is often 9001 (or random), API is 9000.
+    # If you explicitly set MinIO to run on 8000, keep it as 8000.
+    reverse_proxy localhost:9000
+}
+

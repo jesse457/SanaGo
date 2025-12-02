@@ -1,4 +1,4 @@
-<div class="flex-1 p-4 md:p-6 lg:ml-64 bg-gray-50 dark:bg-gray-900 overflow-y-auto min-h-screen">
+<div class="flex-1 p-4 mt-8  bg-gray-50 dark:bg-gray-900 overflow-y-auto min-h-screen">
 
     {{-- Breadcrumbs --}}
     <div class="mb-8">
@@ -32,7 +32,7 @@
 
     {{-- Header --}}
     <header class="mb-8 pb-4 border-b border-gray-200 dark:border-gray-700">
-        <h1 class="text-4xl font-extrabold text-gray-900 dark:text-white flex items-center gap-3">
+        <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-1 flex items-center gap-3">
             <x-heroicon-s-beaker class="w-10 h-10 text-indigo-600" />
             Create New Lab Test
         </h1>

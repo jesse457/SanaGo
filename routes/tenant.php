@@ -155,9 +155,9 @@ Route::middleware([
         // Logout route: logs out user and redirects to login
         Route::post('/logout', function (Request $request) {
             Auth::guard('web')->logout();
-            Session::invalidate();
-            Session::regenerateToken();
-
+        Session::invalidate();
+        Session::regenerateToken();
+return redirect()->route('tenant.login');
         })->name('auth.logout');
 
         // --- Admin Routes ---

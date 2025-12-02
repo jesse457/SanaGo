@@ -5,33 +5,40 @@ namespace App\Livewire\LandLord;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-// Use the doctor layout for this Livewire component
 #[Layout('components.layouts.landlord')]
 class Settings extends Component
 {
-    public $landlordName;
+    // Platform Identity
+    public $platformName = 'MediFlow SaaS';
+    public $supportEmail = 'support@mediflow.com';
 
-    public $email;
+    // Localization
+    public $timezone = 'Africa/Douala';
+    public $currency = 'XAF';
 
-    public $timezone = 'America/New_York';
-
-    public $currency = 'USD';
-
-    public $darkMode = false;
+    // Notifications (SaaS Admin preferences)
+    public $notifyNewTenant = true;
+    public $notifyTicketCreated = true;
+    public $marketingEmails = false;
 
     public function mount()
     {
-        // Load settings from the database or a configuration file.
-        // For demonstration, we'll use placeholder values.
-        $this->landlordName = 'Your Landlord Name';
-        $this->email = 'your.email@example.com';
+        // Ideally, load these from a 'Settings' model or config file
+        // $settings = Setting::all()->pluck('value', 'key');
+        // $this->platformName = $settings['platform_name']; etc.
     }
 
     public function saveSettings()
     {
-        // Add logic to validate and save settings to the database.
-        // For now, we'll just show a success message.
-        session()->flash('success', 'Settings saved successfully!');
+        // Validation
+        $this->validate([
+            'platformName' => 'required|string|max:255',
+            'supportEmail' => 'required|email',
+        ]);
+
+        // Logic to save to DB (e.g., Settings::updateOrCreate(...))
+
+        session()->flash('success', 'Platform settings updated successfully.');
     }
 
     public function render()

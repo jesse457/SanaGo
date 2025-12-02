@@ -1,5 +1,5 @@
- <main class="flex-1 p-4 md:p-6 lg:ml-64 bg-gray-50 dark:bg-gray-900 min-h-screen">
-     <div class="mb-6">
+ <main class="flex-1 p-4  mt-8  bg-gray-50 dark:bg-gray-900 min-h-screen">
+     <div class="mb-8">
          <nav class="flex" aria-label="Breadcrumb">
              <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
                  <li class="inline-flex items-center">
@@ -38,7 +38,7 @@
      </header>
 
      <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-10 dark:bg-gray-800 dark:border-gray-700">
-        
+
 
          @if (!isset($feedbacks) || $feedbacks->total() === 0)
              <div class="text-center py-12 text-gray-500 dark:text-gray-300">

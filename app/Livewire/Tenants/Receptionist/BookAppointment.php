@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Tenants\Receptionist;
 
+;
+use Livewire\Attributes\Computed; // Import Computed Attribute
 use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\User;
@@ -28,18 +30,14 @@ class BookAppointment extends Component
     public ?int $doctorId = null;
 
     public string $appointmentDate;
-
-    public string $appointmentTime; // Represents scheduled arrival time (H:i)
-
+    public string $appointmentTime;
     public ?string $reasonForVisit = null;
 
     public ?float $price = null;
 
-    public array $doctors = [];
-
+    // public array $doctors = []; // Removed: Converted to Computed Property for performance
     public $foundPatients = [];
 
-    // Updated validation rules
     protected array $rules = [
         'selectedPatientId' => 'required|exists:patients,id',
         'doctorId' => 'required|exists:users,id',
@@ -52,10 +50,19 @@ class BookAppointment extends Component
     public function mount(): void
     {
         $this->appointmentDate = now()->toDateString();
-        $this->appointmentTime = now()->format('H:i'); // Default to current time for check-in
+        $this->appointmentTime = now()->format('H:i');
+    }
 
-        // Cache doctors short term to reduce DB hits
-        $this->doctors = Cache::remember('doctors_list_receptionist', 60, function () {
+    /**
+     * Computed Property: Doctors
+     * This fixes the "Cold Start" and "No Redis" issue.
+     * If Cache fails (Redis down), it catches the error and queries DB directly.
+     */
+    #[Computed]
+    public function doctors()
+    {
+        // Define the query logic once to avoid duplication
+        $fetchDoctors = function () {
             return User::query()
                 ->where('role', 'doctor')
                 ->select(['id', 'name', 'email', 'department_id'])
@@ -68,7 +75,16 @@ class BookAppointment extends Component
                     'email' => $d->email,
                     'department' => $d->department?->name,
                 ])->toArray();
-        });
+        };
+
+        try {
+            // Attempt to retrieve from cache
+            return Cache::remember('doctors_list_receptionist', 60, $fetchDoctors);
+        } catch (\Exception $e) {
+            // If Redis is down or connection refused, log it and fall back to DB
+            Log::warning('Cache store unavailable, falling back to database: ' . $e->getMessage());
+            return $fetchDoctors();
+        }
     }
 
     public function updatedPatientSearch()
@@ -76,6 +92,7 @@ class BookAppointment extends Component
         $term = trim($this->patientSearch);
         $this->selectedPatientId = null;
         $this->selectedPatientName = '';
+
         if (strlen($term) >= 2) {
             $this->foundPatients = Patient::where(function ($q) use ($term) {
                 try {
@@ -84,21 +101,18 @@ class BookAppointment extends Component
                         $q->WhereBlind('first_name', 'first_name_index', $terms[0]);
                         $q->WhereBlind('last_name', 'last_name_index', $terms[1]);
                     } else {
-                        // Single term or multiple fragments: match against indexed fields
-                        foreach ($terms as $term) {
-                            $q->orWhereBlind('first_name', 'first_name_index', $term)
-                                ->orWhereBlind('last_name', 'last_name_index', $term)
-                                ->orWhere('patient_uid', 'like', "%$term%");
+                        foreach ($terms as $subTerm) {
+                            $q->orWhereBlind('first_name', 'first_name_index', $subTerm)
+                                ->orWhereBlind('last_name', 'last_name_index', $subTerm);
                         }
                     }
                 } catch (\Throwable $e) {
-                    // Log error if blind index fails but continue without it
-                    Log::warning('Blind index search failed: '.$e->getMessage());
+                    Log::warning('Blind index search failed: ' . $e->getMessage());
                 }
             })
-                ->orWhere('patient_uid', 'ilike', "%{$term}%") // Add non-blind search for patient ID
-                ->limit(10)
-                ->get();
+
+            ->limit(10)
+            ->get();
         } else {
             $this->foundPatients = [];
         }
@@ -120,9 +134,6 @@ class BookAppointment extends Component
         $this->foundPatients = [];
     }
 
-    /**
-     * Add a patient to the selected doctor's queue for the day.
-     */
     public function bookAppointment()
     {
         $this->validate();
@@ -138,10 +149,11 @@ class BookAppointment extends Component
 
         $appointmentDateTime = Carbon::createFromFormat('Y-m-d H:i', $this->appointmentDate.' '.$this->appointmentTime);
         $nextPosition = null;
+
         try {
-            DB::transaction(function () use ($doctor, $patient, $appointmentDateTime) {
-                // Stricter check: Block if the patient has any non-terminal appointment
-                // (Scheduled, Waiting, or In Consultation) for the same doctor/date.
+            DB::transaction(function () use ($doctor, $patient, $appointmentDateTime, &$nextPosition) {
+
+                // Block duplicate active appointments
                 $isAlreadyActive = Appointment::query()
                     ->where('patient_id', $patient->id)
                     ->where('doctor_id', $doctor->id)
@@ -150,23 +162,21 @@ class BookAppointment extends Component
                     ->exists();
 
                 if ($isAlreadyActive) {
-                    throw new \RuntimeException('This patient already has an active appointment with this doctor on this date. Please check the appointment list or cancel the existing one.');
+                    throw new \RuntimeException('This patient already has an active appointment with this doctor on this date.');
                 }
 
-                // FIX for PostgreSQL: Instead of locking the aggregate function,
-                // we fetch the latest queue position row and lock it.
+                // Lock the latest row to calculate queue position safely
                 $latestAppointment = Appointment::query()
                     ->where('doctor_id', $doctor->id)
                     ->whereDate('appointment_date', $this->appointmentDate)
                     ->orderByDesc('queue_position')
                     ->limit(1)
-                    ->lockForUpdate() // This locks the specific latest row found
+                    ->lockForUpdate()
                     ->first();
 
                 $lastPosition = $latestAppointment ? $latestAppointment->queue_position : 0;
                 $nextPosition = $lastPosition + 1;
 
-                // Create the appointment and add it to the queue
                 $appointment = Appointment::create([
                     'patient_id' => $patient->id,
                     'doctor_id' => $doctor->id,
@@ -174,42 +184,39 @@ class BookAppointment extends Component
                     'appointment_time' => $appointmentDateTime,
                     'reason_for_visit' => $this->reasonForVisit,
                     'price' => $this->price,
-                    'status' => 'Waiting', // Initial status is 'Waiting' (Checked In)
+                    'status' => 'Waiting',
                     'queue_position' => $nextPosition,
                 ]);
 
                 $this->logActivity(
-                    'appointment_waiting', // Changed from _queued to reflect 'Waiting' status
-                    "Added patient {$patient->first_name} {$patient->last_name} to queue for Dr. {$doctor->name} at position #{$nextPosition} (Status: Waiting)",
+                    'appointment_waiting',
+                    "Added patient {$patient->first_name} {$patient->last_name} to queue for Dr. {$doctor->name} at position #{$nextPosition}",
                     ['patient_id' => $patient->id, 'doctor_id' => $doctor->id, 'appointment_id' => $appointment->id]
                 );
-            }, 5); // Retry 5 times on deadlock
+            }, 5);
         } catch (\RuntimeException $e) {
-            Log::warning('Appointment booking blocked due to conflict: '.$e->getMessage());
+            Log::warning('Booking blocked: ' . $e->getMessage());
             LivewireAlert::title('Conflict')->text($e->getMessage())->warning()->show();
 
             return;
         } catch (\Throwable $e) {
-            Log::error('Queue booking failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            LivewireAlert::title('Server Error')->text('Unable to add patient to the queue. Please try again.')->error()->show();
-
+            Log::error('Queue booking failed', ['error' => $e->getMessage()]);
+            LivewireAlert::title('Server Error')->text('Unable to add patient to the queue.')->error()->show();
             return;
         }
 
-        LivewireAlert::title('Success')->success()->text("{$patient->first_name} has been added to the doctor's queue at position #{$nextPosition}.")->show();
-        $this->resetForm();
+        LivewireAlert::title('Success')->success()->text("{$patient->first_name} added to queue at position #{$nextPosition}.")->show();
 
+        // No need to manually reset logic, simple redirect or reset
+        $this->reset(['selectedPatientId', 'selectedPatientName', 'patientSearch', 'reasonForVisit', 'price', 'doctorId']);
+        // If you prefer redirecting:
         return redirect()->route('receptionist.appointments');
-    }
-
-    public function resetForm(): void
-    {
-        $this->reset();
-        $this->mount();
     }
 
     public function render()
     {
-        return view('livewire.tenants.receptionist.book-appointment');
+        return view('livewire.tenants.receptionist.book-appointment', [
+            'doctors' => $this->doctors(),
+        ]);
     }
 }

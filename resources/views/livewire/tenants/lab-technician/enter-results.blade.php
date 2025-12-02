@@ -1,5 +1,5 @@
 <div>
-    <main class="flex-1 p-4 md:p-6 lg:ml-64 bg-gray-50 dark:bg-gray-900 overflow-y-auto min-h-screen">
+    <main class="flex-1 p-4  bg-gray-50 dark:bg-gray-900 overflow-y-auto min-h-screen">
         {{-- Breadcrumbs --}}
         <div class="mb-8">
             <nav class="flex" aria-label="Breadcrumb">
