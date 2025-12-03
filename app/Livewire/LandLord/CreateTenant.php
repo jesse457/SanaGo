@@ -25,13 +25,16 @@ class CreateTenant extends Component
     public $address;
 
     public $logo = null;
+
     public $generatedDomain;
 
     public $hospitalContactEmail;
 
     // Subscription & Admin
     public $subscriptionTier = Subscription::PLAN_BASIC;
+
     public $billingCycle = Subscription::BILLING_YEARLY; // Added billing cycle selection
+
     public $adminName;
 
     public $adminEmail;
@@ -46,11 +49,11 @@ class CreateTenant extends Component
             'subscriptionTier' => ['required', Rule::in([
                 Subscription::PLAN_BASIC,
                 Subscription::PLAN_STANDARD,
-                Subscription::PLAN_ENTERPRISE
+                Subscription::PLAN_ENTERPRISE,
             ])],
             'billingCycle' => ['required', Rule::in([
                 Subscription::BILLING_MONTHLY,
-                Subscription::BILLING_YEARLY
+                Subscription::BILLING_YEARLY,
             ])],
             'generatedDomain' => ['required', 'string', Rule::unique('domains', 'domain')],
             'adminName' => 'required|string|max:255',
@@ -69,7 +72,6 @@ class CreateTenant extends Component
     {
         $this->validate();
 
-
         // 1. Create Tenant
         $tenant = Tenant::create([
             'id' => $this->generatedDomain,
@@ -85,7 +87,7 @@ class CreateTenant extends Component
         // 2. Setup Context
         $password = Str::password(16);
 
-        $tenant->run(function () use ($password) {
+        $tenant->run(function () {
             $logoPath = $this->logo ? $this->logo->store('logos', 's3') : null;
             // Create Admin
             $user = User::create([
@@ -96,7 +98,7 @@ class CreateTenant extends Component
             ]);
 
             // Create Subscription
-            $sub = new Subscription();
+            $sub = new Subscription;
             $sub->plan = $this->subscriptionTier;
             $sub->billing_cycle = $this->billingCycle;
             $sub->status = Subscription::STATUS_ACTIVE;
@@ -142,6 +144,7 @@ class CreateTenant extends Component
 
         return collect($plans)->map(function ($plan) {
             $tempSub = new Subscription(['plan' => $plan]);
+
             return [
                 'id' => $plan,
                 'name' => $tempSub->getPlanDisplayName(),
@@ -154,7 +157,7 @@ class CreateTenant extends Component
     public function render()
     {
         return view('livewire.land-lord.create-tenant', [
-            'plans' => $this->plans // Use the computed property,
+            'plans' => $this->plans, // Use the computed property,
         ]);
     }
 }

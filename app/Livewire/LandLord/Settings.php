@@ -10,15 +10,19 @@ class Settings extends Component
 {
     // Platform Identity
     public $platformName = 'MediFlow SaaS';
+
     public $supportEmail = 'support@mediflow.com';
 
     // Localization
     public $timezone = 'Africa/Douala';
+
     public $currency = 'XAF';
 
     // Notifications (SaaS Admin preferences)
     public $notifyNewTenant = true;
+
     public $notifyTicketCreated = true;
+
     public $marketingEmails = false;
 
     public function mount()

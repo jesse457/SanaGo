@@ -6,8 +6,8 @@ use App\Models\Bed;
 use App\Models\BedType;
 use App\Models\Department;
 use App\Models\Subscription;
-use App\Models\Ward;
 use App\Models\Supply;
+use App\Models\Ward;
 use App\Models\Ward;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -33,16 +33,24 @@ class Settings extends Component
     public $hospitalLogo;
 
     public $currentLogoUrl;
+
     public ?Subscription $subscription;
+
     public $usage = ['users' => 0, 'storage' => 0]; // Placeholder for actual usage
+
     public $currentUsersCount = 0;
+
     public $currentStorageUsage = 0; // in MB
+
     public $billingHistory = [];
 
     // Subscription Management
     public $showUpgradeModal = false;
+
     public $showCancelModal = false;
+
     public $cancelReason;
+
     public $cancelFeedback;
 
     // Department Management
@@ -173,7 +181,6 @@ class Settings extends Component
 
     public $deletingSupplyId;
 
-
     public $tenant;
 
     public function mount()
@@ -183,7 +190,6 @@ class Settings extends Component
         $this->hospitalAddress = $this->tenant->address ?? '';
         $this->hospitalEmail = $this->tenant->contact_email ?? '';
 
-     
         $this->currentLogoUrl = $this->tenant?->logo
             ? Storage::disk('s3')->temporaryUrl($this->tenant->logo, now()->addMinutes(5))
             : null;
@@ -553,7 +559,6 @@ class Settings extends Component
         LivewireAlert::title('Success')->success()->text('Bed deleted successfully')->show();
     }
 
-
     // -----------------------
     // Supply CRUD
     // -----------------------
@@ -636,21 +641,20 @@ class Settings extends Component
     public function render()
     {
         return view('livewire.tenants.admin.settings', [
-            'filteredDepartments' => Department::when($this->searchDepartment, fn($q) => $q->where('name', 'like', '%' . $this->searchDepartment . '%'))->get(),
+            'filteredDepartments' => Department::when($this->searchDepartment, fn ($q) => $q->where('name', 'like', '%'.$this->searchDepartment.'%'))->get(),
             'subscriptions' => Subscription::all(),
 
             'filteredWards' => Ward::with('department')
                 ->when($this->searchWard, fn ($q) => $q->where('name', 'like', '%'.$this->searchWard.'%'))
                 ->get(),
 
-            'filteredBedTypes' => BedType::when($this->searchBedType, fn($q) => $q->where('name', 'like', '%' . $this->searchBedType . '%'))->get(),
+            'filteredBedTypes' => BedType::when($this->searchBedType, fn ($q) => $q->where('name', 'like', '%'.$this->searchBedType.'%'))->get(),
 
             'filteredBeds' => Bed::with(['ward.department', 'bedType'])
                 ->when($this->searchBed, fn ($q) => $q->where('bed_number', 'like', '%'.$this->searchBed.'%'))
                 ->get(),
 
-            'filteredSupplies' => Supply::when($this->searchSupply, fn($q) => $q->where('name', 'like', '%' . $this->searchSupply . '%'))->get(),
+            'filteredSupplies' => Supply::when($this->searchSupply, fn ($q) => $q->where('name', 'like', '%'.$this->searchSupply.'%'))->get(),
         ]);
     }
 }
-

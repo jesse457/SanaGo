@@ -13,10 +13,12 @@ use Livewire\Component;
 class ManageSubscription extends Component
 {
     public Tenant $tenant;
+
     public ?Subscription $subscription;
 
     // Usage Stats
     public int $currentUsers = 0;
+
     public int $currentStorage = 0; // In MB
 
     public function mount(Tenant $tenant)
