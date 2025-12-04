@@ -2,11 +2,11 @@
 
 namespace App\Livewire\LandLord;
 
-use Livewire\Attributes\Layout;
-use Livewire\Component;
-use Livewire\WithFileUploads; // Required for Logo Upload
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Layout; // Required for Logo Upload
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('components.layouts.landlord')]
 class Settings extends Component
@@ -17,25 +17,32 @@ class Settings extends Component
     public $platformName = 'MediFlow SaaS';
 
     public $supportEmail = 'support@mediflow.com';
+
     public $globalAnnouncement = '';
+
     public $logo; // Temporary file upload
+
     public $currentLogoUrl; // For displaying existing logo
 
     // --- Tab: Localization ---
     public $timezone = 'Africa/Douala';
 
     public $currency = 'XAF';
+
     public $dateFormat = 'Y-m-d';
 
     // --- Tab: Security ---
     public $enforce2fa = false;
+
     public $sessionTimeout = 120; // Minutes
+
     public $passwordMinLength = 8;
 
     // --- Tab: Notifications ---
     public $notifyNewTenant = true;
 
     public $notifyTicketCreated = true;
+
     public $notifyCriticalErrors = true;
 
     // --- Tab: Maintenance ---
@@ -55,7 +62,7 @@ class Settings extends Component
         $this->validate([
             'platformName' => 'required|string|max:255',
             'supportEmail' => 'required|email',
-            'logo'         => 'nullable|image|max:2048', // 2MB Max
+            'logo' => 'nullable|image|max:2048', // 2MB Max
             'sessionTimeout' => 'required|integer|min:5',
             'passwordMinLength' => 'required|integer|min:8',
         ]);
@@ -75,9 +82,9 @@ class Settings extends Component
         // 2. Handle Maintenance Mode
         // In Laravel, this usually creates a file in storage/framework
         if ($this->maintenanceMode) {
-             // You might use Artisan::call('down') here, but be careful
-             // as it might lock you out if you haven't whitelisted your IP.
-             // Ideally, save a DB flag that your Middleware checks.
+            // You might use Artisan::call('down') here, but be careful
+            // as it might lock you out if you haven't whitelisted your IP.
+            // Ideally, save a DB flag that your Middleware checks.
         }
 
         // 3. Save other settings to DB
@@ -97,7 +104,7 @@ class Settings extends Component
             Artisan::call('optimize:clear');
             session()->flash('success', 'System cache, views, and routes cleared.');
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to clear cache: ' . $e->getMessage());
+            session()->flash('error', 'Failed to clear cache: '.$e->getMessage());
         }
     }
 

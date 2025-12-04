@@ -20,7 +20,9 @@ class Login extends Component
        Form fields
        -------------------- */
     public string $email = '';
+
     public string $password = '';
+
     public bool $remember = false;
 
     /* --------------------
@@ -68,7 +70,7 @@ class Login extends Component
             if (! $user->is_active) {
                 Log::warning('Login failed – inactive account', ['email' => $this->email]);
                 throw ValidationException::withMessages([
-                    'email' => [__('Your account has been deactivated. Please contact the administrator.')]
+                    'email' => [__('Your account has been deactivated. Please contact the administrator.')],
                 ]);
             }
 
@@ -81,7 +83,7 @@ class Login extends Component
                 } catch (\Exception $e) {
                     Log::error('Failed to initialize tenant', ['tenant_id' => $user->tenant_id, 'error' => $e->getMessage()]);
                     throw ValidationException::withMessages([
-                        'email' => [__('Tenant configuration error. Please contact support.')]
+                        'email' => [__('Tenant configuration error. Please contact support.')],
                     ]);
                 }
             }
@@ -109,7 +111,7 @@ class Login extends Component
             ]);
 
             throw ValidationException::withMessages([
-                'email' => [__('An unexpected error occurred. Please try again.')]
+                'email' => [__('An unexpected error occurred. Please try again.')],
             ]);
         }
     }
