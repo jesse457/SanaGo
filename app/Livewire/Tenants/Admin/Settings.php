@@ -6,7 +6,6 @@ use App\Models\Bed;
 use App\Models\BedType;
 use App\Models\Department;
 use App\Models\Subscription;
-use App\Models\Ward;
 use App\Models\Supply;
 use App\Models\Ward;
 use Illuminate\Support\Facades\Storage;
@@ -183,7 +182,7 @@ class Settings extends Component
         $this->hospitalAddress = $this->tenant->address ?? '';
         $this->hospitalEmail = $this->tenant->contact_email ?? '';
 
-     
+
         $this->currentLogoUrl = $this->tenant?->logo
             ? Storage::disk('s3')->temporaryUrl($this->tenant->logo, now()->addMinutes(5))
             : null;
