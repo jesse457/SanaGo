@@ -15,6 +15,7 @@ class Settings extends Component
 
     // --- Tab: General & Branding ---
     public $platformName = 'MediFlow SaaS';
+
     public $supportEmail = 'support@mediflow.com';
     public $globalAnnouncement = '';
     public $logo; // Temporary file upload
@@ -22,6 +23,7 @@ class Settings extends Component
 
     // --- Tab: Localization ---
     public $timezone = 'Africa/Douala';
+
     public $currency = 'XAF';
     public $dateFormat = 'Y-m-d';
 
@@ -32,6 +34,7 @@ class Settings extends Component
 
     // --- Tab: Notifications ---
     public $notifyNewTenant = true;
+
     public $notifyTicketCreated = true;
     public $notifyCriticalErrors = true;
 

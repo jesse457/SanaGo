@@ -132,7 +132,7 @@ class CreateNewUser extends Component
             try {
                 // Validate only the 'profile_picture' field using the rules defined.
                 $this->validateOnly($propertyName);
-                 Log::warning('Livewire temporary file upload validation failed.', [
+                Log::warning('Livewire temporary file upload validation failed.', [
                     'property' => $propertyName,
                     'tenant_id' => tenant('id'),
                     'component' => static::class,

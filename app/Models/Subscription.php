@@ -45,8 +45,6 @@ class Subscription extends Model
 
     const PLAN_STANDARD = 'standard';
 
-
-
     const PLAN_ENTERPRISE = 'enterprise';
 
     // Constants for subscription status
@@ -301,7 +299,6 @@ class Subscription extends Model
         return $this;
     }
 
-
     /**
      * ==========================================
      * STORAGE CALCULATION METHODS
@@ -332,7 +329,9 @@ class Subscription extends Model
         // Convert limit from MB (as stored in features) to Bytes for comparison
         $limitBytes = $limit * 1024 * 1024;
 
-        if ($limitBytes <= 0) return 100;
+        if ($limitBytes <= 0) {
+            return 100;
+        }
 
         $usedBytes = $this->getUsedStorageInBytes();
 
@@ -389,7 +388,7 @@ class Subscription extends Model
 
         foreach ($tablesToCheck as $table) {
             // Verify table exists to prevent SQL errors
-            if (!\Illuminate\Support\Facades\Schema::hasTable($table)) {
+            if (! \Illuminate\Support\Facades\Schema::hasTable($table)) {
                 continue;
             }
 
@@ -417,6 +416,6 @@ class Subscription extends Model
 
         $bytes /= pow(1024, $pow);
 
-        return round($bytes, $precision) . ' ' . $units[$pow];
+        return round($bytes, $precision).' '.$units[$pow];
     }
 }

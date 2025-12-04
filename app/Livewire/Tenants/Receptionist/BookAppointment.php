@@ -2,9 +2,7 @@
 
 namespace App\Livewire\Tenants\Receptionist;
 
-;
-use Livewire\Attributes\Computed; // Import Computed Attribute
-use App\Models\Appointment;
+use App\Models\Appointment; // Import Computed Attribute
 use App\Models\Patient;
 use App\Models\User;
 use App\Traits\UserActivitiesTrait;
@@ -13,6 +11,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -30,7 +29,9 @@ class BookAppointment extends Component
     public ?int $doctorId = null;
 
     public string $appointmentDate;
+
     public string $appointmentTime;
+
     public ?string $reasonForVisit = null;
 
     public ?float $price = null;
@@ -82,7 +83,8 @@ class BookAppointment extends Component
             return Cache::remember('doctors_list_receptionist', 60, $fetchDoctors);
         } catch (\Exception $e) {
             // If Redis is down or connection refused, log it and fall back to DB
-            Log::warning('Cache store unavailable, falling back to database: ' . $e->getMessage());
+            Log::warning('Cache store unavailable, falling back to database: '.$e->getMessage());
+
             return $fetchDoctors();
         }
     }
@@ -107,12 +109,11 @@ class BookAppointment extends Component
                         }
                     }
                 } catch (\Throwable $e) {
-                    Log::warning('Blind index search failed: ' . $e->getMessage());
+                    Log::warning('Blind index search failed: '.$e->getMessage());
                 }
             })
-
-            ->limit(10)
-            ->get();
+                ->limit(10)
+                ->get();
         } else {
             $this->foundPatients = [];
         }
@@ -195,13 +196,14 @@ class BookAppointment extends Component
                 );
             }, 5);
         } catch (\RuntimeException $e) {
-            Log::warning('Booking blocked: ' . $e->getMessage());
+            Log::warning('Booking blocked: '.$e->getMessage());
             LivewireAlert::title('Conflict')->text($e->getMessage())->warning()->show();
 
             return;
         } catch (\Throwable $e) {
             Log::error('Queue booking failed', ['error' => $e->getMessage()]);
             LivewireAlert::title('Server Error')->text('Unable to add patient to the queue.')->error()->show();
+
             return;
         }
 
@@ -209,6 +211,7 @@ class BookAppointment extends Component
 
         // No need to manually reset logic, simple redirect or reset
         $this->reset(['selectedPatientId', 'selectedPatientName', 'patientSearch', 'reasonForVisit', 'price', 'doctorId']);
+
         // If you prefer redirecting:
         return redirect()->route('receptionist.appointments');
     }

@@ -17,7 +17,7 @@ return [
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
     'central_domains' => [
-        
+
         'localhost',
         '127.0.0.1',
 
@@ -97,7 +97,7 @@ return [
      * Filesystem tenancy config. Used by FilesystemTenancyBootstrapper.
      * https://tenancyforlaravel.com/docs/v3/tenancy-bootstrappers/#filesystem-tenancy-boostrapper.
      */
-  'filesystem' => [
+    'filesystem' => [
         'suffix_base' => 'tenant',
 
         // Keep 's3' here. This ensures your user uploads (Images/PDFs)
