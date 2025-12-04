@@ -190,7 +190,6 @@ class Settings extends Component
         $this->hospitalAddress = $this->tenant->address ?? '';
         $this->hospitalEmail = $this->tenant->contact_email ?? '';
 
-
         $this->currentLogoUrl = $this->tenant?->logo
             ? Storage::disk('s3')->temporaryUrl($this->tenant->logo, now()->addMinutes(5))
             : null;
