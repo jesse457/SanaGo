@@ -50,20 +50,20 @@
             <div class="relative max-w-7xl mx-auto px-6 flex flex-col items-center text-center z-10">
                 <div class="reveal-on-scroll inline-flex items-center rounded-full border border-blue-100 dark:border-blue-900 bg-blue-50/80 dark:bg-blue-900/30 px-4 py-1.5 text-sm font-medium text-blue-700 dark:text-blue-200 mb-8 backdrop-blur-md shadow-sm">
                     <span class="flex h-2 w-2 rounded-full bg-blue-500 mr-2 animate-pulse"></span>
-                    Healthcare Insights
+                    {{ __('blog.badge') }}
                 </div>
 
                 <h1 class="reveal-on-scroll delay-100 text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8 max-w-5xl">
-                    SanaGo <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-500 to-blue-400">Blog</span>
+                    {{ __('blog.title_prefix') }} <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-500 to-blue-400">{{ __('blog.title_suffix') }}</span>
                 </h1>
 
                 <p class="reveal-on-scroll delay-200 mt-4 text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mb-12 leading-relaxed">
-                    Insights, trends, and best practices in healthcare management technology from our team of experts.
+                    {{ __('blog.subtitle') }}
                 </p>
 
                 <div class="reveal-on-scroll delay-300 w-full max-w-md">
                     <div class="relative">
-                        <input type="text" x-model="searchQuery" placeholder="Search articles..." class="w-full px-5 py-3 pl-12 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400">
+                        <input type="text" x-model="searchQuery" placeholder="{{ __('blog.search_placeholder') }}" class="w-full px-5 py-3 pl-12 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400">
                         <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
                 </div>
@@ -75,19 +75,19 @@
             <div class="max-w-7xl mx-auto px-6">
                 <div class="flex flex-wrap justify-center gap-3 reveal-on-scroll">
                     <button @click="selectedCategory = 'all'" class="px-5 py-2 rounded-full font-medium transition-colors" :class="selectedCategory === 'all' ? 'bg-blue-600 text-white' : 'bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'">
-                        All Posts
+                        {{ __('blog.cat_all') }}
                     </button>
                     <button @click="selectedCategory = 'healthcare-tech'" class="px-5 py-2 rounded-full font-medium transition-colors" :class="selectedCategory === 'healthcare-tech' ? 'bg-blue-600 text-white' : 'bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'">
-                        Healthcare Technology
+                        {{ __('blog.cat_tech') }}
                     </button>
                     <button @click="selectedCategory = 'patient-care'" class="px-5 py-2 rounded-full font-medium transition-colors" :class="selectedCategory === 'patient-care' ? 'bg-blue-600 text-white' : 'bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'">
-                        Patient Care
+                        {{ __('blog.cat_patient') }}
                     </button>
                     <button @click="selectedCategory = 'hospital-management'" class="px-5 py-2 rounded-full font-medium transition-colors" :class="selectedCategory === 'hospital-management' ? 'bg-blue-600 text-white' : 'bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'">
-                        Hospital Management
+                        {{ __('blog.cat_management') }}
                     </button>
                     <button @click="selectedCategory = 'company-news'" class="px-5 py-2 rounded-full font-medium transition-colors" :class="selectedCategory === 'company-news' ? 'bg-blue-600 text-white' : 'bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'">
-                        Company News
+                        {{ __('blog.cat_news') }}
                     </button>
                 </div>
             </div>
@@ -99,7 +99,7 @@
                 <div class="grid md:grid-cols-2 gap-12 items-center">
                     <div class="reveal-on-scroll order-2 md:order-1">
                         <div class="flex items-center gap-3 mb-4">
-                            <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">Featured</span>
+                            <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">{{ __('blog.featured_badge') }}</span>
                             <span class="text-slate-500 dark:text-slate-400 text-sm">June 15, 2023</span>
                         </div>
                         <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">The Future of Hospital Management: AI and Automation</h2>
@@ -116,7 +116,7 @@
                             </div>
                         </div>
                         <a href="#" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors">
-                            Read Article
+                            {{ __('blog.read_article') }}
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                         </a>
                     </div>
@@ -133,8 +133,8 @@
     <section class="py-24">
         <div class="max-w-7xl mx-auto px-6">
             <div class="text-center mb-16 reveal-on-scroll">
-                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Recent Posts</h2>
-                <p class="mt-4 text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">Stay updated with the latest trends and insights in healthcare management</p>
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">{{ __('blog.recent_posts_title') }}</h2>
+                <p class="mt-4 text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">{{ __('blog.recent_posts_subtitle') }}</p>
             </div>
 
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -145,7 +145,7 @@
                     </div>
                     <div class="p-6">
                         <div class="flex items-center gap-3 mb-3">
-                            <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-xs font-medium">Healthcare Technology</span>
+                            <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-xs font-medium">{{ __('blog.cat_tech') }}</span>
                             <span class="text-slate-500 dark:text-slate-400 text-xs">June 10, 2023</span>
                         </div>
                         <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Ensuring Data Security in Hospital Management Systems</h3>
@@ -157,7 +157,7 @@
                                 </div>
                                 <span class="text-sm text-slate-600 dark:text-slate-400">Sarah Rodriguez</span>
                             </div>
-                            <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm">Read More →</a>
+                            <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm">{{ __('blog.read_more') }}</a>
                         </div>
                     </div>
                 </div>
@@ -169,7 +169,7 @@
                     </div>
                     <div class="p-6">
                         <div class="flex items-center gap-3 mb-3">
-                            <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs font-medium">Patient Care</span>
+                            <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs font-medium">{{ __('blog.cat_patient') }}</span>
                             <span class="text-slate-500 dark:text-slate-400 text-xs">June 5, 2023</span>
                         </div>
                         <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Improving Patient Experience Through Digital Solutions</h3>
@@ -181,7 +181,7 @@
                                 </div>
                                 <span class="text-sm text-slate-600 dark:text-slate-400">Michael Chen</span>
                             </div>
-                            <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm">Read More →</a>
+                            <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm">{{ __('blog.read_more') }}</a>
                         </div>
                     </div>
                 </div>
@@ -193,7 +193,7 @@
                     </div>
                     <div class="p-6">
                         <div class="flex items-center gap-3 mb-3">
-                            <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">Hospital Management</span>
+                            <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">{{ __('blog.cat_management') }}</span>
                             <span class="text-slate-500 dark:text-slate-400 text-xs">May 28, 2023</span>
                         </div>
                         <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">The Benefits of Role-Based Access in Healthcare Settings</h3>
@@ -205,7 +205,7 @@
                                 </div>
                                 <span class="text-sm text-slate-600 dark:text-slate-400">Dr. James Davidson</span>
                             </div>
-                            <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm">Read More →</a>
+                            <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm">{{ __('blog.read_more') }}</a>
                         </div>
                     </div>
                 </div>
@@ -217,7 +217,7 @@
                     </div>
                     <div class="p-6">
                         <div class="flex items-center gap-3 mb-3">
-                            <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-xs font-medium">Healthcare Technology</span>
+                            <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-xs font-medium">{{ __('blog.cat_tech') }}</span>
                             <span class="text-slate-500 dark:text-slate-400 text-xs">May 20, 2023</span>
                         </div>
                         <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Mobile-First Design for Healthcare Applications</h3>
@@ -229,7 +229,7 @@
                                 </div>
                                 <span class="text-sm text-slate-600 dark:text-slate-400">Sarah Rodriguez</span>
                             </div>
-                            <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm">Read More →</a>
+                            <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm">{{ __('blog.read_more') }}</a>
                         </div>
                     </div>
                 </div>
@@ -241,7 +241,7 @@
                     </div>
                     <div class="p-6">
                         <div class="flex items-center gap-3 mb-3">
-                            <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">Hospital Management</span>
+                            <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">{{ __('blog.cat_management') }}</span>
                             <span class="text-slate-500 dark:text-slate-400 text-xs">May 15, 2023</span>
                         </div>
                         <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Interoperability Challenges in Healthcare Systems</h3>
@@ -253,7 +253,7 @@
                                 </div>
                                 <span class="text-sm text-slate-600 dark:text-slate-400">Michael Chen</span>
                             </div>
-                            <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm">Read More →</a>
+                            <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm">{{ __('blog.read_more') }}</a>
                         </div>
                     </div>
                 </div>
@@ -265,7 +265,7 @@
                     </div>
                     <div class="p-6">
                         <div class="flex items-center gap-3 mb-3">
-                            <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full text-xs font-medium">Company News</span>
+                            <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full text-xs font-medium">{{ __('blog.cat_news') }}</span>
                             <span class="text-slate-500 dark:text-slate-400 text-xs">May 10, 2023</span>
                         </div>
                         <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">SanaGo Announces New Partnership with Leading Hospital Chain</h3>
@@ -277,7 +277,7 @@
                                 </div>
                                 <span class="text-sm text-slate-600 dark:text-slate-400">Dr. James Davidson</span>
                             </div>
-                            <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm">Read More →</a>
+                            <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm">{{ __('blog.read_more') }}</a>
                         </div>
                     </div>
                 </div>
@@ -285,7 +285,7 @@
 
             <div class="mt-12 text-center reveal-on-scroll">
                 <button class="inline-flex items-center gap-2 px-8 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-xl transition-colors">
-                    Load More Articles
+                    {{ __('blog.load_more') }}
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
             </div>
@@ -299,15 +299,15 @@
                 <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6">
                     ✉️
                 </div>
-                <h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Stay Updated with SanaGo</h2>
-                <p class="text-lg text-slate-600 dark:text-slate-300 mb-8">Subscribe to our newsletter for the latest insights on healthcare management technology and industry trends.</p>
+                <h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">{{ __('blog.newsletter_title') }}</h2>
+                <p class="text-lg text-slate-600 dark:text-slate-300 mb-8">{{ __('blog.newsletter_desc') }}</p>
                 <form class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-                    <input type="email" placeholder="Enter your email" class="flex-1 px-5 py-3 rounded-full bg-white/80 dark:bg-slate-700/80 backdrop-blur-md border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400">
+                    <input type="email" placeholder="{{ __('blog.email_placeholder') }}" class="flex-1 px-5 py-3 rounded-full bg-white/80 dark:bg-slate-700/80 backdrop-blur-md border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400">
                     <button type="submit" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full transition-colors">
-                        Subscribe
+                        {{ __('blog.subscribe_btn') }}
                     </button>
                 </form>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mt-4">We respect your privacy. Unsubscribe at any time.</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-4">{{ __('blog.privacy_note') }}</p>
             </div>
         </div>
     </section>

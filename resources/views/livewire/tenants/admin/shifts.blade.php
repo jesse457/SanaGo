@@ -1,4 +1,4 @@
-<main class="flex-1  sm:p-6 bg-gray-50 dark:bg-gray-900 overflow-y-auto min-h-screen">
+<main class="flex-1  sm:p-6 bg-white dark:bg-gray-900 overflow-y-auto min-h-screen">
 
     {{-- Hero section --}}
     <div class="mb-8 relative p-2">
@@ -26,11 +26,6 @@
 
             {{-- Action Toolbar --}}
             <div class="flex items-center gap-3">
-                 {{-- Placeholder for Search/Filter (Visual enhancement) --}}
-                <div class="relative hidden sm:block">
-                    <x-heroicon-o-magnifying-glass class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input type="text" placeholder="Search shifts..." class="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500 dark:text-white shadow-sm" />
-                </div>
 
                 <button wire:click="openModal"
                         class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 dark:focus:ring-offset-gray-900">

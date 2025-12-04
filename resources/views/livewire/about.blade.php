@@ -51,24 +51,24 @@
             <div class="relative max-w-7xl mx-auto px-6 flex flex-col items-center text-center z-10">
                 <div class="reveal-on-scroll inline-flex items-center rounded-full border border-blue-100 dark:border-blue-900 bg-blue-50/80 dark:bg-blue-900/30 px-4 py-1.5 text-sm font-medium text-blue-700 dark:text-blue-200 mb-8 backdrop-blur-md shadow-sm">
                     <span class="flex h-2 w-2 rounded-full bg-blue-500 mr-2 animate-pulse"></span>
-                    Healthcare Management Revolution
+                    {{ __('about.badge') }}
                 </div>
 
                 <h1 class="reveal-on-scroll delay-100 text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8 max-w-5xl">
-                    About <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-500 to-blue-400">SanaGo</span>
+                    {{ __('about.title') }} <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-500 to-blue-400">SanaGo</span>
                 </h1>
 
                 <p class="reveal-on-scroll delay-200 mt-4 text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mb-12 leading-relaxed">
-                    Transforming healthcare management through innovative technology solutions designed specifically for the unique challenges of modern hospitals and healthcare facilities.
+                    {{ __('about.subtitle') }}
                 </p>
 
                 <div class="reveal-on-scroll delay-300 flex flex-col sm:flex-row gap-5 items-center w-full justify-center">
                     <a href="#mission" class="group relative inline-flex h-14 items-center justify-center overflow-hidden rounded-full bg-blue-600 px-10 font-bold text-white duration-300 hover:bg-blue-700 shadow-[0_10px_40px_-10px_rgba(37,99,235,0.5)] hover:shadow-[0_20px_40px_-10px_rgba(37,99,235,0.7)] hover:-translate-y-1 w-full sm:w-auto">
-                        <span class="mr-2">Our Mission</span>
+                        <span class="mr-2">{{ __('about.mission_cta') }}</span>
                         <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </a>
                     <a href="#team" class="inline-flex h-14 items-center justify-center rounded-full px-10 font-bold text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 border border-slate-200 dark:border-slate-700 w-full sm:w-auto">
-                        Meet Our Team
+                        {{ __('about.team_cta') }}
                     </a>
                 </div>
             </div>
@@ -79,12 +79,12 @@
             <div class="max-w-7xl mx-auto px-6">
                 <div class="grid md:grid-cols-2 gap-12 items-center">
                     <div class="reveal-on-scroll">
-                        <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-6">Our Mission</h2>
+                        <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-6">{{ __('about.mission_title') }}</h2>
                         <p class="text-lg text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
-                            At SanaGo, we're dedicated to revolutionizing healthcare management through innovative technology. Our mission is to empower healthcare providers with tools that streamline operations, enhance patient care, and improve overall efficiency.
+                            {{ __('about.mission_desc_1') }}
                         </p>
                         <p class="text-lg text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
-                            We believe that technology should serve healthcare professionals, not complicate their work. That's why we've developed a comprehensive system that addresses the unique challenges faced by hospitals and healthcare facilities today.
+                            {{ __('about.mission_desc_2') }}
                         </p>
                         <div class="flex flex-col sm:flex-row gap-4">
                             <div class="flex items-start gap-3">
@@ -92,7 +92,7 @@
                                     <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                 </div>
                                 <div>
-                                    <p class="font-bold text-slate-900 dark:text-white">Patient-Centered Design</p>
+                                    <p class="font-bold text-slate-900 dark:text-white">{{ __('about.patient_centered_design') }}</p>
                                 </div>
                             </div>
                             <div class="flex items-start gap-3">
@@ -100,7 +100,7 @@
                                     <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                 </div>
                                 <div>
-                                    <p class="font-bold text-slate-900 dark:text-white">Role-Based Access</p>
+                                    <p class="font-bold text-slate-900 dark:text-white">{{ __('about.role_based_access') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -119,8 +119,8 @@
         <section class="py-24">
             <div class="max-w-7xl mx-auto px-6">
                 <div class="text-center mb-16 reveal-on-scroll">
-                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Our Values</h2>
-                    <p class="mt-4 text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">The principles that guide everything we do at SanaGo</p>
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">{{ __('about.values_title') }}</h2>
+                    <p class="mt-4 text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">{{ __('about.values_subtitle') }}</p>
                 </div>
 
                 <div class="grid md:grid-cols-3 gap-8">
@@ -128,24 +128,24 @@
                         <div class="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mb-6">
                             <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                         </div>
-                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Security First</h3>
-                        <p class="text-slate-600 dark:text-slate-300">We prioritize the security and privacy of patient data above all else, implementing industry-leading encryption and security measures.</p>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">{{ __('about.value_security_title') }}</h3>
+                        <p class="text-slate-600 dark:text-slate-300">{{ __('about.value_security_desc') }}</p>
                     </div>
 
                     <div class="reveal-on-scroll delay-200 bg-white dark:bg-slate-800/60 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
                         <div class="w-14 h-14 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mb-6">
                             <svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                         </div>
-                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Efficiency</h3>
-                        <p class="text-slate-600 dark:text-slate-300">Our solutions are designed to streamline workflows and eliminate redundant tasks, allowing healthcare professionals to focus on patient care.</p>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">{{ __('about.value_efficiency_title') }}</h3>
+                        <p class="text-slate-600 dark:text-slate-300">{{ __('about.value_efficiency_desc') }}</p>
                     </div>
 
                     <div class="reveal-on-scroll delay-300 bg-white dark:bg-slate-800/60 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
                         <div class="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center mb-6">
                             <svg class="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                         </div>
-                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Patient-Centered</h3>
-                        <p class="text-slate-600 dark:text-slate-300">We believe that technology should ultimately improve the patient experience, from registration to discharge and beyond.</p>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">{{ __('about.value_patient_title') }}</h3>
+                        <p class="text-slate-600 dark:text-slate-300">{{ __('about.value_patient_desc') }}</p>
                     </div>
                 </div>
             </div>
@@ -155,8 +155,8 @@
         <section id="team" class="py-24 bg-white/40 dark:bg-black/20 backdrop-blur-sm">
             <div class="max-w-7xl mx-auto px-6">
                 <div class="text-center mb-16 reveal-on-scroll">
-                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Leadership Team</h2>
-                    <p class="mt-4 text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">The experts behind SanaGo's innovative healthcare solutions</p>
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">{{ __('about.team_title') }}</h2>
+                    <p class="mt-4 text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">{{ __('about.team_subtitle') }}</p>
                 </div>
 
                 <div class="grid md:grid-cols-3 gap-8">
@@ -164,27 +164,27 @@
                         <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold">
                             JD
                         </div>
-                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Dr. James Davidson</h3>
-                        <p class="text-blue-600 dark:text-blue-400 mb-4">Chief Executive Officer</p>
-                        <p class="text-slate-600 dark:text-slate-300">Former hospital administrator with 15+ years of healthcare management experience. Passionate about technology's potential to transform healthcare delivery.</p>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">{{ __('about.member_1_name') }}</h3>
+                        <p class="text-blue-600 dark:text-blue-400 mb-4">{{ __('about.member_1_role') }}</p>
+                        <p class="text-slate-600 dark:text-slate-300">{{ __('about.member_1_desc') }}</p>
                     </div>
 
                     <div class="reveal-on-scroll delay-200 bg-white dark:bg-slate-800/60 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl text-center">
                         <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold">
                             SR
                         </div>
-                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Sarah Rodriguez</h3>
-                        <p class="text-blue-600 dark:text-blue-400 mb-4">Chief Technology Officer</p>
-                        <p class="text-slate-600 dark:text-slate-300">Software engineer with expertise in healthcare systems and data security. Leads our development team in creating innovative solutions for healthcare challenges.</p>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">{{ __('about.member_2_name') }}</h3>
+                        <p class="text-blue-600 dark:text-blue-400 mb-4">{{ __('about.member_2_role') }}</p>
+                        <p class="text-slate-600 dark:text-slate-300">{{ __('about.member_2_desc') }}</p>
                     </div>
 
                     <div class="reveal-on-scroll delay-300 bg-white dark:bg-slate-800/60 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl text-center">
                         <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold">
                             MC
                         </div>
-                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Michael Chen</h3>
-                        <p class="text-blue-600 dark:text-blue-400 mb-4">Chief Medical Officer</p>
-                        <p class="text-slate-600 dark:text-slate-300">Practicing physician with a background in health informatics. Ensures our solutions meet the real-world needs of healthcare providers and their patients.</p>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">{{ __('about.member_3_name') }}</h3>
+                        <p class="text-blue-600 dark:text-blue-400 mb-4">{{ __('about.member_3_role') }}</p>
+                        <p class="text-slate-600 dark:text-slate-300">{{ __('about.member_3_desc') }}</p>
                     </div>
                 </div>
             </div>
@@ -196,19 +196,19 @@
                 <div class="grid md:grid-cols-4 gap-8 text-center">
                     <div class="reveal-on-scroll delay-100">
                         <div class="text-4xl md:text-5xl font-bold text-blue-600 dark:text-blue-400 mb-2">500+</div>
-                        <p class="text-slate-600 dark:text-slate-300">Healthcare Facilities</p>
+                        <p class="text-slate-600 dark:text-slate-300">{{ __('about.stat_facilities') }}</p>
                     </div>
                     <div class="reveal-on-scroll delay-200">
                         <div class="text-4xl md:text-5xl font-bold text-blue-600 dark:text-blue-400 mb-2">50K+</div>
-                        <p class="text-slate-600 dark:text-slate-300">Healthcare Professionals</p>
+                        <p class="text-slate-600 dark:text-slate-300">{{ __('about.stat_professionals') }}</p>
                     </div>
                     <div class="reveal-on-scroll delay-300">
                         <div class="text-4xl md:text-5xl font-bold text-blue-600 dark:text-blue-400 mb-2">2M+</div>
-                        <p class="text-slate-600 dark:text-slate-300">Patients Managed</p>
+                        <p class="text-slate-600 dark:text-slate-300">{{ __('about.stat_patients') }}</p>
                     </div>
                     <div class="reveal-on-scroll delay-400">
                         <div class="text-4xl md:text-5xl font-bold text-blue-600 dark:text-blue-400 mb-2">99.9%</div>
-                        <p class="text-slate-600 dark:text-slate-300">System Uptime</p>
+                        <p class="text-slate-600 dark:text-slate-300">{{ __('about.stat_uptime') }}</p>
                     </div>
                 </div>
             </div>
@@ -222,15 +222,15 @@
                     <div class="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
                     <div class="absolute bottom-0 right-0 translate-x-1/2 translate-y-1/2 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl"></div>
 
-                    <h2 class="relative text-3xl font-bold tracking-tight text-white sm:text-5xl mb-6">Ready to Transform Your Healthcare Facility?</h2>
-                    <p class="relative text-xl text-blue-100 max-w-2xl mx-auto mb-10">Join the hundreds of healthcare facilities already using SanaGo to streamline operations and improve patient care.</p>
+                    <h2 class="relative text-3xl font-bold tracking-tight text-white sm:text-5xl mb-6">{{ __('about.cta_title') }}</h2>
+                    <p class="relative text-xl text-blue-100 max-w-2xl mx-auto mb-10">{{ __('about.cta_subtitle') }}</p>
 
                     <div class="relative flex flex-col sm:flex-row justify-center gap-4">
                         <a href="#" class="rounded-full bg-white px-10 py-4 text-base font-bold text-blue-600 shadow-xl hover:bg-blue-50 transition-all duration-200 hover:scale-105">
-                            Request a Demo
+                            {{ __('about.cta_demo') }}
                         </a>
                         <a href="#" class="rounded-full border border-white/30 bg-white/10 px-10 py-4 text-base font-bold text-white backdrop-blur-sm hover:bg-white/20 transition-all duration-200 hover:scale-105">
-                            Contact Sales
+                            {{ __('about.cta_sales') }}
                         </a>
                     </div>
                 </div>

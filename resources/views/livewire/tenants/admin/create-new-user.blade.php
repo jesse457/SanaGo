@@ -1,4 +1,4 @@
-<div class="flex-1 p-6 sm:p-6 bg-slate-50 dark:bg-gray-900 overflow-y-auto min-h-screen">
+<div class="flex-1 p-6 sm:p-6 bg-white dark:bg-gray-900 overflow-y-auto min-h-screen">
     <div class="p-4">
 
         <div class="mb-8 mt-2 relative">

@@ -2,13 +2,17 @@ services:
   # --- Application ---
   frankenphp:
     container_name: sanago-octane
+    # Option 1: Build locally (for development)
     build:
       context: .
-    # image: ghcr.io/${GITHUB_REPOSITORY:-my-app}:latest
+    # Option 2: Use pre-built image from GitHub Container Registry (for production)
+    # Uncomment the line below and comment out the 'build' section above
+    # image: ghcr.io/${GITHUB_REPOSITORY:-your-username/sanago-v1}:latest
     restart: unless-stopped
     ports:
       - "8000:8000"
-    extra_hosts: # Added for Linux compatibility
+    extra_hosts:
+      # Added for Linux compatibility
       - "host.docker.internal:host-gateway"
     environment:
       - APP_ENV=local
@@ -52,7 +56,7 @@ services:
     networks:
       - app_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 30s
       timeout: 20s
       retries: 3
@@ -63,12 +67,7 @@ services:
       minio:
         condition: service_healthy
     entrypoint: >
-      /bin/sh -c "
-      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
-      /usr/bin/mc mb myminio/local-bucket || true;  # Added || true to prevent crash if exists
-      /usr/bin/mc policy set download myminio/local-bucket;
-      exit 0;
-      "
+      /bin/sh -c " /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin; /usr/bin/mc mb myminio/local-bucket || true;  # Added || true to prevent crash if exists /usr/bin/mc policy set download myminio/local-bucket; exit 0; "
     networks:
       - app_network
 
@@ -180,6 +179,7 @@ volumes:
   redis_data:
   grafana_data:
   prometheus_data:
+
 
 networks:
   app_network:

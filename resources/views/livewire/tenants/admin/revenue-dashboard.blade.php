@@ -1,4 +1,4 @@
-<div class="w-full min-h-full p-4 md:p-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+<div class="w-full min-h-full p-4 md:p-6 bg-white dark:from-slate-900 dark:to-slate-800">
 
     {{-- Header Section --}}
     <header class="max-w-7xl mx-auto mb-8">

@@ -61,32 +61,29 @@
                 <div
                     class="reveal-on-scroll inline-flex items-center rounded-full border border-blue-100 dark:border-blue-900 bg-blue-50/80 dark:bg-blue-900/30 px-4 py-1.5 text-sm font-medium text-blue-700 dark:text-blue-200 mb-8 backdrop-blur-md shadow-sm">
                     <span class="flex h-2 w-2 rounded-full bg-blue-500 mr-2 animate-pulse"></span>
-                    Simple, Transparent Pricing
+                    {{ __('pricing.badge') }}
                 </div>
 
                 <h1
                     class="reveal-on-scroll delay-100 text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8 max-w-5xl">
-                    Plans for Every <span
-                        class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-500 to-blue-400">Healthcare
-                        Facility</span>
+                    {{ __('pricing.title') }}
                 </h1>
 
                 <p
                     class="reveal-on-scroll delay-200 mt-4 text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mb-12 leading-relaxed">
-                    Choose the perfect plan for your clinic or hospital. All plans include our core features with
-                    role-based access for your entire team.
+                    {{ __('pricing.subtitle') }}
                 </p>
 
                 <!-- Billing Toggle -->
                 <div class="reveal-on-scroll delay-300 flex items-center justify-center gap-4 mb-16">
-                    <span class="text-slate-700 dark:text-slate-300 font-medium">Monthly</span>
+                    <span class="text-slate-700 dark:text-slate-300 font-medium">{{ __('pricing.monthly') }}</span>
                     <button @click="billingCycle = billingCycle === 'monthly' ? 'annual' : 'monthly'"
                         class="relative inline-flex h-8 w-14 items-center rounded-full bg-slate-200 dark:bg-slate-700 transition-colors">
                         <span
                             class="inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform"
                             :class="billingCycle === 'annual' ? 'translate-x-7' : 'translate-x-1'"></span>
                     </button>
-                    <span class="text-slate-700 dark:text-slate-300 font-medium">Annual (Save 20%)</span>
+                    <span class="text-slate-700 dark:text-slate-300 font-medium">{{ __('pricing.annual') }}</span>
                 </div>
             </div>
         </section>
@@ -98,59 +95,28 @@
                     <!-- Starter Plan -->
                     <div
                         class="reveal-on-scroll delay-100 bg-white dark:bg-slate-800/60 p-8 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Starter</h3>
-                        <p class="text-slate-600 dark:text-slate-300 mb-6">Perfect for small clinics and private
-                            practices.</p>
+                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">{{ __('pricing.starter_title') }}</h3>
+                        <p class="text-slate-600 dark:text-slate-300 mb-6">{{ __('pricing.starter_desc') }}</p>
                         <div class="flex items-baseline mb-8">
                             <span class="text-5xl font-extrabold text-slate-900 dark:text-white"
-                                x-text="billingCycle === 'monthly' ? '$199' : '$159'"></span>
-                            <span class="text-slate-500 dark:text-slate-400 font-medium">/month</span>
+                                x-text="billingCycle === 'monthly' ? '{{ __('pricing.starter_price_monthly') }}' : '{{ __('pricing.starter_price_annual') }}'"></span>
+                            <span class="text-slate-500 dark:text-slate-400 font-medium">{{ __('pricing.per_month') }}</span>
                         </div>
                         <ul class="space-y-4 mb-8">
+                            @foreach(__('pricing.starter_features') as $feature)
                             <li class="flex items-start gap-3">
                                 <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M5 13l4 4L19 7"></path>
                                 </svg>
-                                <span class="text-slate-700 dark:text-slate-300">Up to 10 Users</span>
+                                <span class="text-slate-700 dark:text-slate-300">{{ $feature }}</span>
                             </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-slate-700 dark:text-slate-300">All 6 Role-Based Dashboards</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-slate-700 dark:text-slate-300">Patient & Appointment Management</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-slate-700 dark:text-slate-300">Basic Reporting & Analytics</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-slate-700 dark:text-slate-300">Email Support</span>
-                            </li>
+                            @endforeach
                         </ul>
                         <a href="#"
                             class="w-full block text-center px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-colors">
-                            Start Free Trial
+                            {{ __('pricing.start_trial') }}
                         </a>
                     </div>
 
@@ -159,136 +125,56 @@
                         class="reveal-on-scroll delay-200 relative bg-white dark:bg-slate-800/60 p-8 rounded-3xl border-2 border-blue-500 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-2 scale-105">
                         <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
                             <span
-                                class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-bold">Most
-                                Popular</span>
+                                class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-bold">{{ __('pricing.most_popular') }}</span>
                         </div>
-                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Professional</h3>
-                        <p class="text-slate-600 dark:text-slate-300 mb-6">Ideal for medium-sized hospitals and medical
-                            centers.</p>
+                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">{{ __('pricing.pro_title') }}</h3>
+                        <p class="text-slate-600 dark:text-slate-300 mb-6">{{ __('pricing.pro_desc') }}</p>
                         <div class="flex items-baseline mb-8">
                             <span class="text-5xl font-extrabold text-slate-900 dark:text-white"
-                                x-text="billingCycle === 'monthly' ? '$499' : '$399'"></span>
-                            <span class="text-slate-500 dark:text-slate-400 font-medium">/month</span>
+                                x-text="billingCycle === 'monthly' ? '{{ __('pricing.pro_price_monthly') }}' : '{{ __('pricing.pro_price_annual') }}'"></span>
+                            <span class="text-slate-500 dark:text-slate-400 font-medium">{{ __('pricing.per_month') }}</span>
                         </div>
                         <ul class="space-y-4 mb-8">
+                            @foreach(__('pricing.pro_features') as $feature)
                             <li class="flex items-start gap-3">
                                 <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M5 13l4 4L19 7"></path>
                                 </svg>
-                                <span class="text-slate-700 dark:text-slate-300">Up to 50 Users</span>
+                                <span class="text-slate-700 dark:text-slate-300">{{ $feature }}</span>
                             </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-slate-700 dark:text-slate-300">Everything in Starter, plus:</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-slate-700 dark:text-slate-300">Advanced Revenue Dashboard</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-slate-700 dark:text-slate-300">Shift & Bed Management</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-slate-700 dark:text-slate-300">Inventory & Supply Tracking</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-slate-700 dark:text-slate-300">Priority Phone Support</span>
-                            </li>
+                            @endforeach
                         </ul>
                         <a href="#"
                             class="w-full block text-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors shadow-lg">
-                            Start Free Trial
+                            {{ __('pricing.start_trial') }}
                         </a>
                     </div>
 
                     <!-- Enterprise Plan -->
                     <div
                         class="reveal-on-scroll delay-300 bg-white dark:bg-slate-800/60 p-8 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Enterprise</h3>
-                        <p class="text-slate-600 dark:text-slate-300 mb-6">Tailored for large hospital networks and
-                            healthcare enterprises.</p>
+                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">{{ __('pricing.enterprise_title') }}</h3>
+                        <p class="text-slate-600 dark:text-slate-300 mb-6">{{ __('pricing.enterprise_desc') }}</p>
                         <div class="flex items-baseline mb-8">
-                            <span class="text-4xl font-extrabold text-slate-900 dark:text-white">Custom</span>
+                            <span class="text-4xl font-extrabold text-slate-900 dark:text-white">{{ __('pricing.enterprise_price') }}</span>
                         </div>
                         <ul class="space-y-4 mb-8">
+                            @foreach(__('pricing.enterprise_features') as $feature)
                             <li class="flex items-start gap-3">
                                 <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M5 13l4 4L19 7"></path>
                                 </svg>
-                                <span class="text-slate-700 dark:text-slate-300">Unlimited Users</span>
+                                <span class="text-slate-700 dark:text-slate-300">{{ $feature }}</span>
                             </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-slate-700 dark:text-slate-300">Everything in Professional,
-                                    plus:</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-slate-700 dark:text-slate-300">Custom Feature Development</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-slate-700 dark:text-slate-300">Advanced API Access</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-slate-700 dark:text-slate-300">Dedicated Account Manager</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-500 mt-0.5 shrink-0" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-slate-700 dark:text-slate-300">24/7 Dedicated Support</span>
-                            </li>
+                            @endforeach
                         </ul>
                         <a href="#"
                             class="w-full block text-center px-6 py-3 bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 font-bold rounded-xl transition-colors">
-                            Contact Sales
+                            {{ __('pricing.contact_sales') }}
                         </a>
                     </div>
                 </div>
@@ -298,13 +184,12 @@
         <!-- FAQ SECTION -->
         <section class="py-24 bg-white/40 dark:bg-black/20 backdrop-blur-sm">
             <div class="max-w-3xl mx-auto px-6">
-                <h2 class="text-3xl font-bold text-center mb-12 text-slate-900 dark:text-white">Frequently Asked
-                    Questions</h2>
+                <h2 class="text-3xl font-bold text-center mb-12 text-slate-900 dark:text-white">{{ __('pricing.faq_title') }}</h2>
                 <div class="space-y-4">
                     <div
                         class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
                         <button class="w-full p-6 flex justify-between items-center text-left">
-                            <span class="font-semibold text-slate-900 dark:text-white">Is there a setup fee?</span>
+                            <span class="font-semibold text-slate-900 dark:text-white">{{ __('pricing.faq_1_q') }}</span>
                             <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -312,15 +197,13 @@
                             </svg>
                         </button>
                         <div class="px-6 pb-6 text-slate-600 dark:text-slate-300">
-                            No, there are no setup fees for any of our plans. You can start your free trial instantly
-                            without any hidden charges.
+                            {{ __('pricing.faq_1_a') }}
                         </div>
                     </div>
                     <div
                         class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
                         <button class="w-full p-6 flex justify-between items-center text-left">
-                            <span class="font-semibold text-slate-900 dark:text-white">Can I change my plan
-                                later?</span>
+                            <span class="font-semibold text-slate-900 dark:text-white">{{ __('pricing.faq_2_q') }}</span>
                             <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -328,15 +211,13 @@
                             </svg>
                         </button>
                         <div class="px-6 pb-6 text-slate-600 dark:text-slate-300">
-                            Absolutely! You can upgrade or downgrade your plan at any time from your account settings.
-                            Changes will be reflected in your next billing cycle.
+                            {{ __('pricing.faq_2_a') }}
                         </div>
                     </div>
                     <div
                         class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
                         <button class="w-full p-6 flex justify-between items-center text-left">
-                            <span class="font-semibold text-slate-900 dark:text-white">How secure is my patient
-                                data?</span>
+                            <span class="font-semibold text-slate-900 dark:text-white">{{ __('pricing.faq_3_q') }}</span>
                             <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -344,8 +225,7 @@
                             </svg>
                         </button>
                         <div class="px-6 pb-6 text-slate-600 dark:text-slate-300">
-                            Security is our top priority. We use industry-standard encryption for data at rest and in
-                            transit. Our system is HIPAA compliant and we conduct regular security audits.
+                            {{ __('pricing.faq_3_a') }}
                         </div>
                     </div>
                 </div>
@@ -364,19 +244,17 @@
                         class="absolute bottom-0 right-0 translate-x-1/2 translate-y-1/2 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl">
                     </div>
 
-                    <h2 class="relative text-3xl font-bold tracking-tight text-white sm:text-5xl mb-6">Ready to Get
-                        Started?</h2>
-                    <p class="relative text-xl text-blue-100 max-w-2xl mx-auto mb-10">Join hundreds of healthcare
-                        facilities that trust SanaGo to manage their operations efficiently and securely.</p>
+                    <h2 class="relative text-3xl font-bold tracking-tight text-white sm:text-5xl mb-6">{{ __('pricing.cta_title') }}</h2>
+                    <p class="relative text-xl text-blue-100 max-w-2xl mx-auto mb-10">{{ __('pricing.cta_subtitle') }}</p>
 
                     <div class="relative flex flex-col sm:flex-row justify-center gap-4">
                         <a href="#"
                             class="rounded-full bg-white px-10 py-4 text-base font-bold text-blue-600 shadow-xl hover:bg-blue-50 transition-all duration-200 hover:scale-105">
-                            Start Your Free Trial
+                            {{ __('pricing.cta_trial') }}
                         </a>
                         <a href="#"
                             class="rounded-full border border-white/30 bg-white/10 px-10 py-4 text-base font-bold text-white backdrop-blur-sm hover:bg-white/20 transition-all duration-200 hover:scale-105">
-                            Schedule a Demo
+                            {{ __('pricing.cta_demo') }}
                         </a>
                     </div>
                 </div>

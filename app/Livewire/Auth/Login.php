@@ -87,7 +87,7 @@ class Login extends Component
             }
 
             // 6. Log the user in
-            Auth::login($user, $this->remember);
+            Auth::Login($user, $this->remember);
 
             // 7. Regenerate the session for security
             Session::regenerate();

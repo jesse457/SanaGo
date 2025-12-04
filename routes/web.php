@@ -22,6 +22,14 @@ use App\Livewire\SendFeedback;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 
+// Health check endpoint for Docker/Kubernetes
+Route::get('/api/health', function () {
+    return response()->json([
+        'status' => 'healthy',
+        'timestamp' => now()->toIso8601String(),
+    ]);
+});
+
 Route::middleware(['web', 'universal'])->group(function () {
 
     // Iterate through central domains defined in tenancy config

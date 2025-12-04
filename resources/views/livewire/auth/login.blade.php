@@ -56,8 +56,8 @@
                              alt="Logo">
                     </div>
 
-                    <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">Welcome Back</h1>
-                    <p class="text-slate-600 dark:text-slate-400 text-center text-sm">Sign in to your account to continue</p>
+                    <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">{{ __('auth_login.title') }}</h1>
+                    <p class="text-slate-600 dark:text-slate-400 text-center text-sm">{{ __('auth_login.subtitle') }}</p>
                 </div>
 
                 <!-- Login Form -->
@@ -65,12 +65,12 @@
 
                     <!-- Email Field -->
                     <div>
-                        <label for="email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 ml-1">Email Address</label>
+                        <label for="email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 ml-1">{{ __('auth_login.email_label') }}</label>
                         <div class="relative group">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <x-heroicon-o-envelope class="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                             </div>
-                            <input id="email" wire:model.live="email" type="email" required autocomplete="email" placeholder="you@example.com"
+                            <input id="email" wire:model.live="email" type="email" required autocomplete="email" placeholder="{{ __('auth_login.email_placeholder') }}"
                                 class="block w-full pl-10 pr-4 py-3 border rounded-xl bg-white/50 dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200
                                 @error('email') border-red-500 focus:ring-red-500 @else border-slate-300 dark:border-slate-600 @enderror">
                         </div>
@@ -84,13 +84,13 @@
                     <!-- Password Field -->
                     <div x-data="{ show: false }">
                         <div class="flex items-center justify-between mb-1.5 ml-1">
-                            <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
+                            <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ __('auth_login.password_label') }}</label>
                         </div>
                         <div class="relative group">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <x-heroicon-o-lock-closed class="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                             </div>
-                            <input id="password" wire:model.live="password" :type="show ? 'text' : 'password'" required autocomplete="current-password" placeholder="•••••••••"
+                            <input id="password" wire:model.live="password" :type="show ? 'text' : 'password'" required autocomplete="current-password" placeholder="{{ __('auth_login.password_placeholder') }}"
                                 class="block w-full pl-10 pr-12 py-3 border rounded-xl bg-white/50 dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200
                                 @error('password') border-red-500 focus:ring-red-500 @else border-slate-300 dark:border-slate-600 @enderror">
 
@@ -108,21 +108,21 @@
                     <div class="flex items-center justify-between pt-1">
                         <label class="flex items-center cursor-pointer">
                             <input type="checkbox" wire:model="remember" class="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:focus:ring-offset-slate-800 transition">
-                            <span class="ml-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors">Remember me</span>
+                            <span class="ml-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors">{{ __('auth_login.remember_me') }}</span>
                         </label>
-                        <a href="{{ route('password.request') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors">Forgot password?</a>
+                        <a href="{{ route('password.request') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors">{{ __('auth_login.forgot_password') }}</a>
                     </div>
 
                     <!-- Submit Button -->
                     <div>
                         <button type="submit" wire:loading.attr="disabled" class="w-full flex justify-center items-center px-6 py-3.5 border border-transparent text-base font-semibold rounded-xl shadow-lg shadow-blue-500/30 text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none dark:focus:ring-offset-slate-800">
-                            <span wire:loading.remove wire:target="authenticate">Sign in</span>
+                            <span wire:loading.remove wire:target="authenticate">{{ __('auth_login.sign_in_btn') }}</span>
                             <span wire:loading wire:target="authenticate" class="flex items-center gap-2">
                                 <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                Signing in...
+                                {{ __('auth_login.signing_in') }}
                             </span>
                         </button>
                     </div>
@@ -131,8 +131,8 @@
                 <!-- Footer -->
                 <div class="mt-8 text-center relative z-10">
                     <p class="text-sm text-slate-600 dark:text-slate-400">
-                        Don't have an account?
-                        <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-bold transition-colors">Register here</a>
+                        {{ __('auth_login.no_account_prefix') }}
+                        <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-bold transition-colors">{{ __('auth_login.register_link') }}</a>
                     </p>
                 </div>
             </div>

@@ -1,5 +1,5 @@
 {{-- resources/views/livewire/tenants/admin/user-activities.blade.php --}}
-<main class="flex-1  bg-gray-50 dark:bg-gray-900 overflow-y-auto min-h-screen">
+<main class="flex-1  bg-white dark:bg-gray-900 overflow-y-auto min-h-screen">
 
 
 

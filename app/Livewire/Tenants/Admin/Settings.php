@@ -8,7 +8,6 @@ use App\Models\Department;
 use App\Models\Subscription;
 use App\Models\Supply;
 use App\Models\Ward;
-use App\Models\Ward;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
