@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # We do NOT set IMAGE_NAME here to handle casing issues dynamically in steps
+  # We do not set IMAGE_NAME here because we need to lowercase it dynamically
 
 jobs:
   build-and-push:
@@ -23,8 +23,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. FIX: Convert repository name to lowercase
-      # GHCR fails if the image name has uppercase letters.
+      # 1. FIX: Calculate Date here so it can be passed safely to build-args later
+      - name: Set Build Date
+        run: echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+
+      # 2. FIX: Convert repository name (Jesse457/SanaGo) to lowercase (jesse457/sanago)
+      # GHCR fails if the image name contains uppercase letters.
       - name: Lowercase Image Name
         run: |
           echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
@@ -44,13 +48,15 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # 3. FIX: Tagging logic
+          # - semver: turns v1.0.0 into 1.0.0
+          # - sha: uses 'sha-' prefix instead of 'branch-' (which caused your error)
           tags: |
-            type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -60,12 +66,12 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # 2. FIX: Use the lowercased variable for caching
+          # 4. FIX: Use the lowercased variable for caching
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
-          # 3. FIX: Generate dynamic build args safely
+          # 5. FIX: Pass the env vars calculated in Step 1
           build-args: |
-            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            BUILD_DATE=${{ env.BUILD_DATE }}
             VCS_REF=${{ github.sha }}
 
       - name: Image digest
