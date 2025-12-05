@@ -4,7 +4,7 @@ return [
     'badge' => 'Comprehensive & Role-Based',
     'title' => 'A Feature for Every Healthcare Role',
     'subtitle' => 'Explore the powerful, specialized tools designed for each role within your hospital, all working together in one unified, secure system.',
-    
+
     'roles_title' => 'Role-Based Dashboards',
     'roles_subtitle' => 'Click on a role to see its specific features and capabilities.',
 

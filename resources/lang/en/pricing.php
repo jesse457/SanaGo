@@ -10,7 +10,7 @@ return [
     'start_trial' => 'Start Free Trial',
     'contact_sales' => 'Contact Sales',
     'most_popular' => 'Most Popular',
-    
+
     'starter_title' => 'Starter',
     'starter_desc' => 'Perfect for small clinics and private practices.',
     'starter_price_monthly' => '$199',

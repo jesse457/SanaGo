@@ -25,7 +25,7 @@ return [
 
     'positions_title' => 'Open Positions',
     'positions_subtitle' => 'Join our team and help transform healthcare management',
-    
+
     'job_backend_title' => 'Senior Backend Developer',
     'job_backend_desc' => 'We\'re looking for an experienced backend developer to help build and scale our healthcare management platform. Experience with secure data handling and healthcare systems is a plus.',
     'job_backend_reqs' => [
@@ -56,7 +56,7 @@ return [
     'apply_now' => 'Apply Now',
     'requirements' => 'Requirements:',
     'apply_linkedin' => 'Apply on LinkedIn',
-    
+
     'tags_fulltime' => 'Full-time',
     'tags_remote' => 'Remote',
     'tags_hybrid' => 'Hybrid',
