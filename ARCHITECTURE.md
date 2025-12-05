@@ -32,32 +32,33 @@ SanaGo is built on a modern, layered architecture designed for:
 | **Database** | PostgreSQL | ACID compliance, JSON support, excellent for multi-tenancy |
 | **Cache** | Redis | In-memory performance, pub/sub for real-time features |
 | **Storage** | MinIO (S3) | Self-hosted, S3-compatible, cost-effective |
-| **Multi-Tenancy** | Stancl Tenancy | Database-per-tenant for maximum isolation |
+| **Multi-Tenancy** | Stancl Tenancy | Single-database with tenant_id scoping for optimal performance |
 
 ---
 
 ## Multi-Tenancy Architecture
 
-### Database-Per-Tenant Model
+### Single-Database Multi-Tenant Model
 
-Each hospital/clinic gets its own PostgreSQL database for complete data isolation:
+All tenants share a single PostgreSQL database with complete data isolation via tenant_id scoping:
 
 ```
-Central Database (sanago_central)
-├── tenants (id, name, created_at, data)
-├── domains (id, domain, tenant_id)
-└── subscriptions (id, tenant_id, plan, status)
-
-Tenant Databases (tenant_<uuid>)
-├── users
-├── patients
-├── appointments
-├── medical_records
-├── prescriptions
-├── lab_requests
-├── medications
-├── invoices
-└── ... (30+ tables)
+Single Database (sanago)
+├── Central Tables (no tenant_id)
+│   ├── tenants (id, name, created_at, data)
+│   ├── domains (id, domain, tenant_id)
+│   └── subscriptions (id, tenant_id, plan, status)
+│
+└── Tenant-Scoped Tables (with tenant_id column)
+    ├── users (tenant_id, ...)
+    ├── patients (tenant_id, ...)
+    ├── appointments (tenant_id, ...)
+    ├── medical_records (tenant_id, ...)
+    ├── prescriptions (tenant_id, ...)
+    ├── lab_requests (tenant_id, ...)
+    ├── medications (tenant_id, ...)
+    ├── invoices (tenant_id, ...)
+    └── ... (30+ tables with automatic tenant_id filtering)
 ```
 
 ### Tenant Identification Flow
@@ -65,25 +66,26 @@ Tenant Databases (tenant_<uuid>)
 ```php
 // 1. Request arrives: hospital-a.sanago.com
 // 2. Middleware extracts subdomain: "hospital-a"
-// 3. Query central DB for tenant
+// 3. Query for tenant
 $tenant = Tenant::whereHas('domains', function($q) {
     $q->where('domain', 'hospital-a.sanago.com');
 })->first();
 
-// 4. Initialize tenancy
+// 4. Initialize tenancy (sets tenant context)
 tenancy()->initialize($tenant);
 
-// 5. All subsequent queries use tenant DB
-$patients = Patient::all(); // Queries tenant_abc123.patients
+// 5. All subsequent queries automatically scoped by tenant_id
+$patients = Patient::all(); // Automatically adds WHERE tenant_id = 'abc123'
 ```
 
 ### Tenant Isolation Layers
 
-1. **Database Isolation**: Separate PostgreSQL databases
+1. **Query Isolation**: Global scopes automatically filter all queries by tenant_id
 2. **File Isolation**: S3 prefixes per tenant (`tenant_<id>/uploads/...`)
 3. **Cache Isolation**: Redis key prefixes (`tenant:<id>:cache:...`)
 4. **Queue Isolation**: Job metadata includes tenant context
 5. **Session Isolation**: Tenant-scoped session storage
+6. **Index Optimization**: Composite indexes on (tenant_id, ...) for fast queries
 
 ---
 
@@ -186,19 +188,27 @@ app/Models/
 ```php
 class Patient extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant;  // Automatically adds global scope for tenant_id
     
-    // Relationships
+    protected $fillable = ['tenant_id', 'first_name', 'last_name', ...];
+    
+    // Global scope automatically applied
+    protected static function booted()
+    {
+        static::addGlobalScope('tenant', function ($query) {
+            if (tenancy()->initialized) {
+                $query->where('tenant_id', tenant('id'));
+            }
+        });
+    }
+    
+    // Relationships (automatically scoped)
     public function appointments() {
         return $this->hasMany(Appointment::class);
     }
     
     public function medicalRecords() {
         return $this->hasMany(MedicalRecord::class);
-    }
-    
-    public function prescriptions() {
-        return $this->hasManyThrough(Prescription::class, Appointment::class);
     }
     
     // Accessors/Mutators
@@ -257,7 +267,7 @@ class Patient extends Model
 ```sql
 CREATE TABLE patients (
     id BIGSERIAL PRIMARY KEY,
-    tenant_id VARCHAR(255),
+    tenant_id VARCHAR(255) NOT NULL,  -- Required for multi-tenancy
     first_name VARCHAR(255),
     last_name VARCHAR(255),
     date_of_birth DATE,
@@ -269,7 +279,11 @@ CREATE TABLE patients (
     medical_history JSONB,
     allergies JSONB,
     created_at TIMESTAMP,
-    updated_at TIMESTAMP
+    updated_at TIMESTAMP,
+    
+    -- Composite index for tenant-scoped queries
+    INDEX idx_tenant_patients (tenant_id, id),
+    INDEX idx_tenant_name (tenant_id, last_name, first_name)
 );
 ```
 
@@ -277,7 +291,7 @@ CREATE TABLE patients (
 ```sql
 CREATE TABLE appointments (
     id BIGSERIAL PRIMARY KEY,
-    tenant_id VARCHAR(255),
+    tenant_id VARCHAR(255) NOT NULL,  -- Required for multi-tenancy
     patient_id BIGINT REFERENCES patients(id),
     doctor_id BIGINT REFERENCES users(id),
     appointment_date TIMESTAMP,
@@ -287,8 +301,11 @@ CREATE TABLE appointments (
     notes TEXT,
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
-    INDEX idx_doctor_date (doctor_id, appointment_date),
-    INDEX idx_patient (patient_id)
+    
+    -- Composite indexes for tenant-scoped queries
+    INDEX idx_tenant_doctor_date (tenant_id, doctor_id, appointment_date),
+    INDEX idx_tenant_patient (tenant_id, patient_id),
+    INDEX idx_tenant_status (tenant_id, status)
 );
 ```
 
@@ -296,7 +313,7 @@ CREATE TABLE appointments (
 ```sql
 CREATE TABLE medical_records (
     id BIGSERIAL PRIMARY KEY,
-    tenant_id VARCHAR(255),
+    tenant_id VARCHAR(255) NOT NULL,  -- Required for multi-tenancy
     patient_id BIGINT REFERENCES patients(id),
     doctor_id BIGINT REFERENCES users(id),
     appointment_id BIGINT REFERENCES appointments(id),
@@ -307,21 +324,29 @@ CREATE TABLE medical_records (
     treatment_plan TEXT,
     follow_up_date DATE,
     created_at TIMESTAMP,
-    updated_at TIMESTAMP
+    updated_at TIMESTAMP,
+    
+    -- Composite indexes for tenant-scoped queries
+    INDEX idx_tenant_patient (tenant_id, patient_id),
+    INDEX idx_tenant_doctor (tenant_id, doctor_id)
 );
 ```
 
 ### Indexing Strategy
 
 ```sql
--- Frequently queried columns
-CREATE INDEX idx_patients_tenant ON patients(tenant_id);
-CREATE INDEX idx_appointments_doctor_date ON appointments(doctor_id, appointment_date);
-CREATE INDEX idx_appointments_patient ON appointments(patient_id);
-CREATE INDEX idx_lab_requests_status ON lab_requests(status);
+-- Tenant-scoped composite indexes (CRITICAL for performance)
+CREATE INDEX idx_patients_tenant ON patients(tenant_id, id);
+CREATE INDEX idx_appointments_tenant_doctor_date ON appointments(tenant_id, doctor_id, appointment_date);
+CREATE INDEX idx_appointments_tenant_patient ON appointments(tenant_id, patient_id);
+CREATE INDEX idx_lab_requests_tenant_status ON lab_requests(tenant_id, status);
 
--- Full-text search
-CREATE INDEX idx_patients_search ON patients USING GIN(to_tsvector('english', first_name || ' ' || last_name));
+-- Full-text search (tenant-scoped)
+CREATE INDEX idx_patients_search ON patients USING GIN(tenant_id, to_tsvector('english', first_name || ' ' || last_name));
+
+-- Ensure data integrity
+ALTER TABLE patients ADD CONSTRAINT fk_patients_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE appointments ADD CONSTRAINT fk_appointments_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE;
 ```
 
 ---
@@ -602,13 +627,13 @@ autorestart=true
 **Connection Pooling** (PgBouncer):
 ```ini
 [databases]
-sanago_central = host=postgres port=5432 dbname=sanago_central
-tenant_* = host=postgres port=5432
+sanago = host=postgres port=5432 dbname=sanago
 
 [pgbouncer]
 pool_mode = transaction
 max_client_conn = 1000
-default_pool_size = 25
+default_pool_size = 50  # Higher pool for single database
+reserve_pool_size = 10
 ```
 
 ---

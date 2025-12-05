@@ -1,14 +1,14 @@
-name: Fix Code Style
+name: CI - Code Linting
 
 on:
   push:
     branches:
-      - development
       - main
+      - develop
   pull_request:
     branches:
-      - development
       - main
+      - develop
 
 permissions:
   contents: write
@@ -16,6 +16,7 @@ permissions:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,14 +27,20 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
+          extensions: mbstring, intl
 
       - name: Install Pint
         run: composer global require laravel/pint
 
-      - name: Run Pint
+      - name: Run Pint (Code Style Check)
+        run: pint --test
+
+      - name: Run Pint (Auto-fix)
+        if: failure()
         run: pint
 
       - name: Commit Fixed Style
+        if: failure()
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "style: fix code style via pint"
+          commit_message: "style: fix code style via pint [skip ci]"
