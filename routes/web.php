@@ -32,58 +32,52 @@ Route::get('/api/health', function () {
 
 Route::middleware(['web', 'universal'])->group(function () {
 
-    // Iterate through central domains defined in tenancy config
-    foreach (config('tenancy.central_domains') as $domain) {
+    // REMOVE THE FOREACH LOOP AND THE Route::domain() WRAPPER
 
-        Route::domain($domain)->group(function () {
-            // Marketing / Public Pages
-            Route::get('/', HomePage::class)->name('home');
-            Route::get('/docs', Docs::class)->name('docs');
-            Route::get('/about', About::class)->name('about');
-            Route::get('/career', Career::class)->name('career');
-            Route::get('/blog', Blog::class)->name('blog');
-            Route::get('/pricing', Pricing::class)->name('pricing');
-            Route::get('/features', Features::class)->name('features');
-            Route::get('/book-demo', BookDemo::class)->name('book-demo');
+    // --- Public / Marketing Routes ---
+    // These will automatically work on BOTH localhost and 127.0.0.1
+    // because of the 'universal' middleware.
+    Route::get('/', HomePage::class)->name('home');
+    Route::get('/docs', Docs::class)->name('docs');
+    Route::get('/about', About::class)->name('about');
+    Route::get('/career', Career::class)->name('career');
+    Route::get('/blog', Blog::class)->name('blog');
+    Route::get('/pricing', Pricing::class)->name('pricing');
+    Route::get('/features', Features::class)->name('features');
+    Route::get('/book-demo', BookDemo::class)->name('book-demo');
 
-            // --- GUEST ROUTES ---
-            // This is the global 'login' route
-            Route::get('/login', Login::class)->name('login');
+    // --- GUEST ROUTES ---
+    Route::get('/login', Login::class)->name('login');
+    Route::get('/forgot-password', ForgotPassword::class)->name('password.request');
+    Route::get('/reset-password/{token}', ResetPassword::class)->name('password.reset');
 
-            Route::get('/forgot-password', ForgotPassword::class)->name('password.request');
-            Route::get('/reset-password/{token}', ResetPassword::class)->name('password.reset');
+    Route::get('/language/{locale}', function (string $locale) {
+        if (! in_array($locale, ['en', 'es', 'fr'])) {
+            abort(400);
+        }
+        Session::put('locale', $locale);
 
-            Route::get('/language/{locale}', function (string $locale) {
-                if (! in_array($locale, ['en', 'es', 'fr'])) {
-                    abort(400);
-                }
-                Session::put('locale', $locale);
+        return redirect()->back();
+    })->name('language.switch');
 
-                return redirect()->back();
-            })->name('language.switch');
+    // --- AUTHENTICATED LANDLORD ROUTES ---
+    Route::middleware([
+        'role:landlord',
+        'auth',
+    ])->name('landlord.')->group(function () {
+        Route::get('/dashboard', Dashboard::class)->name('dashboard');
+        Route::get('/tenants/{tenant}/subscription', ManageSubscription::class)->name('manage-subscription');
+        Route::get('/settings', Settings::class)->name('settings');
+        Route::get('/manage-tenants', ManageTenants::class)->name('manage-tenants');
+        Route::get('/create-tenants', CreateTenant::class)->name('create-tenants');
+        Route::get('/feedbacks', Feedback::class)->name('feedbacks');
+        Route::get('/respond-feedback/{feedback}', RespondFeedback::class)->name('respond-feedback');
+        Route::get('/send-feedback', SendFeedback::class)->name('send-feedback');
 
-            // --- AUTHENTICATED LANDLORD ROUTES ---
-            Route::middleware([
-                'role:landlord',
-                'auth',
-            ])->name('landlord.')->group(function () {
-
-                Route::get('/dashboard', Dashboard::class)->name('dashboard');
-                Route::get('/tenants/{tenant}/subscription', ManageSubscription::class)->name('manage-subscription');
-                Route::get('/settings', Settings::class)->name('settings');
-                Route::get('/manage-tenants', ManageTenants::class)->name('manage-tenants');
-                Route::get('/create-tenants', CreateTenant::class)->name('create-tenants');
-                Route::get('/feedbacks', Feedback::class)->name('feedbacks');
-                Route::get('/respond-feedback/{feedback}', RespondFeedback::class)->name('respond-feedback');
-                Route::get('/send-feedback', SendFeedback::class)->name('send-feedback');
-
-                // Logout for Landlord
-                Route::post('/logout', function () {
-                    Illuminate\Support\Facades\Auth::logout();
-                    Session::invalidate();
-                    Session::regenerateToken();
-                })->name('logout');
-            });
-        });
-    }
+        Route::post('/logout', function () {
+            Illuminate\Support\Facades\Auth::logout();
+            Session::invalidate();
+            Session::regenerateToken();
+        })->name('logout');
+    });
 });

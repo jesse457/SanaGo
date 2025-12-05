@@ -1,35 +1,98 @@
-# Global options (optional, but good for debugging)
+# ==============================================================================
+# GLOBAL OPTIONS
+# ==============================================================================
 {
-    debug
+    email admin@sanago.com
+    
+    # JSON logging for Promtail
+    log {
+        output file /data/caddy-main.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+        format json
+    }
+
+    grace_period 10s
 }
 
-# ---------------------------------------------------------------------
-# PHP / Laravel App (Localhost)
-# ---------------------------------------------------------------------
-localhost, *.localhost {
-    encode gzip zstd
-
-    # Points to the 'public' folder relative to where you run Caddy
-    root * public
-
-    # Serve static files (CSS, JS, images)
-    file_server
-
-    # Process PHP files
-    # ERROR FIX: 'php_server' is not standard. Use php_fastcgi.
-    # Adjust the address below to match your setup:
-    # - If using native Linux PHP-FPM: unix//run/php/php8.2-fpm.sock
-    # - If using Docker/Windows: localhost:9000
-    php_server
+# ==============================================================================
+# SNIPPETS
+# ==============================================================================
+(security_headers) {
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+        -X-Powered-By
+    }
 }
 
-# ---------------------------------------------------------------------
-# MinIO Local Domain
-# ---------------------------------------------------------------------
-files.localhost {
-    # If you are accessing this in a browser, you want the MinIO CONSOLE port.
-    # Default MinIO Console port is often 9001 (or random), API is 9000.
-    # If you explicitly set MinIO to run on 8000, keep it as 8000.
-    reverse_proxy localhost:9000
+(compression) {
+    encode zstd gzip
 }
 
+# ==============================================================================
+# 1. MAIN APP + TENANT WILDCARDS
+# ==============================================================================
+# Matches "sanago.com" AND any subdomain "*.sanago.com"
+*.{$DOMAIN:sanago.com}, {$DOMAIN:sanago.com} {
+    
+    # 1. TLS CONFIGURATION (Crucial for Wildcards)
+    tls {
+        # You MUST replace 'cloudflare' with your actual DNS provider
+        dns cloudflare {$CLOUDFLARE_API_TOKEN}
+    }
+
+    import security_headers
+    import compression
+
+    # 2. Reverse Proxy to Laravel
+    reverse_proxy sanago_app:8000 {
+        trusted_proxies private_ranges
+    }
+
+    # 3. Access Logs
+    log {
+        output file /data/access-app.log
+        format json
+    }
+}
+
+# ==============================================================================
+# 2. MINIO API (s3.sanago.com)
+# ==============================================================================
+# Since *.sanago.com matches everything, we must define specific subdomains
+# explicitly so they take priority over the wildcard.
+s3.{$DOMAIN:sanago.com} {
+    tls {
+        dns cloudflare {$CLOUDFLARE_API_TOKEN}
+    }
+    import security_headers
+
+    reverse_proxy minio:9000 {
+        trusted_proxies private_ranges
+    }
+
+    request_body {
+        max_size 100MB
+    }
+}
+
+# ==============================================================================
+# 3. MINIO CONSOLE (console.sanago.com)
+# ==============================================================================
+console.{$DOMAIN:sanago.com} {
+    tls {
+        dns cloudflare {$CLOUDFLARE_API_TOKEN}
+    }
+    import security_headers
+    import compression
+
+    reverse_proxy minio:9001 {
+        trusted_proxies private_ranges
+    }
+}
