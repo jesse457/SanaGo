@@ -51,24 +51,24 @@
             <div class="relative max-w-7xl mx-auto px-6 flex flex-col items-center text-center z-10">
                 <div class="reveal-on-scroll inline-flex items-center rounded-full border border-blue-100 dark:border-blue-900 bg-blue-50/80 dark:bg-blue-900/30 px-4 py-1.5 text-sm font-medium text-blue-700 dark:text-blue-200 mb-8 backdrop-blur-md shadow-sm">
                     <span class="flex h-2 w-2 rounded-full bg-blue-500 mr-2 animate-pulse"></span>
-                    Join Our Team
+                    {{ __('career.badge') }}
                 </div>
 
                 <h1 class="reveal-on-scroll delay-100 text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8 max-w-5xl">
-                    Careers at <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-500 to-blue-400">SanaGo</span>
+                    {{ __('career.title_prefix') }} <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-500 to-blue-400">{{ __('career.title_suffix') }}</span>
                 </h1>
 
                 <p class="reveal-on-scroll delay-200 mt-4 text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mb-12 leading-relaxed">
-                    Help us transform healthcare management through innovative technology solutions. Join a team dedicated to making a difference in healthcare.
+                    {{ __('career.subtitle') }}
                 </p>
 
-                <div class="reveal-on-scroll delay-300 flex flex-col sm:flex-row gap-5 items-center w-full justify-center">
-                    <a href="#openings" class="group relative inline-flex h-14 items-center justify-center overflow-hidden rounded-full bg-blue-600 px-10 font-bold text-white duration-300 hover:bg-blue-700 shadow-[0_10px_40px_-10px_rgba(37,99,235,0.5)] hover:shadow-[0_20px_40px_-10px_rgba(37,99,235,0.7)] hover:-translate-y-1 w-full sm:w-auto">
-                        <span class="mr-2">View Openings</span>
-                        <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                <div class="reveal-on-scroll delay-300 flex flex-col sm:flex-row gap-4 w-full justify-center">
+                    <a href="#openings" class="inline-flex items-center justify-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-blue-500/25">
+                        {{ __('career.view_openings') }}
+                        <svg class="ml-2 -mr-1 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </a>
-                    <a href="#culture" class="inline-flex h-14 items-center justify-center rounded-full px-10 font-bold text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 border border-slate-200 dark:border-slate-700 w-full sm:w-auto">
-                        Our Culture
+                    <a href="#culture" class="inline-flex items-center justify-center px-8 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-full transition-all duration-200 hover:scale-105">
+                        {{ __('career.our_culture') }}
                     </a>
                 </div>
             </div>
@@ -77,37 +77,33 @@
         <!-- CULTURE SECTION -->
         <section id="culture" class="py-24 bg-white/40 dark:bg-black/20 backdrop-blur-sm">
             <div class="max-w-7xl mx-auto px-6">
-                <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div class="grid md:grid-cols-2 gap-16 items-center">
                     <div class="reveal-on-scroll order-2 md:order-1">
-                        <div class="relative rounded-2xl overflow-hidden shadow-2xl">
-                            <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1184&q=80" alt="Team collaboration" class="w-full h-auto">
+                        <div class="relative rounded-2xl overflow-hidden shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-500">
+                            <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" alt="Team collaboration" class="w-full h-auto">
                             <div class="absolute inset-0 bg-gradient-to-t from-blue-600/20 to-transparent"></div>
                         </div>
                     </div>
                     <div class="reveal-on-scroll order-1 md:order-2">
-                        <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-6">Our Culture</h2>
+                        <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-6">{{ __('career.culture_title') }}</h2>
                         <p class="text-lg text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
-                            At SanaGo, we foster a culture of innovation, collaboration, and continuous learning. We believe in empowering our team members to make a meaningful impact on healthcare through technology.
+                            {{ __('career.culture_desc_1') }}
                         </p>
                         <p class="text-lg text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
-                            Our diverse team brings together expertise from healthcare, technology, and business to create solutions that address real-world challenges. We value creativity, integrity, and a passion for improving healthcare delivery.
+                            {{ __('career.culture_desc_2') }}
                         </p>
-                        <div class="flex flex-col sm:flex-row gap-4">
-                            <div class="flex items-start gap-3">
-                                <div class="mt-1 h-6 w-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                                    <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 </div>
-                                <div>
-                                    <p class="font-bold text-slate-900 dark:text-white">Work-Life Balance</p>
-                                </div>
+                                <span class="font-medium text-slate-900 dark:text-white">{{ __('career.culture_point_1') }}</span>
                             </div>
-                            <div class="flex items-start gap-3">
-                                <div class="mt-1 h-6 w-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                                    <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                                 </div>
-                                <div>
-                                    <p class="font-bold text-slate-900 dark:text-white">Professional Growth</p>
-                                </div>
+                                <span class="font-medium text-slate-900 dark:text-white">{{ __('career.culture_point_2') }}</span>
                             </div>
                         </div>
                     </div>
@@ -119,33 +115,31 @@
         <section class="py-24">
             <div class="max-w-7xl mx-auto px-6">
                 <div class="text-center mb-16 reveal-on-scroll">
-                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Benefits & Perks</h2>
-                    <p class="mt-4 text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">We offer competitive benefits to support our team's well-being and growth</p>
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">{{ __('career.benefits_title') }}</h2>
+                    <p class="mt-4 text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">{{ __('career.benefits_subtitle') }}</p>
                 </div>
 
                 <div class="grid md:grid-cols-3 gap-8">
-                    <div class="reveal-on-scroll delay-100 bg-white dark:bg-slate-800/60 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
-                        <div class="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mb-6">
-                            <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                    <div class="reveal-on-scroll delay-100 bg-white dark:bg-slate-800/60 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-shadow">
+                        <div class="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-3xl mb-6">
+                            🏥
                         </div>
-                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Health & Wellness</h3>
-                        <p class="text-slate-600 dark:text-slate-300">Comprehensive health, dental, and vision insurance for you and your family. Mental health support and wellness programs included.</p>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">{{ __('career.benefit_health_title') }}</h3>
+                        <p class="text-slate-600 dark:text-slate-300">{{ __('career.benefit_health_desc') }}</p>
                     </div>
-
-                    <div class="reveal-on-scroll delay-200 bg-white dark:bg-slate-800/60 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
-                        <div class="w-14 h-14 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mb-6">
-                            <svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    <div class="reveal-on-scroll delay-200 bg-white dark:bg-slate-800/60 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-shadow">
+                        <div class="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-3xl mb-6">
+                            📚
                         </div>
-                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Professional Development</h3>
-                        <p class="text-slate-600 dark:text-slate-300">Annual learning stipend, conference attendance, and regular training opportunities to help you grow your skills and career.</p>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">{{ __('career.benefit_dev_title') }}</h3>
+                        <p class="text-slate-600 dark:text-slate-300">{{ __('career.benefit_dev_desc') }}</p>
                     </div>
-
-                    <div class="reveal-on-scroll delay-300 bg-white dark:bg-slate-800/60 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
-                        <div class="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center mb-6">
-                            <svg class="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div class="reveal-on-scroll delay-300 bg-white dark:bg-slate-800/60 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-shadow">
+                        <div class="w-14 h-14 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center text-3xl mb-6">
+                            🏡
                         </div>
-                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Flexible Work</h3>
-                        <p class="text-slate-600 dark:text-slate-300">Remote-friendly work environment with flexible hours. Generous PTO and paid parental leave to support work-life balance.</p>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">{{ __('career.benefit_flex_title') }}</h3>
+                        <p class="text-slate-600 dark:text-slate-300">{{ __('career.benefit_flex_desc') }}</p>
                     </div>
                 </div>
             </div>
@@ -153,103 +147,13 @@
 
         <!-- OPEN POSITIONS SECTION -->
         <section id="openings" class="py-24 bg-white/40 dark:bg-black/20 backdrop-blur-sm">
-            <div class="max-w-7xl mx-auto px-6">
+            <div class="max-w-5xl mx-auto px-6">
                 <div class="text-center mb-16 reveal-on-scroll">
-                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Open Positions</h2>
-                    <p class="mt-4 text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">Join our team and help transform healthcare management</p>
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">{{ __('career.positions_title') }}</h2>
+                    <p class="mt-4 text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">{{ __('career.positions_subtitle') }}</p>
                 </div>
 
                 <div class="space-y-6">
-                    <!-- Senior Backend Developer -->
-                    <div class="reveal-on-scroll delay-100 bg-white dark:bg-slate-800/60 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div>
-                                <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Senior Backend Developer</h3>
-                                <div class="flex flex-wrap gap-2 mb-4">
-                                    <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm">Full-time</span>
-                                    <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm">Remote</span>
-                                    <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-sm">Engineering</span>
-                                </div>
-                                <p class="text-slate-600 dark:text-slate-300">We're looking for an experienced backend developer to help build and scale our healthcare management platform. Experience with secure data handling and healthcare systems is a plus.</p>
-                            </div>
-                            <button @click="jobOpen = jobOpen === 'backend' ? null : 'backend'" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors">
-                                Apply Now
-                            </button>
-                        </div>
-                        <div x-show="jobOpen === 'backend'" x-collapse class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-                            <h4 class="font-bold text-slate-900 dark:text-white mb-3">Requirements:</h4>
-                            <ul class="space-y-2 mb-6 text-slate-600 dark:text-slate-300">
-                                <li class="flex items-start gap-2">
-                                    <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                    5+ years of backend development experience
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                    Experience with secure data handling and encryption
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                    Familiarity with healthcare data standards (HIPAA, HL7)
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                    Strong problem-solving and communication skills
-                                </li>
-                            </ul>
-                            <a href="#" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                                Apply on LinkedIn
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Healthcare Product Manager -->
-                    <div class="reveal-on-scroll delay-200 bg-white dark:bg-slate-800/60 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div>
-                                <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Healthcare Product Manager</h3>
-                                <div class="flex flex-wrap gap-2 mb-4">
-                                    <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm">Full-time</span>
-                                    <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm">Hybrid</span>
-                                    <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-sm">Product</span>
-                                </div>
-                                <p class="text-slate-600 dark:text-slate-300">We're seeking a product manager with healthcare experience to lead the development of our hospital management system features and ensure they meet the needs of healthcare providers.</p>
-                            </div>
-                            <button @click="jobOpen = jobOpen === 'product' ? null : 'product'" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors">
-                                Apply Now
-                            </button>
-                        </div>
-                        <div x-show="jobOpen === 'product'" x-collapse class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-                            <h4 class="font-bold text-slate-900 dark:text-white mb-3">Requirements:</h4>
-                            <ul class="space-y-2 mb-6 text-slate-600 dark:text-slate-300">
-                                <li class="flex items-start gap-2">
-                                    <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                    3+ years of product management experience
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                    Experience in healthcare technology or hospital administration
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                    Strong understanding of healthcare workflows and challenges
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                    Excellent communication and stakeholder management skills
-                                </li>
-                            </ul>
-                            <a href="#" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                                Apply on LinkedIn
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- UX/UI Designer -->
-                    <div class="reveal-on-scroll delay-300 bg-white dark:bg-slate-800/60 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div>
                                 <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">UX/UI Designer</h3>
                                 <div class="flex flex-wrap gap-2 mb-4">
                                     <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm">Full-time</span>

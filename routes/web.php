@@ -13,6 +13,7 @@ use App\Livewire\Home as HomePage;
 use App\Livewire\LandLord\CreateTenant;
 use App\Livewire\LandLord\Dashboard;
 use App\Livewire\LandLord\Feedback;
+use App\Livewire\LandLord\ManageSubscription;
 use App\Livewire\LandLord\ManageTenants;
 use App\Livewire\LandLord\RespondFeedback;
 use App\Livewire\LandLord\Settings;
@@ -20,6 +21,14 @@ use App\Livewire\Pricing;
 use App\Livewire\SendFeedback;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
+
+// Health check endpoint for Docker/Kubernetes
+Route::get('/api/health', function () {
+    return response()->json([
+        'status' => 'healthy',
+        'timestamp' => now()->toIso8601String(),
+    ]);
+});
 
 Route::middleware(['web', 'universal'])->group(function () {
 
@@ -60,6 +69,7 @@ Route::middleware(['web', 'universal'])->group(function () {
             ])->name('landlord.')->group(function () {
 
                 Route::get('/dashboard', Dashboard::class)->name('dashboard');
+                Route::get('/tenants/{tenant}/subscription', ManageSubscription::class)->name('manage-subscription');
                 Route::get('/settings', Settings::class)->name('settings');
                 Route::get('/manage-tenants', ManageTenants::class)->name('manage-tenants');
                 Route::get('/create-tenants', CreateTenant::class)->name('create-tenants');

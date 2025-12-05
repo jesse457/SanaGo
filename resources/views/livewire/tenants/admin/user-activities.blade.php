@@ -1,11 +1,11 @@
 {{-- resources/views/livewire/tenants/admin/user-activities.blade.php --}}
-<main class="flex-1 p-4  bg-gray-50 dark:bg-gray-900 overflow-y-auto min-h-screen">
-    <button @click="open = true"
-        class="lg:hidden p-2 rounded-md text-gray-700 bg-white shadow-sm hover:bg-gray-100 transition-colors mb-6">
-        <x-heroicon-o-bars-3 class="w-6 h-6" />
-    </button>
+<main class="flex-1  bg-white dark:bg-gray-900 overflow-y-auto min-h-screen">
 
-    <div class="mb-6">
+
+
+
+    <div class="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 md:p-8 mt-5 mb-8">
+        <div class="mb-6">
         <nav class="flex" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
                 <li class="inline-flex items-center">
@@ -25,15 +25,13 @@
             </ol>
         </nav>
     </div>
-
-    <div class="space-y-6">
         <header class="flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-1 flex items-center gap-3">
-                    <x-heroicon-s-clock class="w-8 h-8 text-indigo-600" />
+                <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight flex items-center gap-3">
+
                     {{ __('admin.user_activities_bar') }}
                 </h1>
-                <p class="text-gray-600 dark:text-gray-400">{{ __('admin.activities_page_description') }}</p>
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ __('admin.activities_page_description') }}</p>
             </div>
         </header>
 

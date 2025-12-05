@@ -1,69 +1,81 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ config('app.name', 'Landlord Portal') }}</title>
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
-
-    <!-- Fonts -->
-        <link rel="icon" type="image/png" href="{{ Storage::disk('central_public')->url('images/logo.png') }}">
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-
-    <!-- Tailwind CSS CDN (if not using local build) -->
-
+    <!-- Fonts & Icons -->
+    <link rel="icon" type="image/png" href="{{ Storage::disk('central_public')->url('images/logo.png') }}">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        [x-cloak] { display: none !important; }
 
-        /* Custom scrollbar for better aesthetics */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #2a4365;
-            /* Darker blue for track */
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #63b3ed;
-            /* Lighter blue for thumb */
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #90cdf4;
-            /* Even lighter blue on hover */
-        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+        .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
     </style>
-    <!-- Livewire Styles -->
-    @livewireStyles
 
-    <!-- Scripts -->
+    @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class=" antialiased bg-gray-100">
-    <div x-data="{ open: false }" class="bg-gray-50 min-h-screen flex   ">
-        <!-- Overlay for mobile sidebar -->
-        <div x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
-            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-300"
-            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click="open = false"
-            class="fixed inset-10  bg-black/50 z-0 lg:hidden"></div>
-        {{-- Sidebar --}}
-      <livewire:land-lord.components.sidebar />
-        {{ $slot }}
+<body class="antialiased bg-gray-100 dark:bg-gray-900">
+    <!--
+        Root State Management
+        - sidebarExpanded: Persists state across page loads
+        - mobileOpen: Toggles mobile menu
+    -->
+    <div x-data="{
+            sidebarExpanded: localStorage.getItem('sidebarExpanded') === 'true',
+            mobileOpen: false,
+            toggleSidebar() {
+                this.sidebarExpanded = !this.sidebarExpanded;
+                localStorage.setItem('sidebarExpanded', this.sidebarExpanded);
+            }
+         }"
+         x-init="$watch('sidebarExpanded', value => localStorage.setItem('sidebarExpanded', value))"
+         class="min-h-screen flex text-gray-900 dark:text-gray-100 font-sans">
+
+        <!-- Mobile Backdrop Overlay -->
+        <div x-show="mobileOpen"
+             x-transition:enter="transition-opacity ease-linear duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-linear duration-300"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click="mobileOpen = false"
+             class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-20 lg:hidden"
+             x-cloak>
+        </div>
+
+        <!-- Sidebar Component -->
+        <livewire:land-lord.components.sidebar />
+
+        <!-- Main Content Wrapper -->
+        <div class="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out"
+             :class="sidebarExpanded ? 'lg:ml-64' : 'lg:ml-20'">
+
+            <!-- Mobile Header (Hamburger) -->
+            <div class="lg:hidden flex items-center justify-between bg-white dark:bg-gray-800 p-4 shadow-sm sticky top-0 z-10">
+                <button @click="mobileOpen = true" class="text-gray-600 dark:text-gray-300 focus:outline-none p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <span class="font-bold text-lg text-indigo-600 dark:text-indigo-400">Landlord Portal</span>
+                <div class="w-6"></div> <!-- Spacer -->
+            </div>
+
+            <main class="flex-1 bg-slate-50 p-4 md:p-6">
+                {{ $slot }}
+            </main>
+        </div>
     </div>
-    <!-- Livewire Scripts -->
+
     @livewireScripts
 </body>
-
 </html>

@@ -158,6 +158,7 @@ Route::middleware([
             Session::invalidate();
             Session::regenerateToken();
 
+            return redirect()->route('tenant.login');
         })->name('auth.logout');
 
         // --- Admin Routes ---

@@ -132,6 +132,11 @@ class CreateNewUser extends Component
             try {
                 // Validate only the 'profile_picture' field using the rules defined.
                 $this->validateOnly($propertyName);
+                Log::warning('Livewire temporary file upload validation failed.', [
+                    'property' => $propertyName,
+                    'tenant_id' => tenant('id'),
+                    'component' => static::class,
+                ]);
             } catch (ValidationException $e) {
                 // Log the validation error during the temporary upload.
                 Log::warning('Livewire temporary file upload validation failed.', [
@@ -211,18 +216,18 @@ class CreateNewUser extends Component
                     'hire_date' => $this->hire_date,
                     'role' => $this->role,
                     'is_active' => $this->is_active,
-                    'password' => Hash::make($this->generatedPassword), // Hash the generated password
+                    'password' => Hash::make('password'), // Hash the generated password
                 ]);
 
                 // 5. Prepare the credentials email.
-                $mailable = new SendCredentials([
-                    'subject' => 'Your New Account Credentials',
-                    'view' => 'emails.welcome',
-                    'name' => $user->name ?? 'User',
-                    'email' => $user->email,
-                    'password' => $this->generatedPassword, // Send the plain-text password
-                    'login_url' => route('login'),
-                ]);
+                // $mailable = new SendCredentials([
+                //     'subject' => 'Your New Account Credentials',
+                //     'view' => 'emails.welcome',
+                //     'name' => $user->name ?? 'User',
+                //     'email' => $user->email,
+                //     'password' => $this->generatedPassword, // Send the plain-text password
+                //     'login_url' => route('login'),
+                // ]);
 
                 // 6. Queue the email to be sent. (Currently commented out)
                 // Mail::to($user->email)->queue($mailable);

@@ -1,4 +1,4 @@
-<main class="flex-1 p-4 md:p-6 lg:ml-64 bg-gray-50 dark:bg-gray-900 overflow-y-auto min-h-screen">
+<main class="flex-1 p-4 mt-8 bg-gray-50 dark:bg-gray-900 overflow-y-auto min-h-screen">
 <div class="mb-8">
             <nav class="flex" aria-label="Breadcrumb">
                 <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">

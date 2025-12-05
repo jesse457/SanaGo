@@ -5,6 +5,7 @@ namespace App\Livewire\Tenants\Admin;
 use App\Models\Bed;
 use App\Models\BedType;
 use App\Models\Department;
+use App\Models\Subscription;
 use App\Models\Supply;
 use App\Models\Ward;
 use Illuminate\Support\Facades\Storage;
@@ -31,6 +32,25 @@ class Settings extends Component
     public $hospitalLogo;
 
     public $currentLogoUrl;
+
+    public ?Subscription $subscription;
+
+    public $usage = ['users' => 0, 'storage' => 0]; // Placeholder for actual usage
+
+    public $currentUsersCount = 0;
+
+    public $currentStorageUsage = 0; // in MB
+
+    public $billingHistory = [];
+
+    // Subscription Management
+    public $showUpgradeModal = false;
+
+    public $showCancelModal = false;
+
+    public $cancelReason;
+
+    public $cancelFeedback;
 
     // Department Management
     public $newDepartmentName;
@@ -172,6 +192,17 @@ class Settings extends Component
         $this->currentLogoUrl = $this->tenant?->logo
             ? Storage::disk('s3')->temporaryUrl($this->tenant->logo, now()->addMinutes(5))
             : null;
+
+        // Fetch Subscription safely
+        $this->subscription = Subscription::first();
+
+        // Calculate Usage (Mock logic - replace with actual counts)
+        // Example: $this->currentUsersCount = User::count();
+        $this->currentUsersCount = 5;
+        $this->currentStorageUsage = 1500; // in MB
+
+        // Mock Billing History (Replace with actual relation: $this->subscription?->invoices)
+        $this->billingHistory = [];
     }
 
     // -----------------------
@@ -200,9 +231,49 @@ class Settings extends Component
         }
         $tenant->save();
 
-        $this->currentLogoUrl = $tenant->logo ? Storage::disk('s3')->temporaryUrl($tenant->logo, now()->subMinutes(5)) : null;
+        // Fixed: Use addMinutes instead of subMinutes for temporary URL
+        $this->currentLogoUrl = $tenant->logo ? Storage::disk('s3')->temporaryUrl($tenant->logo, now()->addMinutes(5)) : null;
         $this->hospitalLogo = null;
         LivewireAlert::title('Success')->success()->text('General info updated successfully')->show();
+    }
+
+    public function openUpgradeModal()
+    {
+        $this->showUpgradeModal = true;
+    }
+
+    public function selectPlan($plan)
+    {
+        // Logic to handle plan selection
+        // This would typically redirect to a payment processor or update the subscription
+        LivewireAlert::title('Info')->info()->text("Plan selected: {$plan}. Redirecting to payment...")->show();
+        $this->showUpgradeModal = false;
+    }
+
+    public function confirmCancelSubscription()
+    {
+        $this->showCancelModal = true;
+    }
+
+    public function cancelSubscription()
+    {
+        $this->validate([
+            'cancelReason' => 'required|string',
+        ]);
+
+        if ($this->subscription) {
+            // Store cancellation reason and feedback
+            // This could be saved to a database table for analytics
+            $this->subscription->cancel();
+            $this->subscription->refresh();
+
+            // Reset form fields
+            $this->cancelReason = null;
+            $this->cancelFeedback = null;
+            $this->showCancelModal = false;
+
+            LivewireAlert::title('Success')->success()->text('Subscription cancelled.')->show();
+        }
     }
 
     // -----------------------
@@ -559,7 +630,8 @@ class Settings extends Component
         Supply::findOrFail($this->deletingSupplyId)->delete();
         $this->deletingSupplyId = null;
         $this->showSupplyDeleteModal = false;
-        LivewireAlert::title('Success')->success()->toast()->position('top-end')->text('Supply deleted successfully')->show();
+        // Fixed: Consistent alert style with other delete operations
+        LivewireAlert::title('Success')->success()->text('Supply deleted successfully')->show();
     }
 
     // -----------------------
@@ -569,6 +641,7 @@ class Settings extends Component
     {
         return view('livewire.tenants.admin.settings', [
             'filteredDepartments' => Department::when($this->searchDepartment, fn ($q) => $q->where('name', 'like', '%'.$this->searchDepartment.'%'))->get(),
+            'subscriptions' => Subscription::all(),
 
             'filteredWards' => Ward::with('department')
                 ->when($this->searchWard, fn ($q) => $q->where('name', 'like', '%'.$this->searchWard.'%'))

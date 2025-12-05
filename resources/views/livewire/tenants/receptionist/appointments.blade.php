@@ -1,18 +1,19 @@
-<div class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 lg:ml-64 p-6 dark:bg-gray-900">
+<div class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50/50 p-6 dark:bg-gray-900">
     {{-- Breadcrumbs --}}
-    <div class="mb-6">
+     <div class="mb-6 mt-8">
         <nav class="flex" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
                 <li class="inline-flex items-center">
                     <a href="{{ route('receptionist.dashboard') }}" wire:navigate
-                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-150">
-                        <x-heroicon-s-home class="w-4 h-4 me-2.5" />Home
+                        class="inline-flex items-center text-sm font-medium text-gray-400 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-300 transition-colors duration-150">
+                        <x-heroicon-s-home class="w-4 h-4 me-2.5" />
+                        Home
                     </a>
                 </li>
                 <li>
                     <div class="flex items-center">
                         <x-heroicon-s-chevron-right class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" />
-                        <span class="ms-1 text-sm font-medium text-gray-400 md:ms-2 dark:text-gray-400">
+                        <span class="ms-1 text-sm  text-gray-900 md:ms-2 dark:text-gray-400">
                             Appointments</span>
                     </div>
                 </li>
@@ -20,300 +21,266 @@
         </nav>
     </div>
 
-    <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    {{-- Header Section --}}
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
-            <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-1 flex items-center gap-3">
-                <x-heroicon-s-calendar-days class="w-8 h-8 text-indigo-600" />
-                Manage Appointments
+            <h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
+                 Manage Appointments
             </h1>
-            <p class="text-gray-600 dark:text-gray-400">View, search, and manage all doctor appointments.</p>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                Monitor patient flow, manage schedules, and track consultation status.
+            </p>
         </div>
         <a href="{{ route('receptionist.book-appointment') }}" wire:navigate
-            class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-            <x-heroicon-o-plus class="w-5 h-5" /> Book Appointment
+            class="group inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-all duration-200 shadow-lg shadow-indigo-600/20 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+            <x-heroicon-o-plus class="w-5 h-5 transition-transform group-hover:rotate-90" />
+            <span>Book Appointment</span>
         </a>
     </header>
 
-    <div x-data="{ open: true }" class="mt-4 card mb-4">
-        <div class="flex items-center justify-between gap-3 mb-2 p-4 border-b dark:border-gray-700">
-            <div class="flex items-center gap-3">
-                <x-heroicon-o-funnel class="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Filter Appointments</h3>
+    {{-- Filters Card --}}
+    <div x-data="{ open: true }" class="mb-8 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200/60 dark:border-gray-700 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700 cursor-pointer" @click="open = !open">
+            <div class="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                <div class="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
+                    <x-heroicon-o-funnel class="w-4 h-4" />
+                </div>
+                <h3 class="font-semibold text-sm">Filter & Search</h3>
             </div>
-            <button @click="open = !open" class="text-gray-500 hover:text-gray-700">
-                <x-heroicon-s-chevron-up x-show="open" class="w-5 h-5 transition-transform" />
-                <x-heroicon-s-chevron-down x-show="!open" class="w-5 h-5 transition-transform" />
+            <button class="text-gray-400 hover:text-indigo-600 transition-colors">
+                <x-heroicon-s-chevron-up x-show="open" class="w-5 h-5" />
+                <x-heroicon-s-chevron-down x-show="!open" class="w-5 h-5" />
             </button>
         </div>
 
-        <div x-show="open" x-transition class="p-4 will-change-transform">
-            <form class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" onsubmit="return false;"
-                aria-label="Appointment filters">
-                <div>
-                    <label for="dateFilter"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
-                    <input type="date" id="dateFilter" wire:model.live="dateFilter"
-                        class="mt-1 form-input " />
+        <div x-show="open" x-collapse class="p-6">
+            <form class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" onsubmit="return false;">
+                {{-- Date Input --}}
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">Date</label>
+                    <input type="date" wire:model.live="dateFilter"
+                        class="block w-full rounded-xl border-gray-200 bg-gray-50/50 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700/50 dark:border-gray-600 dark:text-white dark:focus:border-indigo-400 transition-shadow duration-200" />
                 </div>
 
-                <div>
-                    <label for="doctorFilter"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Doctor</label>
-                    <select id="doctorFilter" wire:model.live="doctorFilter"
-                        class="mt-1 form-input">
+                {{-- Doctor Select --}}
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">Doctor</label>
+                    <select wire:model.live="doctorFilter"
+                        class="block w-full rounded-xl border-gray-200 bg-gray-50/50 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700/50 dark:border-gray-600 dark:text-white transition-shadow duration-200">
                         <option value="">All Doctors</option>
                         @foreach ($doctors as $doctor)
-                            <option value="{{ $doctor->id }}">{{ $doctor->name }}@if ($doctor->department)
-                                    ({{ $doctor->department->name }})
-                                @endif
-                            </option>
+                            <option value="{{ $doctor->id }}">{{ $doctor->name }} {{ $doctor->department ? '('.$doctor->department->name.')' : '' }}</option>
                         @endforeach
                     </select>
                 </div>
 
-                <div>
-                    <label for="statusFilter"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-                    <select id="statusFilter" wire:model.live="statusFilter"
-                        class="mt-1 form-select w-full rounded-md border-gray-200 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500">
+                {{-- Status Select --}}
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">Status</label>
+                    <select wire:model.live="statusFilter"
+                        class="block w-full rounded-xl border-gray-200 bg-gray-50/50 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700/50 dark:border-gray-600 dark:text-white transition-shadow duration-200">
                         <option value="">All Statuses</option>
-                        {{-- New/Updated Statuses based on model changes --}}
-                        <option value="Scheduled">Scheduled (Pre-Check-in)</option>
-                        <option value="Waiting">Waiting (Checked In)</option>
+                        <option value="Scheduled">Scheduled</option>
+                        <option value="Waiting">Waiting</option>
                         <option value="In Consultation">In Consultation</option>
                         <option value="Completed">Completed</option>
                         <option value="Canceled">Canceled</option>
-                        {{-- Removed 'Pending' and 'Confirmed' --}}
                     </select>
                 </div>
 
-                <div class="relative">
-                    <label for="patientSearch" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Search
-                        Patient</label>
-                    <div class="relative mt-1">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                            <x-heroicon-o-magnifying-glass class="w-5 h-5 text-gray-400" />
-                        </span>
-                        <input type="text" id="patientSearch" wire:model.live.debounce.300ms="patientSearch"
+                {{-- Search Input --}}
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">Search Patient</label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <x-heroicon-o-magnifying-glass class="w-5 h-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+                        </div>
+                        <input type="text" wire:model.live.debounce.300ms="patientSearch"
                             placeholder="Name, ID, or Phone..."
-                            class="pl-10 pr-4 py-2 block w-full border border-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <div wire:loading wire:target="patientSearch"
-                            class="absolute inset-y-0 right-0 flex items-center pr-3">
-                            <svg class="animate-spin h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg"
-                                fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4">
-                                </circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                </path>
+                            class="block w-full pl-10 rounded-xl border-gray-200 bg-gray-50/50 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700/50 dark:border-gray-600 dark:text-white transition-shadow duration-200">
+                        <div wire:loading wire:target="patientSearch" class="absolute inset-y-0 right-0 flex items-center pr-3">
+                            <svg class="animate-spin h-4 w-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                         </div>
                     </div>
                 </div>
             </form>
 
-            <div class="mt-4 flex items-center justify-end gap-2">
-                <button wire:click.prevent="$refresh"
-                    class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-                    wire:loading.attr="disabled" wire:target="resetFilters, $refresh">
-                    <x-heroicon-o-arrow-path class="w-5 h-5" /> Refresh
-                </button>
-
+            {{-- Filter Actions --}}
+            <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
                 <button wire:click="resetFilters"
-                    class="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-gray-200 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
-                    wire:loading.attr="disabled" wire:target="resetFilters, $refresh">
-                    <x-heroicon-o-x-mark class="w-5 h-5" /> Clear Filters
+                    class="text-sm font-medium text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                    Clear Filters
+                </button>
+                <button wire:click="$refresh"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 hover:border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600 transition-all duration-200 shadow-sm">
+                    <x-heroicon-o-arrow-path class="w-4 h-4" />
+                    Refresh List
                 </button>
             </div>
         </div>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 relative">
-        <div class="p-4 flex items-center justify-between border-b dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
-                <x-heroicon-o-clipboard-document-list class="w-5 h-5 text-gray-500 dark:text-gray-400" />
+    {{-- Appointments Table Card --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200/60 dark:border-gray-700 overflow-hidden relative">
+        {{-- Table Header Info --}}
+        <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">
                 Appointment List
+                <span class="ml-2 inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
+                    {{ $appointments->total() }}
+                </span>
             </h3>
-
-            <div class="text-sm text-gray-500 dark:text-gray-400">Showing
-                {{ $appointments->firstItem() }}-{{ $appointments->lastItem() }} of {{ $appointments->total() }} results
+            <div class="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 px-3 py-1 rounded-lg">
+                Showing {{ $appointments->firstItem() }}-{{ $appointments->lastItem() }}
             </div>
         </div>
 
-        <div class="overflow-x-auto rounded-b-lg relative min-h-[200px]">
-            <div wire:loading.flex
-                class="absolute inset-0 z-10 items-center justify-center bg-white/50 dark:bg-gray-900/50 transition-opacity">
-                <div class="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-md px-4 py-2 shadow">
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg"
-                        fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                            stroke-width="4">
-                        </circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                    </svg>
-                    <span class="text-sm text-gray-700 dark:text-gray-200">Loading Appointments…</span>
-                </div>
+        {{-- Loading Overlay --}}
+        <div wire:loading.flex wire:target="dateFilter, doctorFilter, statusFilter, patientSearch, resetFilters, $refresh, confirmAppointment, confirmCancelAppointment, reinstateAppointment"
+            class="absolute inset-0 z-20 items-center justify-center bg-white/60 backdrop-blur-[2px] dark:bg-gray-800/60 transition-opacity">
+            <div class="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-xl px-6 py-4 shadow-xl border border-gray-100 dark:border-gray-700">
+                <svg class="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+                <span class="text-sm font-medium text-gray-800 dark:text-gray-200">Updating...</span>
             </div>
+        </div>
 
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-700">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-sm">
+                <thead class="bg-gray-50/80 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Doctor</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date & Time</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Number</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        <th scope="col" class="px-6 py-4 font-semibold text-gray-500 dark:text-gray-400">Patient</th>
+                        <th scope="col" class="px-6 py-4 font-semibold text-gray-500 dark:text-gray-400">Doctor</th>
+                        <th scope="col" class="px-6 py-4 font-semibold text-gray-500 dark:text-gray-400">Date & Time</th>
+                        <th scope="col" class="px-6 py-4 font-semibold text-gray-500 dark:text-gray-400">Status</th>
+                        <th scope="col" class="px-6 py-4 font-semibold text-gray-500 dark:text-gray-400 text-center">Queue</th>
+                        <th scope="col" class="px-6 py-4 font-semibold text-gray-500 dark:text-gray-400 text-right">Actions</th>
                     </tr>
                 </thead>
 
-                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                     @forelse ($appointments as $appointment)
                         @php
                             $patient = $appointment->patient;
                             $doctor = $appointment->doctor;
                             $patientName = $patient ? trim("{$patient->first_name} {$patient->last_name}") : 'Unknown';
-                            $doctorName = $doctor ? $doctor->name : '--';
-
-                            $dateDisplay = $appointment->appointment_date
-                                ? \Carbon\Carbon::parse($appointment->appointment_date)->toFormattedDateString()
-                                : '--';
-                            $timeDisplay = $appointment->appointment_time
-                                ? \Carbon\Carbon::parse($appointment->appointment_time)->format('h:i A')
-                                : '--';
-
+                            $dateDisplay = $appointment->appointment_date ? \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y') : '--';
+                            $timeDisplay = $appointment->appointment_time ? \Carbon\Carbon::parse($appointment->appointment_time)->format('h:i A') : '--';
                             $status = $appointment->status;
-                            // Updated status color mapping
-                            $statusClasses = match (strtolower($status)) {
-                                'waiting' => 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-                                'in consultation' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-                                'canceled' => 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-                                'completed' => 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400',
-                                // Default for 'Scheduled' or other unknown statuses
-                                default => 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400',
+
+                            // Modern Status Pill Logic with Dot
+                            $statusConfig = match (strtolower($status)) {
+                                'waiting' => ['bg' => 'bg-amber-50 dark:bg-amber-900/20', 'text' => 'text-amber-700 dark:text-amber-400', 'dot' => 'bg-amber-500'],
+                                'in consultation' => ['bg' => 'bg-blue-50 dark:bg-blue-900/20', 'text' => 'text-blue-700 dark:text-blue-400', 'dot' => 'bg-blue-500 animate-pulse'],
+                                'canceled' => ['bg' => 'bg-red-50 dark:bg-red-900/20', 'text' => 'text-red-700 dark:text-red-400', 'dot' => 'bg-red-500'],
+                                'completed' => ['bg' => 'bg-emerald-50 dark:bg-emerald-900/20', 'text' => 'text-emerald-700 dark:text-emerald-400', 'dot' => 'bg-emerald-500'],
+                                default => ['bg' => 'bg-slate-100 dark:bg-slate-700/50', 'text' => 'text-slate-700 dark:text-slate-300', 'dot' => 'bg-slate-500'],
                             };
                         @endphp
 
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150"
-                            wire:key="appointment-{{ $appointment->id }}">
-                            <td class="px-4 py-4 whitespace-nowrap">
+                        <tr class="group hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors duration-150" wire:key="appointment-{{ $appointment->id }}">
+                            <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div
-                                        class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500">
-                                        <x-heroicon-o-user class="w-5 h-5" />
+                                    <div class="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs ring-2 ring-white dark:ring-gray-800">
+                                        {{ substr($patientName, 0, 2) }}
                                     </div>
                                     <div>
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                            {{ $patientName }}</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">ID:
-                                            {{ $patient->patient_uid ?? '--' }}</div>
+                                        <div class="font-semibold text-gray-900 dark:text-white">{{ $patientName }}</div>
+                                        <div class="text-xs text-gray-500 font-mono mt-0.5">{{ $patient->patient_uid ?? '#' }}</div>
                                     </div>
                                 </div>
                             </td>
 
-                            <td class="px-4 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-700 dark:text-gray-200">{{ $doctorName }}</div>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900 dark:text-gray-200">{{ $doctor ? $doctor->name : '--' }}</div>
                                 @if ($doctor && $doctor->department)
-                                    <div class="text-xs text-gray-500 dark:text-gray-400">
-                                        {{ $doctor->department->name }}</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">{{ $doctor->department->name }}</div>
                                 @endif
                             </td>
 
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
-                                <div class="flex items-center gap-2">
-                                    <x-heroicon-o-calendar class="w-4 h-4 text-gray-400" />
-                                    <span>{{ $dateDisplay }}</span>
-                                </div>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <x-heroicon-o-clock class="w-4 h-4 text-gray-400" />
-                                    {{-- End time removed as per updated Appointment model --}}
-                                    <span>{{ $timeDisplay }}</span>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium text-gray-900 dark:text-gray-200">{{ $dateDisplay }}</span>
+                                    <span class="text-xs text-gray-500 mt-0.5">{{ $timeDisplay }}</span>
                                 </div>
                             </td>
 
-                            <td class="px-4 py-4 whitespace-nowrap">
-                                <span
-                                    class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClasses }}"
-                                    role="status" aria-label="Status: {{ $status }}">
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium {{ $statusConfig['bg'] }} {{ $statusConfig['text'] }}">
+                                    <span class="h-1.5 w-1.5 rounded-full {{ $statusConfig['dot'] }}"></span>
                                     {{ $status }}
                                 </span>
                             </td>
- <td class="px-4 py-4 whitespace-nowrap">
 
-              <div class="text-xs text-gray-500 dark:text-gray-400 text-center">
-                                        {{ $appointment->queue_position }}</div>
+                            <td class="px-6 py-4 text-center">
+                                @if($appointment->queue_position)
+                                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-sm font-bold text-gray-700 dark:text-gray-300">
+                                        {{ $appointment->queue_position }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-400">-</span>
+                                @endif
                             </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-center">
-                                <div class="flex items-center justify-center gap-2">
 
-                                    {{-- Reschedule and Cancel - Available for initial/waiting states --}}
-                                    @if (in_array(strtolower($status), ['scheduled', 'waiting']))
-                                        <button wire:click="openRescheduleModal({{ $appointment->id }})"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-yellow-700 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 dark:bg-yellow-900/40 dark:text-yellow-300 dark:hover:bg-yellow-900/60"
-                                            aria-label="Reschedule appointment {{ $appointment->id }}">
-                                            <x-heroicon-o-arrow-path-rounded-square class="w-4 h-4" />
-                                            Reschedule
-                                        </button>
-
-                                        <button wire:click="confirmCancelAppointment({{ $appointment->id }})"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/60"
-                                            aria-label="Cancel appointment {{ $appointment->id }}">
-                                            <x-heroicon-o-x-mark class="w-4 h-4" />
-                                            Cancel
-                                        </button>
-                                    @endif
-
-                                    {{-- Check In: Moves 'Scheduled' to 'Waiting' --}}
+                            <td class="px-6 py-4">
+                                <div class="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+                                    {{-- Action: Check In --}}
                                     @if (strtolower($status) === 'scheduled')
-                                        <button wire:click="confirmAppointment({{ $appointment->id }})"
-                                            wire:loading.attr="disabled"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400 dark:bg-green-900/40 dark:text-green-300 dark:hover:bg-green-900/60"
-                                            aria-label="Check-in appointment {{ $appointment->id }}">
-                                            <x-heroicon-o-check class="w-4 h-4" />
-                                            Check In
+                                        <button wire:click="confirmAppointment({{ $appointment->id }})" title="Check In"
+                                            class="p-2 rounded-lg text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 transition-colors">
+                                            <x-heroicon-o-check class="w-5 h-5" />
                                         </button>
                                     @endif
 
- {{-- Reinstate: Moves 'Canceled'/'Completed' back to 'Waiting' --}}
-                                    @if ($status === 'Completed')
-                                        <button
-                                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 bg-gray-100 dark:bg-gray-900/30 dark:text-gray-400 cursor-not-allowed"
-                                            disabled>
-                                            <x-heroicon-s-check-circle class="w-4 h-4" />
-                                            Completed
+                                    {{-- Action: Reschedule --}}
+                                    @if (in_array(strtolower($status), ['scheduled', 'waiting']))
+                                        <button wire:click="openRescheduleModal({{ $appointment->id }})" title="Reschedule"
+                                            class="p-2 rounded-lg text-amber-600 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/40 transition-colors">
+                                            <x-heroicon-o-calendar-days class="w-5 h-5" />
+                                        </button>
+
+                                        <button wire:click="confirmCancelAppointment({{ $appointment->id }})" title="Cancel"
+                                            class="p-2 rounded-lg text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 transition-colors">
+                                            <x-heroicon-o-x-mark class="w-5 h-5" />
                                         </button>
                                     @endif
 
-                                    {{-- Reinstate: Moves 'Canceled'/'Completed' back to 'Waiting' --}}
+                                    {{-- Action: Reinstate --}}
                                     @if ($status === 'Canceled')
-                                        <button wire:click="reinstateAppointment({{ $appointment->id }})"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-900/60"
-                                            aria-label="Reinstate appointment {{ $appointment->id }}">
+                                        <button wire:click="reinstateAppointment({{ $appointment->id }})" title="Reinstate"
+                                            class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 transition-colors">
                                             <x-heroicon-o-arrow-uturn-left class="w-4 h-4" />
-                                            Reinstate
+                                            Restore
                                         </button>
+                                    @endif
+
+                                     @if ($status === 'Completed')
+                                        <div class="p-2 text-emerald-500">
+                                            <x-heroicon-s-check-circle class="w-5 h-5" />
+                                        </div>
                                     @endif
                                 </div>
                             </td>
-
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6"
-                                class="px-4 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
-                                <div class="flex flex-col items-center justify-center gap-3">
-                                    <x-heroicon-o-calendar class="w-16 h-16 text-gray-300 dark:text-gray-600" />
-                                    <p class="text-lg font-medium text-gray-700 dark:text-gray-300">No appointments
-                                        found</p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">Try adjusting your filters or
-                                        book a new appointment.</p>
-                                    <div class="mt-3">
-                                        <a href="{{ route('receptionist.book-appointment') }}" wire:navigate
-                                            class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
-                                            <x-heroicon-o-plus class="w-4 h-4" /> Book Appointment
-                                        </a>
+                            <td colspan="6" class="px-6 py-16 text-center">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                                        <x-heroicon-o-clipboard-document-list class="w-8 h-8 text-gray-400" />
                                     </div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">No appointments found</h3>
+                                    <p class="text-gray-500 dark:text-gray-400 max-w-sm mt-1">
+                                        We couldn't find any appointments matching your criteria. Try adjusting your filters.
+                                    </p>
+                                    <button wire:click="resetFilters" class="mt-4 text-indigo-600 hover:text-indigo-700 font-medium text-sm">
+                                        Clear all filters
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -323,76 +290,82 @@
         </div>
 
         @if ($appointments->hasPages())
-            <div class="p-4 border-t dark:border-gray-700">
+            <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
                 {{ $appointments->links() }}
             </div>
         @endif
     </div>
 
-    {{-- Reschedule modal --}}
-    <div x-data="{ open: @entangle('showRescheduleModal') }" x-show="open" x-cloak x-trap.noscroll="open"
-        x-on:keydown.escape.window="open = false" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div x-show="open" x-transition.opacity class="fixed inset-0 bg-black/50" @click="open = false"
-            aria-hidden="true"></div>
+    {{-- Reschedule Modal --}}
+    <div x-data="{ open: @entangle('showRescheduleModal') }" x-show="open" x-cloak class="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
 
-        <div x-show="open" x-transition:enter="transition ease-out duration-250"
-            x-transition:enter-start="opacity-0 transform scale-95 -translate-y-2"
-            x-transition:enter-end="opacity-100 transform scale-100 translate-y-0"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 transform scale-100 translate-y-0"
-            x-transition:leave-end="opacity-0 transform scale-95 -translate-y-2"
-            class="relative bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-xl w-full z-10 overflow-hidden">
-            <div class="p-6">
-                <div class="flex items-start justify-between gap-4">
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Reschedule Appointment</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Choose a new date and time for the
-                            appointment.</p>
+        <div x-show="open"
+            x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 backdrop-blur-sm transition-opacity"></div>
+
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div x-show="open"
+                    x-trap.noscroll="open"
+                    @click.away="open = false"
+                    x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+
+                    <div class="bg-white dark:bg-gray-800 px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                                <x-heroicon-o-clock class="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                            </div>
+                            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                                <h3 class="text-lg font-semibold leading-6 text-gray-900 dark:text-white" id="modal-title">Reschedule Appointment</h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Select a new date and time for the patient's appointment.</p>
+
+                                    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div class="space-y-1">
+                                            <label for="rescheduleDate" class="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">New Date</label>
+                                            <input type="date" id="rescheduleDate" wire:model.defer="rescheduleDate"
+                                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                            @error('rescheduleDate')
+                                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+
+                                        <div class="space-y-1">
+                                            <label for="rescheduleStart" class="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">New Time</label>
+                                            <input type="time" id="rescheduleStart" wire:model.defer="rescheduleStart"
+                                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                            @error('rescheduleStart')
+                                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div>
-                        <button @click="open = false"
-                            class="p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
-                            aria-label="Close reschedule modal">
-                            <x-heroicon-o-x-mark class="w-5 h-5" />
+                    <div class="bg-gray-50 dark:bg-gray-700/30 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                        <button type="button" wire:click="rescheduleAppointmentConfirm" wire:loading.attr="disabled"
+                            class="inline-flex w-full justify-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span wire:loading.remove wire:target="rescheduleAppointmentConfirm">Confirm Change</span>
+                            <span wire:loading wire:target="rescheduleAppointmentConfirm">Saving...</span>
+                        </button>
+                        <button type="button" @click="open = false"
+                            class="mt-3 inline-flex w-full justify-center rounded-lg bg-white dark:bg-gray-800 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-gray-200 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 sm:mt-0 sm:w-auto">
+                            Cancel
                         </button>
                     </div>
-                </div>
-
-                {{-- Updated grid to col-2 and removed rescheduleEnd field --}}
-                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="rescheduleDate"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
-                        <input type="date" id="rescheduleDate" wire:model.defer="rescheduleDate"
-                            class="mt-1 form-input w-full rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-200" />
-                        @error('rescheduleDate')
-                            <div class="text-red-600 text-sm mt-1">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label for="rescheduleStart"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Time</label>
-                        <input type="time" id="rescheduleStart" wire:model.defer="rescheduleStart"
-                            class="mt-1 form-input w-full rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-200" />
-                        @error('rescheduleStart')
-                            <div class="text-red-600 text-sm mt-1">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    {{-- The 'End Time' input was removed from here --}}
-
-                </div>
-
-                <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" @click="open = false"
-                        class="px-4 py-2 rounded-md border bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300">Cancel</button>
-                    <button type="button" wire:click="rescheduleAppointmentConfirm" wire:loading.attr="disabled"
-                        class="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 flex items-center">
-                        <span wire:loading.remove wire:target="rescheduleAppointmentConfirm">Reschedule</span>
-                        <span wire:loading wire:target="rescheduleAppointmentConfirm">Saving...</span>
-                    </button>
                 </div>
             </div>
         </div>

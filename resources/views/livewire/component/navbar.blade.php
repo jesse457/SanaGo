@@ -30,12 +30,12 @@ class="fixed inset-x-0 top-0 z-50 transition-all duration-300 'bg-white/80 dark:
 
         <!-- Desktop Navigation -->
         <div class="hidden lg:flex items-center gap-8">
-            <a wire:navigate href="{{ route('home') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Home</a>
-            <a wire:navigate href="{{ route('features') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Features</a>
-            <a wire:navigate href="{{ route('pricing') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Pricing</a>
-            <a wire:navigate href="{{ route('about') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">About</a>
-            <a wire:navigate href="{{ route('career') }}"class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Careers</a>
-            <a wire:navigate href="{{ route('blog') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Blog</a>
+            <a wire:navigate href="{{ route('home') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{{ __('navbar.home') }}</a>
+            <a wire:navigate href="{{ route('features') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{{ __('navbar.features') }}</a>
+            <a wire:navigate href="{{ route('pricing') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{{ __('navbar.pricing') }}</a>
+            <a wire:navigate href="{{ route('about') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{{ __('navbar.about') }}</a>
+            <a wire:navigate href="{{ route('career') }}"class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{{ __('navbar.careers') }}</a>
+            <a wire:navigate href="{{ route('blog') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{{ __('navbar.blog') }}</a>
         </div>
 
         <!-- Right Side Actions -->
@@ -51,7 +51,7 @@ class="fixed inset-x-0 top-0 z-50 transition-all duration-300 'bg-white/80 dark:
             <a href="{{ route('book-demo') }}" class="relative inline-flex h-10 overflow-hidden rounded-full p-[1px] focus:outline-none">
                 <span class="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]"></span>
                 <span class="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-white dark:bg-slate-950 px-5 py-1 text-sm font-bold text-slate-900 dark:text-white backdrop-blur-3xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                Book Now
+                {{ __('navbar.book_now') }}
                 </span>
             </a>
         </div>
@@ -70,15 +70,15 @@ class="fixed inset-x-0 top-0 z-50 transition-all duration-300 'bg-white/80 dark:
          x-cloak
          class="lg:hidden bg-white/95 dark:bg-[#0B1120]/95 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800">
         <div class="px-6 py-6 space-y-4">
-            <a wire:navigate href="{{ route('home') }}" class="block text-lg font-semibold text-slate-900 dark:text-white">Home</a>
-            <a wire:navigate href="{{ route('features') }}" class="block text-lg font-semibold text-slate-600 dark:text-slate-300">Features</a>
-            <a wire:navigate href="{{ route('pricing') }}" class="block text-lg font-semibold text-slate-600 dark:text-slate-300">Pricing</a>
-            <a wire:navigate href="{{ route('about') }}" class="block text-lg font-semibold text-slate-600 dark:text-slate-300">About</a>
-            <a wire:navigate href="{{ route('career') }}"class="block text-lg font-semibold text-slate-600 dark:text-slate-300">Careers</a>
-            <a wire:navigate href="{{ route('blog') }}" class="block text-lg font-semibold text-slate-600 dark:text-slate-300">Blog</a>
+            <a wire:navigate href="{{ route('home') }}" class="block text-lg font-semibold text-slate-900 dark:text-white">{{ __('navbar.home') }}</a>
+            <a wire:navigate href="{{ route('features') }}" class="block text-lg font-semibold text-slate-600 dark:text-slate-300">{{ __('navbar.features') }}</a>
+            <a wire:navigate href="{{ route('pricing') }}" class="block text-lg font-semibold text-slate-600 dark:text-slate-300">{{ __('navbar.pricing') }}</a>
+            <a wire:navigate href="{{ route('about') }}" class="block text-lg font-semibold text-slate-600 dark:text-slate-300">{{ __('navbar.about') }}</a>
+            <a wire:navigate href="{{ route('career') }}"class="block text-lg font-semibold text-slate-600 dark:text-slate-300">{{ __('navbar.careers') }}</a>
+            <a wire:navigate href="{{ route('blog') }}" class="block text-lg font-semibold text-slate-600 dark:text-slate-300">{{ __('navbar.blog') }}</a>
             <div class="pt-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <button @click="toggleDarkMode()" class="text-slate-600 dark:text-slate-300 flex items-center gap-2 font-medium">
-                    <span x-text="darkMode ? 'Light Mode' : 'Dark Mode'"></span>
+                    <span x-text="darkMode ? '{{ __('navbar.light_mode') }}' : '{{ __('navbar.dark_mode') }}'"></span>
                 </button>
             </div>
         </div>

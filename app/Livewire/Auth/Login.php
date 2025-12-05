@@ -23,8 +23,6 @@ class Login extends Component
 
     public string $password = '';
 
-    public string $test = '';
-
     public bool $remember = false;
 
     /* --------------------
@@ -32,7 +30,7 @@ class Login extends Component
        -------------------- */
     protected array $rules = [
         'email' => ['required', 'string', 'email'],
-        'password' => ['required', 'string', 'min:8'],
+        'password' => ['required', 'string'],
     ];
 
     /* --------------------
@@ -50,60 +48,71 @@ class Login extends Component
        -------------------- */
     public function authenticate()
     {
-        // 1. Validate once and only once
-        $this->validate($this->rules);
+        // 1. Validate input
+        $this->validate();
 
         Log::info('Login attempt', ['email' => $this->email]);
 
         try {
-            // 2. Safely retrieve user by email for custom pre-login checks
+            // 2. Retrieve user
             $user = User::where('email', $this->email)->first();
 
-            // 3. Combined check for user existence and password correctness
+            // 3. Verify User exists and Password matches
             if (! $user || ! Hash::check($this->password, $user->password)) {
-                // Throw a generic error for security, covering both user not found AND incorrect password
+                // Introduce a slight delay to prevent timing attacks
+                sleep(1);
                 throw ValidationException::withMessages([
-                    'email' => ['We could not find an account with that email address or the provided password was incorrect.'],
+                    'email' => [__('The provided credentials do not match our records.')],
                 ]);
             }
 
             // 4. Check for active status
             if (! $user->is_active) {
                 Log::warning('Login failed – inactive account', ['email' => $this->email]);
-                throw ValidationException::withMessages(['email' => __('Your account has deactivated contact the admin for more info.')]);
+                throw ValidationException::withMessages([
+                    'email' => [__('Your account has been deactivated. Please contact the administrator.')],
+                ]);
             }
 
-            // 5. Log the user in directly (since the password is now verified)
-            Auth::login($user, $this->remember);
-
-            // 6. Initialize tenancy *only if* the user is a tenant.
+            // 5. Initialize tenancy *before* login if user is a tenant
+            // This ensures the session is created in the correct context if using single-db or scoped sessions
             if ($user->role !== 'landlord' && ! empty($user->tenant_id)) {
-                Tenancy::initialize($user->tenant_id);
-                Log::info('Tenant initialised', ['tenant_id' => $user->tenant_id]);
+                try {
+                    Tenancy::initialize($user->tenant_id);
+                    Log::info('Tenant initialised', ['tenant_id' => $user->tenant_id]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to initialize tenant', ['tenant_id' => $user->tenant_id, 'error' => $e->getMessage()]);
+                    throw ValidationException::withMessages([
+                        'email' => [__('Tenant configuration error. Please contact support.')],
+                    ]);
+                }
             }
 
-            // 7. Regenerate the session for security.
+            // 6. Log the user in
+            Auth::Login($user, $this->remember);
+
+            // 7. Regenerate the session for security
             Session::regenerate();
+
             Log::info('Login successful', ['email' => $this->email, 'role' => $user->role]);
 
-            // 8. Redirect the user to their appropriate dashboard.
+            // 8. Redirect
             return $this->redirectToDashboard($user);
+
         } catch (ValidationException $e) {
-            // Re-throw so Livewire can show the message on the form.
+            // Livewire handles this automatically, no need to log the stack trace for validation errors
             throw $e;
-            Log::error('Login exception', [
-                'email' => $this->email,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
         } catch (\Throwable $e) {
+            // Log unexpected errors
             Log::error('Login exception', [
                 'email' => $this->email,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            throw ValidationException::withMessages(['email' => __('An unexpected error occurred. Please try again.')]);
+            throw ValidationException::withMessages([
+                'email' => [__('An unexpected error occurred. Please try again.')],
+            ]);
         }
     }
 
@@ -123,7 +132,6 @@ class Login extends Component
             default => '/',
         };
 
-        // This ensures the redirect is detected by Livewire and the Pest tests
         return $this->redirect($route, navigate: true);
     }
 

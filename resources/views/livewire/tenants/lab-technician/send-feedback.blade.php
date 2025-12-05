@@ -1,24 +1,24 @@
-<div class="flex-1 p-4 md:p-6 lg:ml-64 bg-gray-100 dark:bg-gray-900 overflow-y-auto min-h-screen">
+<div class="flex-1 p-4 mt-8  dark:bg-gray-900 overflow-y-auto min-h-screen">
     <header class="mb-8 space-y-4 sm:space-y-0">
-        <nav class="flex items-center text-sm font-medium text-gray-500 dark:text-gray-400">
+        <nav class="flex items-center text-sm font-medium text-gray-500 dark:text-gray-400 mb-8">
             <a href="{{ route('lab-technician.dashboard') }}" wire:navigate
-                class="flex items-center text-gray-700 hover:text-blue-700 dark:hover:text-gray-200">
+                class="ps-2 flex items-center text-gray-700 hover:text-blue-700 dark:hover:text-gray-200">
                 <x-heroicon-s-home class="w-4 h-4 mr-1" />
                 Home
             </a>
-            <x-heroicon-s-chevron-right class="w-4 h-4 mx-1" />
+            <x-heroicon-s-chevron-right class="w-4 h-4 mx-3" />
             <a href="{{ route('lab-technician.feedbacks') }}" wire:navigate
                 class="flex items-center text-gray-700 hover:text-blue-700 dark:hover:text-blue-200">
                 Feedbacks
             </a>
-            <x-heroicon-s-chevron-right class="w-4 h-4 mx-1" />
+            <x-heroicon-s-chevron-right class="w-4 h-4 mx-3" />
             <span class="text-gray-400 ">Submit Feedback</span>
         </nav>
 
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4">
             <div>
                 <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white flex items-center gap-3">
-                    <x-heroicon-s-chat-bubble-left-right class="w-8 h-8 text-indigo-500" />
+                    <x-heroicon-o-chat-bubble-left-right class="w-8 h-8 text-indigo-500" />
                     Submit Feedback
                 </h1>
                 <p class="text-gray-600 dark:text-gray-400 mt-1">

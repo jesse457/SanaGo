@@ -1,207 +1,142 @@
-<div class="flex-1 p-4 md:p-6 lg:ml-64 bg-gray-100 dark:bg-gray-900 overflow-y-auto min-h-screen">
-    {{-- Breadcrumbs & Header --}}
-    <div class="mb-6">
-        <nav class="flex" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
-                <li class="inline-flex items-center">
-                    <a href="{{ route('landlord.dashboard') }}" wire:navigate
-                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300">
-                        <x-heroicon-s-home class="w-4 h-4 me-2.5" />
-                        {{ __('ui.home') }}
-                    </a>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        <x-heroicon-s-chevron-right class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" />
-                        <a href="{{ route('dashboard') }}" wire:navigate
-                            class="ms-1 text-sm font-medium text-gray-700 md:ms-2 dark:text-gray-300 dark:hover:text-gray-200">
-                            {{ __('ui.feedbacks') }}</a>
-                    </div>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        <x-heroicon-s-chevron-right class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" />
-                        <span class="ms-1 text-sm font-medium text-gray-400 md:ms-2 dark:text-gray-500">
-                            {{ __('ui.respond_feedback') }}
-                        </span>
-                    </div>
-                </li>
-            </ol>
-        </nav>
-        <h2 class="text-3xl font-bold text-slate-800 dark:text-white mt-4">{{ __('ui.complaints_header') }}</h2>
-        <p class="mt-2 text-lg text-gray-600 dark:text-gray-400">
-            {{ __('ui.complaints_header_subtext') }}
-        </p>
-    </div>
+<div class=" p-4 md:p-8 max-w-full mx-auto space-y-4 p-2 md:p-4  min-h-screen font-sans">
 
-    {{-- Main Content Grid --}}
+    {{-- Breadcrumb --}}
+    <nav class="flex mb-6" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-2 text-sm text-slate-500 dark:text-slate-400">
+            <li class="hover:text-indigo-600 transition"><a href="{{ route('landlord.dashboard') }}" wire:navigate>Dashboard</a></li>
+            <li><x-heroicon-s-chevron-right class="w-3 h-3 text-slate-400" /></li>
+            <li class="hover:text-indigo-600 transition"><a href="{{ route('landlord.feedbacks') }}" wire:navigate>Complaints</a></li>
+            <li><x-heroicon-s-chevron-right class="w-3 h-3 text-slate-400" /></li>
+            <li class="font-medium text-slate-900 dark:text-white truncate">Ticket #{{ $feedback->id }}</li>
+        </ol>
+    </nav>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {{-- Left Panel: Ticket Details --}}
-        <section
-            class="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ __('ui.tenant_details') }}</h3>
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">{{ __('ui.key_info_context') }}</p>
-            </div>
 
-            <div class="p-5 space-y-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-500">{{ __('ui.admin_name') }}</span>
-                    <span
-                        class="text-sm font-medium text-gray-900 dark:text-gray-100">#{{ $feedback->user->name }}</span>
+        {{-- LEFT COLUMN: Context Card --}}
+        <div class="space-y-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 overflow-hidden">
+                <div class="p-5 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800">
+                    <h3 class="font-bold text-slate-900 dark:text-white">Ticket Details</h3>
                 </div>
 
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-500">{{ __('ui.created_at') }}</span>
-                    <span
-                        class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $feedback->created_at->format('M d, Y') }}</span>
-                </div>
-
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-500">{{ __('ui.category') }}</span>
-                    <span
-                        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                        {{ [
-                            'complaint' => 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200',
-                            'suggestion' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200',
-                            'issue' => 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-200',
-                            'general' => 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
-                            'other' => 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
-                        ][$feedback->category] ?? 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200' }}">
-                        {{ ucfirst($feedback->category) }}
-                    </span>
-                </div>
-
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-500">{{ __('ui.priority') }}</span>
-                    <span
-                        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                        {{ [
-                            'low' => 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
-                            'normal' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200',
-                            'high' => 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-200',
-                            'urgent' => 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200',
-                        ][$feedback->priority] ?? 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200' }}">
-                        {{ ucfirst($feedback->priority) }}
-                    </span>
-                </div>
-
-                <div>
-                    <span class="block text-sm text-gray-500">{{ __('ui.subject') }}</span>
-                    <p class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">{{ $feedback->subject }}</p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-
-                    <div>
-                        <span class="block text-xs text-gray-500">{{ __('ui.tenant') }}</span>
-                        <p class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {{ $feedback->tenant->name ?? 'N/A' }}
-                        </p>
-                    </div>
-                </div>
-
-                <div>
-                    <span class="block text-sm text-gray-500">{{ __('ui.original_message') }}</span>
-                    <pre
-                        class="mt-1 bg-gray-50 dark:bg-gray-700/60 rounded-lg p-3 text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap">{{ $feedback->message }}</pre>
-                </div>
-            </div>
-
-            {{-- Status and Assignee Panel --}}
-            <div class="px-5 py-4 border-t border-gray-200 dark:border-gray-700 space-y-4" x-data="{ status: '{{ $status }}' }">
-                <div x-data="{ status: @entangle('status') }">
-                    <span class="block text-sm text-gray-500">{{ __('ui.status') }}</span>
-
-                    <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        @foreach (['open', 'pending', 'resolved', 'closed'] as $s)
-                            <button type="button" @click="status = '{{ $s }}'"
-                                class="px-3 py-2 rounded-lg text-xs border transition duration-200"
-                                :class="{
-                                    'bg-indigo-600 text-white border-indigo-600 shadow-md': status === '{{ $s }}',
-                                    'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700': status !== '{{ $s }}'
-                                }">
-                                {{ ucfirst(__('ui.' . $s)) }}
-                            </button>
-                        @endforeach
+                <div class="p-5 space-y-5">
+                    {{-- User Info --}}
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold">
+                            {{ substr($feedback->user->name ?? 'U', 0, 1) }}
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ $feedback->user->name }}</p>
+                            <p class="text-xs text-slate-500 truncate">{{ $feedback->tenant->name ?? 'Unknown Tenant' }}</p>
+                        </div>
                     </div>
 
-                    {{-- hidden input kept for progressive enhancement / forms; not necessary with @entangle --}}
-                    <input type="hidden" wire:model="status">
-                </div>
+                    <hr class="border-slate-100 dark:border-slate-700/60">
 
-
-            </div>
-        </section>
-
-        {{-- Right Panel: Response --}}
-        <section
-            class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                <div>
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ __('ui.respond') }}</h3>
-                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">{{ __('ui.respond_subtext') }}
-                    </p>
-                </div>
-                <div class="flex items-center gap-4">
-                    <label class="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                        <input type="checkbox"
-                            class="rounded border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-indigo-600 focus:ring-indigo-500"
-                            wire:model.live="sendEmail">
-                        {{ __('ui.email') }}
-                    </label>
-                    <label class="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                        <input type="checkbox"
-                            class="rounded border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-indigo-600 focus:ring-indigo-500"
-                            wire:model.live="sendInApp">
-                        {{ __('ui.in_app') }}
-                    </label>
-                </div>
-            </div>
-
-            <form wire:submit="sendResponse">
-                <div class="p-5 space-y-4">
-                    <div
-                        class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-700/60">
-                        <p class="text-xs text-gray-600 dark:text-gray-300">{{ __('ui.to_label') }}: {{ $feedback->tenant->name ?? 'N/A' }}
-                        </p>
-                        <p class="text-xs text-gray-600 dark:text-gray-300">{{ __('ui.subject') }}: {{ $feedback->subject }}</p>
-                    </div>
-
-                    <div>
-                        <label for="response" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('ui.your_response') }}
-                            </label>
-                        <textarea id="response" rows="10" wire:model="response" placeholder="{{ __('ui.write_response_placeholder') }}"
-                            class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
-                        @error('response')
-                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="flex items-center justify-end gap-3">
-                        <button type="button" wire:click="saveDraft"
-                            class="px-4 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-200"
-                            wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="saveDraft">{{ __('ui.save_draft') }}</span>
-                            <span wire:loading wire:target="saveDraft">{{ __('ui.saving') }}</span>
-                        </button>
-                        <button type="submit"
-                            class="inline-flex items-center px-4 py-2 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 shadow-md transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                            wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="sendResponse">{{ __('ui.send_response') }}</span>
-                            <span wire:loading wire:target="sendResponse" class="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                    class="w-5 h-5 inline-block animate-spin mr-2">
-                                    <path fill-rule="evenodd"
-                                        d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm4.876 4.31a.75.75 0 01-.75 0C15.021 6.362 13.513 6 12 6c-1.42 0-2.822.36-4.062 1.059a.75.75 0 11-.75-1.299C8.36 6.096 10.198 5.625 12 5.625s3.64.471 5.293 1.355a.75.75 0 010 1.299z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                {{ __('ui.sending') }}
+                    {{-- Metadata --}}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <span class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Status</span>
+                             <div x-data="{ status: @entangle('status') }" class="relative">
+                                <select wire:model.live="status" class="appearance-none w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-semibold rounded-lg py-2 pl-3 pr-8 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer">
+                                    <option value="open">Open</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="resolved">Resolved</option>
+                                    <option value="closed">Closed</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                                    <x-heroicon-s-chevron-down class="w-3 h-3" />
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Priority</span>
+                            <span class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-bold
+                                {{ match($feedback->priority) {
+                                    'urgent', 'high' => 'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+                                    'medium' => 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                                    default => 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                                } }}">
+                                {{ ucfirst($feedback->priority) }}
                             </span>
-                        </button>
+                        </div>
+                        <div class="col-span-2">
+                             <span class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Category</span>
+                             <div class="text-sm font-medium text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                {{ ucfirst($feedback->category) }}
+                             </div>
+                        </div>
+                        <div class="col-span-2">
+                             <span class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Submitted</span>
+                             <div class="text-sm text-slate-800 dark:text-slate-200">
+                                {{ $feedback->created_at->format('M d, Y \a\t h:i A') }}
+                             </div>
+                        </div>
                     </div>
                 </div>
-            </form>
-        </section>
+            </div>
+        </div>
+
+        {{-- RIGHT COLUMN: Conversation --}}
+        <div class="lg:col-span-2 space-y-6">
+
+            {{-- Original Message Bubble --}}
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 p-6 relative">
+                <div class="absolute top-0 left-0 w-1 h-full bg-slate-200 dark:bg-slate-700 rounded-l-2xl"></div>
+
+                <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4">{{ $feedback->subject }}</h2>
+
+                <div class="prose prose-sm prose-slate dark:prose-invert max-w-none text-slate-600 dark:text-slate-300">
+                    {!! nl2br(e($feedback->message)) !!}
+                </div>
+            </div>
+
+            {{-- Response Editor --}}
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 overflow-hidden ring-1 ring-indigo-500/10 dark:ring-indigo-500/20">
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-900 dark:text-white text-sm">Post a Reply</h3>
+
+                    <div class="flex items-center gap-4">
+                        <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 cursor-pointer">
+                            <input type="checkbox" wire:model="sendEmail" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            Email
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 cursor-pointer">
+                            <input type="checkbox" wire:model="sendInApp" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            In-App
+                        </label>
+                    </div>
+                </div>
+
+                <form wire:submit="sendResponse" class="p-6 space-y-4">
+                    <div class="relative">
+                        <textarea wire:model="response" rows="6"
+                            class="block w-full rounded-xl border-0 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white shadow-inner ring-1 ring-inset ring-slate-200 dark:ring-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 resize-y p-4"
+                            placeholder="Write your response here..."></textarea>
+                        @error('response') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="text-xs text-slate-400">
+                            Responding to <span class="font-semibold">{{ $feedback->user->name }}</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <button type="button" wire:click="saveDraft" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700 transition">
+                                Save Draft
+                            </button>
+                            <button type="submit" wire:loading.attr="disabled" class="px-6 py-2 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-500/20 disabled:opacity-70 disabled:cursor-not-allowed transition flex items-center gap-2">
+                                <span wire:loading.remove>Send Response</span>
+                                <span wire:loading class="flex items-center gap-2">
+                                    <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    Sending...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>

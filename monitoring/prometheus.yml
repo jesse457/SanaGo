@@ -5,6 +5,10 @@ scrape_configs:
   - job_name: 'prometheus'
     static_configs:
       - targets: ['monitoring-prometheus:9090']
+  - job_name: 'frankenphp_app'
+    metrics_path: /prometheus
+    static_configs:
+      - targets: ['sanago-octane:8000']
 
   - job_name: 'node-exporter' # Host System Metrics
     static_configs:

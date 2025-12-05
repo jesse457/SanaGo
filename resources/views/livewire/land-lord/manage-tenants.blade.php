@@ -1,367 +1,289 @@
-<main class="flex-1 p-4 md:p-6 lg:ml-64 bg-slate-50 dark:bg-gray-900 overflow-y-auto min-h-screen" role="main">
-    {{-- Removed Animated Background Elements for a simpler, professional look --}}
+<main class="max-w-7xl mx-auto space-y-8 font-sans">
 
-    <div x-data="toastStore()" x-on:show-toast.window="showToast($event.detail)"
-        class="fixed top-5 right-5 z-[100] w-full max-w-xs" role="alert" aria-live="polite">
-        <div x-show="show" x-transition:enter="transform ease-out duration-300 transition"
-            x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
-            x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
-            x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0"
-            class="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg flex items-center gap-4">
-            <div class="flex-shrink-0">
-                {{-- Standardized Success color to a primary blue --}}
-                <x-heroicon-o-check-circle class="w-8 h-8 text-blue-600 dark:text-blue-400" />
-            </div>
+    {{-- Toast Notification (Alpine.js) --}}
+    <div x-data="{ show: false, title: '', message: '', type: 'success' }"
+         x-on:notify.window="show = true; title = $event.detail.title; message = $event.detail.message; type = $event.detail.type || 'success'; setTimeout(() => show = false, 3000)"
+         class="fixed top-6 right-6 z-[100] w-full max-w-sm" x-cloak>
+        <div x-show="show" x-transition.opacity.duration.300ms
+             :class="{ 'bg-green-50 border-green-200': type === 'success', 'bg-red-50 border-red-200': type === 'error' }"
+             class="p-4 border rounded-xl shadow-lg flex items-start gap-3 relative backdrop-blur-sm">
+            <div x-show="type === 'success'" class="text-green-500"><x-heroicon-s-check-circle class="w-6 h-6" /></div>
+            <div x-show="type === 'error'" class="text-red-500"><x-heroicon-s-x-circle class="w-6 h-6" /></div>
             <div>
-                <p class="font-bold text-gray-900 dark:text-white" x-text="title"></p>
-                <p class="text-sm text-gray-600 dark:text-gray-400" x-text="message"></p>
+                <h4 class="font-bold text-gray-900" x-text="title"></h4>
+                <p class="text-sm text-gray-600" x-text="message"></p>
             </div>
+            <button @click="show = false" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600"><x-heroicon-s-x-mark class="w-4 h-4" /></button>
         </div>
     </div>
 
-    <button @click="openSidebar = true" aria-label="{{ __('ui.open_menu') }}"
-        class="lg:hidden p-2 rounded-lg text-gray-700 bg-white shadow-md hover:bg-gray-100 transition-all duration-200 mb-6 dark:bg-gray-800 dark:text-gray-200">
-        <x-heroicon-o-bars-3 class="w-6 h-6" />
-    </button>
-
-    <div class="mb-6">
-        <nav class="flex" aria-label="Breadcrumb">
+    {{-- Breadcrumb --}}
+     <nav class="flex mb-5" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
                 <li class="inline-flex items-center">
                     <a href="{{ route('landlord.dashboard') }}" wire:navigate
-                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors dark:text-gray-400 dark:hover:text-indigo-400">
+                        class="inline-flex items-center text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-white">
                         <x-heroicon-s-home class="w-4 h-4 me-2.5" />
-                        {{ __('ui.home') }}
+                        Home
                     </a>
                 </li>
                 <li>
                     <div class="flex items-center">
-                        <x-heroicon-s-chevron-right class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" />
-                        <span class="ms-1 text-sm font-medium text-gray-500 md:ms-2 dark:text-gray-500">
-                            {{ __('ui.manage_tenants') }}
-                        </span>
+                        <x-heroicon-s-chevron-right class="rtl:rotate-180 w-3 h-3 text-slate-400 mx-1" />
+                        <span class="ms-1 text-sm font-medium text-slate-500 md:ms-2 dark:text-slate-400">Tenant
+                            Complaints</span>
                     </div>
                 </li>
             </ol>
         </nav>
+
+    {{-- Header & Actions --}}
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Tenant Management</h1>
+            <p class="text-slate-500 dark:text-slate-400 mt-1">Overview of all registered hospitals and clinics.</p>
+        </div>
+        <a href="{{ route('landlord.create-tenants') }}" wire:navigate
+           class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition-all hover:-translate-y-0.5 focus:ring-4 focus:ring-indigo-500/20">
+            <x-heroicon-m-plus class="w-5 h-5" />
+            <span>{{ __('ui.add_tenant') }}</span>
+        </a>
     </div>
 
-    <div class="mb-8">
-        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    {{-- Stats Overview (Optional but recommended) --}}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-gray-700 flex items-center justify-between">
             <div>
-                <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
-                    <div class="p-2 bg-indigo-600 rounded-lg shadow-md">
-                        <x-heroicon-s-user-group class="w-8 h-8 text-white" />
-                    </div>
-                    {{ __('ui.manage_tenants') }}
-                </h1>
-                <p class="text-gray-600 dark:text-gray-400">{{ __('ui.tenants_header_subtext') }}</p>
+                <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Tenants</p>
+                <p class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ $tenants->total() }}</p>
             </div>
-            <a href="{{ route('landlord.create-tenants') }}" wire:navigate
-                class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                <x-heroicon-o-plus class="w-5 h-5" />
-                {{ __('ui.add_tenant') }}
-            </a>
-        </header>
-    </div>
-
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 mb-6 relative z-10">
-        <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
-            <div class="relative w-full md:flex-1">
-                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <x-heroicon-o-magnifying-glass class="h-5 w-5 text-gray-400" />
-                </div>
-                <input type="text" wire:model.live.debounce.300ms="search"
-                    placeholder="{{ __('ui.search_tenant_placeholder') }}"
-                    class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out">
+            <div class="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
+                <x-heroicon-o-building-office-2 class="w-6 h-6" />
             </div>
-            <div class="flex gap-2">
-                <button class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" aria-label="{{ __('ui.filter') }}">
-                    <x-heroicon-o-adjustments-horizontal class="w-5 h-5" />
-                </button>
-                <button class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" aria-label="{{ __('ui.export') }}">
-                    <x-heroicon-o-arrow-down-tray class="w-5 h-5" />
-                </button>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-gray-700 flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Active Subscriptions</p>
+                <p class="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                    {{-- Assuming you add a scopeActive to your component query --}}
+                    {{ $tenants->where('subscription.status', 'active')->count() }}
+                </p>
+            </div>
+            <div class="p-3 bg-green-50 dark:bg-green-900/30 rounded-lg text-green-600 dark:text-green-400">
+                <x-heroicon-o-credit-card class="w-6 h-6" />
+            </div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-gray-700 flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Expiring Soon</p>
+                <p class="text-2xl font-bold text-slate-900 dark:text-white mt-1">0</p>
+            </div>
+            <div class="p-3 bg-amber-50 dark:bg-amber-900/30 rounded-lg text-amber-600 dark:text-amber-400">
+                <x-heroicon-o-clock class="w-6 h-6" />
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 relative z-10">
+    {{-- Filters & Search --}}
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-slate-200 dark:border-gray-700 p-4 mb-6">
+        <div class="flex flex-col md:flex-row gap-4">
+            <div class="relative flex-1">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <x-heroicon-o-magnifying-glass class="h-5 w-5 text-slate-400" />
+                </div>
+                <input type="text" wire:model.live.debounce.300ms="search"
+                       placeholder="Search by name, domain, or email..."
+                       class="block w-full pl-10 pr-3 py-2.5 border border-slate-300 dark:border-gray-600 rounded-lg bg-slate-50 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-shadow">
+            </div>
+            <div class="flex gap-2">
+                <select wire:model.live="filterPlan" class="py-2.5 pl-3 pr-8 border border-slate-300 dark:border-gray-600 rounded-lg bg-slate-50 dark:bg-gray-900 text-slate-700 dark:text-gray-200 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">All Plans</option>
+                    <option value="basic">Basic</option>
+                    <option value="standard">Standard</option>
+                    <option value="premium">Premium</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    {{-- Tenants Grid --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         @forelse ($tenants as $tenant)
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group">
-                <div class="h-2 bg-indigo-600"></div>
-                <div class="p-6">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="flex items-center">
-                            <div class="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-lg mr-3">
-                                {{ substr($tenant->name, 0, 1) }}
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $tenant->name }}</h3>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">ID: {{ $tenant->id }}</p>
-                            </div>
-                        </div>
-                        @php $tier = $tenant->subscription_tier ?? 'Basic'; @endphp
-                        @if ($tier === 'Premium')
-                            <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
-                                {{ __('ui.premium') }}
-                            </span>
-                        @elseif ($tier === 'Standard')
-                            <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300">
-                                {{ __('ui.standard') }}
-                            </span>
-                        @else
-                            <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300">
-                                {{ __('ui.basic') }}
-                            </span>
-                        @endif
-                    </div>
+            <div class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md border border-slate-200 dark:border-gray-700 transition-all duration-200 flex flex-col h-full">
 
-                    <div class="space-y-3 mb-4">
-                        <div class="flex items-center text-sm">
-                            <x-heroicon-o-globe-alt class="w-4 h-4 text-gray-400 mr-2" />
-                            @php
-                                $firstDomain = $tenant->domains()->first()?->domain;
-                            @endphp
-                            @if ($firstDomain)
-                                <a href="{{ $firstDomain }}:8000" target="_blank" rel="noopener"
-                                    class="text-indigo-600 dark:text-indigo-400 hover:underline font-mono break-all">
-                                    {{ $firstDomain }}
-                                </a>
-                            @else
-                                <span class="text-gray-400">—</span>
-                            @endif
+                {{-- Card Header --}}
+                <div class="p-5 border-b border-slate-100 dark:border-gray-700/50 flex items-start justify-between">
+                    <div class="flex items-center gap-3">
+                        {{-- Avatar / Logo Placeholder --}}
+                        <div class="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-lg">
+                            {{ substr($tenant->name, 0, 1) }}
                         </div>
-                        <div class="flex items-center text-sm">
-                            <x-heroicon-o-envelope class="w-4 h-4 text-gray-400 mr-2" />
-                            <span class="text-gray-600 dark:text-gray-400 truncate">{{ $tenant->contact_email }}</span>
-                        </div>
-
-                         <div class="flex items-center text-sm">
-                            <x-heroicon-o-calendar class="w-4 h-4 text-gray-400 mr-2" />
-                            <span class="text-gray-600 dark:text-gray-400 truncate">{{ __('ui.starts_at') }}: {{ $tenant->subscription?->starts_at }}</span>
-                        </div>
-                                                 <div class="flex items-center text-sm">
-                            <x-heroicon-o-calendar class="w-4 h-4 text-gray-400 mr-2" />
-                            <span class="text-gray-600 dark:text-gray-400 truncate">{{ __('ui.ends_at') }}: {{ $tenant->subscription?->ends_at }}</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-slate-900 dark:text-white truncate max-w-[140px]" title="{{ $tenant->name }}">
+                                {{ $tenant->name }}
+                            </h3>
+                            <a href="http://{{ $tenant->domains->first()?->domain }}" target="_blank" class="text-xs text-slate-500 hover:text-indigo-600 hover:underline flex items-center gap-1">
+                                {{ $tenant->domains->first()?->domain }}
+                                <x-heroicon-m-arrow-top-right-on-square class="w-3 h-3" />
+                            </a>
                         </div>
                     </div>
-
-                    <div class="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700">
-                        <button type="button" wire:click="editTenant({{ $tenant->id }})"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors">
-                            <x-heroicon-o-pencil-square class="w-4 h-4" />
-                            {{ __('ui.edit') }}
-                        </button>
-                        <div class="flex gap-2">
-                            <button type="button" wire:click="viewTenant({{ $tenant->id }})"
-                                class="p-1.5 rounded-lg text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors" aria-label="{{ __('ui.view') }}">
-                                <x-heroicon-o-eye class="w-4 h-4" />
-                            </button>
-                            <button type="button" wire:click="viewDeleteTenant({{ $tenant->id }})"
-                                class="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" aria-label="{{ __('ui.delete') }}">
-                                <x-heroicon-o-trash class="w-4 h-4" />
-                            </button>
-                        </div>
+                    {{-- Live Status Dot --}}
+                    @php $isActive = $tenant->subscription && $tenant->subscription->isActive(); @endphp
+                    <div class="flex flex-col items-end">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {{ $isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' }}">
+                            <span class="w-1.5 h-1.5 rounded-full {{ $isActive ? 'bg-green-500' : 'bg-red-500' }}"></span>
+                            {{ $isActive ? 'Active' : 'Inactive' }}
+                        </span>
                     </div>
+                </div>
+
+                {{-- Card Body --}}
+                <div class="p-5 flex-1 space-y-4">
+                    {{-- Plan Badge --}}
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-500 dark:text-slate-400">Plan</span>
+                        @php
+                            $tier = $tenant->subscription_tier;
+                            $badgeClass = match($tier) {
+                                'enterprise' => 'bg-purple-100 text-purple-700 border-purple-200',
+                                'premium' => 'bg-amber-100 text-amber-700 border-amber-200',
+                                'standard' => 'bg-blue-100 text-blue-700 border-blue-200',
+                                default => 'bg-slate-100 text-slate-700 border-slate-200'
+                            };
+                        @endphp
+                        <span class="px-2 py-0.5 rounded text-xs font-semibold border {{ $badgeClass }}">
+                            {{ ucfirst($tier) }}
+                        </span>
+                    </div>
+
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-500 dark:text-slate-400">Renewal</span>
+                        <span class="font-medium text-slate-900 dark:text-white">
+                            {{ $tenant->subscription?->ends_at?->format('M d, Y') ?? 'N/A' }}
+                        </span>
+                    </div>
+
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-500 dark:text-slate-400">Contact</span>
+                        <span class="font-medium text-slate-900 dark:text-white truncate max-w-[150px]" title="{{ $tenant->contact_email }}">
+                            {{ $tenant->contact_email }}
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Card Actions --}}
+                <div class="p-4 bg-slate-50 dark:bg-gray-800/50 border-t border-slate-200 dark:border-gray-700 rounded-b-xl flex justify-between gap-2">
+                    {{-- Main Link Requested: Manage Subscription --}}
+                    <a href="{{ route('landlord.manage-subscription', $tenant->id) }}" wire:navigate
+                       class="flex-1 inline-flex justify-center items-center gap-2 px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg dark:bg-indigo-900/20 dark:text-indigo-300 dark:hover:bg-indigo-900/40 transition-colors">
+                       <x-heroicon-s-credit-card class="w-4 h-4" />
+                       {{ __('Manage Sub') }}
+                    </a>
+
+                    {{-- Edit Button (Triggers Modal) --}}
+                    <button wire:click="editTenant({{ $tenant->id }})"
+                            class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-200 dark:hover:bg-gray-700 rounded-lg transition-colors" title="Edit Details">
+                        <x-heroicon-o-pencil-square class="w-5 h-5" />
+                    </button>
+
+                    {{-- Delete Button --}}
+                    <button wire:click="viewDeleteTenant({{ $tenant->id }})"
+                            class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Delete Tenant">
+                        <x-heroicon-o-trash class="w-5 h-5" />
+                    </button>
                 </div>
             </div>
         @empty
-            <div class="col-span-full">
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-12 text-center">
-                    <x-heroicon-o-user-group class="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                    <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">{{ __('ui.no_tenants_found') }}</h3>
-                    <p class="text-gray-500 dark:text-gray-400 mb-6">
-                        {{ __('ui.tenants_search_tip') }}
-                    </p>
-                    <a href="{{ route('landlord.create-tenants') }}" wire:navigate
-                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl">
-                        <x-heroicon-o-plus class="w-5 h-5" />
-                        {{ __('ui.add_new_tenant') }}
-                    </a>
+            <div class="col-span-full py-12 flex flex-col items-center justify-center text-center bg-white dark:bg-gray-800 rounded-xl border border-dashed border-slate-300 dark:border-gray-700">
+                <div class="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-full mb-4">
+                    <x-heroicon-o-building-storefront class="w-8 h-8 text-indigo-500" />
                 </div>
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">No tenants found</h3>
+                <p class="text-slate-500 dark:text-slate-400 max-w-sm mt-1 mb-6">
+                    Try adjusting your search terms or create your first tenant to get started.
+                </p>
+                <a href="{{ route('landlord.create-tenants') }}" wire:navigate class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
+                    Create New Tenant
+                </a>
             </div>
         @endforelse
     </div>
 
-    <div class="flex justify-center">
+    {{-- Pagination --}}
+    <div class="mt-4">
         {{ $tenants->links() }}
     </div>
 
-    <!-- View Modal -->
-    <div x-cloak x-show="$wire.showViewModal" x-transition.opacity
-        class="fixed inset-0 z-40 flex items-center justify-center p-4">
-        <div @click="$wire.closeViewModal()" class="absolute inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true"></div>
-        <div @keydown.escape.window="$wire.closeViewModal()"
-            class="relative w-full max-w-lg bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden transform transition-all"
-            role="dialog" aria-modal="true" aria-labelledby="view-modal-title">
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                <h3 id="view-modal-title" class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('ui.tenant_details') }}</h3>
-                <button class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    @click="$wire.closeViewModal()" aria-label="{{ __('ui.close') }}">
-                    <x-heroicon-o-x-mark class="w-5 h-5 text-gray-500" />
-                </button>
-            </div>
-            <div class="px-6 py-5 space-y-4">
-                <div class="flex items-center space-x-4">
-                    <div class="w-16 h-16 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xl">
-                        <span x-text="$wire.viewing?.name ? $wire.viewing.name.charAt(0).toUpperCase() : ''"></span>
+    {{-- ================= MODALS ================= --}}
+
+    {{-- Edit Modal --}}
+    <div x-cloak x-show="$wire.showEditModal"
+        class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div x-show="$wire.showEditModal" x-transition.opacity class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"></div>
+
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div x-show="$wire.showEditModal"
+                 @click.away="$wire.closeEditModal()"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 class="relative transform overflow-hidden rounded-xl bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-slate-200 dark:border-gray-700">
+
+                <div class="px-4 py-5 sm:px-6 bg-slate-50 dark:bg-gray-700/50 border-b border-slate-200 dark:border-gray-700 flex justify-between items-center">
+                    <h3 class="text-lg font-semibold leading-6 text-slate-900 dark:text-white" id="modal-title">Edit Tenant Details</h3>
+                    <button wire:click="closeEditModal" class="text-slate-400 hover:text-slate-500"><x-heroicon-m-x-mark class="w-5 h-5"/></button>
+                </div>
+
+                <div class="px-4 py-5 sm:p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium leading-6 text-slate-900 dark:text-white">Tenant Name</label>
+                        <input type="text" wire:model.defer="tenantName" class="mt-2 block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-900 dark:ring-gray-600 dark:text-white">
+                        @error('tenantName') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                     </div>
                     <div>
-                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white" x-text="$wire.viewing?.name"></h4>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">ID: <span x-text="$wire.viewing?.id"></span></p>
+                        <label class="block text-sm font-medium leading-6 text-slate-900 dark:text-white">Contact Email</label>
+                        <input type="email" wire:model.defer="contactEmail" class="mt-2 block w-full rounded-md border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-900 dark:ring-gray-600 dark:text-white">
+                        @error('contactEmail') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                     </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                        <p class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">{{ __('ui.domain') }}</p>
-                        <p class="text-sm font-mono text-indigo-600 dark:text-indigo-400 break-all"
-                            x-text="$wire.viewing?.domain"></p>
-                    </div>
-                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                        <p class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">{{ __('ui.subscription') }}</p>
-                        <p class="text-sm text-gray-900 dark:text-white" x-text="$wire.viewing?.subscription_tier"></p>
-                    </div>
-                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 sm:col-span-2">
-                        <p class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">{{ __('ui.email') }}</p>
-                        <p class="text-sm text-gray-900 dark:text-white" x-text="$wire.viewing?.contact_email"></p>
-                    </div>
-                </div>
-            </div>
-            <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-                <button
-                    class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                    @click="$wire.closeViewModal()">
-                    {{ __('ui.close') }}
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Modal -->
-    <div x-cloak x-show="$wire.showEditModal" x-transition.opacity
-        class="fixed inset-0 z-40 flex items-center justify-center p-4">
-        <div @click="$wire.closeEditModal()" class="absolute inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true"></div>
-        <div @keydown.escape.window="$wire.closeEditModal()"
-            class="relative w-full max-w-xl bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden transform transition-all"
-            role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                <h3 id="edit-modal-title" class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('ui.edit_tenant') }}</h3>
-                <button class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    @click="$wire.closeEditModal()" aria-label="{{ __('ui.close') }}">
-                    <x-heroicon-o-x-mark class="w-5 h-5 text-gray-500" />
-                </button>
-            </div>
-            <div class="px-6 py-5 space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <label for="tenant-name" class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('ui.tenant_name') }}</label>
-                        <input id="tenant-name" type="text" wire:model.defer="tenantName"
-                            class="w-full px-3 py-2 rounded-lg border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
-                        @error('tenantName')
-                            <p class="text-xs text-red-500">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="contact-email" class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('ui.contact_email') }}</label>
-                        <input id="contact-email" type="email" wire:model.defer="contactEmail"
-                            class="w-full px-3 py-2 rounded-lg border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
-                        @error('contactEmail')
-                            <p class="text-xs text-red-500">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="subscription-tier" class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('ui.subscription') }}</label>
-                        <select id="subscription-tier" wire:model.defer="subscriptionTier"
-                            class="w-full px-3 py-2 rounded-lg border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
-                            <option value="Basic">{{ __('ui.basic') }}</option>
-                            <option value="Standard">{{ __('ui.standard') }}</option>
-                            <option value="Premium">{{ __('ui.premium') }}</option>
-                        </select>
-                        @error('subscriptionTier')
-                            <p class="text-xs text-red-500">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="space-y-2 sm:col-span-2">
-                        <label for="generated-domain" class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('ui.generated_domain') }}</label>
-                        <input id="generated-domain" type="text" wire:model="generatedDomain" readonly
-                            class="w-full px-3 py-2 rounded-lg border-gray-300 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
-                    </div>
-                </div>
-            </div>
-            <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
-                <button
-                    class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                    @click="$wire.closeEditModal()">
-                    {{ __('ui.cancel') }}
-                </button>
-                <button wire:click="saveTenant"
-                    class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
-                    {{ __('ui.save_changes') }}
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Modal -->
-    <div x-cloak x-show="$wire.showDeleteModal" x-transition.opacity
-        class="fixed inset-0 z-40 flex items-center justify-center p-4">
-        <div @click="$wire.closeDeleteModal()" class="absolute inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true"></div>
-        <div @keydown.escape.window="$wire.closeDeleteModal()"
-            class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden transform transition-all"
-            role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
-            <div class="px-6 py-5">
-                <div class="flex items-start gap-3">
-                    <div class="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
-                        <x-heroicon-o-exclamation-triangle class="w-6 h-6 text-red-600 dark:text-red-400" />
-                    </div>
-                    <div>
-                        <h3 id="delete-modal-title" class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('ui.delete_tenant') }}</h3>
-                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                            {{ __('ui.delete_tenant_confirm', ['domain' => '<span class="font-semibold" x-text="$wire.selectedTenantDomain"></span>']) }}
-                            {{ __('ui.action_cannot_be_undone') }}
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg flex gap-3">
+                        <x-heroicon-s-information-circle class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                        <p class="text-xs text-blue-700 dark:text-blue-300">
+                            To change the Subscription Plan or Billing Cycle, please use the <span class="font-bold">Manage Sub</span> page.
                         </p>
                     </div>
                 </div>
-            </div>
-            <div
-                class="px-6 py-4 bg-gray-50 dark:bg-gray-700/40 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
-                <button
-                    class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                    @click="$wire.closeDeleteModal()">
-                    {{ __('ui.cancel') }}
-                </button>
-                <button wire:click="deleteTenant" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">
-                    {{ __('ui.delete') }}
-                </button>
+
+                <div class="bg-slate-50 dark:bg-gray-700/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-slate-200 dark:border-gray-700">
+                    <button type="button" wire:click="saveTenant" class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto">Save Changes</button>
+                    <button type="button" wire:click="closeEditModal" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto dark:bg-gray-800 dark:text-slate-300 dark:ring-gray-600 dark:hover:bg-gray-700">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('toastStore', () => ({
-                show: false,
-                title: '{{ __('ui.success') }}',
-                message: '',
-                showToast(detail) {
-                    this.title = detail.title || '{{ __('ui.success') }}';
-                    this.message = detail.message || '';
-                    this.show = true;
-                    clearTimeout(this._t);
-                    this._t = setTimeout(() => this.show = false, detail.timeout || 3000);
-                }
-            }));
+    {{-- Delete Modal --}}
+    <div x-cloak x-show="$wire.showDeleteModal" class="fixed inset-0 z-50 overflow-y-auto">
+        <div x-show="$wire.showDeleteModal" x-transition.opacity class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div x-show="$wire.showDeleteModal" @click.away="$wire.closeDeleteModal()"
+                 x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                 class="relative transform overflow-hidden rounded-xl bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                <div class="p-6 text-center">
+                    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
+                        <x-heroicon-o-exclamation-triangle class="h-6 w-6 text-red-600" />
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Delete Tenant?</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">
+                        Are you sure you want to delete <span class="font-bold text-slate-900 dark:text-white">{{ $selectedTenantDomain }}</span>? This action involves deleting databases and cannot be undone.
+                    </p>
+                </div>
+                <div class="bg-slate-50 dark:bg-gray-700/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                    <button wire:click="deleteTenant" class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto">Yes, Delete</button>
+                    <button wire:click="closeDeleteModal" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto dark:bg-gray-800 dark:text-slate-300 dark:ring-gray-600">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            // Listen for Livewire notify events
-            Livewire.on('notify', (event) => {
-                Alpine.store('toastStore').showToast(event);
-            });
-        });
-    </script>
 </main>
