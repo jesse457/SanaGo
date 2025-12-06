@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Landlord;
+namespace App\Livewire\LandLord;
 
 use App\Models\Subscription;
 use App\Models\Tenant;

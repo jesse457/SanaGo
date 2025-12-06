@@ -50,17 +50,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            <span class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Priority</span>
-                            <span class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-bold
-                                {{ match($feedback->priority) {
-                                    'urgent', 'high' => 'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
-                                    'medium' => 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-                                    default => 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
-                                } }}">
-                                {{ ucfirst($feedback->priority) }}
-                            </span>
-                        </div>
+                       
                         <div class="col-span-2">
                              <span class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Category</span>
                              <div class="text-sm font-medium text-slate-800 dark:text-slate-200 flex items-center gap-2">

@@ -1,4 +1,4 @@
-<main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50/50 p-6 dark:bg-gray-900">
+<main class="flex-1 overflow-x-hidden overflow-y-auto  p-6 dark:bg-gray-900">
     {{-- Mobile Sidebar Toggle --}}
     <button @click="open = true" class="lg:hidden p-2 rounded-lg text-gray-500 bg-white shadow-sm border border-gray-200 hover:bg-gray-50 mb-6 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-700 transition-colors">
         <x-heroicon-o-bars-3 class="w-6 h-6" />
@@ -6,22 +6,21 @@
 
     <div class=" mx-auto">
         {{-- Breadcrumbs --}}
-        <div class="mb-6 mt-8">
+        <div class="mb-6 mt-6">
         <nav class="flex" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
                 <li class="inline-flex items-center">
                     <a href="{{ route('receptionist.dashboard') }}" wire:navigate
-                        class="inline-flex items-center text-sm font-medium text-gray-400 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-300 transition-colors duration-150">
+                        class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-300 transition-colors duration-150">
                         <x-heroicon-s-home class="w-4 h-4 me-2.5" />
                         Home
                     </a>
                 </li>
                  <li>
                     <div class="flex items-center">
-                        <x-heroicon-s-chevron-right class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" />
+                        <x-heroicon-s-chevron-right class="rtl:rotate-180 w-3 h-3 text-gray-500 mx-1" />
                         <a href="{{ route('receptionist.patients') }}" wire:navigate
-                        class="inline-flex items-center text-sm font-medium text-gray-400 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-300 transition-colors duration-150">
-                       
+                        class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-300 transition-colors duration-150">
                         Patients
                     </a>
                     </div>
@@ -40,12 +39,10 @@
         {{-- Header --}}
         <div class="mb-8">
             <h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
-                <div class="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
-                    <x-heroicon-o-user-plus class="w-7 h-7" />
-                </div>
+
                 New Patient Registration
             </h1>
-            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 ml-14">
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 ">
                 Enter the patient's personal details to create a new medical record.
             </p>
         </div>

@@ -1,4 +1,4 @@
-<main class="flex-1 bg-white dark:bg-gray-900 overflow-y-auto min-h-screen">
+<main class="flex-1 bg-white dark:bg-gray-900 overflow-y-auto min-h-screen font-sans">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 md:p-8">
 
 

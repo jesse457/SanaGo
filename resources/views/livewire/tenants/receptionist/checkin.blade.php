@@ -1,9 +1,9 @@
-<main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50/50 p-6 dark:bg-gray-900" data-turbo="false"
+<main class="flex-1 overflow-x-hidden overflow-y-auto  p-6 dark:bg-gray-900" data-turbo="false"
     data-boost="false">
 
     <div class="max-w-7xl mx-auto">
         {{-- Breadcrumbs --}}
-        <div class="mb-6 mt-8">
+        <div class="mb-6 mt-6">
             <nav class="flex" aria-label="Breadcrumb">
                 <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
                     <li class="inline-flex items-center">
@@ -44,13 +44,10 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
-                    <div
-                        class="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
-                        <x-heroicon-o-user-plus class="w-7 h-7" />
-                    </div>
+
                     Patient Admissions
                 </h1>
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 ml-14">
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     Manage patient admission requests, bed assignments, and discharge status.
                 </p>
             </div>

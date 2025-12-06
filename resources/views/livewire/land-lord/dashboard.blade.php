@@ -1,5 +1,5 @@
 <div>
-    
+
     <!--
       CONTENT WRAPPER
       - Reduced spacing (space-y-4)

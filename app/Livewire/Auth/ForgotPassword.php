@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Password;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('components.layouts.guest')] // Ensure this points to a blank layout if needed
+
 class ForgotPassword extends Component
 {
     public $email = '';
@@ -23,7 +23,7 @@ class ForgotPassword extends Component
     {
         $this->validate();
 
-        $response = Password::broker()->sendResetLink(['email' => $this->email]);
+        $response = Password::sendResetLink(['email' => $this->email]);
 
         if ($response == Password::RESET_LINK_SENT) {
             $this->status = trans($response);

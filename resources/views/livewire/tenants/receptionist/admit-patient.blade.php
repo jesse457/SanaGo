@@ -32,12 +32,10 @@
         {{-- Header --}}
         <div class="mb-8">
             <h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
-                <div class="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
-                    <x-heroicon-s-clipboard-document-list class="w-7 h-7" />
-                </div>
+
                 Patient Admission
             </h1>
-            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 ml-14">
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 ">
                 Assign a bed and record admission details for inpatient care.
             </p>
         </div>
