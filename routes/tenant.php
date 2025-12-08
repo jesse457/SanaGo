@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Livewire\Auth\ForgotPassword;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -13,8 +14,7 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 // -- Auth Components --
 use App\Livewire\Auth\Login;
-use App\Livewire\Auth\ForgotPassword;
-use App\Livewire\Auth\ResetPassword;
+use App\Livewire\Tenants\Auth\TenantResetPassword;
 
 // -- Admin Components --
 use App\Livewire\Tenants\Admin\Index as AdminIndex;
@@ -28,7 +28,6 @@ use App\Livewire\Tenants\Admin\Profile as AdminProfile;
 use App\Livewire\Tenants\Admin\Shifts;
 use App\Livewire\Tenants\Admin\RevenueDashboard;
 use App\Livewire\Tenants\Admin\AdminFeedbackHistory;
-
 // -- Doctor Components --
 use App\Livewire\Tenants\Doctor\Index as DoctorIndex;
 use App\Livewire\Tenants\Doctor\Patient;
@@ -83,6 +82,7 @@ use App\Livewire\Tenants\Pharmacist\CreateDrugs;
 use App\Livewire\Tenants\Pharmacist\SalesReport;
 use App\Livewire\Tenants\Pharmacist\Medications;
 use App\Livewire\Tenants\Pharmacist\Profile as PharmacistProfile;
+use Illuminate\Support\Facades\Cache;
 
 /*
 |--------------------------------------------------------------------------
@@ -121,7 +121,7 @@ Route::middleware([
     Route::middleware('guest')->prefix('tenant')->group(function () {
         Route::get('/login', Login::class)->name('tenant.login');
         Route::get('/forgot-password', ForgotPassword::class)->name('tenant.password.request');
-        Route::get('/reset-password/{token}', ResetPassword::class)->name('tenant.password.reset');
+        Route::get('/reset-password/{token}', TenantResetPassword::class)->name('tenant.password.reset');
     });
 
     // =========================================================================
@@ -129,6 +129,29 @@ Route::middleware([
     // =========================================================================
     Route::middleware(['auth'])->group(function () {
 
+    // 1. Heartbeat: Tells the server "I am online"
+    Route::post('/user/heartbeat', function (Request $request) {
+        // Store 'true' in cache for 40 seconds (we will ping every 30s)
+        Cache::put('user-online-' . $request->user()->id, true, 40);
+        return response()->noContent();
+    });
+
+    // 2. Fetch Missed: Gets notifications saved while user was offline
+    Route::get('/user/notifications/missed', function (Request $request) {
+        // Get unread notifications
+        $notifications = $request->user()->unreadNotifications;
+
+        // Mark them as read immediately since we are moving them to Frontend LocalStorage
+        $request->user()->unreadNotifications->markAsRead();
+
+        return $notifications;
+    });
+
+    // 3. Mark specific notification as read (if needed)
+    Route::post('/user/notifications/{id}/read', function (Request $request, $id) {
+        $request->user()->notifications()->where('id', $id)->first()?->markAsRead();
+        return response()->noContent();
+    });
         // Logout
         Route::post('/logout', function (Request $request) {
             Auth::guard('web')->logout();

@@ -1,65 +1,51 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
     <title>{{ config('app.name', 'Laravel') }}</title>
-
-    <!-- Fonts -->
-        <link rel="icon" type="image/png" href="{{ Storage::disk('central_public')->url('images/logo.png') }}">
-  
-    <!-- Tailwind CSS CDN (if not using local build) -->
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-
-        /* Custom scrollbar for better aesthetics */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #2a4365;
-            /* Darker blue for track */
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #63b3ed;
-            /* Lighter blue for thumb */
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #90cdf4;
-            /* Even lighter blue on hover */
-        }
+        [x-cloak] { display: none !important; }
+        /* Smooth transition for the margin change */
+        .main-transition { transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     </style>
-    <!-- Livewire Styles -->
     @livewireStyles
-
-    <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class=" antialiased bg-gray-100">
-    <div x-data="{ open: false }" class="bg-gray-50 min-h-screen flex   ">
-        <!-- Overlay for mobile sidebar -->
-        <div x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
-            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-300"
-            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click="open = false"
-            class="fixed inset-10  bg-black/50 z-0 lg:hidden"></div>
-        {{-- Sidebar --}}
-      <livewire:tenants.pharmacist.components.sidebar />
-        {{ $slot }}
+{{-- 1. DEFINE STATE HERE (Globally) --}}
+<body class="antialiased bg-gray-50 dark:bg-gray-900 h-full overflow-hidden"
+      x-data="{
+          sidebarExpanded: localStorage.getItem('sidebarExpanded') === 'true',
+          mobileOpen: false,
+          toggleSidebar() {
+              this.sidebarExpanded = !this.sidebarExpanded;
+              localStorage.setItem('sidebarExpanded', this.sidebarExpanded);
+              // Trigger a resize event so Chart.js redraws immediately
+              setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 320);
+          }
+      }"
+      x-init="$watch('sidebarExpanded', value => localStorage.setItem('sidebarExpanded', value))">
+
+    <div class="flex h-full">
+        <!-- Mobile Overlay -->
+        <div x-show="mobileOpen" x-transition.opacity @click="mobileOpen = false" class="fixed inset-0 bg-gray-900/80 z-40 lg:hidden" x-cloak></div>
+
+        <!-- Sidebar Component -->
+        <livewire:tenants.pharmacist.components.sidebar />
+
+        <!-- 2. DYNAMIC MARGIN HERE -->
+        <!-- The class binding depends on the parent x-data 'sidebarExpanded' -->
+        <div class="flex-1 flex flex-col h-full main-transition relative w-full"
+             :class="sidebarExpanded ? 'lg:ml-64' : 'lg:ml-20'">
+
+            <main class="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 dark:bg-gray-900">
+                {{ $slot }}
+            </main>
+        </div>
     </div>
-    <!-- Livewire Scripts -->
+
     @livewireScripts
 </body>
-
 </html>

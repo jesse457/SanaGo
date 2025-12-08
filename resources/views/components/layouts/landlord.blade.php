@@ -71,6 +71,7 @@
             </div>
 
             <main class="flex-1 overflow-y-auto overflow-x-hidden  dark:bg-gray-900 bg-white">
+           
                 {{ $slot }}
             </main>
         </div>

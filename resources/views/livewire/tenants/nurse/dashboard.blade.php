@@ -11,7 +11,7 @@
     {{-- ========================================== --}}
     {{-- SECTION 1: DASHBOARD OVERVIEW              --}}
     {{-- ========================================== --}}
-    <main id="nurse-dashboard" class="p-4 md:p-8 lg:ml-64 pt-20 transition-all duration-300 ease-in-out">
+    <main id="nurse-dashboard" class="p-4 md:p-8 pt-20 transition-all duration-300 ease-in-out">
 
         {{-- Header & Profile --}}
         <header class="card flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">

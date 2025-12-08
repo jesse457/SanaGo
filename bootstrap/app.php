@@ -9,6 +9,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
+        channels: __DIR__.'/../routes/channels.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
@@ -27,6 +28,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
+
+            // 3. THIS IS THE FIX: Custom Redirection for Guests
+        $middleware->redirectGuestsTo(function () {
+            // Check if we are currently in a Tenant context
+            if (function_exists('tenant') && tenant()) {
+                return route('tenant.login');
+            }
+
+            // Default to central login
+            return route('login');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

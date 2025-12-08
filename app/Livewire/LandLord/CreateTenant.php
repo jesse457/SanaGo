@@ -2,11 +2,14 @@
 
 namespace App\Livewire\LandLord;
 
+use App\Mail\UserInvitationMail;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Subscription;
 use Illuminate\Support\Facades\DB; // [FIX] Added for transaction
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
@@ -89,13 +92,17 @@ class CreateTenant extends Component
             // 4. Setup Tenant Context (Switch to Tenant DB)
             $tenant->run(function () use ($password) {
                 // Create Admin User
-                User::create([
+                $user = User::create([
                     'name' => $this->adminName,
                     'email' => $this->adminEmail,
                     // [FIX] Use the generated $password, not hardcoded 'password'
                     'password' => Hash::make($password),
                     'role' => 'admin',
                 ]);
+                $token = Password::broker()->createToken($user);
+                // 3. Send Email
+                // [FIX] Queuing the modern email we created
+                Mail::to($user->email)->queue(new UserInvitationMail($user, $token));
 
                 // Create Subscription Record
                 $sub = new Subscription();

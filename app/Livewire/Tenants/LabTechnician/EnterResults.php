@@ -18,7 +18,7 @@ use Livewire\WithFileUploads;
 #[Layout('components.layouts.lab-technician')]
 class EnterResults extends Component
 {
-    use UserActivitiesTrait,WithFileUploads;
+    use UserActivitiesTrait, WithFileUploads;
 
     public LabRequest $labRequest;
 
@@ -73,9 +73,14 @@ class EnterResults extends Component
                     'results_text' => $this->results_text,
                     'analysis_comments' => $this->analysis_comments,
                     'status' => 'Completed',
-                    'price' => $currentPrice, // <-- ADD THIS LINE
+                    'price' => $currentPrice,
                 ]
             );
+
+            // FIX: Load the deep relationships before dispatching
+            $result->load(['labRequest.patient', 'labRequest.testDefinition']);
+            $this->labRequest->doctor->notify(new \App\Notifications\LabResultNotification($result));
+            \App\Events\LabResultCompleted::dispatch($result);
 
             foreach ($this->attachments as $attachment) {
                 // Change from 'public' to 'local' to use the private disk
@@ -102,7 +107,7 @@ class EnterResults extends Component
             return redirect()->route('lab-technician.lab-results');
         } catch (Exception $e) {
             LivewireAlert::title('Error')->text('Server Error please Contact us in Feedback if this error persist')->error()->show();
-            Log::error('Error while saving Lab results'.$e->getMessage());
+            Log::error('Error while saving Lab results' . $e->getMessage());
         }
     }
 

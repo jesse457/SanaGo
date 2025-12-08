@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Tenants\Admin;
 
+use App\Mail\UserInvitationMail;
 use App\Mail\UserWelcomeMail; // [FIX] Imported the new Mailable
 use App\Models\Department;
 use App\Models\User;
@@ -18,6 +19,7 @@ use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Password; // Required for token generation
 
 #[Layout('components.layouts.admin')]
 class CreateNewUser extends Component
@@ -89,12 +91,7 @@ class CreateNewUser extends Component
         $storedPath = null;
 
         try {
-            // 1. Upload File (if exists)
-            if ($this->profile_picture) {
-                $storedPath = $this->profile_picture->store('profile_pictures', 's3');
-            }
-
-            // 2. Start Transaction
+            // 1. Start Transaction
             DB::transaction(function () use ($storedPath) {
 
                 // Create User
@@ -109,17 +106,17 @@ class CreateNewUser extends Component
                     'hire_date' => $this->hire_date,
                     'role' => $this->role,
                     'is_active' => $this->is_active,
-                    // [FIX] Use the generated variable, NOT the hardcoded string 'password'
-                    'password' => Hash::make($this->generatedPassword),
+                    'password' => Hash::make(Str::random(32)),
                 ]);
 
+                // 2. Upload File (if exists)
+                if ($this->profile_picture) {
+                    $storedPath = $this->profile_picture->store('profile_pictures', 's3');
+                }
+                $token = Password::broker()->createToken($user);
                 // 3. Send Email
                 // [FIX] Queuing the modern email we created
-                Mail::to($user->email)->queue(new UserWelcomeMail(
-                    $user,
-                    $this->generatedPassword,
-                    route('login') // Ensure this route exists in your tenant route file
-                ));
+                Mail::to($user->email)->queue(new UserInvitationMail($user, $token));
 
                 // 4. Log Activity
                 $this->logActivity(
@@ -132,7 +129,6 @@ class CreateNewUser extends Component
             // 5. Success Response
             LivewireAlert::title('Success')->success()->text('User created and credentials sent to email.')->show();
             return redirect()->route('admin.user-management');
-
         } catch (\Throwable $e) {
             // [FIX] Cleanup orphaned S3 file if DB transaction fails
             if ($storedPath) {

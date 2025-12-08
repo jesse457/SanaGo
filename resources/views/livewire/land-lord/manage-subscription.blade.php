@@ -188,32 +188,16 @@
                                     </div>
                                 </div>
 
-                                {{-- Storage --}}
-                                @php
-                                    $maxStorage = $subscription->max_storage;
-                                    $sPerc = $maxStorage > 0 ? min(($currentStorage / $maxStorage) * 100, 100) : 0;
-                                @endphp
-                                <div>
-                                    <div class="flex justify-between items-center mb-2">
-                                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Storage
-                                            (MB)</span>
-                                        <span
-                                            class="text-xs font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">
-                                            {{ $currentStorage }} / {{ $maxStorage == -1 ? '∞' : $maxStorage }}
-                                        </span>
+                                <!-- Storage Usage -->
+                                <div class="mt-4">
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm font-medium">Storage Usage</span>
+                                        <span class="text-sm font-medium">{{ $formattedStorage }} /
+                                            {{ $subscription->max_storage == -1 ? 'Unlimited' : $subscription->getPlanFeatures()['max_storage'] . ' MB' }}</span>
                                     </div>
-                                    <div
-                                        class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
-                                        @if ($maxStorage == -1)
-                                            <div
-                                                class="w-full h-full bg-purple-50 dark:bg-purple-900/30 flex justify-center items-center">
-                                                <span
-                                                    class="text-[8px] uppercase tracking-widest text-purple-400">Unlimited</span>
-                                            </div>
-                                        @else
-                                            <div class="bg-purple-500 h-2.5 rounded-full transition-all duration-500"
-                                                style="width: {{ $sPerc }}%"></div>
-                                        @endif
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                        <div class="bg-blue-600 h-2.5 rounded-full"
+                                            style="width: {{ $storagePercentage }}%"></div>
                                     </div>
                                 </div>
                             </div>
