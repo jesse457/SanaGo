@@ -58,7 +58,7 @@
                         <section class="space-y-4">
                             <div class="flex items-center justify-between border-b border-slate-100 dark:border-gray-800 pb-3">
                                 <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600 text-sm font-bold dark:bg-blue-900/30 dark:text-blue-400">1</div>
+                                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-50 text-pink-600 text-sm font-bold dark:bg-blue-900/30 dark:text-blue-400">1</div>
                                     Select Patient
                                 </h2>
                                 @error('selectedPatientId')
@@ -141,7 +141,7 @@
                         <section class="space-y-4">
                             <div class="flex items-center justify-between border-b border-slate-100 dark:border-gray-800 pb-3">
                                 <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600 text-sm font-bold dark:bg-blue-900/30 dark:text-blue-400">2</div>
+                                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-50 text-pink-600 text-sm font-bold dark:bg-pink-900/30 dark:text-pink-400">2</div>
                                     Select Doctor
                                 </h2>
                                 @error('doctorId')
@@ -189,7 +189,7 @@
                         <section class="space-y-6">
                             <div class="flex items-center justify-between border-b border-slate-100 dark:border-gray-800 pb-3">
                                 <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600 text-sm font-bold dark:bg-blue-900/30 dark:text-blue-400">3</div>
+                                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-50 text-pink-600 text-sm font-bold dark:bg-pink-900/30 dark:text-pink-400">3</div>
                                     Appointment Details
                                 </h2>
                             </div>
@@ -249,7 +249,7 @@
 
                         <button type="submit"
                             wire:loading.attr="disabled"
-                            class="inline-flex items-center justify-center px-6 py-2.5 rounded-xl shadow-md text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
+                            class="inline-flex items-center justify-center px-6 py-2.5 rounded-xl shadow-md text-sm font-bold text-white bg-gradient-to-tr from-pink-500 to-rose-500 hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
 
                             <span wire:loading.remove wire:target="bookAppointment" class="flex items-center gap-2">
                                 <x-heroicon-s-clipboard-document-check class="w-5 h-5" />

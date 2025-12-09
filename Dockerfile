@@ -1,5 +1,5 @@
 # Stage 1: Builder
-FROM dunglas/frankenphp:1-php8.3 AS builder
+FROM dunglas/frankenphp:1.10.1-php8.3 AS builder
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -35,7 +35,7 @@ RUN npm run build
 RUN composer dump-autoload --optimize --no-dev
 
 # Stage 2: Runtime
-FROM dunglas/frankenphp:1.0-php8.3
+FROM dunglas/frankenphp:1.10.1-php8.3
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -65,6 +65,7 @@ COPY --chown=www-data:www-data octane-supervisor.conf /etc/supervisor/conf.d/oct
 RUN mkdir -p /app/storage/logs /app/bootstrap/cache /var/log/supervisor && \
     chown -R www-data:www-data /app/storage /app/bootstrap/cache /var/log/supervisor && \
     chmod -R 775 /app/storage /app/bootstrap/cache /var/log/supervisor
+
 
 EXPOSE 8000
 

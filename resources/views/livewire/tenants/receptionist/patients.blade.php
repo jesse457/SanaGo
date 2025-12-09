@@ -35,7 +35,7 @@
                 {{-- Action Toolbar --}}
                 <div class="flex items-center gap-3">
                     <a href="{{ route('receptionist.register-patient') }}" wire:navigate
-                        class="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all overflow-hidden dark:focus:ring-offset-gray-900">
+                        class="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-tr from-pink-500 to-rose-500 text-white text-sm font-semibold rounded-xl shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all overflow-hidden dark:focus:ring-offset-gray-900">
                         <div
                             class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000">
                         </div>
@@ -108,11 +108,11 @@
                                     class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-150">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center gap-4">
-                                            <div class="h-10 w-10 flex-shrink-0 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-xs ring-2 ring-white dark:ring-gray-800">
+                                            <div class="h-10 w-10 flex-shrink-0 rounded-full bg-pink-100 dark:bg-indigo-900/50 flex items-center justify-center text-pink-700 dark:text-indigo-300 font-bold text-xs ring-2 ring-white dark:ring-gray-800">
                                                 {{ substr($patient->first_name, 0, 1) }}{{ substr($patient->last_name, 0, 1) }}
                                             </div>
                                             <div>
-                                                <div class="font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                                <div class="font-bold text-slate-900 dark:text-white group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">
                                                     {{ $patient->first_name }} {{ $patient->last_name }}
                                                 </div>
                                                 <div class="text-xs text-slate-500 dark:text-slate-400 font-mono bg-slate-100 dark:bg-slate-800/50 px-1.5 py-0.5 rounded w-fit mt-0.5">

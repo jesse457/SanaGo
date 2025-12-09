@@ -15,6 +15,7 @@ class Prescription extends Model
         'patient_id',
         'doctor_id',
         'consultation_id',
+        'pharmacist_id',
         'prescription_date',
         'general_notes',
         'status',
@@ -37,6 +38,11 @@ class Prescription extends Model
     public function consultation()
     {
         return $this->belongsTo(MedicalRecord::class, 'consultation_id');
+    }
+
+    public function pharmacist()
+    {
+        return $this->belongsTo(User::class, 'pharmacist_id');
     }
 
     public function items()

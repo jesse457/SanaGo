@@ -128,11 +128,11 @@
                                     {{-- Patient --}}
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center gap-4">
-                                            <div class="h-10 w-10 flex-shrink-0 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-xs ring-2 ring-white dark:ring-gray-800">
+                                            <div class="h-10 w-10 flex-shrink-0 rounded-full bg-pink-100 dark:bg-pink-900/50 flex items-center justify-center text-pink-700 dark:text-pink-300 font-bold text-xs ring-2 ring-white dark:ring-gray-800">
                                                 {{ substr($patient->first_name, 0, 1) }}
                                             </div>
                                             <div>
-                                                <div class="font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                                <div class="font-bold text-slate-900 dark:text-white group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">
                                                     {{ $patient->first_name }} {{ $patient->last_name }}
                                                 </div>
                                                 <div class="text-xs text-slate-500 dark:text-slate-400 font-mono bg-slate-100 dark:bg-slate-800/50 px-1.5 py-0.5 rounded w-fit mt-0.5">
@@ -199,7 +199,7 @@
                                                 </span>
                                             @else
                                                 <button wire:click="admitPatient({{ $patient->id }})"
-                                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg border border-blue-200 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800 transition-colors shadow-sm">
+                                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-pink-50 text-pink-700 text-xs font-bold rounded-lg border border-pink-200 hover:bg-pink-100 dark:bg-pink-900/20 dark:text-pink-400 dark:border-pink-800 transition-colors shadow-sm">
                                                     <x-heroicon-s-plus class="w-3.5 h-3.5" /> Admit
                                                 </button>
                                             @endif
@@ -362,13 +362,13 @@
                                     <div wire:click="selectAdmission({{ $ad->id }})"
                                         class="cursor-pointer group relative flex items-start gap-4 p-4 rounded-xl border transition-all duration-200
                                         {{ $selectedAdmissionId === $ad->id
-                                            ? 'bg-blue-50 border-blue-200 shadow-sm dark:bg-blue-900/20 dark:border-blue-800'
+                                            ? 'bg-pink-50 border-pink-200 shadow-sm dark:bg-pink-900/20 dark:border-pink-800'
                                             : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-md dark:bg-gray-800 dark:border-gray-700 dark:hover:border-blue-500' }}">
 
                                         <div class="flex h-5 items-center mt-1">
                                             <input type="radio" name="selectedAdmission"
                                                 value="{{ $ad->id }}"
-                                                class="h-4 w-4 text-blue-600 border-slate-300 focus:ring-blue-600 dark:bg-gray-700 dark:border-gray-600"
+                                                class="h-4 w-4 text-pink-600 border-slate-300 focus:ring-pink-600 dark:bg-gray-700 dark:border-gray-600"
                                                 @checked($selectedAdmissionId === $ad->id)>
                                         </div>
 
@@ -398,7 +398,7 @@
                                     Cancel
                                 </button>
                                 <button type="button" wire:click="confirmAdmission(true)"
-                                    class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold shadow-md hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-pink-600 text-white text-sm font-bold shadow-md hover:bg-pink-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     {{ !$selectedAdmissionId ? 'disabled' : '' }}>
                                     Process Selected
                                 </button>

@@ -1,5 +1,5 @@
 <main class="w-full min-h-screen bg-slate-50 dark:bg-gray-950 font-sans text-slate-600 dark:text-slate-300">
-    <div class="max-w-7xl mx-auto">
+    <div class=" ">
 
         {{-- 1. HEADER SECTION (Sticky) --}}
         <header
