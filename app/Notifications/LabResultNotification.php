@@ -26,15 +26,8 @@ class LabResultNotification extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        // Check the cache key set by the Heartbeat route
-        $isOnline = Cache::has('user-online-' . $notifiable->id);
-
-        if ($isOnline) {
-            // User is online: Send via Reverb ONLY (No DB Write)
-            return ['broadcast'];
-        }
-
-        // User is offline: Save to DB so they can fetch it later + Try broadcast
+        // 1. Always save to database so the history is preserved
+        // 2. Broadcast to Reverb for real-time alert
         return ['database', 'broadcast'];
     }
 
@@ -44,7 +37,7 @@ class LabResultNotification extends Notification implements ShouldQueue
     public function broadcastOn(): array
     {
         // Ensure this matches the channel name in your Frontend Echo listener
-        // Assuming the doctor is the 'notifiable' entity
+        // Channel: private-App.Models.User.{id}
         return [
             new PrivateChannel('App.Models.User.' . $this->labResult->doctor_id),
         ];
@@ -53,7 +46,7 @@ class LabResultNotification extends Notification implements ShouldQueue
     /**
      * DATA FOR DATABASE (Offline Storage)
      */
-    public function toArray($notifiable)
+    public function toDatabase($notifiable)
     {
         return $this->getData();
     }
@@ -63,7 +56,11 @@ class LabResultNotification extends Notification implements ShouldQueue
      */
     public function toBroadcast($notifiable)
     {
-        return new BroadcastMessage($this->getData());
+        return new BroadcastMessage([
+            'data' => $this->getData(), // Wrap in 'data' to match standard structure
+            'read_at' => null,
+            'created_at' => now()->toIso8601String(),
+        ]);
     }
 
     /**
@@ -72,15 +69,14 @@ class LabResultNotification extends Notification implements ShouldQueue
     private function getData()
     {
         return [
-            'id' => $this->id, // Important for de-duplication
-            'message' => 'Lab result completed for ' . ($this->labResult->labRequest->patient->name ?? 'Patient'),
+            'id' => $this->id,
+            'message' => 'Lab result completed for ' . ($this->labResult->labRequest->patient->first_name ?? 'Patient'),
             'lab_result_id' => $this->labResult->id,
-            'patient_name' => $this->labResult->labRequest?->patient?->name,
-            'test_name' => $this->labResult->labRequest?->testDefinition?->test_name,
+            'patient_name' => ($this->labResult->labRequest->patient->first_name ?? '') . ' ' . ($this->labResult->labRequest->patient->last_name ?? ''),
+            'test_name' => $this->labResult->labRequest->testDefinition->test_name ?? 'Unknown Test',
+            'urgency' => $this->labResult->labRequest->urgency_level ?? 'normal',
             'status' => $this->labResult->status,
-            'created_at' => now()->toIso8601String(),
-            // If you need tenant_id logic here manually for the DB JSON:
-            // 'tenant_id' => $this->labResult->tenant_id,
+            'type' => 'lab_result'
         ];
     }
 }

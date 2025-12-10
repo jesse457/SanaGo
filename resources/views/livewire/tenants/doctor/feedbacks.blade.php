@@ -1,265 +1,324 @@
-<main class="flex-1 p-4 sm:p-6 overflow-y-auto h-screen bg-gray-50 dark:bg-gray-900 min-h-screen">
+<main class="w-full min-h-screen bg-slate-50 dark:bg-gray-950 font-sans text-slate-600 dark:text-slate-300">
     <div class="max-w-7xl mx-auto">
-        <!-- Breadcrumb -->
-        <nav class="flex mb-6" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                <li class="inline-flex items-center">
-                    <a href="{{ route('admin.dashboard') }}"
-                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 dark:text-gray-300 dark:hover:text-white transition-colors">
-                        <x-heroicon-s-home class="w-4 h-4 me-2" />
-                        Home
-                    </a>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        <x-heroicon-s-chevron-right class="w-4 h-4 text-gray-400 mx-1" />
-                        <span class="ms-1 text-sm font-medium text-gray-500 md:ms-2 dark:text-gray-400">Feedback History</span>
+
+        {{-- 1. HEADER SECTION (Sticky) --}}
+        <header
+            class="sticky top-0 flex-shrink-0 bg-white/90 dark:bg-gray-800/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-sm z-30 transition-all duration-200">
+            <div class="px-4 sm:px-6 py-4 md:flex md:items-center md:justify-between space-y-3 md:space-y-0">
+
+                {{-- Title & Breadcrumbs --}}
+                <div class="flex-1 min-w-0">
+                    <nav class="flex text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 mt-2"
+                        aria-label="Breadcrumb">
+                        <ol class="inline-flex items-center space-x-1 md:space-x-2">
+                            <li class="inline-flex items-center">
+                                <a href="{{ route('receptionist.dashboard') }}" wire:navigate
+                                    class="hover:text-pink-600 dark:hover:text-pink-400 transition-colors flex items-center">
+                                    <x-heroicon-s-home class="w-3 h-3 mr-1.5" />
+                                    Home
+                                </a>
+                            </li>
+                            <li>
+                                <div class="flex items-center">
+                                    <x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300 mx-1" />
+                                    <span class="text-gray-900 dark:text-white">Feedback History</span>
+                                </div>
+                            </li>
+                        </ol>
+                    </nav>
+
+                    {{-- Title --}}
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-7">
+                            Feedback History
+                        </h2>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            View, search, and manage your user feedback submissions.
+                        </p>
                     </div>
-                </li>
-            </ol>
-        </nav>
-
-        <!-- Header Section -->
-        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-3">
-                    <div class="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg">
-                        <x-heroicon-s-user-group class="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    Feedback History
-                </h1>
-                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Manage and track user feedback submissions.</p>
-            </div>
-
-            <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                
-                <a href="{{ route('doctor.send-feedback') }}" wire:navigate
-                    class="inline-flex justify-center items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                    <x-heroicon-o-plus class="w-4 h-4" />
-                    Submit Feedback
-                </a>
-            </div>
-        </div>
-
-        <!-- Content Area -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden dark:bg-gray-800 dark:border-gray-700">
-
-            @if (!isset($feedbacks) || $feedbacks->total() === 0)
-                <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
-                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-full p-4 mb-4">
-                        <x-heroicon-o-inbox class="w-12 h-12 text-gray-400 dark:text-gray-500" />
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">No feedback found</h3>
-                    <p class="mt-1 text-gray-500 dark:text-gray-400 max-w-sm">Get started by submitting your first feedback using the button above.</p>
-                </div>
-            @else
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-700/50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Category</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Submitted</th>
-                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                            @foreach ($feedbacks as $feedback)
-                                @php
-                                    $status = strtolower($feedback->status ?? 'unknown');
-                                    $statusStyles = [
-                                        'pending' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 ring-yellow-600/20',
-                                        'resolved' => 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 ring-green-600/20',
-                                        'closed' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 ring-gray-500/10',
-                                        'reviewing' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 ring-blue-600/20',
-                                    ];
-                                    $ssty = $statusStyles[$status] ?? 'bg-gray-100 text-gray-800 ring-gray-500/10';
-                                @endphp
-
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150 group">
-                                    <td class="px-6 py-4">
-                                        <div class="flex flex-col">
-                                            <span class="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                                {{ $feedback->subject ?? 'No subject' }}
-                                            </span>
-                                            <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">
-                                                {{ Str::limit($feedback->message ?? '', 80) }}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
-                                            {{ ucfirst($feedback->category ?? 'General') }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset {{ $ssty }}">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-current mr-1.5"></span>
-                                            {{ ucfirst($status) }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                                        <span class="text-sm text-gray-500 dark:text-gray-400">
-                                            {{ optional($feedback->created_at)->format('M d, Y') }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button wire:click.prevent="showFeedback({{ $feedback->id }})"
-                                            class="text-gray-400 hover:text-indigo-600 dark:text-gray-500 dark:hover:text-indigo-400 transition-colors">
-                                            <span class="sr-only">View</span>
-                                            <x-heroicon-s-eye class="w-5 h-5" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
                 </div>
 
-                <!-- Pagination -->
-                <div class="bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                        <div>
-                            <p class="text-sm text-gray-700 dark:text-gray-300">
-                                Showing <span class="font-medium">{{ $feedbacks->firstItem() ?? 0 }}</span> to <span class="font-medium">{{ $feedbacks->lastItem() ?? 0 }}</span> of <span class="font-medium">{{ $feedbacks->total() ?? 0 }}</span> results
-                            </p>
+                {{-- Action Toolbar --}}
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('doctor.send-feedback') }}" wire:navigate
+                        class="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-tr from-pink-500 to-rose-500 text-white text-sm font-semibold rounded-xl shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all overflow-hidden dark:focus:ring-offset-gray-900">
+                        <div
+                            class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000">
                         </div>
-                        <div>
+                        <x-heroicon-o-plus class="w-5 h-5" />
+                        <span>Submit Feedback</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        {{-- Content Area --}}
+        <div class="relative min-h-[400px] p-4 sm:p-6 pb-20">
+
+            <div
+                class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-slate-200 dark:border-gray-800 overflow-hidden">
+
+                @if (!isset($feedbacks) || $feedbacks->total() === 0)
+                    <div class="text-center py-16 px-6">
+                        <div
+                            class="w-16 h-16 bg-slate-50 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6 border border-slate-100 dark:border-gray-700">
+                            <x-heroicon-o-chat-bubble-left-right class="h-8 w-8 text-slate-400" />
+                        </div>
+                        <p class="text-lg font-bold text-slate-900 dark:text-white mb-2">No feedback found</p>
+                        <p class="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-8">
+                            Submit your first feedback using the button above.
+                        </p>
+
+                    </div>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-100 dark:divide-gray-800">
+                            <thead class="bg-slate-50 dark:bg-gray-950">
+                                <tr>
+                                    <th
+                                        class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Subject</th>
+                                    <th
+                                        class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">
+                                        Category</th>
+                                    <th
+                                        class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Status</th>
+                                    <th
+                                        class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">
+                                        Submitted</th>
+                                    <th
+                                        class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Actions</th>
+                                </tr>
+                            </thead>
+
+                            <tbody class="divide-y divide-slate-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
+                                @foreach ($feedbacks as $feedback)
+                                    @php
+                                        $status = strtolower($feedback->status ?? 'unknown');
+                                        $statusStyles = match ($status) {
+                                            'pending'
+                                                => 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800',
+                                            'resolved'
+                                                => 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800',
+                                            'closed'
+                                                => 'bg-slate-50 text-slate-600 border-slate-100 dark:bg-gray-800 dark:text-slate-400 dark:border-gray-700',
+                                            default
+                                                => 'bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800',
+                                        };
+                                    @endphp
+
+                                    <tr
+                                        class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-150 group">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-bold text-slate-900 dark:text-white">
+                                                {{ $feedback->subject ?? 'No subject' }}
+                                            </div>
+                                            <div
+                                                class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-1 max-w-xs">
+                                                {{ Str::limit($feedback->message ?? '', 80) }}
+                                            </div>
+                                        </td>
+
+                                        <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 dark:bg-gray-800/50 dark:text-slate-300 dark:border-gray-700 capitalize">
+                                                {{ ucfirst($feedback->category ?? 'general') }}
+                                            </span>
+                                        </td>
+
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm capitalize {{ $statusStyles }}">
+                                                {{ ucfirst($status !== 'unknown' ? $status : 'Unknown') }}
+                                            </span>
+                                        </td>
+
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap hidden md:table-cell text-sm text-slate-500 dark:text-slate-400">
+                                            {{ optional($feedback->created_at)->format('M d, Y H:i') ?? '--' }}
+                                        </td>
+
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div class="flex items-center justify-end gap-2">
+                                                <button wire:click.prevent="showFeedback({{ $feedback->id }})"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-600 text-xs font-bold rounded-lg border border-slate-200 hover:bg-slate-50 hover:text-blue-600 dark:bg-gray-800 dark:text-slate-300 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-blue-400 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                    <x-heroicon-s-eye class="w-4 h-4" /> View
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- Pagination --}}
+                    @if ($feedbacks->hasPages())
+                        <div
+                            class="px-6 py-4 border-t border-slate-100 dark:border-gray-800 bg-slate-50 dark:bg-gray-900/50">
                             {{ $feedbacks->links() }}
                         </div>
-                    </div>
-                </div>
-            @endif
+                    @endif
+                @endif
+            </div>
         </div>
-    </div>
 
-    <!-- Detail Modal -->
-    <div x-data="{ open: @entangle('showModal') }"
-         x-init="$watch('open', value => { document.body.classList.toggle('overflow-hidden', value) })"
-         @keydown.escape.window="open = false; $wire.closeModal();"
-         class="relative z-50"
-         aria-labelledby="modal-title"
-         role="dialog"
-         aria-modal="true">
+        {{-- Modal (Reused from Admin Feedback UI) --}}
+        <div x-data="{ open: @entangle('showModal') }" x-init="$watch('open', value => { if (value) { document.body.style.overflow = 'hidden'; } else { document.body.style.overflow = ''; } })" x-show="open" x-cloak class="relative z-50">
+            <template x-teleport="body">
+                <div x-show="open" class="fixed inset-0 z-50 overflow-y-auto">
+                    <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                        {{-- Backdrop --}}
+                        <div x-show="open" x-transition:enter="ease-out duration-300"
+                            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                            x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm transition-opacity"
+                            @click="open = false; $wire.closeModal();"></div>
 
-        <!-- Backdrop -->
-        <div x-show="open" x-cloak
-             x-transition:enter="ease-out duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm transition-opacity"></div>
+                        <div x-show="open" x-transition:enter="ease-out duration-300"
+                            x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                            x-transition:leave="ease-in duration-200"
+                            x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+                            class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-gray-900 text-left shadow-2xl transition-all w-full max-w-3xl border border-slate-100 dark:border-gray-800 my-8">
 
-        <!-- Modal Panel -->
-        <div x-show="open" x-cloak
-             class="fixed inset-0 z-10 overflow-y-auto">
-            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-
-                <div x-show="open"
-                     x-transition:enter="ease-out duration-300"
-                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                     x-transition:leave="ease-in duration-200"
-                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                     @click.away="open = false; $wire.closeModal();"
-                     class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
-
-                    @if ($modalFeedback)
-                        <!-- Modal Header -->
-                        <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b dark:border-gray-700 flex justify-between items-start">
-                            <div>
-                                <h3 class="text-xl font-semibold leading-6 text-gray-900 dark:text-white" id="modal-title">
-                                    {{ $modalFeedback->subject ?? 'Feedback Details' }}
+                            {{-- Modal Header --}}
+                            <div
+                                class="bg-white dark:bg-gray-900 px-6 py-5 border-b border-slate-100 dark:border-gray-800 flex items-center justify-between sticky top-0 z-10">
+                                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                                    {{ $modalTitle ?? 'Feedback Details' }}
                                 </h3>
-                                <div class="mt-2 flex items-center gap-2">
-                                    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 dark:bg-gray-700 dark:text-gray-300">
-                                        {{ ucfirst($modalFeedback->category ?? 'General') }}
-                                    </span>
-                                    <span class="text-gray-300 dark:text-gray-600">|</span>
-                                    <span class="text-xs text-gray-500 dark:text-gray-400">
-                                        {{ optional($modalFeedback->created_at)->format('M d, Y • H:i') }}
-                                    </span>
-                                </div>
-                            </div>
-                            <button @click="open = false; $wire.closeModal();" type="button" class="rounded-md bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                                <span class="sr-only">Close</span>
-                                <x-heroicon-s-x-mark class="h-6 w-6" aria-hidden="true" />
-                            </button>
-                        </div>
-
-                        <!-- Modal Body -->
-                        <div class="px-4 py-6 sm:p-6 bg-gray-50 dark:bg-gray-900/50">
-
-                            <!-- User Message Bubble -->
-                            <div class="flex gap-3 mb-6">
-                                <div class="flex-shrink-0">
-                                    <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                        <x-heroicon-s-user class="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                                    </div>
-                                </div>
-                                <div class="flex-1">
-                                    <div class="bg-white dark:bg-gray-800 rounded-2xl rounded-tl-none p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-                                        <p class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
-                                            {{ $modalFeedback->message }}
-                                        </p>
-                                    </div>
-                                </div>
+                                <button @click="open = false; $wire.closeModal();"
+                                    class="rounded-xl bg-slate-50 dark:bg-gray-800 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400">
+                                    <x-heroicon-o-x-mark class="h-6 w-6" />
+                                </button>
                             </div>
 
-                            <!-- Admin Response Bubble -->
-                            <div class="flex gap-3 justify-end">
-                                @if (!empty($modalFeedback->response))
-                                    <div class="flex-1">
-                                        <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl rounded-tr-none p-4 shadow-sm border border-indigo-100 dark:border-indigo-800 ml-auto">
-                                            <h5 class="text-xs font-bold text-indigo-800 dark:text-indigo-300 mb-2 uppercase tracking-wide">Response</h5>
-                                            <p class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
-                                                {!! nl2br(e($modalFeedback->response)) !!}
-                                            </p>
-                                            <div class="mt-3 flex items-center justify-end gap-1 text-xs text-indigo-400 dark:text-indigo-500">
-                                                <x-heroicon-s-check-circle class="w-3 h-3" />
-                                                Replied by {{ optional($modalFeedback->responder)->name ?? 'Support' }}
-                                                • {{ optional($modalFeedback->updated_at)->diffForHumans() }}
+                            <div class="px-6 py-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                                @if ($modalFeedback)
+                                    <div class="space-y-6">
+                                        {{-- Header: meta --}}
+                                        <div
+                                            class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50 dark:bg-gray-800/50 p-4 rounded-xl border border-slate-100 dark:border-gray-800">
+                                            <div class="flex flex-wrap items-center gap-3">
+                                                <span
+                                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-gray-700 border border-slate-200 dark:border-gray-600 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm capitalize">
+                                                    <x-heroicon-s-tag class="w-3.5 h-3.5 text-slate-400" />
+                                                    {{ ucfirst($modalFeedback->category ?? 'General') }}
+                                                </span>
+                                                <span
+                                                    class="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                                    <x-heroicon-o-clock class="w-3.5 h-3.5" />
+                                                    Submitted
+                                                    {{ optional($modalFeedback->created_at)->diffForHumans() }}
+                                                </span>
+                                            </div>
+
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="text-xs font-bold text-slate-400 uppercase tracking-wider">Status:</span>
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold capitalize
+                                                    {{ match (strtolower($modalFeedback->status ?? 'open')) {
+                                                        'pending' => 'bg-amber-50 text-amber-700 border border-amber-100',
+                                                        'resolved' => 'bg-emerald-50 text-emerald-700 border border-emerald-100',
+                                                        default => 'bg-slate-100 text-slate-700 border border-slate-200',
+                                                    } }}">
+                                                    {{ ucfirst($modalFeedback->status ?? 'Open') }}
+                                                </span>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="flex-shrink-0">
-                                        <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
-                                            <span class="text-sm font-bold text-indigo-600 dark:text-indigo-300">
-                                                {{ strtoupper(Str::limit(optional($modalFeedback->responder)->name ?? 'S', 1, '')) }}
-                                            </span>
+
+                                        {{-- Original message --}}
+                                        <div>
+                                            <h4
+                                                class="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                                                <x-heroicon-s-chat-bubble-left class="w-4 h-4 text-blue-500" />
+                                                Feedback Message
+                                            </h4>
+                                            <div
+                                                class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-slate-200 dark:border-gray-700 shadow-sm">
+                                                <div
+                                                    class="prose prose-sm max-w-none dark:prose-invert text-slate-600 dark:text-slate-300">
+                                                    {!! nl2br(e($modalFeedback->message)) !!}
+                                                </div>
+                                            </div>
                                         </div>
+
+                                        {{-- Published response --}}
+                                        <div class="relative">
+                                            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                                                <div class="w-full border-t border-slate-200 dark:border-gray-800">
+                                                </div>
+                                            </div>
+                                            <div class="relative flex justify-center">
+                                                <span
+                                                    class="bg-white dark:bg-gray-900 px-3 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                                    Response
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        @if (!empty($modalFeedback->response))
+                                            <div class="flex gap-4">
+                                                <div class="flex-shrink-0">
+                                                    <div
+                                                        class="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center border-2 border-white dark:border-gray-800 shadow-sm">
+                                                        <span
+                                                            class="text-sm font-bold text-blue-700 dark:text-blue-300">
+                                                            {{ strtoupper(Str::limit(optional($modalFeedback->responder)->name ?? 'S', 1, '')) }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow">
+                                                    <div
+                                                        class="bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl rounded-tl-none p-5 border border-blue-100 dark:border-blue-900/30">
+                                                        <div
+                                                            class="prose prose-sm max-w-none dark:prose-invert text-slate-700 dark:text-slate-200 mb-3">
+                                                            {!! nl2br(e($modalFeedback->response)) !!}
+                                                        </div>
+                                                        <div
+                                                            class="flex items-center gap-2 text-xs text-slate-400 font-medium">
+                                                            <span>Responded by <span
+                                                                    class="text-slate-600 dark:text-slate-300 font-bold">{{ optional($modalFeedback->responder)->name ?? 'Staff' }}</span></span>
+                                                            <span>•</span>
+                                                            <span>{{ optional($modalFeedback->updated_at)->diffForHumans() }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <div
+                                                class="text-center py-8 bg-slate-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-slate-300 dark:border-gray-700">
+                                                <x-heroicon-o-inbox class="mx-auto h-8 w-8 text-slate-300 mb-2" />
+                                                <p class="text-sm font-medium text-slate-500 dark:text-slate-400">No
+                                                    response yet</p>
+                                            </div>
+                                        @endif
                                     </div>
                                 @else
-                                    <div class="w-full text-center py-4">
-                                        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-400">
-                                            <x-heroicon-s-clock class="w-4 h-4" />
-                                            Awaiting administrative response...
-                                        </div>
+                                    <div class="flex items-center justify-center py-12">
+                                        <x-heroicon-o-arrow-path class="animate-spin h-8 w-8 text-blue-500" />
                                     </div>
                                 @endif
                             </div>
-                        </div>
 
-                        <!-- Modal Footer -->
-                        <div class="bg-white dark:bg-gray-800 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t dark:border-gray-700">
-                            <button type="button"
-                                @click="open = false; $wire.closeModal();"
-                                class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:hover:bg-gray-600 transition-colors">
-                                Close
-                            </button>
+                            {{-- Footer --}}
+                            <div
+                                class="bg-slate-50 dark:bg-gray-900/50 px-6 py-4 flex flex-row-reverse gap-3 rounded-b-2xl border-t border-slate-100 dark:border-gray-800">
+                                <button @click="open = false; $wire.closeModal();"
+                                    class="inline-flex justify-center w-full sm:w-auto rounded-xl bg-white dark:bg-gray-800 px-6 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-gray-700 hover:bg-slate-50 dark:hover:bg-gray-700 transition-all focus:outline-none focus:ring-2 focus:ring-slate-400">
+                                    Close
+                                </button>
+                            </div>
                         </div>
-                    @else
-                        <div class="p-12 text-center">
-                            <x-heroicon-s-arrow-path class="w-8 h-8 text-gray-400 animate-spin mx-auto"/>
-                            <p class="mt-2 text-sm text-gray-500">Loading details...</p>
-                        </div>
-                    @endif
+                    </div>
                 </div>
-            </div>
+            </template>
         </div>
     </div>
 </main>

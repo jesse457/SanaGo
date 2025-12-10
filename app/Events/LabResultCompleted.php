@@ -10,6 +10,7 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 
 class LabResultCompleted implements ShouldBroadcast
 {
@@ -25,6 +26,19 @@ class LabResultCompleted implements ShouldBroadcast
         $this->labResult = $labResult;
     }
 
+     /**
+     * Logic: If tech is online, just Broadcast. If offline, store in DB.
+     */
+    public function via($notifiable)
+    {
+        $isOnline = Cache::has('user-online-' . $notifiable->id);
+
+        if ($isOnline) {
+            return ['broadcast'];
+        }
+
+        return ['database', 'broadcast'];
+    }
     /**
      * Get the channels the event should broadcast on.
      *

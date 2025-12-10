@@ -27,35 +27,52 @@
     {{-- MAIN CONTENT WRAPPER --}}
     <div class="flex flex-1 overflow-hidden">
 
-        {{-- 🟢 LEFT SIDEBAR --}}
+        {{-- 🟢 LEFT SIDEBAR (PATIENT SEARCH) --}}
         <aside class="w-full md:w-80 lg:w-96 flex-shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 z-10 h-full">
 
-            {{-- Search Bar --}}
+            {{-- Search Bar Section --}}
             <div class="p-4 border-b border-gray-100 dark:border-gray-700 relative z-20">
                 <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Find Patient</label>
                 <div class="relative">
                     <x-heroicon-o-magnifying-glass class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+
+                    {{-- Loading Icon --}}
+                    <div wire:loading wire:target="patientQuery" class="absolute right-3 top-2.5">
+                        <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+
                     <input type="text"
                            wire:model.live.debounce.300ms="patientQuery"
-                           class="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                           class="w-full pl-10 pr-10 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                            placeholder="Name or ID..."
                            autocomplete="off">
 
-                    {{-- Patient Search Results --}}
-                    @if($patientResults->isNotEmpty())
+                    {{-- Patient Results --}}
+                    @if(strlen($patientQuery) >= 2)
                         <div class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
-                            @foreach($patientResults as $res)
-                                <button wire:click="selectPatient({{ $res->id }})"
-                                        class="w-full text-left px-4 py-3 hover:bg-blue-50 dark:hover:bg-gray-700 border-b border-gray-50 dark:border-gray-700 last:border-0 transition-colors flex items-center gap-3">
-                                    <div class="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
-                                        {{ substr($res->first_name, 0, 1) }}{{ substr($res->last_name, 0, 1) }}
-                                    </div>
-                                    <div class="min-w-0">
-                                        <div class="font-bold text-gray-900 dark:text-white text-sm truncate">{{ $res->first_name }} {{ $res->last_name }}</div>
-                                        <div class="text-xs text-gray-500">{{ $res->patient_uid }}</div>
-                                    </div>
-                                </button>
-                            @endforeach
+                            @if($patientResults->isNotEmpty())
+                                @foreach($patientResults as $res)
+                                    <button wire:click="selectPatient({{ $res->id }})"
+                                            class="w-full text-left px-4 py-3 hover:bg-blue-50 dark:hover:bg-gray-700 border-b border-gray-50 dark:border-gray-700 last:border-0 transition-colors flex items-center gap-3">
+                                        <div class="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                                            {{ substr($res->first_name, 0, 1) }}{{ substr($res->last_name, 0, 1) }}
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="font-bold text-gray-900 dark:text-white text-sm truncate">{{ $res->first_name }} {{ $res->last_name }}</div>
+                                            <div class="text-xs text-gray-500">{{ $res->patient_uid }}</div>
+                                        </div>
+                                    </button>
+                                @endforeach
+                            @else
+                                <div class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    <x-heroicon-o-face-frown class="w-8 h-8 mx-auto mb-2 text-gray-400"/>
+                                    <p class="text-sm font-medium">No patient found</p>
+                                    <p class="text-xs">Try a different name or ID</p>
+                                </div>
+                            @endif
                         </div>
                     @endif
                 </div>
@@ -153,38 +170,31 @@
                         </div>
                     </div>
 
-                    {{-- 2. PRESCRIPTIONS TAB (Optimized Search) --}}
+                    {{-- 2. PRESCRIPTIONS TAB (DROPDOWN) --}}
                     <div x-show="activeTab === 'rx'" class="space-y-6 max-w-5xl mx-auto" x-cloak>
                         <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 relative overflow-visible">
 
-                            {{-- Search Input with Dropdown --}}
-                            <div class="mb-6 relative z-30">
+                            {{-- Dropdown Selection for Medications --}}
+                            <div class="mb-6 relative z-30" x-data="{ tempMedId: '' }">
                                 <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Add Medication</label>
                                 <div class="flex gap-2">
                                     <div class="relative flex-1">
-                                        <x-heroicon-o-magnifying-glass class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
-                                        <input type="text"
-                                               wire:model.live.debounce.300ms="medicationQuery"
-                                               class="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                               placeholder="Type to search drugs...">
-
-                                        {{-- Dropdown Results --}}
-                                        @if(strlen($medicationQuery) >= 2 && count($this->medicationResults) > 0)
-                                            <div class="absolute w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-60 overflow-y-auto z-50">
-                                                @foreach($this->medicationResults as $med)
-                                                    <button wire:click="$set('selectedMedicationId', {{ $med->id }}); $call('addMedication')"
-                                                            class="w-full text-left px-4 py-2 hover:bg-blue-50 dark:hover:bg-gray-700 border-b border-gray-50 dark:border-gray-700 last:border-0">
-                                                        <div class="font-medium text-gray-900 dark:text-white">{{ $med->name }}</div>
-                                                        <div class="text-xs text-gray-500">Stock: {{ $med->stock_quantity }}</div>
-                                                    </button>
-                                                @endforeach
-                                            </div>
-                                        @elseif(strlen($medicationQuery) >= 2)
-                                            <div class="absolute w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-sm text-gray-500 z-50">
-                                                No medications found.
-                                            </div>
-                                        @endif
+                                        <select x-model="tempMedId"
+                                                class="w-full pl-3 pr-10 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white">
+                                            <option value="">Select a medication...</option>
+                                            @foreach($allMedications as $med)
+                                                <option wire:key="med-opt-{{ $med->id }}" value="{{ $med->id }}">{{ $med->name }} (Stock: {{ $med->stock_quantity }})</option>
+                                            @endforeach
+                                        </select>
                                     </div>
+                                    <button
+                                        type="button"
+                                        :disabled="!tempMedId"
+                                        wire:click="addMedication(tempMedId)"
+                                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
+                                        <x-heroicon-m-plus class="w-5 h-5"/>
+                                        Add
+                                    </button>
                                 </div>
                             </div>
 
@@ -203,7 +213,7 @@
                                         </thead>
                                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                             @foreach($prescriptionItems as $index => $item)
-                                                <tr>
+                                                <tr wire:key="rx-item-{{ $index }}">
                                                     <td class="px-4 py-2 font-medium text-gray-900 dark:text-white">{{ $item['name'] }}</td>
                                                     <td class="px-4 py-2"><input type="text" wire:model="prescriptionItems.{{ $index }}.dosage" class="w-full text-sm border-gray-200 rounded p-1" placeholder="500mg"></td>
                                                     <td class="px-4 py-2"><input type="text" wire:model="prescriptionItems.{{ $index }}.frequency" class="w-full text-sm border-gray-200 rounded p-1" placeholder="1-0-1"></td>
@@ -224,45 +234,38 @@
                         </div>
                     </div>
 
-                    {{-- 3. LABS TAB (Optimized Search) --}}
+                    {{-- 3. LABS TAB (DROPDOWN) --}}
                     <div x-show="activeTab === 'labs'" class="space-y-6 max-w-5xl mx-auto" x-cloak>
                         <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 relative overflow-visible">
 
-                             {{-- Lab Search Input --}}
-                             <div class="mb-6 relative z-30">
+                             {{-- Dropdown Selection for Lab Tests --}}
+                             <div class="mb-6 relative z-30" x-data="{ tempLabId: '' }">
                                 <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Add Lab Test</label>
                                 <div class="flex gap-2">
                                     <div class="relative flex-1">
-                                        <x-heroicon-o-beaker class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
-                                        <input type="text"
-                                               wire:model.live.debounce.300ms="labTestQuery"
-                                               class="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500"
-                                               placeholder="Type to search tests...">
-
-                                        {{-- Results Dropdown --}}
-                                        @if(strlen($labTestQuery) >= 2 && count($this->labTestResults) > 0)
-                                            <div class="absolute w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-60 overflow-y-auto z-50">
-                                                @foreach($this->labTestResults as $test)
-                                                    <button wire:click="$set('selectedLabTestId', {{ $test->id }}); $call('addLabTest')"
-                                                            class="w-full text-left px-4 py-2 hover:bg-purple-50 dark:hover:bg-gray-700 border-b border-gray-50 dark:border-gray-700 last:border-0">
-                                                        <div class="font-medium text-gray-900 dark:text-white">{{ $test->test_name }}</div>
-                                                        <div class="text-xs text-gray-500">{{ $test->code }}</div>
-                                                    </button>
-                                                @endforeach
-                                            </div>
-                                        @elseif(strlen($labTestQuery) >= 2)
-                                             <div class="absolute w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-sm text-gray-500 z-50">
-                                                No tests found.
-                                            </div>
-                                        @endif
+                                        <select x-model="tempLabId"
+                                                class="w-full pl-3 pr-10 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white">
+                                            <option value="">Select a lab test...</option>
+                                            @foreach($allLabTests as $test)
+                                                <option wire:key="lab-opt-{{ $test->id }}" value="{{ $test->id }}">{{ $test->test_name }} ({{ $test->code }})</option>
+                                            @endforeach
+                                        </select>
                                     </div>
+                                    <button
+                                        type="button"
+                                        :disabled="!tempLabId"
+                                        wire:click="addLabTest(tempLabId)"
+                                        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
+                                        <x-heroicon-m-plus class="w-5 h-5"/>
+                                        Add
+                                    </button>
                                 </div>
                             </div>
 
                             @if(count($labItems) > 0)
                                 <div class="space-y-3">
                                     @foreach($labItems as $index => $item)
-                                        <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col md:flex-row gap-4 items-start md:items-center relative z-10">
+                                        <div wire:key="lab-item-{{ $index }}" class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col md:flex-row gap-4 items-start md:items-center relative z-10">
                                             <div class="w-full md:w-1/4">
                                                 <div class="font-bold text-gray-900 dark:text-white">{{ $item['test_name'] }}</div>
                                                 <select wire:model="labItems.{{ $index }}.urgency" class="mt-1 text-xs py-1 pl-2 pr-6 border-gray-200 rounded-md">
@@ -278,7 +281,7 @@
                                                     <select wire:model="labItems.{{ $index }}.lab_tech_id" class="w-full text-sm border-gray-200 rounded p-1.5">
                                                         <option value="">Any Available</option>
                                                         @foreach($labTechnicianOptions as $tech)
-                                                            <option value="{{ $tech->id }}">{{ $tech->name }}</option>
+                                                            <option wire:key="tech-{{ $tech->id }}" value="{{ $tech->id }}">{{ $tech->name }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
@@ -316,7 +319,7 @@
                                 <h4 class="text-xs font-bold text-gray-500 uppercase mt-6 mb-3">Ready to Upload</h4>
                                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                                     @foreach($attachments as $index => $file)
-                                        <div class="relative group bg-gray-50 border rounded-lg p-2">
+                                        <div wire:key="tmp-file-{{ $index }}" class="relative group bg-gray-50 border rounded-lg p-2">
                                             @if(in_array($file->getMimeType(), ['image/jpeg', 'image/png']))
                                                 <img src="{{ $file->temporaryUrl() }}" class="h-24 w-full object-cover rounded mb-2">
                                             @else
@@ -338,7 +341,7 @@
                                 <h4 class="text-xs font-bold text-gray-500 uppercase mt-6 mb-3">Saved Attachments</h4>
                                 <div class="space-y-2">
                                     @foreach($storedAttachments as $att)
-                                        <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
+                                        <div wire:key="stored-file-{{ $att->id }}" class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
                                             <div class="flex items-center gap-3">
                                                 <div class="h-10 w-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
                                                     <x-heroicon-o-paper-clip class="w-5 h-5"/>

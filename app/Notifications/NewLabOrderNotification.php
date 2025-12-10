@@ -22,47 +22,59 @@ class NewLabOrderNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Logic: If tech is online, just Broadcast. If offline, store in DB.
+     * Logic: Defines which channels to send to.
      */
-    public function via($notifiable)
+    public function via(object $notifiable): array
     {
+        // Check if the specific user is online
         $isOnline = Cache::has('user-online-' . $notifiable->id);
 
-        if ($isOnline) {
-            return ['broadcast'];
-        }
-
-        return ['database', 'broadcast'];
+        // If online, send a Toast (Broadcast).
+        // If offline, save to History (Database) AND Broadcast (in case they just reconnected).
+        // Note: Usually you want 'database' always for history, but sticking to your logic:
+        return $isOnline ? ['broadcast'] : ['database', 'broadcast'];
     }
 
-    public function broadcastOn(): array
-    {
-        return [
-            new PrivateChannel('App.Models.User.' . $this->labRequest->lab_tech_id),
-        ];
-    }
-
-    public function toBroadcast($notifiable)
+    /**
+     * Get the broadcastable representation of the notification.
+     */
+    public function toBroadcast(object $notifiable): BroadcastMessage
     {
         return new BroadcastMessage($this->getData());
     }
 
-    public function toArray($notifiable)
+    /**
+     * Get the array representation of the notification (for Database).
+     */
+    public function toArray(object $notifiable): array
     {
         return $this->getData();
     }
 
-    private function getData()
+    /**
+     * Helper to centralize data structure.
+     */
+    private function getData(): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->id, // Notification ID
             'message' => 'New Lab Order: ' . ($this->labRequest->testDefinition->test_name ?? 'Test'),
             'patient_name' => $this->labRequest->patient->first_name . ' ' . $this->labRequest->patient->last_name,
             'urgency' => $this->labRequest->urgency_level,
-            'doctor_name' => $this->labRequest->doctor->name ?? 'Unknown Doctor',
             'request_id' => $this->labRequest->id,
+            'type' => 'new_order',
             'created_at' => now()->toIso8601String(),
-            'type' => 'new_order' // To distinguish icon/color in frontend
+        ];
+    }
+
+    /**
+     * Optional: Explicitly define the channel if not using the default `App.Models.User.{id}`
+     */
+    public function broadcastOn(): array
+    {
+        // This targets the specific Lab Tech
+        return [
+            new PrivateChannel('App.Models.User.' . $this->labRequest->lab_tech_id),
         ];
     }
 }

@@ -1,5 +1,5 @@
 <main class="w-full min-h-screen bg-slate-50 dark:bg-gray-950 font-sans text-slate-600 dark:text-slate-300">
-    <div class="max-w-7xl mx-auto">
+    <div class=" mx-auto">
 
         {{-- 1. HEADER SECTION (Sticky) --}}
         <header
@@ -49,7 +49,7 @@
 
         {{-- Content Area --}}
         <div class="p-4 sm:p-6 pb-20">
-            <div class="max-w-4xl mx-auto">
+            <div class=" mx-auto">
                 <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-slate-200 dark:border-gray-800 overflow-hidden">
 
                     {{-- Card Header --}}

@@ -13,7 +13,7 @@
                                 <a href="{{ route('receptionist.dashboard') }}" wire:navigate
                                     class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center">
                                     <x-heroicon-s-home class="w-3 h-3 mr-1.5" />
-                                    {{ __('receptionist.home') }}
+                                   Home
                                 </a>
                             </li>
                             <li>
@@ -49,7 +49,7 @@
 
         {{-- Content Area --}}
         <div class="p-4 sm:p-6 pb-20">
-            <div class="max-w-4xl mx-auto">
+            <div class=" mx-auto">
 
                 {{-- Main Content Card --}}
                 <div

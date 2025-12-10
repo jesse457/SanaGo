@@ -14,7 +14,7 @@
                                 <a href="{{ route('receptionist.dashboard') }}" wire:navigate
                                     class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center">
                                     <x-heroicon-s-home class="w-3 h-3 mr-1.5" />
-                                    {{ __('receptionist.home') }}
+                                    Home
                                 </a>
                             </li>
                             <li>

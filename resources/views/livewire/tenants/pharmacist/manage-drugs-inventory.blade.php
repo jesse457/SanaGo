@@ -8,7 +8,7 @@
 
                 {{-- Title & Breadcrumbs --}}
                 <div class="flex-1 min-w-0">
-                    <nav class="flex text-xs font-medium text-gray-500 dark:text-gray-400 mb-1" aria-label="Breadcrumb">
+                    <nav class="flex text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 mt-2" aria-label="Breadcrumb">
                         <ol class="inline-flex items-center space-x-1 md:space-x-2">
                             <li class="inline-flex items-center">
                                 <a href="{{ route('pharmacist.dashboard') }}" wire:navigate
@@ -133,7 +133,7 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900 dark:text-white">
-                                        ${{ number_format($drug->unit_price_purchase, 2) }}
+                                        FCFA {{ number_format($drug->unit_price_purchase, 2) }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-300">
                                         {{ $drug->min_stock_level }}

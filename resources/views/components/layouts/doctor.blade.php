@@ -14,9 +14,7 @@
     <style>
         [x-cloak] { display: none !important; }
         .layout-transition { transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        /* Hide scrollbar for Chrome, Safari and Opera */
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        /* Hide scrollbar for IE, Edge and Firefox */
         .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
     </style>
 </head>
@@ -37,19 +35,51 @@
           notifications: [],
           showToast: false,
           toastMessage: '',
+          toastDetails: '',
 
           get unreadCount() {
               return this.notifications.filter(n => !n.read).length;
           },
 
           init() {
+              // Load from LocalStorage
               const stored = localStorage.getItem('doctor_notifications');
               if (stored) this.notifications = JSON.parse(stored);
 
+              // Watch for Sidebar changes
               this.$watch('sidebarExpanded', val => localStorage.setItem('sidebarExpanded', val));
 
-              // Polling/Heartbeat logic here...
-              // this.fetchMissedNotifications();
+              // --- REVERB LISTENER ---
+              if (typeof Echo !== 'undefined') {
+                  Echo.private('App.Models.User.{{ Auth::id() }}')
+                      .notification((notification) => {
+                          console.log('Notification Received:', notification);
+
+                          // Format incoming data
+                          const newNotif = {
+                              id: notification.id,
+                              message: notification.data.message,
+                              patient_name: notification.data.patient_name,
+                              test_name: notification.data.test_name,
+                              created_at: new Date().toISOString(),
+                              read: false
+                          };
+
+                          // Add to array
+                          this.notifications.unshift(newNotif);
+                          this.saveToStorage();
+
+                          // Show Toast
+                          this.toastMessage = newNotif.message;
+                          this.toastDetails = newNotif.patient_name;
+                          this.showToast = true;
+
+                          // Play Sound
+                          // new Audio('/sounds/notification.mp3').play().catch(e => console.log('Audio blocked'));
+
+                          setTimeout(() => { this.showToast = false; }, 5000);
+                      });
+              }
           },
 
           markAsRead(id) {
@@ -80,9 +110,11 @@
         <div x-show="mobileOpen" x-transition.opacity @click="mobileOpen = false"
              class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40 lg:hidden" x-cloak>
         </div>
-<div wire:offline class="fixed top-0 w-full bg-red-500 text-white text-center p-2 z-50">
-    You are currently offline. Data will not be saved.
-</div>
+
+        <div wire:offline class="fixed top-0 w-full bg-red-500 text-white text-center p-2 z-[60]">
+            You are currently offline. Data will not be saved.
+        </div>
+
         <!-- SIDEBAR -->
         <livewire:tenants.doctor.components.sidebar />
 
@@ -90,7 +122,7 @@
         <div class="flex-1 flex flex-col h-full relative layout-transition min-w-0"
              :class="sidebarExpanded ? 'lg:ml-64' : 'lg:ml-[72px]'">
 
-            <!-- CONTENT SLOT (This is where the Dashboard/Navbar injects) -->
+            <!-- CONTENT SLOT -->
             {{ $slot }}
 
         </div>
@@ -98,21 +130,26 @@
 
     {{-- TOAST POPUP --}}
     <div x-show="showToast" x-cloak
-         class="fixed bottom-4 right-4 z-[60] w-full max-w-sm bg-white dark:bg-gray-800 border-l-4 border-green-500 shadow-xl rounded-lg p-4 cursor-pointer"
-         x-transition:enter="transform ease-out duration-300"
-         x-transition:enter-start="translate-y-2 opacity-0"
+         class="fixed bottom-6 right-6 z-[70] w-full max-w-sm bg-white dark:bg-gray-800 border-l-4 border-blue-500 shadow-2xl rounded-r-lg p-4 cursor-pointer transform transition-all duration-300 hover:scale-105"
+         x-transition:enter="translate-y-10 opacity-0"
          x-transition:enter-end="translate-y-0 opacity-100"
-         x-transition:leave="transition ease-in duration-100"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
+         x-transition:leave="translate-y-0 opacity-0"
          @click="showToast = false">
         <div class="flex items-start">
             <div class="flex-shrink-0">
-                <x-heroicon-o-check-circle class="h-6 w-6 text-green-400" />
+                <div class="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                    <x-heroicon-o-beaker class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
             </div>
             <div class="ml-3 w-0 flex-1 pt-0.5">
-                <p class="text-sm font-medium text-gray-900 dark:text-white">Notification</p>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" x-text="toastMessage"></p>
+                <p class="text-sm font-bold text-gray-900 dark:text-white">New Lab Result</p>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-300" x-text="toastMessage"></p>
+                <p class="mt-0.5 text-xs text-gray-400" x-text="toastDetails"></p>
+            </div>
+            <div class="ml-4 flex-shrink-0 flex">
+                <button @click.stop="showToast = false" class="text-gray-400 hover:text-gray-500">
+                    <x-heroicon-s-x-mark class="h-5 w-5" />
+                </button>
             </div>
         </div>
     </div>

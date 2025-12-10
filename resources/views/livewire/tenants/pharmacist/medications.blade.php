@@ -8,7 +8,7 @@
 
                 {{-- Title & Breadcrumbs --}}
                 <div class="flex-1 min-w-0">
-                    <nav class="flex text-xs font-medium text-gray-500 dark:text-gray-400 mb-1" aria-label="Breadcrumb">
+                    <nav class="flex text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 mt-2" aria-label="Breadcrumb">
                         <ol class="inline-flex items-center space-x-1 md:space-x-2">
                             <li class="inline-flex items-center">
                                 <a href="{{ route('pharmacist.dashboard') }}" wire:navigate

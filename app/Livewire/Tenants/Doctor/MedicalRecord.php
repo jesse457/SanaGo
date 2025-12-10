@@ -12,7 +12,6 @@ use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use App\Models\User;
 use App\Notifications\NewLabOrderNotification;
-use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -48,16 +47,14 @@ class MedicalRecord extends Component
     #[Rule('nullable|string|max:65535')]
     public ?string $clinicalNotes = null;
 
-    // Prescriptions (Optimized: Removed huge public collection)
-    public string $medicationQuery = '';
-    public string $selectedMedicationId = '';
+    // Prescriptions (Dropdown Data)
+    public Collection $allMedications;
     public array $prescriptionItems = [];
 
-    // Lab Requests (Optimized: Removed huge public collection)
-    public string $labTestQuery = '';
-    public string $selectedLabTestId = '';
+    // Lab Requests (Dropdown Data)
+    public Collection $allLabTests;
     public array $labItems = [];
-    public Collection $labTechnicianOptions; // Keep this if user count is low (<100)
+    public Collection $labTechnicianOptions;
 
     // Attachments
     #[Rule(['attachments.*' => 'file|max:10240|mimes:jpg,jpeg,png,pdf'])]
@@ -69,14 +66,24 @@ class MedicalRecord extends Component
     public function mount(): void
     {
         $this->patientResults = collect();
-        // OPTIMIZATION: Do not load all medications/labs here. Use search.
+
+        // LOAD DROPDOWN DATA
+        // Select specific columns to reduce memory usage
+        $this->allMedications = Medication::select('id', 'name', 'stock_quantity')
+            ->orderBy('name')
+            ->get();
+
+        $this->allLabTests = LabTestDefinition::select('id', 'test_name', 'code')
+            ->orderBy('test_name')
+            ->get();
+
         $this->labTechnicianOptions = User::where('role', 'lab-technician')
-            ->select('id', 'name') // Select only what is needed
+            ->select('id', 'name')
             ->orderBy('name')
             ->get();
     }
 
-    // --- Search Logic ---
+    // --- Search Logic (Patient Only) ---
 
     public function updatedPatientQuery(): void
     {
@@ -87,39 +94,25 @@ class MedicalRecord extends Component
             $this->patientResults = collect();
             return;
         }
-
+        $terms = explode(' ', $this->patientQuery);
         $this->patientResults = Patient::query()
-            ->where(function ($query) use ($q) {
-                $query->where('first_name', 'like', "$q%") // Optimized: Remove leading % for index usage
-                    ->orWhere('last_name', 'like', "$q%")
-                    ->orWhere('patient_uid', 'like', "$q%");
+            ->where(function ($q) use ($terms) {
+                try {
+                    if (count($terms) === 2) {
+                        $q->WhereBlind('first_name', 'first_name_index', $terms[0]);
+                        $q->WhereBlind('last_name', 'last_name_index', $terms[1]);
+                    } else {
+                        foreach ($terms as $term) {
+                            $q->orWhereBlind('first_name', 'first_name_index', $term)
+                                ->orWhereBlind('last_name', 'last_name_index', $term)
+                                ->orWhere('patient_uid', 'like', "%$term%");
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // Fallback or log if blind index fails
+                }
             })
-            ->select('id', 'first_name', 'last_name', 'patient_uid')
             ->limit(10)
-            ->get();
-    }
-
-    // --- Computed Properties for Dynamic Search (Prevents Payload Bloat) ---
-
-    public function getMedicationResultsProperty()
-    {
-        if (strlen($this->medicationQuery) < 2) {
-            return collect();
-        }
-        return Medication::where('name', 'like', '%' . $this->medicationQuery . '%')
-            ->orderBy('name')
-            ->limit(20)
-            ->get();
-    }
-
-    public function getLabTestResultsProperty()
-    {
-        if (strlen($this->labTestQuery) < 2) {
-            return collect();
-        }
-        return LabTestDefinition::where('test_name', 'like', '%' . $this->labTestQuery . '%')
-            ->orderBy('test_name')
-            ->limit(20)
             ->get();
     }
 
@@ -151,7 +144,7 @@ class MedicalRecord extends Component
         $this->medicalRecord = MedicalRecordModel::with(['attachments'])
             ->where('patient_id', $this->selectedPatientId)
             ->where('doctor_id', Auth::id())
-            ->where('finalized', false) // Only drafts
+            ->where('finalized', false)
             ->first();
 
         if ($this->medicalRecord) {
@@ -186,23 +179,24 @@ class MedicalRecord extends Component
         $this->storedAttachments = [];
         $this->attachmentUrls = [];
         $this->attachments = [];
-        $this->medicationQuery = '';
-        $this->labTestQuery = '';
     }
 
     // --- Prescriptions Logic ---
 
-    public function addMedication()
+    // Updated to accept ID from View
+    public function addMedication($medicationId)
     {
-        if (empty($this->selectedMedicationId)) return;
+        if (empty($medicationId)) return;
 
-        // Fetch specific ID directly
-        $med = Medication::find($this->selectedMedicationId);
+        // Fetch from collection or DB
+        $med = $this->allMedications->where('id', $medicationId)->first();
+        // Fallback to DB if for some reason not in collection (rare)
+        if (!$med) $med = Medication::find($medicationId);
 
         if ($med) {
             // Check for duplicates
-            foreach($this->prescriptionItems as $item) {
-                if($item['medication_id'] == $med->id) return;
+            foreach ($this->prescriptionItems as $item) {
+                if ($item['medication_id'] == $med->id) return;
             }
 
             $this->prescriptionItems[] = [
@@ -214,8 +208,6 @@ class MedicalRecord extends Component
             ];
             $this->hasUnsavedChanges = true;
         }
-        $this->selectedMedicationId = '';
-        $this->medicationQuery = '';
     }
 
     public function removeMedication($index)
@@ -227,15 +219,17 @@ class MedicalRecord extends Component
 
     // --- Lab Logic ---
 
-    public function addLabTest()
+    // Updated to accept ID from View
+    public function addLabTest($testId)
     {
-        if (empty($this->selectedLabTestId)) return;
+        if (empty($testId)) return;
 
-        $lab = LabTestDefinition::find($this->selectedLabTestId);
+        $lab = $this->allLabTests->where('id', $testId)->first();
+        if (!$lab) $lab = LabTestDefinition::find($testId);
 
         if ($lab) {
-             foreach($this->labItems as $item) {
-                if($item['lab_test_definition_id'] == $lab->id) return;
+            foreach ($this->labItems as $item) {
+                if ($item['lab_test_definition_id'] == $lab->id) return;
             }
 
             $this->labItems[] = [
@@ -247,8 +241,6 @@ class MedicalRecord extends Component
             ];
             $this->hasUnsavedChanges = true;
         }
-        $this->selectedLabTestId = '';
-        $this->labTestQuery = '';
     }
 
     public function removeLabTest($index)
@@ -273,14 +265,17 @@ class MedicalRecord extends Component
 
     public function removeStoredAttachment(int $id): void
     {
-        // Security: Ensure attachment belongs to current record
         $att = MedicalRecordAttachment::where('id', $id)
             ->where('medical_record_id', $this->medicalRecord?->id)
             ->first();
 
         if ($att) {
-            // Optional: Delete from S3 immediately
-            Storage::disk('s3')->delete($att->file_path);
+            try {
+                Storage::disk('s3')->delete($att->file_path);
+            } catch (\Exception $e) {
+                // Log but continue deletion of record
+                Log::error("S3 Delete failed: " . $e->getMessage());
+            }
             $att->delete();
             $this->loadStoredAttachments();
         }
@@ -298,19 +293,24 @@ class MedicalRecord extends Component
 
         foreach ($this->storedAttachments as $att) {
             try {
-                // Fix: Wrap in try/catch in case file is missing on S3
                 $this->attachmentUrls[$att->id] = Storage::disk('s3')->temporaryUrl($att->file_path, now()->addMinutes(30));
             } catch (\Exception $e) {
                 Log::warning("Could not generate URL for attachment {$att->id}: " . $e->getMessage());
-                $this->attachmentUrls[$att->id] = '#'; // Fallback
+                $this->attachmentUrls[$att->id] = '#';
             }
         }
     }
 
     // --- Save Logic ---
 
-    public function saveDraft(): void { $this->saveAll(false); }
-    public function saveAndSign(): void { $this->saveAll(true); }
+    public function saveDraft(): void
+    {
+        $this->saveAll(false);
+    }
+    public function saveAndSign(): void
+    {
+        $this->saveAll(true);
+    }
 
     public function saveAll(bool $finalize = false): void
     {
@@ -340,7 +340,7 @@ class MedicalRecord extends Component
                     $this->medicalRecord = $record;
                 }
 
-                // 2. Save Attachments (Bulk Insert where possible, but S3 requires loop)
+                // 2. Save Attachments
                 if (!empty($this->attachments)) {
                     foreach ($this->attachments as $file) {
                         $path = $file->store('medical_records/' . $record->id, 's3');
@@ -351,7 +351,7 @@ class MedicalRecord extends Component
                             'file_type' => $file->getClientMimeType(),
                         ]);
                     }
-                    $this->attachments = []; // Reset after save
+                    $this->attachments = [];
                 }
 
                 // 3. Save Prescriptions
@@ -370,8 +370,6 @@ class MedicalRecord extends Component
                         $prescription->update(['status' => 'prescribed']);
                     }
 
-                    // Optimization: Sync items instead of delete/create if logic allows,
-                    // otherwise delete/create is acceptable for Drafts.
                     $prescription->items()->delete();
 
                     $prescItemsData = [];
@@ -387,23 +385,20 @@ class MedicalRecord extends Component
                             'updated_at' => now(),
                         ];
                     }
-                    if(!empty($prescItemsData)) {
-                        PrescriptionItem::insert($prescItemsData); // Bulk Insert
+                    if (!empty($prescItemsData)) {
+                        PrescriptionItem::insert($prescItemsData);
                     }
                 } else {
-                    // Only delete if it was a draft
                     Prescription::where('consultation_id', $record->id)
                         ->where('status', 'draft')
                         ->delete();
                 }
 
                 // 4. Save Lab Requests
-                // Note: We avoid deleting processed requests
                 $currentRequestIds = [];
                 $notificationsToSend = [];
 
                 foreach ($this->labItems as $lab) {
-                    // Logic: Update if exists in this consultation, otherwise create
                     $labReq = LabRequest::updateOrCreate(
                         [
                             'consultation_id' => $record->id,
@@ -416,13 +411,9 @@ class MedicalRecord extends Component
                             'lab_tech_id' => $lab['lab_tech_id'] ?: null,
                             'reason_for_test' => $lab['reason'],
                             'request_date' => now(),
-                            // Only set status to 'requested' if creating new or it was draft
-                            // If DB has 'completed', updateOrCreate keeps it unless we overwrite.
-                            // Here we force 'requested' only if it's new.
                         ]
                     );
 
-                    // If newly created, ensure status is requested
                     if ($labReq->wasRecentlyCreated) {
                         $labReq->status = 'requested';
                         $labReq->save();
@@ -430,31 +421,26 @@ class MedicalRecord extends Component
 
                     $currentRequestIds[] = $labReq->id;
 
-                    // Prepare Notification
                     if ($lab['lab_tech_id'] && $labReq->wasRecentlyCreated) {
-                         $notificationsToSend[] = ['tech_id' => $lab['lab_tech_id'], 'model' => $labReq];
+                        $notificationsToSend[] = ['tech_id' => $lab['lab_tech_id'], 'model' => $labReq];
                     }
                 }
 
-                // Cleanup removed labs (Only if they are still 'requested' or 'draft')
+                // Cleanup removed labs
                 LabRequest::where('consultation_id', $record->id)
                     ->whereNotIn('id', $currentRequestIds)
                     ->whereIn('status', ['requested', 'draft'])
                     ->delete();
 
-                // Send Notifications (Optimized: Outside the loop queries)
-                // We send one notification per test request usually
+                // Send Notifications
                 foreach ($notificationsToSend as $notif) {
-                    // Note: This still does find() but usually small number.
-                    // Better: User::find($notif['tech_id'])->notify(...)
                     $tech = User::find($notif['tech_id']);
-                    if($tech) {
+                    if ($tech) {
                         $tech->notify(new NewLabOrderNotification($notif['model']));
                     }
                 }
             });
 
-            // Post-Transaction UI Updates
             $this->loadStoredAttachments();
 
             if ($finalize) {
@@ -464,7 +450,6 @@ class MedicalRecord extends Component
                 $this->updatedSelectedPatientId();
                 LivewireAlert::title('Saved')->text('Draft saved.')->success()->show();
             }
-
         } catch (\Throwable $e) {
             Log::error('Medical Record Save Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             LivewireAlert::error('Failed to save record. Please try again.')->show();
