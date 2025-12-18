@@ -6,22 +6,35 @@ use Illuminate\Support\Facades\Password;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('components.layouts.auth')]
+
 class ForgotPassword extends Component
 {
-    public string $email = '';
+    public $email = '';
 
-    /**
-     * Send a password reset link to the provided email address.
-     */
-    public function sendPasswordResetLink(): void
+    public $status = null;
+
+    public $emailSent = false; // Controls the UI state
+
+    protected $rules = [
+        'email' => 'required|email',
+    ];
+
+    public function sendResetLink()
     {
-        $this->validate([
-            'email' => ['required', 'string', 'email'],
-        ]);
+        $this->validate();
 
-        Password::sendResetLink($this->only('email'));
+        $response = Password::sendResetLink(['email' => $this->email]);
 
-        session()->flash('status', __('A reset link will be sent if the account exists.'));
+        if ($response == Password::RESET_LINK_SENT) {
+            $this->status = trans($response);
+            $this->emailSent = true; // Triggers the UI transition
+        } else {
+            $this->addError('email', trans($response));
+        }
+    }
+
+    public function render()
+    {
+        return view('livewire.auth.forgot-password');
     }
 }

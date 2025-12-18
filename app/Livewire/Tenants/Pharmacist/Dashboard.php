@@ -64,7 +64,7 @@ class Dashboard extends Component
         })->count();
 
         // 2. Prescriptions pending (not fully dispensed)
-        $this->prescriptionsPending = Prescription::where('status', 'Pending')
+        $this->prescriptionsPending = Prescription::where('status', 'prescribed')
             ->whereHas('items', function ($query) {
                 $query->whereColumn('quantity_prescribed', '>', 'dispensed_quantity');
             })->count();

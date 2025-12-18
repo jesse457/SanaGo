@@ -392,7 +392,7 @@ return [
     'settings_breadcrumb' => 'Settings',
 
     // 1. General Information
-    'general_info_header' => 'General Information',
+    'general_info_header' => 'General ',
     'label_hospital_name' => 'Hospital Name',
     'placeholder_hospital_name' => 'e.g., City General Hospital',
     'label_hospital_address' => 'Address',
@@ -405,7 +405,7 @@ return [
     'button_saving' => 'Saving...',
 
     // 2. Department Management
-    'department_management_header' => 'Department Management',
+    'department_management_header' => 'Department ',
     'label_new_department' => 'Department Name',
     'placeholder_new_department' => 'e.g., Pediatrics',
     'label_department_description' => 'Description (Optional)',
@@ -419,14 +419,14 @@ return [
     'no_departments_found_tip' => 'Try a different search or add a new department.',
 
     // Department Edit Modal
-    'modal_edit_department_title' => 'Edit Department',
+    'modal_edit_department_title' => 'Edit ',
     'label_edit_department_name' => 'Department Name',
     'label_edit_department_description' => 'Description',
     'modal_delete_department_title' => 'Delete Department',
     'modal_delete_department_message' => 'Are you sure you want to delete this department? This action cannot be undone.',
 
     // 3. Ward Management
-    'ward_management_header' => 'Ward Management',
+    'ward_management_header' => 'Ward ',
     'label_new_ward' => 'Ward Name',
     'placeholder_new_ward' => 'e.g., General Ward A',
     'label_ward_number' => 'Ward Number (Optional)',
@@ -456,7 +456,7 @@ return [
     'modal_delete_ward_message' => 'Are you sure you want to delete this ward? This action cannot be undone.',
 
     // 4. Bed Type Management
-    'bed_type_management_header' => 'Bed Type Management',
+    'bed_type_management_header' => 'Room',
     'label_new_bed_type_name' => 'Bed Type Name',
     'placeholder_new_bed_type_name' => 'e.g., ICU Bed, Private Room',
     'label_bed_type_description' => 'Description (Optional)',
@@ -474,15 +474,15 @@ return [
     'no_bed_types_found_tip' => 'Try a different search or add a new bed type.',
 
     // Bed Type Edit Modal
-    'modal_edit_bed_type_title' => 'Edit Bed Type',
-    'label_edit_bed_type_name' => 'Bed Type Name',
+    'modal_edit_bed_type_title' => 'Edit Room',
+    'label_edit_bed_type_name' => 'Room Name',
     'label_edit_bed_type_description' => 'Description',
     'label_edit_bed_type_price' => 'Price Per Day ($)',
-    'modal_delete_bed_type_title' => 'Delete Bed Type',
-    'modal_delete_bed_type_message' => 'Are you sure you want to delete this bed type? This action cannot be undone.',
+    'modal_delete_bed_type_title' => 'Delete Room',
+    'modal_delete_bed_type_message' => 'Are you sure you want to delete this room? This action cannot be undone.',
 
     // 5. Bed Management
-    'bed_management_header' => 'Bed Management',
+    'bed_management_header' => 'Bed ',
     'label_new_bed_number' => 'Bed Number',
     'placeholder_new_bed_number' => 'e.g., A-101, ICU-05',
     'label_bed_assign_ward' => 'Assign to Ward',
@@ -507,7 +507,7 @@ return [
     'modal_delete_bed_message' => 'Are you sure you want to delete this bed? This action cannot be undone.',
 
     // 6. Supply Management
-    'supply_management_header' => 'Supply Management',
+    'supply_management_header' => 'Supply ',
     'label_new_supply_name' => 'Supply Name',
     'placeholder_new_supply_name' => 'e.g., Bandages',
     'label_supply_unit_of_measure' => 'Unit of Measure (e.g., pcs, boxes)',
@@ -537,7 +537,7 @@ return [
     'modal_delete_supply_message' => 'Are you sure you want to delete this supply? This action cannot be undone.',
 
     // 7. Subscription Management
-    'subscription_management_header' => 'Subscription Management',
+    'subscription_management_header' => 'Subscription ',
     'subscription_current_plan' => 'Current Plan',
     'subscription_no_plan' => 'No Active Plan',
     'subscription_no_active_plan' => 'No Active Plan',

@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ParagonIE\CipherSweet\BlindIndex;
 use ParagonIE\CipherSweet\EncryptedRow;
+use ParagonIE\CipherSweet\Transformation\Lowercase;
+use ParagonIE\CipherSweet\Transformation\Trigram; // <--- Import Trigram
 use Spatie\LaravelCipherSweet\Concerns\UsesCipherSweet;
 use Spatie\LaravelCipherSweet\Contracts\CipherSweetEncrypted;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
@@ -33,7 +35,6 @@ class Patient extends Model implements CipherSweetEncrypted
 
     /**
      * Accessor to combine First and Last name.
-     * Allows $patient->name to work in the view.
      */
     public function getNameAttribute()
     {
@@ -41,35 +42,45 @@ class Patient extends Model implements CipherSweetEncrypted
     }
 
     /**
-     * Configure CipherSweet encryption for this model.
-     *
-     * Fields added with ->addField(...) should correspond to text columns
-     * in your DB to store ciphertext. For exact-match searchable fields,
-     * add a BlindIndex.
+     * Configure CipherSweet encryption.
      */
     public static function configureCipherSweet(EncryptedRow $encryptedRow): void
     {
         $encryptedRow
-            // first & last names - encrypted and searchable (exact match)
+            // 1. First Name: Case-insensitive + Partial Match
             ->addField('first_name')
-            ->addBlindIndex('first_name', new BlindIndex('first_name_index'))
+            ->addBlindIndex('first_name', new BlindIndex('first_name_index', [
+                new Lowercase(), // Normalize to lowercase
+            ]))
+
+            // 2. Last Name: Case-insensitive + Partial Match
             ->addField('last_name')
-            ->addBlindIndex('last_name', new BlindIndex('last_name_index'))
+            ->addBlindIndex('last_name', new BlindIndex('last_name_index', [
+                new Lowercase(),
+            ]))
+
+            // 3. Email: Case-insensitive (Exact match usually preferred for emails)
             ->addField('email')
-            ->addBlindIndex('email', new BlindIndex('email_index'))
-            // phone & email - encrypted and searchable (exact match)
+            ->addBlindIndex('email', new BlindIndex('email_index', [
+                new Lowercase()
+            ]))
+
+            // 4. Phone: Encrypted, Exact Match
             ->addField('phone')
-            // other sensitive fields (encrypted, not necessarily searchable)
+            ->addBlindIndex('phone', new BlindIndex('phone_index'))
+
+           
+
+            // 6. Address: Encrypted only (Not searchable)
             ->addField('address')
+
+            // 7. Optional fields
             ->addOptionalTextField('id_document_path')
             ->addOptionalTextField('referral_note_path');
-
-        // If you want case-insensitive or transformed blind indexes, define
-        // transformations via BlindIndex options (see CipherSweet docs).
     }
 
     // -----------------------
-    // relationships & scopes
+    // Relationships & Scopes
     // -----------------------
 
     public function scopeFuture($query)

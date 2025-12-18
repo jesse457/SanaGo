@@ -1,4 +1,4 @@
-<main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50/50 p-6 dark:bg-gray-900">
+<main class="flex-1 overflow-x-hidden overflow-y-auto p-6 dark:bg-gray-900">
     <div class="max-w-7xl mx-auto">
         {{-- Breadcrumbs --}}
         <div class="mb-6 mt-8">
@@ -28,7 +28,7 @@
 
                 Profile
             </h1>
-            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 ml-14">
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 ">
                 Manage your account settings, personal information, and view assigned shifts.
             </p>
         </div>

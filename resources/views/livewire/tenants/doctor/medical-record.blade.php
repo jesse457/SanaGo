@@ -1,557 +1,383 @@
-<main id="doctor-medical-record" class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
-    {{-- Scrollable Content Area --}}
-    <div class="flex-1 overflow-y-auto custom-scrollbar relative">
-        <div class="p-4 md:p-8 pb-32 max-w-7xl mx-auto">
-            {{-- Header & Nav --}}
-            <div class="mb-8">
-                <div class="flex items-center justify-between mb-2">
-                    <button @click="open = true"
-                        class="lg:hidden p-2 -ml-2 rounded-md text-gray-600 hover:bg-gray-100 dark:text-gray-300 transition-colors">
-                        <x-heroicon-o-bars-3 class="w-6 h-6" />
-                    </button>
+<div class="bg-gray-50 dark:bg-gray-900 overflow-hidden h-screen flex flex-col"
+     x-data="{ activeTab: 'clinical' }">
 
-                    <nav class="hidden md:flex text-sm font-medium text-gray-500 dark:text-gray-400">
-                        <ol class="flex items-center space-x-2">
-                            <li><a href="{{ route('doctor.dashboard') }}"
-                                    class="hover:text-blue-600 transition">{{ __('doctor.home') }}</a></li>
-                            <li><x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300" /></li>
-                            <li class="text-gray-300 dark:text-white ">
-                                {{ __('doctor.patient_consultation') }}</li>
-                        </ol>
-                    </nav>
-                </div>
-
-                <header
-                    class="flex items-start justify-between border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
-                    {{-- Left Block: Title --}}
-                    <div class="flex items-center gap-4">
-                        <div class="p-3 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/40 ring-1 ring-white/20">
-                            <x-heroicon-o-clipboard-document-list class="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                                {{ __('doctor.clinical_consultation') }}
-                            </h1>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                {{ __('doctor.consultation_header_subtitle') }}
-                            </p>
-                        </div>
-                    </div>
-
-                    {{-- Right Block: Date --}}
-                    <div class="hidden md:block text-right pt-1">
-                        <span
-                            class="block text-xs text-gray-400 uppercase tracking-wider font-semibold">{{ __('doctor.today') }}</span>
-                        <span
-                            class="text-lg font-mono font-medium text-gray-700 dark:text-gray-300">{{ now()->format('F d, Y') }}</span>
-                    </div>
-                </header>
+    {{-- HEADER --}}
+    <header class="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm z-20">
+        <div class="px-6 py-4 flex items-center justify-between">
+            <div>
+                <nav class="flex text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    <ol class="flex items-center space-x-2">
+                        <li>
+                            <a href="#" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center">
+                                <x-heroicon-s-home class="w-3 h-3 mr-1.5" />
+                                Home
+                            </a>
+                        </li>
+                        <li><x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300" /></li>
+                        <li class="text-gray-900 dark:text-white">Patients</li>
+                    </ol>
+                </nav>
+                <h1 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+                    Patient Consultation
+                </h1>
             </div>
+        </div>
+    </header>
 
-            {{-- Patient Selector (Command Palette Style) --}}
-            <div class="mb-10 relative z-40 group" x-data="{ open: false }" @click.outside="open = false">
-                <div
-                    class="relative shadow-sm transition-all duration-300 group-focus-within:shadow-lg group-focus-within:-translate-y-1">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <x-heroicon-o-magnifying-glass
-                            class="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+    {{-- MAIN CONTENT WRAPPER --}}
+    <div class="flex flex-1 overflow-hidden">
+
+        {{-- 🟢 LEFT SIDEBAR (PATIENT SEARCH) --}}
+        <aside class="w-full md:w-80 lg:w-96 flex-shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 z-10 h-full">
+
+            {{-- Search Bar Section --}}
+            <div class="p-4 border-b border-gray-100 dark:border-gray-700 relative z-20">
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Find Patient</label>
+                <div class="relative">
+                    <x-heroicon-o-magnifying-glass class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+
+                    {{-- Loading Icon --}}
+                    <div wire:loading wire:target="patientQuery" class="absolute right-3 top-2.5">
+                        <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
                     </div>
-                    <input type="search" wire:model.live.debounce.350ms="patientQuery" @focus="open = true"
-                        class="block w-full rounded-xl border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 pl-11 pr-12 py-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg transition-all"
-                        placeholder="{{ __('doctor.search_patient_placeholder') }}..." />
 
-                    <div wire:loading wire:target="patientQuery"
-                        class="absolute inset-y-0 right-0 pr-4 flex items-center">
-                        <x-heroicon-o-arrow-path class="h-5 w-5 text-blue-500 animate-spin" />
-                    </div>
-                </div>
+                    <input type="text"
+                           wire:model.live.debounce.300ms="patientQuery"
+                           class="w-full pl-10 pr-10 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                           placeholder="Name or ID..."
+                           autocomplete="off">
 
-                {{-- Search Dropdown --}}
-                <div x-show="open" x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 translate-y-2"
-                    x-transition:enter-end="opacity-100 translate-y-0" x-cloak
-                    class="absolute w-full mt-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50 max-h-[28rem] overflow-y-auto custom-scrollbar">
-
-                    @if (strlen($patientQuery) > 1)
-                        <ul>
-                            <li
-                                class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-700/50">
-                                {{ __('doctor.search_results') }}
-                            </li>
-                            @forelse($patientResults as $p)
-                                <li wire:click="selectPatient({{ $p->id }})" @click="open = false"
-                                    class="cursor-pointer p-4 hover:bg-blue-50 dark:hover:bg-blue-900/30 border-b border-gray-50 dark:border-gray-700 last:border-0 transition-colors flex items-center justify-between group">
-                                    <div class="flex items-center gap-4">
-                                        <div
-                                            class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 flex items-center justify-center font-bold text-sm ring-2 ring-white dark:ring-gray-700">
-                                            {{ substr($p->first_name, 0, 1) }}{{ substr($p->last_name, 0, 1) }}
+                    {{-- Patient Results --}}
+                    @if(strlen($patientQuery) >= 2)
+                        <div class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
+                            @if($patientResults->isNotEmpty())
+                                @foreach($patientResults as $res)
+                                    <button wire:click="selectPatient({{ $res->id }})"
+                                            class="w-full text-left px-4 py-3 hover:bg-blue-50 dark:hover:bg-gray-700 border-b border-gray-50 dark:border-gray-700 last:border-0 transition-colors flex items-center gap-3">
+                                        <div class="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                                            {{ substr($res->first_name, 0, 1) }}{{ substr($res->last_name, 0, 1) }}
                                         </div>
-                                        <div>
-                                            <p
-                                                class="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
-                                                {{ $p->last_name }}, {{ $p->first_name }}
-                                            </p>
-                                            <p
-                                                class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-0.5">
-                                                <span
-                                                    class="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 rounded text-gray-600 dark:text-gray-300">{{ $p->patient_uid }}</span>
-                                                <span>&bull;</span>
-                                                <span>{{ $p->age }} {{ __('doctor.yrs') }}</span>
-                                                <span>&bull;</span>
-                                                <span>{{ $p->gender }}</span>
-                                            </p>
+                                        <div class="min-w-0">
+                                            <div class="font-bold text-gray-900 dark:text-white text-sm truncate">{{ $res->first_name }} {{ $res->last_name }}</div>
+                                            <div class="text-xs text-gray-500">{{ $res->patient_uid }}</div>
                                         </div>
-                                    </div>
-                                    <x-heroicon-m-chevron-right
-                                        class="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-transform group-hover:translate-x-1" />
-                                </li>
-                            @empty
-                                <li class="p-8 text-center text-gray-500">
-                                    <p>{{ __('doctor.no_patients_found') }}</p>
-                                </li>
-                            @endforelse
-                        </ul>
+                                    </button>
+                                @endforeach
+                            @else
+                                <div class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    <x-heroicon-o-face-frown class="w-8 h-8 mx-auto mb-2 text-gray-400"/>
+                                    <p class="text-sm font-medium">No patient found</p>
+                                    <p class="text-xs">Try a different name or ID</p>
+                                </div>
+                            @endif
+                        </div>
                     @endif
                 </div>
             </div>
 
-            {{-- Active Consultation Form --}}
-            @if ($selectedPatientId && $patient)
-                <form wire:submit.prevent="saveAll" class="space-y-6 animate-fade-in-up">
-
-                    {{-- Patient Context Card --}}
-                    <div
-                        class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 relative overflow-hidden group">
-                        <div class="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-500 to-indigo-600">
-                        </div>
-
-                        <div class="flex flex-col md:flex-row gap-6 items-start md:items-center relative z-10">
-                            <div
-                                class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 text-2xl font-bold shadow-inner border-4 border-white dark:border-gray-800">
-                                {{ substr($patient->first_name, 0, 1) }}{{ substr($patient->last_name, 0, 1) }}
+            {{-- Patient Card --}}
+            @if($patient)
+                <div class="flex-1 overflow-y-auto p-5 custom-scrollbar">
+                    <div class="flex flex-col items-center text-center mb-6">
+                        @if($patient->profile_picture)
+                            <img src="{{ Storage::disk('s3')->temporaryUrl($patient->profile_picture, now()->addMinutes(10)) }}" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md mb-3">
+                        @else
+                            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold mb-3 shadow-md">
+                                {{ substr($patient->first_name, 0, 1) }}
                             </div>
-
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-3 mb-1">
-                                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white truncate">
-                                        {{ $patient->full_name }}</h2>
-                                    @if ($hasUnsavedChanges)
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-700/50 animate-pulse">
-                                            <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full mr-1.5"></span>
-                                            {{ __('doctor.unsaved_changes') }}
-                                        </span>
-                                    @endif
-                                </div>
-                                <div class="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
-                                    <span class="flex items-center bg-gray-50 dark:bg-gray-700/50 px-2 py-0.5 rounded">
-                                        <x-heroicon-m-identification class="w-4 h-4 mr-1.5 text-gray-400" />
-                                        <span
-                                            class="font-mono text-gray-700 dark:text-gray-300">{{ $patient->patient_uid }}</span>
-                                    </span>
-                                    <span class="flex items-center">
-                                        <x-heroicon-m-cake class="w-4 h-4 mr-1.5 text-gray-400" /> {{ $patient->age }}
-                                        {{ __('doctor.yrs') }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+                        @endif
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ $patient->first_name }} {{ $patient->last_name }}</h2>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 mt-1">
+                            {{ \Carbon\Carbon::parse($patient->date_of_birth)->age }} Years • {{ ucfirst($patient->gender) }}
+                        </span>
                     </div>
 
-                    {{-- Main Content Grid --}}
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {{-- LEFT COLUMN: Clinical Inputs --}}
-                        <div class="lg:col-span-2 space-y-6">
-                            {{-- 1. Assessment Section --}}
-                            <div
-                                class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                                <div
-                                    class="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
-                                    <div class="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
-                                        <x-heroicon-o-document-text
-                                            class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                                    </div>
-                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">
-                                        {{ __('doctor.assessment') }}</h3>
-                                </div>
-
-                                <div class="space-y-6">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                {{ __('doctor.chief_complaint') }} <span class="text-red-500">*</span>
-                                            </label>
-                                            <input type="text" wire:model.defer="complaint"
-                                                class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5"
-                                                placeholder="e.g. Severe headache...">
-                                            @error('complaint')
-                                                <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
-                                            @enderror
-                                        </div>
-
-                                        <div>
-                                            <label
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                {{ __('doctor.working_diagnosis') }}
-                                            </label>
-                                            <input type="text" wire:model.defer="diagnosisText"
-                                                class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5"
-                                                placeholder="e.g. Migraine with aura">
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            {{ __('doctor.clinical_notes_and_plan') }}
-                                        </label>
-                                        <textarea wire:model.defer="clinicalNotes" rows="6"
-                                            class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm leading-relaxed resize-y"
-                                            placeholder="Record detailed observations and plan here..."></textarea>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- 2. Prescription Section --}}
-                            <div
-                                class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                                <div
-                                    class="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
-                                    <div class="p-1.5 bg-green-50 dark:bg-green-900/30 rounded-lg">
-                                        <x-heroicon-o-beaker class="w-5 h-5 text-green-600 dark:text-green-400" />
-                                    </div>
-                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">
-                                        {{ __('doctor.prescriptions') }}</h3>
-                                </div>
-
-                                <div class="space-y-6">
-                                    {{-- Add Medication Dropdown --}}
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            {{ __('doctor.select_medication') }}
-                                        </label>
-                                        <div class="flex gap-2">
-                                            <div class="relative flex-1">
-                                                <select wire:model="selectedMedicationId"
-                                                    class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm py-2.5">
-                                                    <option value="">{{ __('doctor.choose_medication') }}...
-                                                    </option>
-                                                    @foreach ($medicationOptions as $med)
-                                                        <option value="{{ $med->id }}">
-                                                            {{ $med->name }}
-                                                            {{ $med->dosage_form ? '(' . $med->dosage_form . ')' : '' }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <button type="button" wire:click="addMedication"
-                                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50">
-                                                <x-heroicon-m-plus class="w-5 h-5" />
-                                                <span class="hidden sm:inline ml-1">{{ __('doctor.add') }}</span>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {{-- Medication List Table --}}
-                                    @if (count($prescriptionItems) > 0)
-                                        <div
-                                            class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden overflow-x-auto">
-                                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                                <thead class="bg-gray-50 dark:bg-gray-700/50">
-                                                    <tr>
-                                                        <th
-                                                            class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
-                                                            Drug</th>
-                                                        <th
-                                                            class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
-                                                            Dosage</th>
-                                                        <th
-                                                            class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
-                                                            Freq</th>
-                                                        <th
-                                                            class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
-                                                            Duration</th>
-                                                        <th class="px-3 py-2"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody
-                                                    class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
-                                                    @foreach ($prescriptionItems as $index => $item)
-                                                        <tr>
-                                                            <td
-                                                                class="px-3 py-2 text-sm font-medium text-gray-900 dark:text-white min-w-[120px]">
-                                                                {{ $item['name'] }}
-                                                            </td>
-                                                            <td class="px-3 py-2">
-                                                                <input type="text"
-                                                                    wire:model.defer="prescriptionItems.{{ $index }}.dosage"
-                                                                    class="w-full border-0 bg-transparent p-0 text-sm focus:ring-0 placeholder-gray-400 focus:text-green-600"
-                                                                    placeholder="500mg">
-                                                            </td>
-                                                            <td class="px-3 py-2">
-                                                                <input type="text"
-                                                                    wire:model.defer="prescriptionItems.{{ $index }}.frequency"
-                                                                    class="w-full border-0 bg-transparent p-0 text-sm focus:ring-0 placeholder-gray-400 focus:text-green-600"
-                                                                    placeholder="1-0-1">
-                                                            </td>
-                                                            <td class="px-3 py-2">
-                                                                <input type="text"
-                                                                    wire:model.defer="prescriptionItems.{{ $index }}.duration"
-                                                                    class="w-full border-0 bg-transparent p-0 text-sm focus:ring-0 placeholder-gray-400 focus:text-green-600"
-                                                                    placeholder="5 days">
-                                                            </td>
-                                                            <td class="px-3 py-2 text-right">
-                                                                <button type="button"
-                                                                    wire:click="removeMedication({{ $index }})"
-                                                                    class="text-gray-400 hover:text-red-500 transition-colors">
-                                                                    <x-heroicon-o-trash class="w-4 h-4" />
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    @else
-                                        <div
-                                            class="text-center py-6 bg-gray-50 dark:bg-gray-900/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700">
-                                            <p class="text-sm text-gray-500 dark:text-gray-400">
-                                                {{ __('doctor.no_medications_added') }}</p>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-
-                           
-                            {{-- 3. Lab Request Section --}}
-<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-    <div class="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
-        <div class="p-1.5 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
-            <x-heroicon-o-beaker class="w-5 h-5 text-purple-600 dark:text-purple-400" />
-        </div>
-        <h3 class="text-lg font-bold text-gray-900 dark:text-white">
-            {{ __('doctor.lab_requests') }}</h3>
-    </div>
-
-    <div class="space-y-6">
-        {{-- Add Lab Dropdown --}}
-        <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {{ __('doctor.select_lab_test') }}
-            </label>
-            <div class="flex gap-2">
-                <div class="relative flex-1">
-                    <select wire:model="selectedLabTestId"
-                        class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm py-2.5">
-                        <option value="">{{ __('doctor.choose_lab_test') }}...
-                        </option>
-                        @foreach ($labTestOptions as $lab)
-                            <option value="{{ $lab->id }}">{{ $lab->test_name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <button type="button" wire:click="addLabTest"
-                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors disabled:opacity-50">
-                    <x-heroicon-m-plus class="w-5 h-5" />
-                    <span class="hidden sm:inline ml-1">{{ __('doctor.add') }}</span>
-                </button>
-            </div>
-        </div>
-
-        {{-- Lab Items List --}}
-        @if (count($labItems) > 0)
-            <div class="space-y-3">
-                @foreach ($labItems as $index => $item)
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <div class="flex-1 flex items-center gap-3">
-                            <span class="bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 text-xs font-bold px-2 py-1 rounded">
-                                {{ $index + 1 }}
+                    <div class="space-y-4">
+                        <div class="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                            <span class="text-xs font-semibold text-gray-400 uppercase">Contact</span>
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mt-0.5">{{ $patient->phone_number ?? 'N/A' }}</p>
+                        </div>
+                        <div class="bg-red-50 dark:bg-red-900/10 p-3 rounded-lg border border-red-100 dark:border-red-800/30">
+                            <span class="text-xs font-semibold text-red-400 uppercase flex items-center gap-1">
+                                <x-heroicon-s-exclamation-triangle class="w-3 h-3"/> Allergies
                             </span>
-                            <span class="font-medium text-gray-900 dark:text-white text-sm">{{ $item['test_name'] }}</span>
-                        </div>
-
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-                            <select wire:model.defer="labItems.{{ $index }}.urgency"
-                                class="block w-full sm:w-28 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-xs py-1.5 shadow-sm focus:border-purple-500 focus:ring-purple-500">
-                                <option value="normal">Normal</option>
-                                <option value="urgent">Urgent</option>
-                                <option value="critical">Critical</option>
-                            </select>
-
-                            <select wire:model.defer="labItems.{{ $index }}.lab_tech_id"
-                                class="block w-full sm:w-36 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-xs py-1.5 shadow-sm focus:border-purple-500 focus:ring-purple-500">
-                                <option value="">{{ __('doctor.select_technician') }}</option>
-                                @foreach ($labTechnicianOptions as $tech)
-                                    <option value="{{ $tech->id }}">{{ $tech->name }}</option>
-                                @endforeach
-                            </select>
-
-                            <input type="text" wire:model.defer="labItems.{{ $index }}.reason"
-                                placeholder="Reason..."
-                                class="block w-full sm:w-40 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-xs py-1.5 shadow-sm focus:border-purple-500 focus:ring-purple-500">
-
-                            <button type="button" wire:click="removeLabTest({{ $index }})"
-                                class="self-end sm:self-auto p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors">
-                                <x-heroicon-o-x-mark class="w-4 h-4" />
-                            </button>
+                            <p class="text-sm font-medium text-red-800 dark:text-red-300 mt-0.5">
+                                {{ $patient->allergies ?? 'No known allergies' }}
+                            </p>
                         </div>
                     </div>
-                @endforeach
-            </div>
-        @else
-            <div class="text-center py-6 bg-gray-50 dark:bg-gray-900/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700">
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('doctor.no_labs_added') }}</p>
-            </div>
-        @endif
-    </div>
-</div>
-                        </div>
-
-                        {{-- RIGHT COLUMN: Attachments --}}
-                        <div class="lg:col-span-1 space-y-6">
-                            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
-                                x-data="{ progress: @entangle('uploadProgress') }">
-
-                                <div class="flex items-center justify-between mb-4">
-                                    <div class="flex items-center gap-2">
-                                        <x-heroicon-o-paper-clip class="w-5 h-5 text-gray-400" />
-                                        <h3 class="font-bold text-gray-900 dark:text-white">
-                                            {{ __('doctor.attachments') }}</h3>
-                                    </div>
-                                    <span class="text-xs text-gray-400">{{ count($attachmentUrls ?? []) }}
-                                        {{ __('doctor.files') }}</span>
-                                </div>
-
-                                {{-- Upload Zone --}}
-                                <label
-                                    class="relative flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 dark:bg-gray-700/30 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400 transition-all group overflow-hidden">
-                                    <div
-                                        class="flex flex-col items-center justify-center pt-5 pb-6 relative z-10">
-                                        <div
-                                            class="p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm mb-2 group-hover:scale-110 transition-transform">
-                                            <x-heroicon-o-cloud-arrow-up class="w-6 h-6 text-blue-500" />
-                                        </div>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 text-center px-4">
-                                            <span
-                                                class="font-semibold text-blue-600">{{ __('doctor.click_to_upload') }}</span>
-                                            <br><span class="text-[10px]">JPG, PNG, PDF (Max 10MB)</span>
-                                        </p>
-                                    </div>
-                                    <input type="file" wire:model="attachments" class="hidden" />
-
-                                    {{-- Progress Overlay --}}
-                                    <div x-show="progress > 0" x-cloak
-                                        class="absolute inset-0 bg-white/90 dark:bg-gray-800/90 z-20 flex flex-col items-center justify-center">
-                                        <span class="text-sm font-bold text-blue-600"
-                                            x-text="progress + '%'"></span>
-                                        <div class="w-2/3 bg-gray-200 rounded-full h-1.5 mt-2">
-                                            <div class="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-                                                :style="'width: ' + progress + '%'"></div>
-                                        </div>
-                                    </div>
-                                </label>
-
-                                {{-- Files List --}}
-                                @if (!empty($attachmentUrls) || $attachments)
-                                    <div class="mt-4 space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
-                                        @foreach ($attachmentUrls as $i => $url)
-                                            <div
-                                                class="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-600 group hover:border-blue-200 transition-colors">
-                                                <a href="{{ $url }}" target="_blank"
-                                                    class="flex-shrink-0">
-                                                    <div
-                                                        class="w-10 h-10 rounded bg-white dark:bg-gray-600 flex items-center justify-center text-gray-400">
-                                                        <x-heroicon-o-document class="w-6 h-6" />
-                                                    </div>
-                                                </a>
-                                                <div class="flex-1 min-w-0">
-                                                    <p
-                                                        class="text-xs font-medium truncate text-gray-700 dark:text-gray-200">
-                                                        File {{ $i + 1 }}</p>
-                                                    <p class="text-[10px] text-gray-400 uppercase">Stored</p>
-                                                </div>
-                                                <button type="button"
-                                                    wire:click="removeStoredAttachment({{ $i }})"
-                                                    class="text-gray-400 hover:text-red-500 p-1.5 hover:bg-red-50 rounded-md transition-colors">
-                                                    <x-heroicon-o-trash class="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        @endforeach
-
-                                        @if ($attachments)
-                                            <div
-                                                class="flex items-center gap-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800 animate-pulse-slow">
-                                                <div
-                                                    class="w-10 h-10 flex items-center justify-center bg-blue-100 dark:bg-blue-800 rounded text-blue-600">
-                                                    <x-heroicon-o-document class="w-5 h-5" />
-                                                </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <p
-                                                        class="text-xs font-medium truncate text-blue-700 dark:text-blue-300">
-                                                        {{ $attachments->getClientOriginalName() }}</p>
-                                                    <p class="text-[10px] text-blue-400 uppercase">Ready to
-                                                        upload
-                                                    </p>
-                                                </div>
-                                                <button type="button" wire:click="removeAttachment"
-                                                    class="text-blue-400 hover:text-red-500 p-1.5 hover:bg-red-50 rounded-md transition-colors">
-                                                    <x-heroicon-o-x-mark class="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        @endif
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </form>
+                </div>
             @else
-                {{-- Empty State (No Patient Selected) --}}
-                <div class="flex flex-col items-center justify-center py-24 text-center opacity-60 animate-fade-in">
-                    <div
-                        class="w-32 h-32 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
-                        <x-heroicon-o-user-group class="w-16 h-16 text-gray-300 dark:text-gray-600" />
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                        {{ __('doctor.ready_for_consultation') }}</h3>
-                    <p class="text-gray-500 max-w-sm mx-auto">{{ __('doctor.use_search_above_instruction') }}</p>
+                <div class="flex-1 flex flex-col items-center justify-center text-gray-400 p-6 text-center">
+                    <x-heroicon-o-user class="w-16 h-16 mb-2 opacity-50"/>
+                    <p class="text-sm">Select a patient to begin</p>
                 </div>
             @endif
-        </div>
+        </aside>
+
+        {{-- 🔵 RIGHT MAIN --}}
+        <main class="flex-1 flex flex-col h-full bg-gray-50 dark:bg-gray-900 min-w-0 relative">
+            @if($selectedPatientId)
+                {{-- Tabs Header --}}
+                <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 pt-4 flex items-center justify-between flex-shrink-0 z-10">
+                    <div class="flex space-x-6 overflow-x-auto no-scrollbar">
+                        @foreach(['clinical' => 'Clinical Notes', 'rx' => 'Prescriptions', 'labs' => 'Labs & Tests', 'files' => 'Attachments'] as $key => $label)
+                            <button @click="activeTab = '{{ $key }}'"
+                                    :class="activeTab === '{{ $key }}' ? 'border-blue-600 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 hover:border-gray-300'"
+                                    class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 outline-none focus:outline-none">
+                                 {{ $label }}
+                                 @if($key === 'files' && (count($attachments) > 0 || count($storedAttachments) > 0))
+                                    <span class="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded-full">{{ count($attachments) + count($storedAttachments) }}</span>
+                                 @endif
+                            </button>
+                        @endforeach
+                    </div>
+
+                    <div class="flex items-center gap-2 pb-2 pl-4">
+                        <span wire:loading class="text-xs text-gray-500 animate-pulse">Saving...</span>
+                        <button wire:click="saveDraft" wire:loading.attr="disabled"
+                                class="px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-600">
+                            Draft
+                        </button>
+                        <button wire:click="saveAndSign" wire:loading.attr="disabled"
+                                wire:confirm="Finalize this record?"
+                                class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
+                            <x-heroicon-m-check-badge class="w-4 h-4"/> Sign
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Scrollable Content Area --}}
+                <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+
+                    {{-- 1. CLINICAL TAB --}}
+                    <div x-show="activeTab === 'clinical'" class="space-y-6 max-w-4xl mx-auto" x-transition.opacity>
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">Chief Complaint <span class="text-red-500">*</span></label>
+                            <textarea wire:model.blur="complaint" rows="3" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 focus:ring-blue-500 focus:border-blue-500" placeholder="Reason for visit..."></textarea>
+                            @error('complaint') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">Clinical Notes & Exam</label>
+                            <textarea wire:model.blur="clinicalNotes" rows="6" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 focus:ring-blue-500 focus:border-blue-500" placeholder="Detailed notes..."></textarea>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">Diagnosis</label>
+                            <textarea wire:model.blur="diagnosisText" rows="2" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 focus:ring-blue-500 focus:border-blue-500" placeholder="Final diagnosis..."></textarea>
+                        </div>
+                    </div>
+
+                    {{-- 2. PRESCRIPTIONS TAB (DROPDOWN) --}}
+                    <div x-show="activeTab === 'rx'" class="space-y-6 max-w-5xl mx-auto" x-cloak>
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 relative overflow-visible">
+
+                            {{-- Dropdown Selection for Medications --}}
+                            <div class="mb-6 relative z-30" x-data="{ tempMedId: '' }">
+                                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Add Medication</label>
+                                <div class="flex gap-2">
+                                    <div class="relative flex-1">
+                                        <select x-model="tempMedId"
+                                                class="w-full pl-3 pr-10 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white">
+                                            <option value="">Select a medication...</option>
+                                            @foreach($allMedications as $med)
+                                                <option wire:key="med-opt-{{ $med->id }}" value="{{ $med->id }}">{{ $med->name }} (Stock: {{ $med->stock_quantity }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        :disabled="!tempMedId"
+                                        wire:click="addMedication(tempMedId)"
+                                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
+                                        <x-heroicon-m-plus class="w-5 h-5"/>
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+
+                            {{-- Data Grid --}}
+                            @if(count($prescriptionItems) > 0)
+                                <div class="overflow-hidden border border-gray-200 dark:border-gray-700 rounded-lg">
+                                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                        <thead class="bg-gray-50 dark:bg-gray-700">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Drug</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-32">Dosage</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-32">Freq</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-32">Duration</th>
+                                                <th class="w-10"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                            @foreach($prescriptionItems as $index => $item)
+                                                <tr wire:key="rx-item-{{ $index }}">
+                                                    <td class="px-4 py-2 font-medium text-gray-900 dark:text-white">{{ $item['name'] }}</td>
+                                                    <td class="px-4 py-2"><input type="text" wire:model="prescriptionItems.{{ $index }}.dosage" class="w-full text-sm border-gray-200 rounded p-1" placeholder="500mg"></td>
+                                                    <td class="px-4 py-2"><input type="text" wire:model="prescriptionItems.{{ $index }}.frequency" class="w-full text-sm border-gray-200 rounded p-1" placeholder="1-0-1"></td>
+                                                    <td class="px-4 py-2"><input type="text" wire:model="prescriptionItems.{{ $index }}.duration" class="w-full text-sm border-gray-200 rounded p-1" placeholder="5 days"></td>
+                                                    <td class="px-4 py-2 text-center">
+                                                        <button wire:click="removeMedication({{ $index }})" class="text-red-500 hover:text-red-700"><x-heroicon-m-trash class="w-4 h-4"/></button>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @else
+                                <div class="text-center py-8 bg-gray-50 dark:bg-gray-900 rounded-lg border border-dashed border-gray-300">
+                                    <p class="text-gray-500">No medications added.</p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- 3. LABS TAB (DROPDOWN) --}}
+                    <div x-show="activeTab === 'labs'" class="space-y-6 max-w-5xl mx-auto" x-cloak>
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 relative overflow-visible">
+
+                             {{-- Dropdown Selection for Lab Tests --}}
+                             <div class="mb-6 relative z-30" x-data="{ tempLabId: '' }">
+                                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Add Lab Test</label>
+                                <div class="flex gap-2">
+                                    <div class="relative flex-1">
+                                        <select x-model="tempLabId"
+                                                class="w-full pl-3 pr-10 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white">
+                                            <option value="">Select a lab test...</option>
+                                            @foreach($allLabTests as $test)
+                                                <option wire:key="lab-opt-{{ $test->id }}" value="{{ $test->id }}">{{ $test->test_name }} ({{ $test->code }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        :disabled="!tempLabId"
+                                        wire:click="addLabTest(tempLabId)"
+                                        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
+                                        <x-heroicon-m-plus class="w-5 h-5"/>
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+
+                            @if(count($labItems) > 0)
+                                <div class="space-y-3">
+                                    @foreach($labItems as $index => $item)
+                                        <div wire:key="lab-item-{{ $index }}" class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col md:flex-row gap-4 items-start md:items-center relative z-10">
+                                            <div class="w-full md:w-1/4">
+                                                <div class="font-bold text-gray-900 dark:text-white">{{ $item['test_name'] }}</div>
+                                                <select wire:model="labItems.{{ $index }}.urgency" class="mt-1 text-xs py-1 pl-2 pr-6 border-gray-200 rounded-md">
+                                                    <option value="normal">Normal</option>
+                                                    <option value="urgent">Urgent</option>
+                                                    <option value="critical">Critical</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label class="text-[10px] uppercase text-gray-400 font-bold">Lab Tech</label>
+                                                    <select wire:model="labItems.{{ $index }}.lab_tech_id" class="w-full text-sm border-gray-200 rounded p-1.5">
+                                                        <option value="">Any Available</option>
+                                                        @foreach($labTechnicianOptions as $tech)
+                                                            <option wire:key="tech-{{ $tech->id }}" value="{{ $tech->id }}">{{ $tech->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label class="text-[10px] uppercase text-gray-400 font-bold">Reason</label>
+                                                    <input type="text" wire:model="labItems.{{ $index }}.reason" class="w-full text-sm border-gray-200 rounded p-1.5" placeholder="Reason...">
+                                                </div>
+                                            </div>
+
+                                            <button wire:click="removeLabTest({{ $index }})" class="text-red-500 hover:bg-red-50 p-2 rounded-full"><x-heroicon-m-x-mark class="w-5 h-5"/></button>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="text-center py-8 bg-gray-50 dark:bg-gray-900 rounded-lg border border-dashed border-gray-300">
+                                    <p class="text-gray-500">No lab tests requested.</p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- 4. FILES TAB --}}
+                    <div x-show="activeTab === 'files'" class="space-y-6 max-w-5xl mx-auto" x-cloak>
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                            {{-- Dropzone --}}
+                            <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative">
+                                <input type="file" wire:model="attachments" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                <x-heroicon-o-cloud-arrow-up class="w-12 h-12 text-blue-500 mx-auto mb-3"/>
+                                <h3 class="text-gray-900 dark:text-white font-medium">Click or Drag files here</h3>
+                                <p class="text-sm text-gray-500 mt-1">PDF, PNG, JPG up to 10MB</p>
+                            </div>
+
+                            {{-- Temp Files --}}
+                            @if($attachments)
+                                <h4 class="text-xs font-bold text-gray-500 uppercase mt-6 mb-3">Ready to Upload</h4>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    @foreach($attachments as $index => $file)
+                                        <div wire:key="tmp-file-{{ $index }}" class="relative group bg-gray-50 border rounded-lg p-2">
+                                            @if(in_array($file->getMimeType(), ['image/jpeg', 'image/png']))
+                                                <img src="{{ $file->temporaryUrl() }}" class="h-24 w-full object-cover rounded mb-2">
+                                            @else
+                                                <div class="h-24 w-full flex items-center justify-center bg-gray-200 rounded mb-2 text-gray-500">
+                                                    <x-heroicon-o-document class="w-10 h-10"/>
+                                                </div>
+                                            @endif
+                                            <p class="text-xs truncate px-1">{{ $file->getClientOriginalName() }}</p>
+                                            <button wire:click="removeTempAttachment({{ $index }})" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <x-heroicon-s-x-mark class="w-3 h-3"/>
+                                            </button>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            {{-- Stored Files --}}
+                            @if(count($storedAttachments) > 0)
+                                <h4 class="text-xs font-bold text-gray-500 uppercase mt-6 mb-3">Saved Attachments</h4>
+                                <div class="space-y-2">
+                                    @foreach($storedAttachments as $att)
+                                        <div wire:key="stored-file-{{ $att->id }}" class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
+                                            <div class="flex items-center gap-3">
+                                                <div class="h-10 w-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                                                    <x-heroicon-o-paper-clip class="w-5 h-5"/>
+                                                </div>
+                                                <div>
+                                                    <a href="{{ $attachmentUrls[$att->id] ?? '#' }}" target="_blank" class="text-sm font-medium text-blue-600 hover:underline">
+                                                        {{ $att->file_name }}
+                                                    </a>
+                                                    <p class="text-xs text-gray-500">{{ $att->created_at->format('M d, Y H:i') }}</p>
+                                                </div>
+                                            </div>
+                                            <button wire:click="removeStoredAttachment({{ $att->id }})" wire:confirm="Delete file?" class="text-gray-400 hover:text-red-500 p-2">
+                                                <x-heroicon-m-trash class="w-4 h-4"/>
+                                            </button>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                </div>
+            @else
+                {{-- 🔴 CENTERED EMPTY STATE --}}
+                <div class="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
+                    <div class="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 text-gray-400 p-6 rounded-lg">
+                        <div class="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 shadow-sm">
+                            <x-heroicon-o-user-plus class="w-10 h-10 text-gray-300"/>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Ready for Consultation</h3>
+                        <p class="max-w-xs text-center mt-2 text-sm text-gray-500">
+                            Search for a patient on the left to view their history and start a new medical record.
+                        </p>
+                    </div>
+                </div>
+            @endif
+        </main>
     </div>
-
-    {{-- Sticky Action Footer --}}
-    @if ($selectedPatientId && $patient)
-        <div
-            class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 md:px-8 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-50 flex flex-col md:flex-row justify-between items-center gap-4 animate-slide-up">
-            <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <x-heroicon-m-hashtag class="w-4 h-4" />
-                <span>{{ __('doctor.consultation_id') }}:</span>
-                <span class="font-mono font-medium text-gray-700 dark:text-gray-300">
-                    {{ Str::substr($patient->patient_uid, 0, 6) }}-{{ now()->format('Hi') }}
-                </span>
-            </div>
-
-            <div class="flex items-center gap-3 w-full md:w-auto">
-                <button type="button" wire:click="saveDraft" wire:loading.attr="disabled"
-                    class="flex-1 md:flex-none justify-center items-center px-5 py-2.5 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-xl text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50">
-                    {{ __('doctor.save_draft') }}
-                </button>
-
-                <button type="button" wire:click="saveAndSign" wire:loading.attr="disabled"
-                    class="flex-1 md:flex-none justify-center items-center px-8 py-2.5 border border-transparent text-sm font-bold rounded-xl shadow-md shadow-blue-600/20 text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:translate-y-0">
-                    <span wire:loading.remove wire:target="saveAndSign" class="flex items-center gap-2">
-                        <x-heroicon-m-check-circle class="w-5 h-5" />
-                        {{ __('doctor.finalize_record') }}
-                    </span>
-                    <span wire:loading wire:target="saveAndSign" class="flex items-center gap-2">
-                        <x-heroicon-o-arrow-path class="w-5 h-5 animate-spin" />
-                        {{ __('doctor.processing') }}...
-                    </span>
-                </button>
-            </div>
-        </div>
-    @endif
-</main>
+</div>

@@ -3,16 +3,50 @@ server:
   grpc_listen_port: 0
 
 positions:
+  # Stores how far we've read so we don't duplicate logs on restart
   filename: /tmp/positions.yaml
 
 clients:
-  - url: http://loki:3100/loki/api/v1/push
+  # 1. CHANGE THIS to your Monitoring Server Domain (Server B)
+  # 2. Use HTTPS (Secured by Caddy on Server B)
+  - url: https://loki.yourdomain.com/loki/api/v1/push
+    
+    # 3. Security: Must match the "basicauth" you set in Caddyfile on Server B
+    basic_auth:
+      username: loki_user
+      password: your_secure_password_here
+
+    # 4. Label the source so you know which server is crashing
+    external_labels:
+      env: production
+      host: app_server_a
 
 scrape_configs:
-- job_name: frankenphp_logs
-  static_configs:
-  - targets:
-      - localhost
-    labels:
-      job: frankenphp_logs
-      __path__: /var/log/app/laravel.log
+  # --- JOB 1: Docker Container Logs (Standard Output) ---
+  # Best for: Octane startup logs, Nginx/Caddy access logs, PHP Fatal Errors
+  - job_name: docker
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker_logs
+          __path__: /var/lib/docker/containers/*/*-json.log
+
+  # --- JOB 2: Laravel Application Logs (Storage File) ---
+  # Best for: Application Logic Errors, Stack Traces
+  - job_name: laravel_app
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: laravel_logs
+          # This path must match where you mount the volume in docker-compose
+          __path__: /app/storage/logs/laravel.log
+    
+    # 5. Pipeline Stages (Critical for PHP Stack Traces)
+    # This detects lines starting with "[2024-..." and groups subsequent lines
+    # into one single log entry.
+    pipeline_stages:
+      - multiline:
+          firstline: '^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]'
+          max_wait_time: 3s

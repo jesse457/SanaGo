@@ -1,163 +1,167 @@
-<div class="w-full flex-1 p-4 sm:p-6 overflow-y-auto h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="">
+<main class="w-full min-h-screen bg-slate-50 dark:bg-gray-950 font-sans text-slate-600 dark:text-slate-300">
+    <div class=" mx-auto">
 
-        <!-- Header Navigation -->
-        <header class="mb-8">
-            <nav class="flex items-center text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">
-                <a href="{{ route('lab-technician.dashboard') }}" wire:navigate
-                    class="flex items-center hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                    <x-heroicon-s-home class="w-4 h-4 mr-1.5" />
-                    Home
-                </a>
-                <x-heroicon-s-chevron-right class="w-4 h-4 mx-2 text-gray-300 dark:text-gray-600" />
-                <a href="{{ route('lab-technician.feedbacks') }}" wire:navigate
-                    class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                    Feedbacks
-                </a>
-                <x-heroicon-s-chevron-right class="w-4 h-4 mx-2 text-gray-300 dark:text-gray-600" />
-                <span class="text-gray-900 dark:text-white font-semibold">Submit</span>
-            </nav>
+        {{-- 1. HEADER SECTION (Sticky) --}}
+        <header
+            class="sticky top-0 flex-shrink-0 bg-white/90 dark:bg-gray-800/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-sm z-30 transition-all duration-200">
+            <div class="px-4 sm:px-6 py-4">
+                <div class="flex flex-col gap-2">
+                    {{-- Breadcrumbs --}}
+                    <nav class="flex text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 mt-2"
+                        aria-label="Breadcrumb">
+                        <ol class="inline-flex items-center space-x-1 md:space-x-2">
+                            <li class="inline-flex items-center">
+                                <a href="{{ route('doctor.dashboard') }}" wire:navigate
+                                    class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center">
+                                    <x-heroicon-s-home class="w-3 h-3 mr-1.5" />
+                                    Home
+                                </a>
+                            </li>
+                            <li>
+                                <div class="flex items-center">
+                                    <x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300 mx-1" />
+                                    <a href="{{ route('doctor.feedbacks') }}" wire:navigate
+                                        class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                        Feedbacks
+                                    </a>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="flex items-center">
+                                    <x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300 mx-1" />
+                                    <span class="text-gray-900 dark:text-white">Submit Feedback</span>
+                                </div>
+                            </li>
+                        </ol>
+                    </nav>
 
-            <div class="flex items-start gap-4">
-                <div class="p-3 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20 hidden sm:block">
-                    <x-heroicon-o-chat-bubble-left-right class="w-8 h-8 text-white" />
-                </div>
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-                        Submit Feedback
-                    </h1>
-                    <p class="mt-2 text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
-                        Found a bug or have a suggestion? We'd love to hear from you to make SanaGo better.
-                    </p>
+                    {{-- Title --}}
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-7">
+                            Submit Feedback
+                        </h2>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-3xl">
+                            Your thoughts are important! Help us make it better.
+                        </p>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <!-- Main Form Card -->
-        <div class="bg-white dark:bg-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700">
+        {{-- Content Area --}}
+        <div class="p-4 sm:p-6 pb-20">
+            <div class=" mx-auto">
+                <div
+                    class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-slate-200 dark:border-gray-800 overflow-hidden">
 
-            <!-- Card Header -->
-            <div class="bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                    <x-heroicon-s-pencil-square class="w-5 h-5 text-indigo-500" />
-                    Feedback Form
-                </h2>
-                <span class="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10 dark:bg-indigo-400/10 dark:text-indigo-400 dark:ring-indigo-400/20">
-                    SanaGo Lab
-                </span>
+                    {{-- Card Header --}}
+                    <div
+                        class="px-6 py-5 border-b border-slate-100 dark:border-gray-800 flex items-center justify-between bg-slate-50/50 dark:bg-gray-800/30">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">Help Us Make It Better</h3>
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Your thoughts are important!
+                                Tell us what you think to help us improve.</p>
+                        </div>
+                        <span
+                            class="hidden sm:inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-bold text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800">SanaGo</span>
+                    </div>
+
+                    {{-- Form --}}
+                    <form wire:submit="submit" class="p-6 sm:p-8 space-y-8">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {{-- Subject --}}
+                            <div class="space-y-1.5">
+                                <label for="subject"
+                                    class="block text-sm font-bold text-slate-700 dark:text-slate-300">What is this
+                                    about? <span class="text-red-500">*</span></label>
+                                <input id="subject" type="text" wire:model.defer="subject"
+                                    placeholder="e.g., I have a problem with appointments"
+                                    class="block w-full rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white py-2.5 px-3" />
+                                @error('subject')
+                                    <p class="mt-1 text-xs text-red-500 font-medium">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            {{-- Category --}}
+                            <div class="space-y-1.5">
+                                <label for="category"
+                                    class="block text-sm font-bold text-slate-700 dark:text-slate-300">Which part of
+                                    the system? <span class="text-red-500">*</span></label>
+                                <select id="category" wire:model.defer="category"
+                                    class="block w-full rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white py-2.5 px-3">
+                                    < <option value="" disabled selected>Select a category</option>
+                                        <option value="dashboard">Dashboard</option>
+                                        <option value="patient">Patient Management</option>
+                                        <option value="appoitntments">Appointments</option>
+                                        <option value="consultation">Consultation</option>
+                                        <option value="test-request">Test Requests</option>
+                                        <option value="view-patient-info">Patient Info View</option>
+                                        <option value="view-lab-test-and-prescription">Lab Tests & Prescriptions
+                                        </option>
+                                        <option value="profile">User Profile</option>
+                                        <option value="other">Other</option>
+                                </select>
+
+
+                                @error('category')
+                                    <p class="mt-1 text-xs text-red-500 font-medium">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
+                        {{-- Message --}}
+                        <div class="space-y-1.5">
+                            <label for="message"
+                                class="block text-sm font-bold text-slate-700 dark:text-slate-300">Tell us what
+                                happened <span class="text-red-500">*</span></label>
+                            <textarea id="message" rows="6" wire:model.defer="message"
+                                placeholder="Please describe what you experienced in your own words. The more details you give us, the better we can help."
+                                class="block w-full rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white p-3"></textarea>
+
+                            <div class="flex justify-between items-start mt-1">
+                                @error('message')
+                                    <p class="text-xs text-red-500 font-medium">{{ $message }}</p>
+                                @else
+                                    <span></span> {{-- Spacer --}}
+                                @enderror
+                                <p class="text-xs text-slate-500 dark:text-slate-400 text-right">
+                                    <b>Tip:</b> Tell us what you were trying to do, what happened, and what you expected
+                                    to happen instead.
+                                </p>
+                            </div>
+                        </div>
+
+                        {{-- Action Buttons --}}
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-slate-100 dark:border-gray-800">
+                            <div class="text-xs text-slate-500 dark:text-slate-400">
+                                By sending this, you agree to our <a href="#"
+                                    class="text-blue-600 hover:underline font-medium">rules</a> and <a href="#"
+                                    class="text-blue-600 hover:underline font-medium">privacy policy</a>.
+                            </div>
+                            <div class="flex flex-col-reverse sm:flex-row gap-3 w-full sm:w-auto">
+                                <button type="button" wire:click="clearData()"
+                                    class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-slate-200 bg-white dark:bg-gray-800 hover:bg-slate-50 dark:hover:bg-gray-700 text-sm font-bold transition-all duration-200">
+                                    Start Over
+                                </button>
+                                <button type="submit"
+                                    class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 rounded-xl text-white bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg text-sm font-bold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    wire:loading.attr="disabled" wire:target="submit">
+                                    <span wire:loading.remove wire:target="submit" class="flex items-center gap-2">
+                                        <x-heroicon-s-paper-airplane class="w-4 h-4 -rotate-45" />
+                                        Send
+                                    </span>
+                                    <span wire:loading wire:target="submit" class="flex items-center gap-2">
+                                        <x-heroicon-s-arrow-path class="w-4 h-4 animate-spin" />
+                                        Sending...
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
-
-            <!-- Form Body -->
-            <form wire:submit="submit" class="p-6 sm:p-8 space-y-8">
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Subject Input -->
-                    <div class="col-span-1">
-                        <label for="subject" class="block text-sm font-medium leading-6 text-gray-900 dark:text-gray-200">
-                            Summary / Subject <span class="text-red-500">*</span>
-                        </label>
-                        <div class="relative mt-2">
-                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                <x-heroicon-s-tag class="h-5 w-5 text-gray-400" />
-                            </div>
-                            <input type="text" id="subject" wire:model.defer="subject"
-                                class="block w-full rounded-lg border-0 py-2.5 pl-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-gray-900 dark:ring-gray-700 dark:text-white sm:text-sm sm:leading-6 transition-shadow"
-                                placeholder="Briefly summarize the issue">
-                        </div>
-                        @error('subject')
-                            <p class="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-                                <x-heroicon-s-exclamation-circle class="w-4 h-4"/> {{ $message }}
-                            </p>
-                        @enderror
-                    </div>
-
-                    <!-- Category Select -->
-                    <div class="col-span-1">
-                        <label for="category" class="block text-sm font-medium leading-6 text-gray-900 dark:text-gray-200">
-                            Related Feature <span class="text-red-500">*</span>
-                        </label>
-                        <div class="relative mt-2">
-                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                <x-heroicon-s-squares-2x2 class="h-5 w-5 text-gray-400" />
-                            </div>
-                            <select id="category" wire:model.defer="category"
-                                class="block w-full rounded-lg border-0 py-2.5 pl-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-gray-900 dark:ring-gray-700 dark:text-white sm:text-sm sm:leading-6 cursor-pointer">
-                                <option value="" disabled selected>Select a category</option>
-                                <option value="dashboard">Dashboard</option>
-                                <option value="patient">Patient Management</option>
-                                <option value="appoitntments">Appointments</option>
-                                <option value="consultation">Consultation</option>
-                                <option value="test-request">Test Requests</option>
-                                <option value="view-patient-info">Patient Info View</option>
-                                <option value="view-lab-test-and-prescription">Lab Tests & Prescriptions</option>
-                                <option value="profile">User Profile</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        @error('category')
-                            <p class="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-                                <x-heroicon-s-exclamation-circle class="w-4 h-4"/> {{ $message }}
-                            </p>
-                        @enderror
-                    </div>
-                </div>
-
-                <!-- Message Textarea -->
-                <div>
-                    <div class="flex justify-between items-center mb-2">
-                        <label for="message" class="block text-sm font-medium leading-6 text-gray-900 dark:text-gray-200">
-                            Description <span class="text-red-500">*</span>
-                        </label>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">Be as specific as possible</span>
-                    </div>
-                    <div class="relative">
-                        <textarea id="message" rows="6" wire:model.defer="message"
-                            class="block w-full rounded-lg border-0 py-3 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-gray-900 dark:ring-gray-700 dark:text-white sm:text-sm sm:leading-6 transition-shadow resize-y"
-                            placeholder="What were you trying to do? What happened? What did you expect to happen?"></textarea>
-
-                        <!-- Corner decoration -->
-                        <div class="absolute bottom-2 right-2 pointer-events-none">
-                            <x-heroicon-s-pencil class="w-4 h-4 text-gray-300 dark:text-gray-600" />
-                        </div>
-                    </div>
-                    @error('message')
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-                            <x-heroicon-s-exclamation-circle class="w-4 h-4"/> {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
-                <!-- Footer Actions -->
-                <div class="pt-6 border-t border-gray-100 dark:border-gray-700 flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-4">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 text-center sm:text-left">
-                        By submitting, you agree to our internal <a href="#" class="text-indigo-600 hover:underline dark:text-indigo-400">data policy</a>.
-                    </div>
-
-                    <div class="flex w-full sm:w-auto gap-3">
-                        <button type="button" wire:click="clearData"
-                            class="flex-1 sm:flex-none inline-flex justify-center items-center px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-all duration-200">
-                            <x-heroicon-s-arrow-path class="w-4 h-4 mr-2 text-gray-400" />
-                            Reset
-                        </button>
-
-                        <button type="submit"
-                            wire:loading.attr="disabled"
-                            class="flex-1 sm:flex-none relative inline-flex justify-center items-center px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70 disabled:cursor-not-allowed shadow-md shadow-indigo-200 dark:shadow-none transition-all duration-200">
-                            <span wire:loading.remove wire:target="submit" class="flex items-center">
-                                Send Feedback
-                                <x-heroicon-s-paper-airplane class="w-4 h-4 ml-2 -rotate-45" />
-                            </span>
-                            <span wire:loading wire:target="submit" class="flex items-center">
-                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Sending...
-                            </span>
-                        </button>
-                    </div>
-                </div>
-            </form>
         </div>
     </div>
-</div>
+</main>

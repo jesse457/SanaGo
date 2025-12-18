@@ -166,7 +166,7 @@ class Checkin extends Component
                             ->WhereBlind('last_name', 'last_name_index', $terms[1]);
                     } else {
                         foreach ($terms as $term) {
-                            $q->orWhere('patient_uid', 'ilike', '%'.$term.'%')
+                            $q->orWhere('patient_uid', 'like', '%'.$term.'%')
                                 ->orWhereBlind('first_name', 'first_name_index', $term)
                                 ->orWhereBlind('last_name', 'last_name_index', $term);
                         }

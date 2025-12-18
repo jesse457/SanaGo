@@ -15,6 +15,7 @@ return new class extends Migration
             $table->foreignId('patient_id')->constrained('patients')->cascadeOnDelete();
             $table->foreignId('consultation_id')->constrained('medical_records')->cascadeOnDelete();
             $table->foreignId('doctor_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('pharmacist_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('prescription_date')->useCurrent();
             $table->text('general_notes')->nullable();
             $table->string('status')->default('Pending');

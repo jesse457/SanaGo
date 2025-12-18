@@ -22,7 +22,7 @@ use App\Livewire\SendFeedback;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 
-// Health check endpoint for Docker/Kubernetes
+// Health check endpoint
 Route::get('/api/health', function () {
     return response()->json([
         'status' => 'healthy',
@@ -30,44 +30,46 @@ Route::get('/api/health', function () {
     ]);
 });
 
-Route::middleware(['web', 'universal'])->group(function () {
+/*
+|--------------------------------------------------------------------------
+| Central Routes
+|--------------------------------------------------------------------------
+| We do NOT loop through domains here to avoid "Duplicate Route Name" errors.
+| Instead, we define the routes once.
+*/
 
-    // Iterate through central domains defined in tenancy config
-    foreach (config('tenancy.central_domains') as $domain) {
+Route::middleware(['web', 'universal'])
+    ->domain(config('tenancy.central_domains.0'))
+    ->group(function () {
 
-        Route::domain($domain)->group(function () {
-            // Marketing / Public Pages
-            Route::get('/', HomePage::class)->name('home');
-            Route::get('/docs', Docs::class)->name('docs');
-            Route::get('/about', About::class)->name('about');
-            Route::get('/career', Career::class)->name('career');
-            Route::get('/blog', Blog::class)->name('blog');
-            Route::get('/pricing', Pricing::class)->name('pricing');
-            Route::get('/features', Features::class)->name('features');
-            Route::get('/book-demo', BookDemo::class)->name('book-demo');
+        // --- PUBLIC PAGES ---
+        Route::get('/', HomePage::class)->name('home');
+        Route::get('/docs', Docs::class)->name('docs');
+        Route::get('/about', About::class)->name('about');
+        Route::get('/career', Career::class)->name('career');
+        Route::get('/blog', Blog::class)->name('blog');
+        Route::get('/pricing', Pricing::class)->name('pricing');
+        Route::get('/features', Features::class)->name('features');
+        Route::get('/book-demo', BookDemo::class)->name('book-demo');
 
-            // --- GUEST ROUTES ---
-            // This is the global 'login' route
-            Route::get('/login', Login::class)->name('login');
+        // --- AUTHENTICATION ---
+        Route::get('/login', Login::class)->name('login');
+        Route::get('/forgot-password', ForgotPassword::class)->name('password.request');
+        Route::get('/reset-password/{token}', ResetPassword::class)->name('password.reset');
 
-            Route::get('/forgot-password', ForgotPassword::class)->name('password.request');
-            Route::get('/reset-password/{token}', ResetPassword::class)->name('password.reset');
+        // --- UTILITIES ---
+        Route::get('/language/{locale}', function (string $locale) {
+            if (! in_array($locale, ['en', 'es', 'fr'])) {
+                abort(400);
+            }
+            Session::put('locale', $locale);
+            return redirect()->back();
+        })->name('language.switch');
 
-            Route::get('/language/{locale}', function (string $locale) {
-                if (! in_array($locale, ['en', 'es', 'fr'])) {
-                    abort(400);
-                }
-                Session::put('locale', $locale);
-
-                return redirect()->back();
-            })->name('language.switch');
-
-            // --- AUTHENTICATED LANDLORD ROUTES ---
-            Route::middleware([
-                'role:landlord',
-                'auth',
-            ])->name('landlord.')->group(function () {
-
+        // --- LANDLORD DASHBOARD ---
+        Route::middleware(['role:landlord', 'auth'])
+            ->name('landlord.') // Prefix route names
+            ->group(function () {
                 Route::get('/dashboard', Dashboard::class)->name('dashboard');
                 Route::get('/tenants/{tenant}/subscription', ManageSubscription::class)->name('manage-subscription');
                 Route::get('/settings', Settings::class)->name('settings');
@@ -77,13 +79,11 @@ Route::middleware(['web', 'universal'])->group(function () {
                 Route::get('/respond-feedback/{feedback}', RespondFeedback::class)->name('respond-feedback');
                 Route::get('/send-feedback', SendFeedback::class)->name('send-feedback');
 
-                // Logout for Landlord
                 Route::post('/logout', function () {
                     Illuminate\Support\Facades\Auth::logout();
                     Session::invalidate();
                     Session::regenerateToken();
+                    return redirect()->route('login');
                 })->name('logout');
             });
-        });
-    }
-});
+    });

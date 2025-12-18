@@ -1,59 +1,57 @@
-<main class="flex-1 flex flex-col h-screen overflow-hidden px-2 bg-gray-50 dark:bg-gray-900"
+<main class="flex-1 flex flex-col h-full relative overflow-hidden bg-gray-50 dark:bg-gray-900"
     x-data="calendarApp()"
     x-init="initCalendar()"
     @keydown.window.escape="showModal = false">
 
-    {{-- 🧩 Breadcrumbs Section --}}
-    <nav class="hidden md:flex text-sm font-medium text-gray-500 dark:text-gray-400 px-6 pt-8 pb-2 pt-3 flex-shrink-0" aria-label="Breadcrumb">
-        <ol class="flex items-center space-x-2">
-            <li>
-                <a href="{{ route('doctor.dashboard') }}"
-                    class="hover:text-blue-600 dark:hover:text-blue-400 transition flex items-center">
-                    <x-heroicon-s-home class="w-4 h-4 mr-1" />
-                    {{ __('doctor.home') }}
-                </a>
-            </li>
-            <li><x-heroicon-s-chevron-right class="w-4 h-4 text-gray-200" /></li>
-            <li class="text-gray-900 dark:text-white">{{ __('doctor.appointments') }}</li>
-        </ol>
-    </nav>
+    {{-- 🟢 TOP HEADER (Sticky, Glassmorphism) --}}
+    <header class="flex-shrink-0 z-30 bg-white/90 dark:bg-gray-800/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300">
 
-    <header class=" dark:bg-gray-800 shadow-sm z-30 flex-shrink-0 relative">
-        {{-- Top Bar (was previously the main header content) --}}
-        <div class="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-100 dark:border-gray-700">
+        {{-- Top Bar: Title & Navigation --}}
+        <div class="px-6 py-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {{-- Left: Breadcrumbs & Title --}}
             <div>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <span class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 p-2 rounded-lg">
-                        <x-heroicon-s-calendar-days class="w-6 h-6" />
-                    </span>
-                    {{ __('doctor.appointments_overview') }}
-                </h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 ml-12">
-                    {{ $selectedDate ? \Carbon\Carbon::parse($selectedDate)->format('l, F jS, Y') : now()->format('l, F jS, Y') }}
-                </p>
+                <nav class="flex items-center text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 mt-4">
+                    <a href="{{ route('doctor.dashboard') }}" class="hover:text-blue-600 transition flex items-center">
+                        <x-heroicon-s-home class="w-3 h-3 mr-1" /> Home
+                    </a>
+                    <x-heroicon-s-chevron-right class="w-3 h-3 mx-1 text-gray-300" />
+                    <span class="text-gray-900 dark:text-white">Appointments</span>
+                </nav>
+                <div class="flex items-center gap-3">
+                    <div>
+<h1 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+           Appointments
+                    </h1>
+ <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                            {{ __('admin.manage_users_description') }}
+                        </p>
+                    </div>
+
+                    {{-- Quick Action: Jump to Today --}}
+                    @if($selectedDate !== now()->format('Y-m-d'))
+                        <button @click="setDate('{{ now()->format('Y-m-d') }}')"
+                                class="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded-md transition-colors">
+                            Return to Today
+                        </button>
+                    @endif
+                </div>
             </div>
 
-            <div class="flex items-center gap-3">
-                 {{-- Month/Date Display --}}
-                <div class="hidden md:block text-right mr-2">
-                    <span class="block text-xs text-gray-400 uppercase tracking-wider font-bold">Selected Date</span>
-                    <span class="block text-sm font-bold text-gray-900 dark:text-white" x-text="formatDateDisplay(selectedDate)"></span>
-                </div>
+            {{-- Right: Legend --}}
+            <div class="hidden md:flex items-center gap-4 text-xs font-medium text-gray-500 dark:text-gray-400">
+                <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Scheduled</div>
+                <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-yellow-500"></span> Active</div>
+                <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-green-500"></span> Completed</div>
             </div>
         </div>
 
-        {{-- Date Carousel --}}
-        <div class="relative w-full bg-white dark:bg-gray-800 py-3">
-            {{-- Left Gradient/Button --}}
-            <div class="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white via-white to-transparent dark:from-gray-800 dark:via-gray-800 z-10 flex items-center pl-2">
-                <button @click="scrollDates('left')" class="p-2 rounded-full bg-white dark:bg-gray-700 shadow-md border border-gray-100 dark:border-gray-600 hover:text-blue-600 text-gray-500 transition-colors">
-                    <x-heroicon-m-chevron-left class="w-4 h-4" />
-                </button>
-            </div>
+        {{-- Date Carousel (Compact) --}}
+        <div class="relative w-full border-t border-gray-100 dark:border-gray-700/50 py-2">
+            <button @click="scrollDates('left')" class="absolute left-0 top-0 bottom-0 z-20 w-12 bg-gradient-to-r from-white via-white/90 to-transparent dark:from-gray-800 dark:via-gray-800/90 flex items-center justify-center text-gray-400 hover:text-blue-600">
+                <x-heroicon-m-chevron-left class="w-5 h-5" />
+            </button>
 
-            {{-- Scrollable Container --}}
-            <div x-ref="dateContainer" class="flex overflow-x-auto no-scrollbar gap-3 px-6 scroll-smooth snap-x snap-mandatory py-2">
-                {{-- Generate -7 days to +21 days for a better carousel feel --}}
+            <div x-ref="dateContainer" class="flex overflow-x-auto no-scrollbar gap-2 px-4 scroll-smooth snap-x snap-mandatory">
                 @php
                     $startStrip = now()->subDays(7);
                     $endStrip = 28;
@@ -64,130 +62,142 @@
                         $d = $startStrip->copy()->addDays($i);
                         $dString = $d->format('Y-m-d');
                         $isToday = $d->isToday();
+                        $isSelected = $selectedDate === $dString;
+                        $hasAppt = in_array($dString, $this->datesWithAppointments);
                     @endphp
 
                     <button type="button"
                         @click="setDate('{{ $dString }}')"
-                        {{-- ID used for auto-scrolling to selected date --}}
                         id="date-btn-{{ $dString }}"
-                        class="snap-center flex-shrink-0 w-[72px] h-[84px] rounded-2xl flex flex-col items-center justify-center relative transition-all duration-300 border group"
-                        :class="selectedDate === '{{ $dString }}'
-                            ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-none scale-105 z-10'
-                            : 'bg-gray-50 dark:bg-gray-700/50 border-transparent hover:border-blue-200 dark:hover:border-gray-500 text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700'">
+                        class="snap-start flex-shrink-0 group relative w-[54px] h-[64px] rounded-xl flex flex-col items-center justify-center transition-all duration-200 border select-none
+                        {{ $isSelected
+                            ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20 scale-105 z-10'
+                            : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-blue-300 dark:hover:border-gray-500 hover:bg-blue-50/50 dark:hover:bg-gray-700'
+                        }}">
 
-                        <span class="text-[10px] uppercase font-bold tracking-wide"
-                            :class="selectedDate === '{{ $dString }}' ? 'opacity-100' : 'opacity-60'">
+                        <span class="text-[10px] font-bold uppercase tracking-wider mb-0.5 {{ $isSelected ? 'text-blue-100' : 'text-gray-400' }}">
                             {{ $d->format('D') }}
                         </span>
-                        <span class="text-2xl font-bold mt-0.5">{{ $d->format('d') }}</span>
+                        <span class="text-lg font-bold leading-none">{{ $d->format('d') }}</span>
 
-                        @if($isToday)
-                            <span class="absolute -top-1.5 -right-1.5 flex h-3 w-3">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                            </span>
-                        @endif
-
-                        {{-- Dot Indicator for Appointments --}}
-                        @if (in_array($dString, $this->datesWithAppointments))
-                            <span class="absolute bottom-2 w-1.5 h-1.5 rounded-full transition-colors"
-                                :class="selectedDate === '{{ $dString }}' ? 'bg-white' : 'bg-blue-500'"></span>
-                        @endif
+                        {{-- Indicators --}}
+                        <div class="flex gap-1 mt-1.5 h-1.5">
+                            @if($isToday)
+                                <span class="w-1.5 h-1.5 rounded-full {{ $isSelected ? 'bg-white' : 'bg-blue-600' }}"></span>
+                            @elseif($hasAppt)
+                                <span class="w-1.5 h-1.5 rounded-full {{ $isSelected ? 'bg-blue-300' : 'bg-blue-400' }}"></span>
+                            @endif
+                        </div>
                     </button>
                 @endfor
             </div>
 
-            {{-- Right Gradient/Button --}}
-            <div class="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white via-white to-transparent dark:from-gray-800 dark:via-gray-800 z-10 flex items-center justify-end pr-2">
-                <button @click="scrollDates('right')" class="p-2 rounded-full bg-white dark:bg-gray-700 shadow-md border border-gray-100 dark:border-gray-600 hover:text-blue-600 text-gray-500 transition-colors">
-                    <x-heroicon-m-chevron-right class="w-4 h-4" />
-                </button>
-            </div>
+            <button @click="scrollDates('right')" class="absolute right-0 top-0 bottom-0 z-20 w-12 bg-gradient-to-l from-white via-white/90 to-transparent dark:from-gray-800 dark:via-gray-800/90 flex items-center justify-center text-gray-400 hover:text-blue-600">
+                <x-heroicon-m-chevron-right class="w-5 h-5" />
+            </button>
         </div>
     </header>
 
-    {{-- Timeline Section (rest of the code remains the same as previous response) --}}
-    <div class="flex-1 overflow-y-auto relative bg-white dark:bg-gray-900 custom-scrollbar scroll-smooth" x-ref="timelineContainer">
-        <div class="relative min-h-[1440px] w-full pb-20" style="height: 1920px;">
+    {{-- 📅 TIMELINE SCROLL AREA --}}
+    <div class="flex-1 overflow-y-auto overflow-x-hidden relative bg-gray-50 dark:bg-gray-900 custom-scrollbar scroll-smooth" x-ref="timelineContainer">
 
-            {{-- Background Grid Lines --}}
+        {{-- Grid Container --}}
+        <div class="relative min-h-[1440px] w-full pb-32 pt-4" style="height: 1940px;">
+
+            {{-- Background Grid & Time Labels --}}
             @for ($h = 0; $h < 24; $h++)
-                <div class="group flex w-full absolute box-border" style="top: {{ $h * 80 + 20 }}px; height: 80px;">
-                    <div class="w-20 flex-shrink-0 text-right pr-4 -mt-3 select-none">
-                        <span class="text-xs font-semibold text-gray-400 dark:text-gray-600 font-mono">
+                <div class="flex w-full absolute pointer-events-none" style="top: {{ $h * 80 + 20 }}px; height: 80px;">
+                    {{-- Time Label --}}
+                    <div class="w-16 sm:w-20 flex-shrink-0 text-right pr-3 -mt-2.5">
+                        <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-mono">
                             {{ sprintf('%02d:00', $h) }}
                         </span>
                     </div>
-                    <div class="flex-1 border-t border-dashed border-gray-100 dark:border-gray-700/50 group-hover:border-gray-200 dark:group-hover:border-gray-600 transition-colors"></div>
+                    {{-- Line --}}
+                    <div class="flex-1 border-t border-gray-200 dark:border-gray-700/60 border-dashed"></div>
                 </div>
             @endfor
 
-            {{-- Current Time Indicator (Red Line) --}}
+            {{-- 📍 Current Time Indicator --}}
             <div x-show="isToday(selectedDate)"
                  x-cloak
-                 class="absolute w-full z-20 pointer-events-none flex items-center transition-all duration-1000 ease-linear"
+                 class="absolute w-full z-20 pointer-events-none flex items-center group"
                  :style="`top: ${currentTimeTop}px;`">
-                <div class="w-20 flex justify-end pr-2">
-                    <span class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm"
+                <div class="w-16 sm:w-20 flex justify-end pr-2">
+                    <span class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-sm tabular-nums"
                           x-text="currentTimeString"></span>
                 </div>
-                <div class="flex-1 h-px bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.6)]"></div>
-                <div class="absolute left-20 -ml-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                <div class="flex-1 h-[2px] bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)] relative">
+                    <div class="absolute -left-1 -top-[3px] w-2 h-2 bg-red-500 rounded-full"></div>
+                </div>
             </div>
 
-            {{-- Appointment Cards --}}
+            {{-- 🗓️ Appointment Cards --}}
             @foreach ($appointmentGroups as $timeSlot => $group)
                 @php
                     $topPosition = $group['hourInt'] * 80 + 20;
-                    // Dynamic styling based on status
-                    $baseClasses = "h-full w-full rounded-xl border-l-[6px] shadow-sm hover:shadow-lg transition-all duration-200 p-3 flex items-center justify-between cursor-pointer overflow-hidden relative";
+                    $isPast = $group['hourInt'] < now()->hour && \Carbon\Carbon::parse($selectedDate)->isToday();
+
+                    // Dynamic Styling
                     if ($group['hasActive']) {
-                        $wrapperClass = "border-yellow-500 bg-yellow-50/80 dark:bg-yellow-900/10";
-                        $textClass = "text-yellow-900 dark:text-yellow-100";
+                        $cardClass = "bg-amber-50 dark:bg-amber-900/20 border-l-amber-500 hover:shadow-amber-500/20";
+                        $textClass = "text-amber-900 dark:text-amber-100";
+                        $borderClass = "border-amber-200 dark:border-amber-800";
                     } else {
-                        $wrapperClass = "border-blue-500 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700";
+                        $cardClass = "bg-white dark:bg-gray-800 border-l-blue-500 hover:shadow-blue-500/20";
                         $textClass = "text-gray-900 dark:text-white";
+                        $borderClass = "border-gray-200 dark:border-gray-700";
+                    }
+
+                    if($isPast && !$group['hasActive']) {
+                        $opacityClass = "opacity-60 grayscale-[0.5] hover:opacity-100 hover:grayscale-0";
+                    } else {
+                        $opacityClass = "opacity-100";
                     }
                 @endphp
 
-                <div class="absolute left-20 right-4 md:right-10 z-10 group"
+                <div class="absolute left-16 sm:left-20 right-2 sm:right-6 z-10 transition-all duration-300 {{ $opacityClass }}"
                     style="top: {{ $topPosition }}px; height: 70px;"
                     wire:click="openGroupModal('{{ $timeSlot }}')">
 
-                    <div class="{{ $baseClasses }} {{ $wrapperClass }} group-hover:-translate-y-1">
-                        <div class="flex items-center gap-4">
-                             {{-- Time & Status --}}
-                            <div class="flex flex-col justify-center pl-1">
-                                <span class="font-bold text-lg {{ $textClass }}">{{ $group['hourRange'] }}</span>
+                    <div class="h-full w-full rounded-lg border border-l-[4px] shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 p-2 sm:p-3 cursor-pointer overflow-hidden relative flex items-center justify-between {{ $cardClass }} {{ $borderClass }}">
+
+                        {{-- Left Info --}}
+                        <div class="flex items-center gap-3 sm:gap-6">
+                            <div class="flex flex-col pl-1 min-w-[70px]">
+                                <span class="font-bold text-lg leading-tight {{ $textClass }}">{{ $group['hourRange'] }}</span>
                                 @if ($group['hasActive'])
-                                    <span class="text-[10px] font-bold uppercase text-yellow-600 flex items-center gap-1">
-                                        <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse"></span>
-                                        Active
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">
+                                        <span class="relative flex h-2 w-2">
+                                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                          <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                        </span>
+                                        Now
                                     </span>
                                 @endif
                             </div>
 
-                            {{-- Vertical Divider --}}
-                            <div class="w-px h-8 bg-gray-200 dark:bg-gray-700"></div>
+                            <div class="w-px h-8 bg-gray-200 dark:bg-gray-700 hidden sm:block"></div>
 
-                            {{-- Patient Count --}}
-                            <div class="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                                <x-heroicon-m-users class="w-4 h-4 text-gray-400" />
-                                <span>{{ $group['totalPatients'] }} {{ Str::plural('Patient', $group['totalPatients']) }}</span>
+                            <div class="flex flex-col justify-center">
+                                <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                                    {{ $group['totalPatients'] }} {{ Str::plural('Patient', $group['totalPatients']) }}
+                                </span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Scheduled Visit</span>
                             </div>
                         </div>
 
-                        {{-- Avatars --}}
-                        <div class="hidden sm:flex -space-x-3 mr-2">
-                            @foreach (array_slice($group['patients'], 0, 4) as $p)
-                                <div class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-white dark:border-gray-800 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300 shadow-sm ring-1 ring-gray-100 dark:ring-gray-700"
+                        {{-- Right Avatars --}}
+                        <div class="flex -space-x-2 sm:-space-x-3 overflow-hidden p-1">
+                            @foreach (array_slice($group['patients'], 0, 5) as $p)
+                                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-white dark:border-gray-800 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300 ring-1 ring-gray-100 dark:ring-gray-600"
                                     title="{{ $p['patientName'] }}">
                                     {{ substr($p['patientName'], 0, 1) }}
                                 </div>
                             @endforeach
-                            @if (count($group['patients']) > 4)
-                                <div class="w-9 h-9 rounded-full bg-gray-800 text-white border-2 border-white flex items-center justify-center text-xs font-bold shadow-sm z-10">
-                                    +{{ count($group['patients']) - 4 }}
+                            @if (count($group['patients']) > 5)
+                                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-800 text-white border-2 border-white dark:border-gray-900 flex items-center justify-center text-[10px] font-bold z-10">
+                                    +{{ count($group['patients']) - 5 }}
                                 </div>
                             @endif
                         </div>
@@ -195,83 +205,109 @@
                 </div>
             @endforeach
 
-            {{-- Empty State --}}
+            {{-- 💤 Empty State --}}
             @if (empty($appointmentGroups))
-                <div class="absolute inset-0 flex flex-col items-center justify-center pt-32 pointer-events-none opacity-60">
-                    <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-full mb-4">
-                        <x-heroicon-o-calendar class="w-12 h-12 text-gray-400 dark:text-gray-500" />
+                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <div class="text-center opacity-40 dark:opacity-30">
+                        <div class="mx-auto w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                            <x-heroicon-o-calendar class="w-12 h-12 text-gray-400" />
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">No Appointments</h3>
+                        <p class="text-gray-500 max-w-xs mx-auto mt-2">Enjoy your free time! No consultations scheduled for this date.</p>
                     </div>
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Free Slot</h3>
-                    <p class="text-gray-500 text-sm">No appointments scheduled for this day.</p>
                 </div>
             @endif
         </div>
     </div>
 
-    {{-- Modal (Kept mostly functional, slightly styled) --}}
-    <div x-show="showModal" style="display: none;" class="px-2 fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div x-show="showModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="showModal = false"></div>
+    {{-- 🛑 MODAL (Enhanced Design) --}}
+    <div x-show="showModal" style="display: none;" class="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div x-show="showModal"
+             x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm transition-opacity" @click="showModal = false"></div>
 
-        <div class="flex min-h-full items-center justify-center p-4 text-center">
-            <div x-show="showModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-gray-900 text-left shadow-2xl transition-all sm:w-full sm:max-w-2xl border border-gray-100 dark:border-gray-700">
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div x-show="showModal"
+                     x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-gray-900 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-xl border border-gray-100 dark:border-gray-700">
 
-                <div class="bg-white dark:bg-gray-800 px-4 py-4 sm:px-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                    <div>
-                        <h3 class="text-xl font-bold leading-6 text-gray-900 dark:text-white">
-                            Appointments
-                        </h3>
-                        <p class="text-sm text-blue-600 dark:text-blue-400 font-medium mt-1" x-text="$wire.modalGroupData.hourRange"></p>
-                    </div>
-                    <button @click="showModal = false" class="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors">
-                        <x-heroicon-m-x-mark class="h-6 w-6" />
-                    </button>
-                </div>
-
-                <div class="px-4 py-5 sm:p-6 max-h-[60vh] overflow-y-auto bg-gray-50 dark:bg-black/20 custom-scrollbar">
-                    <div class="space-y-4">
-                        <template x-for="patient in $wire.modalGroupData.patients" :key="patient.id">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all">
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <span class="text-xs font-bold font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-600 dark:text-gray-300" x-text="patient.time"></span>
-                                        <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset"
-                                            :class="{
-                                                'bg-yellow-50 text-yellow-700 ring-yellow-600/20': patient.status_color === 'yellow',
-                                                'bg-green-50 text-green-700 ring-green-600/20': patient.status_color === 'green',
-                                                'bg-blue-50 text-blue-700 ring-blue-700/10': patient.status_color === 'blue',
-                                                'bg-red-50 text-red-700 ring-red-600/10': patient.status_color === 'red'
-                                            }" x-text="patient.status_label">
-                                        </span>
-                                    </div>
-                                    <h4 class="font-bold text-gray-900 dark:text-white text-lg" x-text="patient.patientName"></h4>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5" x-text="patient.type"></p>
-                                </div>
-
-                                <div class="mt-4 sm:mt-0 sm:ml-4 flex flex-col gap-2 min-w-[140px]">
-                                    <template x-if="patient.raw_status !== 'In Consultation' && patient.raw_status !== 'Completed'">
-                                        <button wire:click="startConsultation(patient.id)" class="w-full inline-flex justify-center items-center gap-2 rounded-lg bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors">
-                                            Start Visit
-                                        </button>
-                                    </template>
-                                    <template x-if="patient.raw_status === 'In Consultation'">
-                                        <button wire:click="endConsultation(patient.id)" class="w-full inline-flex justify-center items-center gap-2 rounded-lg bg-green-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-500 transition-colors">
-                                            End Visit
-                                        </button>
-                                    </template>
-                                    <template x-if="patient.raw_status === 'Completed'">
-                                        <button disabled class="w-full inline-flex justify-center items-center gap-2 rounded-lg bg-gray-100 px-3 py-2.5 text-sm font-semibold text-gray-400 cursor-not-allowed">
-                                            <x-heroicon-s-check-circle class="w-4 h-4"/> Done
-                                        </button>
-                                    </template>
-                                </div>
+                    {{-- Modal Header --}}
+                    <div class="bg-white dark:bg-gray-800 px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 py-1 px-2 rounded-md text-xs font-bold uppercase tracking-wide">
+                                    Slot Details
+                                </span>
+                                <span class="text-sm text-gray-500 dark:text-gray-400" x-text="$wire.modalGroupData.hourRange"></span>
                             </div>
-                        </template>
+                            <h3 class="text-xl font-bold leading-6 text-gray-900 dark:text-white mt-2">
+                                Patient List
+                            </h3>
+                        </div>
+                        <button @click="showModal = false" class="rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-500 transition-colors">
+                            <x-heroicon-m-x-mark class="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    {{-- Modal Body --}}
+                    <div class="px-6 py-6 bg-gray-50 dark:bg-gray-900/50 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                        <div class="space-y-4">
+                            <template x-for="patient in $wire.modalGroupData.patients" :key="patient.id">
+                                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+
+                                    {{-- Patient Info --}}
+                                    <div class="flex items-start gap-4">
+                                        <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0">
+                                            <span x-text="patient.patientName.substring(0,1)"></span>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-gray-900 dark:text-white" x-text="patient.patientName"></h4>
+                                            <div class="flex items-center gap-2 mt-1">
+                                                <span class="text-xs font-mono text-gray-500 dark:text-gray-400" x-text="patient.time"></span>
+                                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium border"
+                                                    :class="{
+                                                        'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800': patient.status_color === 'yellow',
+                                                        'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800': patient.status_color === 'green',
+                                                        'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800': patient.status_color === 'blue',
+                                                        'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800': patient.status_color === 'red'
+                                                    }" x-text="patient.status_label">
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Actions --}}
+                                    <div class="sm:text-right">
+                                        <template x-if="patient.raw_status !== 'In Consultation' && patient.raw_status !== 'Completed'">
+                                            <button wire:click="startConsultation(patient.id)" class="w-full sm:w-auto inline-flex justify-center items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                                                <x-heroicon-m-play class="w-4 h-4"/> Start
+                                            </button>
+                                        </template>
+                                        <template x-if="patient.raw_status === 'In Consultation'">
+                                            <button wire:click="endConsultation(patient.id)" class="w-full sm:w-auto inline-flex justify-center items-center gap-2 rounded-lg bg-green-600 hover:bg-green-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all">
+                                                <x-heroicon-m-check class="w-4 h-4"/> Finish
+                                            </button>
+                                        </template>
+                                        <template x-if="patient.raw_status === 'Completed'">
+                                            <span class="inline-flex items-center gap-1 text-sm font-medium text-gray-400 select-none">
+                                                <x-heroicon-s-check-circle class="w-5 h-5 text-gray-300 dark:text-gray-600"/>
+                                                Completed
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    {{-- Alpine Logic --}}
     <script>
         function calendarApp() {
             return {
@@ -281,61 +317,53 @@
                 currentTimeString: '',
                 timer: null,
 
-                // Logic to center the active date on load or change
                 initCalendar() {
                     this.updateTime();
-                    this.timer = setInterval(() => this.updateTime(), 60000); // Update every minute
+                    this.timer = setInterval(() => this.updateTime(), 60000);
                     this.$nextTick(() => {
                         this.scrollToSelected();
                     });
-
-                    // Update timeline position on window resize
                     window.addEventListener('resize', () => this.updateTime());
                 },
 
-                // Fix for the "1 hour behind" bug.
-                // Uses browser time instead of server time.
                 updateTime() {
                     const now = new Date();
                     const hours = now.getHours();
                     const minutes = now.getMinutes();
-
-                    // Format string HH:MM
                     this.currentTimeString = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0');
+                    // 80px per hour + 20px padding
+                    this.currentTimeTop = (hours + minutes / 60) * 80 + 20;
 
-                    // Calculate pixels (80px per hour + 20px padding top)
-                    const totalMinutes = (hours * 60) + minutes;
-                    this.currentTimeTop = (totalMinutes / 60) * 80 + 20;
+                    // Auto-scroll timeline to current time if on today's date
+                    if(this.isToday(this.selectedDate) && !this.scrolledToTime) {
+                        const container = this.$refs.timelineContainer;
+                        if(container) {
+                            container.scrollTop = this.currentTimeTop - 200; // Center it a bit
+                            this.scrolledToTime = true; // prevent constant jumping
+                        }
+                    }
                 },
 
                 isToday(dateString) {
                     const today = new Date();
-                    // Handle timezone offsets for comparison
                     const offset = today.getTimezoneOffset();
                     const localToday = new Date(today.getTime() - (offset * 60 * 1000)).toISOString().split('T')[0];
                     return dateString === localToday;
                 },
 
-                formatDateDisplay(dateString) {
-                    const date = new Date(dateString);
-                    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-                },
-
                 setDate(dateString) {
                     this.selectedDate = dateString;
-                    // Wait for Livewire to update, then scroll
+                    this.scrolledToTime = false; // Reset auto-scroll trigger
                     setTimeout(() => this.scrollToSelected(), 100);
                 },
 
-                // Carousel Navigation
                 scrollDates(direction) {
                     const container = this.$refs.dateContainer;
-                    const scrollAmount = 200; // px to scroll
-                    if (direction === 'left') {
-                        container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-                    } else {
-                        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-                    }
+                    const scrollAmount = 300;
+                    container.scrollBy({
+                        left: direction === 'left' ? -scrollAmount : scrollAmount,
+                        behavior: 'smooth'
+                    });
                 },
 
                 scrollToSelected() {

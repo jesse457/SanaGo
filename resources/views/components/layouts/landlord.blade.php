@@ -9,7 +9,7 @@
     <!-- Fonts & Icons -->
     <link rel="icon" type="image/png" href="{{ Storage::disk('central_public')->url('images/logo.png') }}">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+
         [x-cloak] { display: none !important; }
 
         /* Custom scrollbar */
@@ -70,7 +70,8 @@
                 <div class="w-6"></div> <!-- Spacer -->
             </div>
 
-            <main class="flex-1 bg-slate-50 p-4 md:p-6">
+            <main class="flex-1 overflow-y-auto overflow-x-hidden  dark:bg-gray-900 bg-white">
+           
                 {{ $slot }}
             </main>
         </div>

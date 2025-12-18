@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Livewire\Landlord;
+namespace App\Livewire\LandLord;
 
 use App\Models\Subscription;
 use App\Models\Tenant;
-use App\Models\User; // Assuming User model exists in Tenant context
+use App\Models\User;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -18,8 +18,9 @@ class ManageSubscription extends Component
 
     // Usage Stats
     public int $currentUsers = 0;
-
-    public int $currentStorage = 0; // In MB
+    public int $currentStorage = 0; // In MB (integer for progress bars)
+    public string $formattedStorage = '0 B'; // Human readable string
+    public float $storagePercentage = 0;
 
     public function mount(Tenant $tenant)
     {
@@ -33,16 +34,36 @@ class ManageSubscription extends Component
         $this->tenant->run(function () {
             $this->subscription = Subscription::first();
 
-            // Calculate Real Usage
-            // Note: Adjust 'User' class import if your tenant user model is namespaced differently
+            // 1. Calculate Real Users (Live count)
             try {
+                // Ensure App\Models\User is the correct path for the Tenant User model
                 $this->currentUsers = User::count();
             } catch (\Exception $e) {
                 $this->currentUsers = 0;
             }
 
-            // Mocking storage calculation (or replace with your actual file storage logic)
-            $this->currentStorage = 450;
+            // 2. Get Storage from Metadata (Cached by Scheduler)
+            // We read from the 'usage_stats' key we populated in the Console Command
+            if ($this->subscription && !empty($this->subscription->metadata['usage_stats'])) {
+                $stats = $this->subscription->metadata['usage_stats'];
+
+                // Get raw bytes
+                $bytes = $stats['bytes'] ?? 0;
+
+                // Convert bytes to MB for the integer property (useful for logic/progress bars)
+                $this->currentStorage = round($bytes / 1024 / 1024);
+
+                // Get the pre-formatted string (e.g., "1.2 GB")
+                $this->formattedStorage = $stats['formatted'] ?? '0 B';
+
+                // Get the percentage
+                $this->storagePercentage = floatval($stats['percentage'] ?? 0);
+            } else {
+                // Fallback if the scheduler hasn't run yet
+                $this->currentStorage = 0;
+                $this->formattedStorage = '0 B';
+                $this->storagePercentage = 0;
+            }
         });
     }
 
@@ -75,7 +96,6 @@ class ManageSubscription extends Component
     public function loginAsTenant()
     {
         // Stancl Tenancy Impersonation Logic
-        // Ensure you have the 'universal' middleware group set up or use the helper
         return redirect()->route('impersonate', $this->tenant->id);
     }
 

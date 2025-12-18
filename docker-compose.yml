@@ -2,40 +2,32 @@ services:
   # --- Application ---
   frankenphp:
     container_name: sanago-octane
-    # Option 1: Build locally (for development)
-    build:
-      context: .
-    # Option 2: Use pre-built image from GitHub Container Registry (for production)
-    # Uncomment the line below and comment out the 'build' section above
-    # image: ghcr.io/${GITHUB_REPOSITORY:-your-username/sanago-v1}:latest
+    image: sanago:latest
+    pull_policy: never
     restart: unless-stopped
     ports:
+      # Exposes the application on http://localhost:8000
       - "8000:8000"
     extra_hosts:
-      # Added for Linux compatibility
       - "host.docker.internal:host-gateway"
-    environment:
-      - APP_ENV=local
-      - APP_KEY=${APP_KEY}
-      - APP_DEBUG=true
-      - DB_CONNECTION=pgsql
-      - DB_HOST=host.docker.internal
-      - DB_PORT=5432
-      - DB_DATABASE=hms
-      - DB_USERNAME=jesse
-      - DB_PASSWORD=secret
-      - REDIS_HOST=redis
-      - REDIS_PORT=6378
-      - FILESYSTEM_DISK=s3
-      - AWS_ACCESS_KEY_ID=minioadmin
-      - AWS_SECRET_ACCESS_KEY=minioadmin
-      - AWS_DEFAULT_REGION=us-east-1
-      - AWS_BUCKET=local-bucket
-      - AWS_USE_PATH_STYLE_ENDPOINT=true
-      - AWS_ENDPOINT=http://minio:9000
+    # 👇 All environment variables are now loaded from the .env file
+    env_file:
+      - .env
     depends_on:
       - redis
       - minio
+      - mailpit
+    networks:
+      - app_network
+
+  # --- Mail Testing (Mailpit) ---
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+      - "1025:1025"
     networks:
       - app_network
 
@@ -67,7 +59,12 @@ services:
       minio:
         condition: service_healthy
     entrypoint: >
-      /bin/sh -c " /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin; /usr/bin/mc mb myminio/local-bucket || true;  # Added || true to prevent crash if exists /usr/bin/mc policy set download myminio/local-bucket; exit 0; "
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/sanago || true;
+      /usr/bin/mc policy set download myminio/sanago;
+      exit 0;
+      "
     networks:
       - app_network
 
@@ -83,103 +80,10 @@ services:
     networks:
       - app_network
 
-  # --- Monitoring Stack ---
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: monitoring-grafana
-    restart: always
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-secret}
-      - GF_USERS_ALLOW_SIGN_UP=false
-    networks:
-      - app_network # Changed to app_network
-
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: monitoring-prometheus
-    restart: always
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.retention.time=15d'
-    networks:
-      - app_network # Changed to app_network
-
-  loki:
-    image: grafana/loki:latest
-    container_name: monitoring-loki
-    restart: always
-    ports:
-      - "3100:3100"
-    volumes:
-      - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml
-    command: -config.file=/etc/loki/local-config.yaml
-    networks:
-      - app_network # Changed to app_network
-
-  promtail:
-    image: grafana/promtail:latest
-    container_name: monitoring-promtail
-    restart: always
-    volumes:
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml
-    command: -config.file=/etc/promtail/config.yml
-    networks:
-      - app_network # Changed to app_network
-
-  cadvisor:
-    # NOTE: Use gcr.io/cadvisor/cadvisor:v0.47.0 or zcube/cadvisor if on Apple Silicon
-    image: gcr.io/cadvisor/cadvisor:latest
-    container_name: monitoring-cadvisor
-    restart: always
-    privileged: true
-    devices:
-      - /dev/kmsg
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
-    networks:
-      - app_network # Changed to app_network
-
-  node-exporter:
-    image: prom/node-exporter:latest
-    container_name: monitoring-node-exporter
-    restart: always
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-    command:
-      - '--path.procfs=/host/proc'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-    networks:
-      - app_network # Changed to app_network
-
 # --- Volumes & Networks ---
 volumes:
   minio_data:
   redis_data:
-  grafana_data:
-  prometheus_data:
-
 
 networks:
   app_network:

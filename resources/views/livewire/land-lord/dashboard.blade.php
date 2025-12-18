@@ -1,104 +1,196 @@
-<div>
-    
-    <!--
-      CONTENT WRAPPER
-      - Reduced spacing (space-y-4)
-      - Full width (max-w-full)
-      - Minimal outer padding (p-2 md:p-4)
-    -->
-    <div class="max-w-full mx-auto space-y-4 p-2 md:p-4">
+<div class="flex-1 bg-gray-50 h-screen overflow-y-auto  dark:bg-gray-900 font-sans"
+    x-cloak
+    x-data="{
+        isOffline: !navigator.onLine,
+        showOnlineToast: false,
+        init() {
+            window.addEventListener('offline', () => {
+                this.isOffline = true;
+                this.showOnlineToast = false;
+            });
+            window.addEventListener('online', () => {
+                this.isOffline = false;
+                this.showOnlineToast = true;
+                setTimeout(() => this.showOnlineToast = false, 4000);
+            });
+        }
+    }">
 
-        <!-- Header (Compact) -->
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                    {{ __('ui.dashboard') }}
-                </h1>
-                <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400">
-                    {{ __('ui.welcome_message', ['name' => auth()->user()->name ?? 'User']) }}
-                </p>
+    {{--
+      ========================================
+      NETWORK STATUS (System Level)
+      ========================================
+    --}}
+    <div x-show="isOffline" x-transition.origin.top
+         class="bg-rose-600 text-white text-xs font-bold text-center py-2 relative z-50 shadow-md">
+        <div class="flex items-center justify-center gap-2">
+            <x-heroicon-s-wifi class="w-4 h-4 opacity-80" />
+            <span>YOU ARE OFFLINE. CHANGES MAY NOT SAVE.</span>
+        </div>
+    </div>
+
+    <div x-show="showOnlineToast"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="translate-y-10 opacity-0"
+         x-transition:enter-end="translate-y-0 opacity-100"
+         x-transition:leave="transition ease-in duration-300"
+         x-transition:leave-start="translate-y-0 opacity-100"
+         x-transition:leave-end="translate-y-10 opacity-0"
+         class="fixed bottom-6 right-6 z-50 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
+        <x-heroicon-s-check-circle class="w-5 h-5" />
+        <div>
+            <p class="text-sm font-bold">Back Online</p>
+        </div>
+    </div>
+
+    {{--
+      ========================================
+      STICKY HEADER
+      ========================================
+    --}}
+    <header class="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+
+            {{-- Left: Context --}}
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hidden sm:block">
+                    <x-heroicon-s-building-office-2 class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+                        {{ __('ui.dashboard') }}
+                    </h1>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                        {{ __('ui.welcome_message', ['name' => auth()->user()->name ?? 'Admin']) }}
+                    </p>
+                </div>
             </div>
 
-            <div class="flex items-center gap-2 w-full md:w-auto">
-                <div class="relative group w-full md:w-40">
-                    <select class="w-full appearance-none bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 pl-3 pr-8 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer">
+            {{-- Right: Filters & Actions --}}
+            <div class="flex items-center gap-3 w-full md:w-auto">
+
+                {{-- Date Range Picker --}}
+                <div class="relative group w-full md:w-48">
+                    <x-heroicon-m-calendar class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
+                    <select class="w-full appearance-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block pl-9 p-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer">
                         <option>{{ __('ui.last_30_days') }}</option>
                         <option>{{ __('ui.last_3_months') }}</option>
                         <option>{{ __('ui.last_6_months') }}</option>
                         <option>{{ __('ui.last_year') }}</option>
                     </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400 group-hover:text-indigo-500 transition-colors">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
+                    <x-heroicon-m-chevron-down class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
-                <!-- Assuming language switcher is compact -->
-                <x-language-switcher class="shrink-0 scale-90 origin-right"/>
-            </div>
-        </header>
 
-        <!-- Stats Grid (Compact) -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="h-8 w-px bg-gray-200 dark:bg-gray-700 hidden md:block"></div>
+
+                {{-- Language Switcher (Compact) --}}
+                <div class="shrink-0">
+                    <x-language-switcher />
+                </div>
+            </div>
+        </div>
+    </header>
+
+    {{--
+      ========================================
+      MAIN CONTENT
+      ========================================
+    --}}
+    <div class="p-6 space-y-6">
+
+        {{-- KPI Cards --}}
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             @php
                 $stats = [
-                    ['title' => 'ui.total_tenants', 'value' => $totalTenants ?? 125, 'change' => '12%', 'trend' => 'up', 'icon' => 'users', 'theme' => 'indigo'],
-                    ['title' => 'ui.active_subscriptions', 'value' => $activeSubscriptions ?? 110, 'change' => '8%', 'trend' => 'up', 'icon' => 'check-circle', 'theme' => 'emerald'],
-                    ['title' => 'ui.monthly_revenue', 'value' => '$' . number_format($monthlyRevenue ?? 25400, 0), 'change' => '23%', 'trend' => 'up', 'icon' => 'currency-dollar', 'theme' => 'amber'],
-                    ['title' => 'ui.new_tenants', 'value' => $newTenants ?? 8, 'change' => '5%', 'trend' => 'down', 'icon' => 'plus-circle', 'theme' => 'rose']
+                    [
+                        'title' => 'ui.total_tenants',
+                        'value' => $totalTenants ?? 125,
+                        'change' => '12%',
+                        'trend' => 'up',
+                        'icon' => 'users',
+                        'bg' => 'bg-indigo-50 dark:bg-indigo-900/20',
+                        'text' => 'text-indigo-600 dark:text-indigo-400',
+                    ],
+                    [
+                        'title' => 'ui.active_subscriptions',
+                        'value' => $activeSubscriptions ?? 110,
+                        'change' => '8%',
+                        'trend' => 'up',
+                        'icon' => 'check-badge',
+                        'bg' => 'bg-emerald-50 dark:bg-emerald-900/20',
+                        'text' => 'text-emerald-600 dark:text-emerald-400',
+                    ],
+                    [
+                        'title' => 'ui.monthly_revenue',
+                        'value' => '$' . number_format($monthlyRevenue ?? 25400, 0),
+                        'change' => '23%',
+                        'trend' => 'up',
+                        'icon' => 'banknotes',
+                        'bg' => 'bg-amber-50 dark:bg-amber-900/20',
+                        'text' => 'text-amber-600 dark:text-amber-400',
+                    ],
+                    [
+                        'title' => 'ui.new_tenants',
+                        'value' => $newTenants ?? 8,
+                        'change' => '5%',
+                        'trend' => 'down',
+                        'icon' => 'user-plus',
+                        'bg' => 'bg-rose-50 dark:bg-rose-900/20',
+                        'text' => 'text-rose-600 dark:text-rose-400',
+                    ],
                 ];
             @endphp
 
             @foreach ($stats as $stat)
-                @php
-                    $colors = match($stat['theme']) {
-                        'indigo' => ['bg' => 'bg-indigo-50 dark:bg-indigo-900/40', 'text' => 'text-indigo-600 dark:text-indigo-400'],
-                        'emerald' => ['bg' => 'bg-emerald-50 dark:bg-emerald-900/40', 'text' => 'text-emerald-600 dark:text-emerald-400'],
-                        'amber' => ['bg' => 'bg-amber-50 dark:bg-amber-900/40', 'text' => 'text-amber-600 dark:text-amber-400'],
-                        'rose' => ['bg' => 'bg-rose-50 dark:bg-rose-900/40', 'text' => 'text-rose-600 dark:text-rose-400'],
-                    };
-                    $trendColor = $stat['trend'] === 'up' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
-                    $trendIcon = $stat['trend'] === 'up' ? 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' : 'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6';
-                @endphp
-
-                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow duration-300 group">
+                <div class="group bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ __($stat['title']) }}</p>
-                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1 tracking-tight">{{ $stat['value'] }}</h3>
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __($stat['title']) }}</p>
+                            <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ $stat['value'] }}</h3>
                         </div>
-                        <div class="p-2 rounded-lg {{ $colors['bg'] }} {{ $colors['text'] }} transition-transform group-hover:scale-110 duration-300">
-                             <x-dynamic-component :component="'heroicon-o-'.$stat['icon']" class="h-5 w-5" />
-                        </div>
-                    </div>
-                    <div class="flex items-center mt-3">
-                        <span class="flex items-center text-[10px] font-bold {{ $trendColor }} bg-slate-50 dark:bg-gray-700/50 px-1.5 py-0.5 rounded">
-                            <svg class="w-2.5 h-2.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $trendIcon }}"></path></svg>
-                            {{ $stat['change'] }}
+                        <span class="p-2 {{ $stat['bg'] }} {{ $stat['text'] }} rounded-lg group-hover:scale-110 transition-transform duration-300">
+                            <x-dynamic-component :component="'heroicon-o-' . $stat['icon']" class="w-6 h-6" />
                         </span>
-                        <span class="text-[10px] text-slate-400 ml-1.5">{{ __('ui.from_last_month') }}</span>
+                    </div>
+
+                    <div class="flex items-center mt-3 text-xs font-medium">
+                        @if($stat['trend'] === 'up')
+                            <span class="text-emerald-600 dark:text-emerald-400 flex items-center bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
+                                <x-heroicon-m-arrow-trending-up class="w-3 h-3 mr-1" />
+                                {{ $stat['change'] }}
+                            </span>
+                        @else
+                            <span class="text-rose-600 dark:text-rose-400 flex items-center bg-rose-50 dark:bg-rose-900/30 px-2 py-0.5 rounded-full">
+                                <x-heroicon-m-arrow-trending-down class="w-3 h-3 mr-1" />
+                                {{ $stat['change'] }}
+                            </span>
+                        @endif
+                        <span class="text-gray-400 ml-2">{{ __('ui.from_last_month') }}</span>
                     </div>
                 </div>
             @endforeach
         </section>
 
-        <!-- Charts Section (Height Reduced to h-64 / 256px) -->
-        <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <!-- Revenue Chart -->
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col h-64"
-                 x-data="dashboardChart({
+        {{-- Charts Grid --}}
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {{-- Revenue Chart --}}
+            {{--
+                NOTE: wire:ignore is crucial here.
+                It stops Livewire from destroying the canvas when other parts of the page update.
+            --}}
+            <div wire:ignore
+                 class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col h-80"
+                 x-data="adminChart({
                     type: 'line',
                     color: '#6366f1',
                     label: 'Revenue',
                     data: @js($revenueChart['data'] ?? [12, 19, 15, 25, 22, 30]),
                     labels: @js($revenueChart['labels'] ?? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'])
-                 })"
-                 x-init="initChart()">
-
-                <div class="flex justify-between items-center mb-2">
-                    <div>
-                        <h2 class="text-sm font-bold text-slate-900 dark:text-white">{{ __('ui.revenue_growth') }}</h2>
-                    </div>
-                    <button class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400">
-                        <x-heroicon-o-ellipsis-horizontal class="w-5 h-5" />
+                 })">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-base font-bold text-gray-900 dark:text-white">{{ __('ui.revenue_growth') }}</h2>
+                    <button class="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                        <x-heroicon-m-ellipsis-horizontal class="w-6 h-6" />
                     </button>
                 </div>
                 <div class="relative flex-1 w-full overflow-hidden">
@@ -106,23 +198,20 @@
                 </div>
             </div>
 
-            <!-- Tenant Growth Chart -->
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col h-64"
-                 x-data="dashboardChart({
+            {{-- Tenant Growth Chart --}}
+            <div wire:ignore
+                 class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col h-80"
+                 x-data="adminChart({
                     type: 'bar',
                     color: '#10b981',
                     label: 'New Tenants',
                     data: @js($tenantGrowthChart['data'] ?? [5, 8, 12, 10, 15, 20]),
                     labels: @js($tenantGrowthChart['labels'] ?? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'])
-                 })"
-                 x-init="initChart()">
-
-                <div class="flex justify-between items-center mb-2">
-                    <div>
-                        <h2 class="text-sm font-bold text-slate-900 dark:text-white">{{ __('ui.tenant_growth') }}</h2>
-                    </div>
-                    <button class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400">
-                        <x-heroicon-o-ellipsis-horizontal class="w-5 h-5" />
+                 })">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-base font-bold text-gray-900 dark:text-white">{{ __('ui.tenant_growth') }}</h2>
+                    <button class="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                        <x-heroicon-m-ellipsis-horizontal class="w-6 h-6" />
                     </button>
                 </div>
                 <div class="relative flex-1 w-full overflow-hidden">
@@ -131,74 +220,94 @@
             </div>
         </section>
 
-        <!-- Table Section (Compact Rows) -->
-        <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-            <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                <h2 class="text-sm font-bold text-slate-900 dark:text-white">{{ __('ui.recent_tenants') }}</h2>
-                <a href="#" class="text-xs font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 flex items-center transition">
+        {{-- Recent Tenants Table --}}
+        <section class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm flex flex-col">
+            {{-- Table Header --}}
+            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <div>
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('ui.recent_tenants') }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Platform registration overview</p>
+                </div>
+                <a href="#" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition">
                     {{ __('ui.view_all') }}
-                    <x-heroicon-o-arrow-right class="w-3 h-3 ml-1" />
                 </a>
             </div>
 
+            {{-- Table Content --}}
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead class="bg-gray-50 dark:bg-gray-900/50">
+                    <thead class="bg-gray-50 dark:bg-gray-800">
                         <tr>
-                            @foreach(['tenant_name', 'hospital_name', 'domain', 'subscription', 'joined_on'] as $head)
-                                <th scope="col" class="px-4 py-2 text-left text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ __('ui.'.$head) }}</th>
-                            @endforeach
-                            <th scope="col" class="relative px-4 py-2"><span class="sr-only">{{ __('ui.actions') }}</span></th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">{{ __('ui.tenant_name') }}</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">{{ __('ui.domain') }}</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">{{ __('ui.subscription') }}</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">{{ __('ui.joined_on') }}</th>
+                            <th scope="col" class="relative px-6 py-3"><span class="sr-only">Edit</span></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
                         @forelse ($recentTenants ?? [] as $tenant)
-                        <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                            <td class="px-4 py-2.5 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-sm ring-2 ring-white dark:ring-gray-800">
-                                        {{ substr($tenant['name'], 0, 1) }}
+                            <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700/25 transition">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-9 w-9 rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 flex items-center justify-center font-bold text-xs border border-indigo-200 dark:border-indigo-800">
+                                            {{ substr($tenant['name'], 0, 1) }}
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $tenant['name'] }}</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">ID: #{{ $tenant['id'] ?? rand(100, 999) }}</div>
+                                        </div>
                                     </div>
-                                    <div class="ml-3">
-                                        <div class="text-xs font-semibold text-slate-900 dark:text-white">{{ $tenant['name'] }}</div>
-                                        <div class="text-[10px] text-slate-500 dark:text-slate-400">ID: #{{ $tenant['id'] ?? rand(100,999) }}</div>
+                                </td>
+
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex flex-col">
+                                        <span class="text-sm text-gray-900 dark:text-white">{{ $tenant['hospital_name'] }}</span>
+                                        <a href="#" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">{{ $tenant['domain'] }}</a>
                                     </div>
-                                </div>
-                            </td>
-                            <td class="px-4 py-2.5 whitespace-nowrap text-xs text-slate-600 dark:text-slate-300">{{ $tenant['hospital_name'] }}</td>
-                            <td class="px-4 py-2.5 whitespace-nowrap text-xs text-indigo-500 hover:underline cursor-pointer">{{ $tenant['domain'] }}</td>
-                            <td class="px-4 py-2.5 whitespace-nowrap">
-                                @php
-                                    $sub = $tenant['subscription'];
-                                    $badge = match($sub) {
-                                        'Premium' => 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
-                                        'Basic' => 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20',
-                                        default => 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
-                                    };
-                                    $dot = match($sub) {
-                                        'Premium' => 'bg-emerald-500',
-                                        'Basic' => 'bg-indigo-500',
-                                        default => 'bg-amber-500',
-                                    };
-                                @endphp
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border {{ $badge }}">
-                                    <span class="w-1 h-1 rounded-full mr-1.5 {{ $dot }}"></span>
-                                    {{ $sub }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-2.5 whitespace-nowrap text-xs text-slate-500">{{ $tenant['created_at'] }}</td>
-                            <td class="px-4 py-2.5 whitespace-nowrap text-right text-xs font-medium">
-                                <button class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
-                                    <x-heroicon-o-pencil-square class="w-4 h-4" />
-                                </button>
-                            </td>
-                        </tr>
+                                </td>
+
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @php
+                                        $sub = $tenant['subscription'];
+                                        $styles = match ($sub) {
+                                            'Premium' => 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800',
+                                            'Basic'   => 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800',
+                                            default   => 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
+                                        };
+                                        $dot = match ($sub) {
+                                            'Premium' => 'bg-emerald-500',
+                                            'Basic'   => 'bg-blue-500',
+                                            default   => 'bg-amber-500',
+                                        };
+                                    @endphp
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border {{ $styles }}">
+                                        <span class="w-1.5 h-1.5 rounded-full {{ $dot }} mr-1.5"></span>
+                                        {{ $sub }}
+                                    </span>
+                                </td>
+
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500 dark:text-gray-400 font-mono">
+                                    {{ $tenant['created_at'] }}
+                                </td>
+
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                                        <x-heroicon-o-pencil-square class="w-5 h-5" />
+                                    </button>
+                                </td>
+                            </tr>
                         @empty
-                        <tr>
-                            <td colspan="6" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
-                                <p class="text-sm font-semibold">{{ __('ui.no_records_found') }}</p>
-                            </td>
-                        </tr>
+                            <tr>
+                                <td colspan="5" class="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <div class="p-3 bg-gray-100 dark:bg-gray-800 rounded-full mb-3">
+                                            <x-heroicon-o-inbox class="w-6 h-6 text-gray-400" />
+                                        </div>
+                                        <p class="font-medium text-gray-900 dark:text-gray-200">{{ __('ui.no_records_found') }}</p>
+                                    </div>
+                                </td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -207,20 +316,30 @@
     </div>
 </div>
 
+{{--
+  ========================================
+  ALPINE CHART COMPONENT
+  ========================================
+--}}
 <script>
     document.addEventListener('alpine:init', () => {
-        Alpine.data('dashboardChart', (config) => ({
+        Alpine.data('adminChart', (config) => ({
             chart: null,
-            initChart() {
+            init() {
+                this.render();
+            },
+            render() {
                 if (this.chart) this.chart.destroy();
 
                 const ctx = this.$refs.canvas.getContext('2d');
-                const gradient = ctx.createLinearGradient(0, 0, 0, 200); // Shorter gradient for shorter chart
-                gradient.addColorStop(0, this.hexToRgba(config.color, 0.2));
+
+                // Create gradient for "Area" look
+                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, this.hexToRgba(config.color, 0.15));
                 gradient.addColorStop(1, this.hexToRgba(config.color, 0.0));
 
                 this.chart = new Chart(ctx, {
-                    type: config.type === 'bar' ? 'bar' : 'line',
+                    type: config.type,
                     data: {
                         labels: config.labels,
                         datasets: [{
@@ -229,21 +348,40 @@
                             borderColor: config.color,
                             backgroundColor: config.type === 'bar' ? config.color : gradient,
                             borderWidth: 2,
-                            borderRadius: 3,
-                            pointRadius: 0, // Cleaner look for small charts
-                            pointHoverRadius: 4,
+                            borderRadius: 4,
+                            pointRadius: 0,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: config.color,
                             fill: true,
-                            tension: 0.4
+                            tension: 0.35 // Curve tension
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         interaction: { intersect: false, mode: 'index' },
-                        plugins: { legend: { display: false }, tooltip: { enabled: true } },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                                padding: 12,
+                                cornerRadius: 8,
+                                displayColors: false,
+                                titleFont: { size: 12 },
+                                bodyFont: { size: 14, weight: 'bold' }
+                            }
+                        },
                         scales: {
-                            y: { display: true, border: { display: false }, grid: { display: true, drawTicks: false }, ticks: { display: true, font: {size: 10} } },
-                            x: { display: true, grid: { display: false }, ticks: { font: {size: 10} } }
+                            y: {
+                                beginAtZero: true,
+                                border: { display: false },
+                                grid: { color: 'rgba(156, 163, 175, 0.1)' },
+                                ticks: { font: { size: 11 }, color: '#9ca3af' }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { size: 11 }, color: '#9ca3af' }
+                            }
                         }
                     }
                 });

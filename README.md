@@ -41,7 +41,7 @@
 
 ### What Makes SanaGo Different?
 
-- **🏢 Multi-Tenancy**: Each hospital/clinic operates in complete isolation with their own database, users, and data
+- **🏢 Multi-Tenancy**: Single-database architecture with complete tenant isolation using tenant_id scoping for all data
 - **⚡ Real-time Updates**: Built with Livewire for reactive, SPA-like experience without JavaScript complexity
 - **🚀 High Performance**: Powered by Laravel Octane + FrankenPHP for blazing-fast response times
 - **🌍 Internationalization**: Full multi-language support (English, French, Spanish) with easy extensibility
@@ -94,10 +94,10 @@
 - **Log Aggregation**: Centralized logging with Loki and Promtail
 
 ### 🌐 Multi-Tenancy Features
-- **Tenant Isolation**: Complete data separation per hospital
+- **Tenant Isolation**: Complete data separation using tenant_id scoping in a single database
 - **Subdomain Routing**: Each tenant gets a unique subdomain (e.g., `hospital1.sanago.com`)
 - **Custom Branding**: Per-tenant logos, colors, and themes
-- **Subscription Management**: Flexible pricing plans with usage tracking
+- **Efficient Scaling**: Single database with optimized indexing and query performance
 
 ---
 
@@ -153,33 +153,44 @@
 
 ### Multi-Tenancy Architecture
 
-SanaGo uses a **database-per-tenant** approach for maximum isolation and security:
+SanaGo uses a **single-database multi-tenant** approach with tenant_id scoping for optimal performance:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Central Application                     │
-│  (Landlord - manages tenants, subscriptions, domains)       │
+│                   Single PostgreSQL Database                │
 │                                                              │
-│  Database: central (PostgreSQL)                              │
-│  - tenants table                                             │
-│  - domains table                                             │
-│  - subscriptions table                                       │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │  Central Tables (No tenant_id)                     │    │
+│  │  - tenants                                          │    │
+│  │  - domains                                          │    │
+│  │  - subscriptions                                    │    │
+│  └────────────────────────────────────────────────────┘    │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │  Tenant-Scoped Tables (with tenant_id)             │    │
+│  │                                                      │    │
+│  │  users (tenant_id, name, email, ...)                │    │
+│  │  ├─ Tenant 1: hospital-a                            │    │
+│  │  ├─ Tenant 2: clinic-b                              │    │
+│  │  └─ Tenant 3: medical-c                             │    │
+│  │                                                      │    │
+│  │  patients (tenant_id, name, dob, ...)               │    │
+│  │  ├─ Tenant 1: hospital-a patients                   │    │
+│  │  ├─ Tenant 2: clinic-b patients                     │    │
+│  │  └─ Tenant 3: medical-c patients                    │    │
+│  │                                                      │    │
+│  │  appointments (tenant_id, patient_id, ...)          │    │
+│  │  prescriptions (tenant_id, patient_id, ...)         │    │
+│  │  lab_results (tenant_id, patient_id, ...)           │    │
+│  │  ... (all tenant data with automatic scoping)       │    │
+│  └────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
-                              │
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        │                     │                     │
-        ▼                     ▼                     ▼
-┌───────────────┐     ┌───────────────┐     ┌───────────────┐
-│  Tenant DB 1  │     │  Tenant DB 2  │     │  Tenant DB 3  │
-│               │     │               │     │               │
-│ hospital-a    │     │ clinic-b      │     │ medical-c     │
-│               │     │               │     │               │
-│ - users       │     │ - users       │     │ - users       │
-│ - patients    │     │ - patients    │     │ - patients    │
-│ - appointments│     │ - appointments│     │ - appointments│
-│ - ...         │     │ - ...         │     │ - ...         │
-└───────────────┘     └───────────────┘     └───────────────┘
+
+🔒 Automatic Tenant Scoping:
+- Global scopes ensure queries are automatically filtered by tenant_id
+- Middleware identifies tenant from subdomain and sets context
+- All Eloquent queries automatically include WHERE tenant_id = ?
+- Complete data isolation without database overhead
 ```
 
 ### Request Flow
@@ -204,7 +215,7 @@ User Request (hospital-a.sanago.com)
          │
          ▼
 ┌─────────────────────┐
-│  Switch Database    │ ◄── Connects to tenant-specific DB
+│  Set Tenant Context │ ◄── Sets tenant_id for query scoping
 └─────────────────────┘
          │
          ▼
@@ -340,9 +351,12 @@ SanaGo-v1/
 ### Option 1: Docker Setup (Recommended)
 
 ```bash
-# 1. Clone the repository
+# 1. Clone the private repository (requires authentication)
 git clone https://github.com/your-username/SanaGo-v1.git
 cd SanaGo-v1
+
+# Note: You'll need access to this private repository
+# Contact the repository owner for access
 
 # 2. Copy environment file
 cp .env.example .env
@@ -369,7 +383,7 @@ open http://localhost:8000
 ### Option 2: Local Setup
 
 ```bash
-# 1. Clone and install dependencies
+# 1. Clone the private repository and install dependencies
 git clone https://github.com/your-username/SanaGo-v1.git
 cd SanaGo-v1
 composer install
@@ -407,9 +421,10 @@ npm run dev
 php artisan tenants:create hospital-name
 
 # This creates:
-# - A new database: tenant_<uuid>
+# - A new tenant record in the tenants table
+# - A unique tenant_id for data scoping
 # - A domain: hospital-name.localhost
-# - Runs all tenant migrations
+# - Seeds initial tenant data
 
 # Seed tenant with sample data (optional)
 php artisan tenants:seed --tenants=hospital-name
@@ -457,8 +472,7 @@ MAIL_MAILER=smtp
 MAIL_HOST=smtp.mailtrap.io
 MAIL_PORT=2525
 
-# Tenancy
-TENANCY_DATABASE_PREFIX=tenant
+# Tenancy (Single Database Multi-Tenant)
 TENANCY_CENTRAL_DOMAINS=localhost,127.0.0.1,sanago.com
 
 # Octane
@@ -470,8 +484,8 @@ OCTANE_SERVER=frankenphp
 Edit `config/tenancy.php` to customize:
 
 - **Central domains**: Domains that host the landlord app
-- **Database naming**: Prefix/suffix for tenant databases
-- **Bootstrappers**: Features to enable (cache, filesystem, queue isolation)
+- **Tenant identification**: Subdomain-based tenant resolution
+- **Global scopes**: Automatic tenant_id filtering for all queries
 - **Storage**: S3 disk configuration for tenant file separation
 
 ---
@@ -654,7 +668,8 @@ See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for comprehensive deployment gu
 **Quick Deploy**:
 
 ```bash
-# Pull the latest image from GitHub Container Registry
+# Pull the latest image from GitHub Container Registry (requires authentication)
+docker login ghcr.io -u your-username
 docker pull ghcr.io/your-username/sanago-v1:latest
 
 # Run with environment variables
@@ -808,7 +823,9 @@ git push origin feature/amazing-feature
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This is a **private, proprietary project**. All rights reserved.
+
+Unauthorized copying, distribution, or use of this software is strictly prohibited.
 
 ---
 
@@ -824,10 +841,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Documentation**: [docs.sanago.com](https://docs.sanago.com)
-- **Issues**: [GitHub Issues](https://github.com/your-username/SanaGo-v1/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/SanaGo-v1/discussions)
-- **Email**: support@sanago.com
+For internal team support:
+
+- **Issues**: [GitHub Issues](https://github.com/your-username/SanaGo-v1/issues) (Private repository)
+- **Team Discussions**: Contact project maintainers directly
+- **Documentation**: See `/docs` directory in this repository
 
 ---
 
@@ -847,6 +865,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ by the SanaGo Team**
 
-[Website](https://sanago.com) • [Documentation](https://docs.sanago.com) • [Demo](https://demo.sanago.com)
+🔒 Private Repository - Internal Use Only
 
 </div>

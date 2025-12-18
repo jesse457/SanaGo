@@ -1,162 +1,210 @@
-{{-- Mobile-first, fully-responsive Nurse Dashboard --}}
-<main id="nurse-dashboard" class="flex-1 p-4  bg-gray-50 dark:bg-gray-900 overflow-y-auto min-h-screen">
+<div class="flex-1 bg-gray-50 h-screen overflow-y-auto dark:bg-gray-900 font-sans">
 
-    {{-- Mobile hamburger (unchanged functionality, slightly enhanced style) --}}
-    <button @click="open = true"
-        class="lg:hidden p-2.5 rounded-lg text-gray-700 bg-white shadow-md hover:bg-gray-100 transition duration-200
-               dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mb-6">
-        <x-heroicon-o-bars-3 class="w-6 h-6" />
-    </button>
+    {{-- Sticky Header --}}
+    <header class="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4">
+        <div class="flex items-center justify-between">
 
-    {{-- ========================================== --}}
-    {{-- SECTION 1: DASHBOARD OVERVIEW              --}}
-    {{-- ========================================== --}}
-    <main id="nurse-dashboard" class="p-4 md:p-8 lg:ml-64 pt-20 transition-all duration-300 ease-in-out">
-
-        {{-- Header & Profile --}}
-        <header class="card flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
-            <div>
-                <h1 class="text-3xl font-black tracking-tight text-gray-900 dark:text-white">
-                    Dashboard
-                </h1>
-                <p class="text-gray-500 dark:text-gray-400 mt-1 font-medium flex items-center">
-                    <span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
-                    Welcome back, {{ auth()->user()->name ?? 'Nurse' }}
-                </p>
-            </div>
-
-            {{-- Profile Dropdown --}}
-            <div class="relative z-30" x-data="{ open: false }">
-                <button @click="open = !open" class="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-full p-1 pr-4 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all">
-                    <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Nurse') }}&background=0ea5e9&color=fff&size=48"
-                         class="w-9 h-9 rounded-full object-cover ring-2 ring-white dark:ring-gray-900">
-                    <div class="text-left hidden sm:block">
-                        <p class="text-xs font-bold text-gray-700 dark:text-gray-200">{{ auth()->user()->name ?? 'User' }}</p>
-                        <p class="text-[10px] text-gray-400 uppercase tracking-wide">Registered Nurse</p>
-                    </div>
-                    <x-heroicon-s-chevron-down class="w-4 h-4 text-gray-400 transition-transform duration-200" x-bind:class="open ? 'rotate-180' : ''"/>
+            {{-- Left: Mobile Toggle & Title --}}
+            <div class="flex items-center gap-4">
+                {{-- Mobile Hamburger --}}
+                <button @click="open = true"
+                    class="lg:hidden p-2 -ml-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
+                    <x-heroicon-o-bars-3 class="w-6 h-6" />
                 </button>
 
-                {{-- Dropdown Menu --}}
-                <div x-show="open"
-                     @click.outside="open = false"
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
-                     x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                     x-transition:leave="transition ease-in duration-150"
-                     x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                     x-transition:leave-end="opacity-0 scale-95 -translate-y-2"
-                     class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden origin-top-right">
-
-                    <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800">
-                        <p class="text-sm font-semibold text-gray-900 dark:text-white">Account</p>
-                        <p class="text-xs text-gray-500 truncate">{{ auth()->user()->email ?? 'email@example.com' }}</p>
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hidden sm:block">
+                        <x-heroicon-s-user-group class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                     </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+                            Nurse Dashboard
+                        </h1>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                            Overview of Ward A &bull; <span class="text-emerald-600 dark:text-emerald-400">Shift Active</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-                    <div class="p-1">
-                        <a href="{{ route('nurse.profile') }}" wire:navigate class="flex items-center px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-colors">
-                            <x-heroicon-o-user class="w-4 h-4 mr-2"/> Profile
+            {{-- Right: Actions & Profile --}}
+            <div class="flex items-center gap-4">
+                {{-- Quick Action (Optional) --}}
+                <button class="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700 transition">
+                    <x-heroicon-o-plus class="w-4 h-4" />
+                    <span>New Vitals</span>
+                </button>
+
+                <div class="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
+
+                {{-- Profile Dropdown --}}
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" class="flex items-center gap-2 group focus:outline-none">
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Nurse') }}&background=6366f1&color=fff&size=64"
+                             class="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm group-hover:ring-2 ring-indigo-100 transition">
+
+                        <div class="hidden md:block text-left">
+                            <p class="text-xs font-semibold text-gray-700 dark:text-gray-200">{{ auth()->user()->name ?? 'User' }}</p>
+                            <p class="text-[10px] text-gray-500 uppercase tracking-wider">RN - Level 2</p>
+                        </div>
+
+                        <x-heroicon-s-chevron-down class="w-3 h-3 text-gray-400 group-hover:text-gray-600 transition-transform duration-200" x-bind:class="open ? 'rotate-180' : ''"/>
+                    </button>
+
+                    {{-- Dropdown Panel --}}
+                    <div x-show="open" x-transition.origin.top.right x-cloak @click.outside="open = false"
+                        class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 z-50 py-1">
+                        <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-700 mb-1">
+                            <p class="text-xs text-gray-500">Signed in as</p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ auth()->user()->email }}</p>
+                        </div>
+
+                        <a href="{{ route('nurse.profile') }}" wire:navigate
+                            class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <x-heroicon-o-user class="w-4 h-4 mr-3 text-gray-400" /> Profile
                         </a>
-                    </div>
 
-                    <div class="p-1 border-t border-gray-100 dark:border-gray-700">
+                        <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+
                         <form method="POST" action="{{ route('auth.logout') }}">
                             @csrf
-                            <button type="submit" class="flex w-full items-center px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-                                <x-heroicon-o-arrow-right-start-on-rectangle class="w-4 h-4 mr-2"/> Sign Out
+                            <button type="submit" class="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                <x-heroicon-o-arrow-left-on-rectangle class="w-4 h-4 mr-3" /> Sign Out
                             </button>
                         </form>
                     </div>
                 </div>
             </div>
-        </header>
+        </div>
+    </header>
+
+    <div class="p-6 space-y-6">
 
         {{-- KPI Cards --}}
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             @php
                 $stats = [
-                    ['label' => 'Admitted Patients', 'count' => $admitted ?? 0, 'icon' => 'users', 'color' => 'text-sky-600', 'bg' => 'bg-sky-100 dark:bg-sky-900/30', 'desc' => 'Currently in ward'],
-                    ['label' => 'Vitals Due', 'count' => $vitalsDue ?? 0, 'icon' => 'clipboard-document-list', 'color' => 'text-emerald-600', 'bg' => 'bg-emerald-100 dark:bg-emerald-900/30', 'desc' => 'Next 4 hours'],
-                    ['label' => 'Critical Supplies', 'count' => $lowStock ?? 0, 'icon' => 'cube', 'color' => 'text-amber-600', 'bg' => 'bg-amber-100 dark:bg-amber-900/30', 'desc' => 'Low stock alert'],
+                    ['label' => 'Admitted Patients', 'count' => $admitted ?? 0, 'icon' => 'users', 'color' => 'text-sky-600', 'bg' => 'bg-sky-50 dark:bg-sky-900/20', 'desc' => 'Currently in ward'],
+                    ['label' => 'Vitals Due', 'count' => $vitalsDue ?? 0, 'icon' => 'clock', 'color' => 'text-emerald-600', 'bg' => 'bg-emerald-50 dark:bg-emerald-900/20', 'desc' => 'Within next 4 hours'],
+                    ['label' => 'Critical Supplies', 'count' => $lowStock ?? 0, 'icon' => 'exclamation-triangle', 'color' => 'text-amber-600', 'bg' => 'bg-amber-50 dark:bg-amber-900/20', 'desc' => 'Requires attention'],
                 ];
             @endphp
 
             @foreach ($stats as $stat)
-                <div class="group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-800 transition-all duration-300">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 rounded-xl {{ $stat['bg'] }} group-hover:scale-110 transition-transform duration-300">
-                            <x-dynamic-component component="heroicon-s-{{ $stat['icon'] }}" class="w-6 h-6 {{ $stat['color'] }}" />
+                <div class="group bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ $stat['label'] }}</p>
+                            <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ $stat['count'] }}</h3>
+                            <p class="text-xs text-gray-400 mt-1">{{ $stat['desc'] }}</p>
                         </div>
-                        <span class="text-xs font-medium text-gray-400">{{ $stat['desc'] }}</span>
+                        <span class="p-2 {{ $stat['bg'] }} {{ $stat['color'] }} rounded-lg">
+                            <x-dynamic-component component="heroicon-o-{{ $stat['icon'] }}" class="w-6 h-6" />
+                        </span>
                     </div>
-                    <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $stat['count'] }}</h3>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">{{ $stat['label'] }}</p>
                 </div>
             @endforeach
-        </section>
+        </div>
 
-        {{-- Admitted Patients Table --}}
-        <section class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <div class="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
-                    Recent Admissions
-                </h3>
-                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-mono rounded-full">
-                    {{ isset($admittedPatients) ? $admittedPatients->count() : 0 }} Total
-                </span>
+        {{-- Main Content Area: Admissions Table --}}
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm flex flex-col">
+
+            {{-- Table Header --}}
+            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">Recent Admissions</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Patient status and bed allocation</p>
+                </div>
+
+                {{-- Filters / Actions --}}
+                <div class="flex items-center gap-2">
+                    <div class="relative">
+                        <x-heroicon-o-magnifying-glass class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input type="text" placeholder="Search patient..."
+                            class="pl-9 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition w-full sm:w-64">
+                    </div>
+                </div>
             </div>
 
+            {{-- Table --}}
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 uppercase text-xs font-semibold">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-800">
                         <tr>
-                            <th class="px-6 py-4">Patient</th>
-                            <th class="px-6 py-4">Ward Info</th>
-                            <th class="px-6 py-4">Status</th>
-                            <th class="px-6 py-4 text-right">Admission Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                Patient Details
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                Location
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                Admission Date
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                Status
+                            </th>
+                            <th scope="col" class="relative px-6 py-3">
+                                <span class="sr-only">Actions</span>
+                            </th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
                         @forelse($admittedPatients as $admission)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
-                                <td class="px-6 py-4">
+                            <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700/25 transition">
+                                <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
-                                        <div class="h-10 w-10 flex-shrink-0 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-sm mr-3 group-hover:ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-gray-800 transition-all">
-                                            {{ substr($admission->patient->first_name ?? 'U', 0, 1) }}
+                                        <div class="flex-shrink-0 h-9 w-9 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 flex items-center justify-center font-bold text-xs border border-indigo-200 dark:border-indigo-800">
+                                            {{ substr($admission->patient->first_name ?? 'U', 0, 1) }}{{ substr($admission->patient->last_name ?? '', 0, 1) }}
                                         </div>
-                                        <div>
-                                            <div class="font-bold text-gray-900 dark:text-white">
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white">
                                                 {{ $admission->patient->first_name ?? 'Unknown' }} {{ $admission->patient->last_name ?? '' }}
                                             </div>
-                                            <div class="text-xs text-gray-500">ID: #{{ $admission->patient->id ?? '---' }}</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                ID: #{{ $admission->patient->id ?? '---' }}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">
+
+                                <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex flex-col">
-                                        <span class="font-medium text-gray-700 dark:text-gray-300">{{ $admission->bed->ward->name ?? 'Unassigned' }}</span>
-                                        <span class="text-xs text-blue-600 dark:text-blue-400">Bed {{ $admission->bed->bed_number ?? 'N/A' }}</span>
+                                        <span class="text-sm text-gray-900 dark:text-gray-200">{{ $admission->bed->ward->name ?? 'Unassigned' }}</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Bed {{ $admission->bed->bed_number ?? 'N/A' }}</span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-400 border border-green-200 dark:border-green-900">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
+
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-sm text-gray-600 dark:text-gray-300 font-mono">
+                                        {{ $admission->admission_date ? $admission->admission_date->format('M d, Y') : 'N/A' }}
+                                    </span>
+                                    <div class="text-xs text-gray-400">
+                                        {{ $admission->admission_date ? $admission->admission_date->format('H:i A') : '' }}
+                                    </div>
+                                </td>
+
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">
                                         Admitted
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-right text-gray-500 dark:text-gray-400 font-mono text-xs">
-                                    {{ $admission->admission_date ? $admission->admission_date->format('M d, H:i') : 'N/A' }}
+
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">
+                                        View
+                                    </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-12 text-center">
+                                <td colspan="5" class="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
                                     <div class="flex flex-col items-center justify-center">
-                                        <div class="p-4 rounded-full bg-gray-100 dark:bg-gray-800 mb-3">
-                                            <x-heroicon-o-clipboard-document class="w-8 h-8 text-gray-400" />
+                                        <div class="p-3 bg-gray-100 dark:bg-gray-800 rounded-full mb-3">
+                                            <x-heroicon-o-clipboard-document-list class="w-6 h-6 text-gray-400" />
                                         </div>
-                                        <p class="text-gray-500 dark:text-gray-400 font-medium">No admitted patients found.</p>
+                                        <p class="font-medium text-gray-900 dark:text-gray-200">No patients currently admitted</p>
+                                        <p class="text-xs mt-1">Check pending admissions or refresh the page.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -164,6 +212,13 @@
                     </tbody>
                 </table>
             </div>
-        </section>
-    </main>
-</main>
+
+            {{-- Footer (Optional Pagination Placeholder) --}}
+            @if(isset($admittedPatients) && method_exists($admittedPatients, 'links'))
+                <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-b-xl">
+                    {{ $admittedPatients->links() }}
+                </div>
+            @endif
+        </div>
+    </div>
+</div>
