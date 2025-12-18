@@ -1,120 +1,79 @@
-# ==============================================================================
-# Multi-stage Dockerfile for Laravel Octane + FrankenPHP
-# Optimized for GitHub Container Registry deployment
-# ==============================================================================
+# Stage 1: Builder
+FROM dunglas/frankenphp:1.10.1-php8.3 AS builder
 
-# ------------------------------------------------------------------------------
-# Stage 1: Builder - Install dependencies and compile assets
-# ------------------------------------------------------------------------------
-FROM dunglas/frankenphp:1.0-php8.3 AS builder
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Install system dependencies needed for build
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    git \
-    curl \
-    unzip \
-    nodejs \
-    npm \
-    && rm -rf /var/lib/apt/lists/*
+    git curl unzip gnupg ca-certificates && \
+    mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
+    apt-get update && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
-ARG MAKEFLAGS="-j2"
-# Install PHP extensions required by Laravel
-RUN install-php-extensions \
-    pcntl \
-    pdo_pgsql \
-    redis \
-    bcmath \
-    zip \
-    gd \
-    intl
+RUN install-php-extensions pcntl pdo_pgsql redis bcmath zip gd intl
 
-# Set working directory
 WORKDIR /app
 
-# Copy dependency files first (for better Docker layer caching)
 COPY composer.json composer.lock ./
 
-# Install PHP dependencies (production mode)
-RUN composer install \
-    --no-dev \
-    --no-interaction \
-    --no-progress \
-    --no-scripts \
-    --prefer-dist \
-    --optimize-autoloader
+# FIX 1: Use 'install' to respect lock file
+RUN composer config platform.php 8.3 && \
+    composer install --no-dev --no-interaction --no-progress --no-scripts --prefer-dist --optimize-autoloader
 
-# Copy package files
 COPY package.json package-lock.json ./
 
-# Install Node dependencies
-RUN npm ci --only=production
+RUN npm config set fetch-retry-maxtimeout 600000 && \
+    npm config set fetch-retry-mintimeout 10000 && \
+    npm ci
 
-# Copy application source code
 COPY . .
 
-# Build frontend assets with Vite
 RUN npm run build
-
-# Generate optimized autoloader
 RUN composer dump-autoload --optimize --no-dev
 
-# Set proper permissions for Laravel
-RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
+# Stage 2: Runtime
+FROM dunglas/frankenphp:1.10.1-php8.3
 
-# ------------------------------------------------------------------------------
-# Stage 2: Runtime - Minimal production image
-# ------------------------------------------------------------------------------
-FROM dunglas/frankenphp:1.0-php8.3
-
-# Install only runtime dependencies
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    supervisor \
-    curl \
+    supervisor curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions (runtime only)
-RUN install-php-extensions \
-    pcntl \
-    pdo_pgsql \
-    redis \
-    bcmath \
-    zip \
-    gd \
-    intl \
-    opcache
+RUN install-php-extensions pcntl pdo_pgsql redis bcmath zip gd intl opcache
 
-# Configure PHP for production
+# Production PHP Configuration
 RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini && \
     echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini && \
     echo "opcache.interned_strings_buffer=16" >> /usr/local/etc/php/conf.d/opcache.ini && \
     echo "opcache.max_accelerated_files=10000" >> /usr/local/etc/php/conf.d/opcache.ini && \
-    echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini
+    echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "variables_order=EGPCS" >> /usr/local/etc/php/conf.d/custom.ini
 
-# Set working directory
 WORKDIR /app
 
-# Copy built application from builder stage
 COPY --from=builder --chown=www-data:www-data /app /app
-
-# Copy supervisor configuration
+COPY --chown=www-data:www-data supervisord.conf /etc/supervisor/supervisord.conf
 COPY --chown=www-data:www-data octane-supervisor.conf /etc/supervisor/conf.d/octane.conf
 
-# Create necessary directories and set permissions
-RUN mkdir -p /app/storage/logs /app/bootstrap/cache && \
-    chown -R www-data:www-data /app/storage /app/bootstrap/cache && \
-    chmod -R 775 /app/storage /app/bootstrap/cache
 
-# Expose port 8000 (Octane default)
+
+# Permissions
+# FIX 3: Removed database folder permission (unnecessary for Postgres)
+RUN mkdir -p /app/storage/logs /app/bootstrap/cache /var/log/supervisor && \
+    chown -R www-data:www-data /app/storage /app/bootstrap/cache /var/log/supervisor && \
+    chmod -R 775 /app/storage /app/bootstrap/cache /var/log/supervisor
+
+
 EXPOSE 8000
 
-# Health check
+# FIX 4: Ensure this path matches Laravel 11's default health check, or use /api/health if you made one
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8000/api/health || exit 1
+    CMD curl -f http://localhost:8000/up || exit 1
 
-# Switch to www-data user for security
 USER www-data
 
-# Start supervisor (manages Octane + queue workers)
-CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
+# FIX 5: Use the entrypoint script
+ENTRYPOINT ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
