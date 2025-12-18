@@ -2,27 +2,27 @@
 
 namespace App\Notifications;
 
-use App\Models\MedicalRecord; // Or LabRequest, depending on how you pass data
+use App\Models\Prescription;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Broadcasting\PrivateChannel;
 
-class NewLabOrderNotification extends Notification implements ShouldQueue
+class NewPrescriptionOrder extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public $medicalRecord;
+    public $prescription;
 
-    // We pass the MedicalRecord (Consultation) to group multiple tests
-    public function __construct(MedicalRecord $medicalRecord)
+    public function __construct(Prescription $prescription)
     {
-        $this->medicalRecord = $medicalRecord;
+        $this->prescription = $prescription;
     }
 
     public function via(object $notifiable): array
     {
+        // Store in DB for history, Broadcast for real-time
         return ['database', 'broadcast'];
     }
 
@@ -40,21 +40,22 @@ class NewLabOrderNotification extends Notification implements ShouldQueue
     {
         return [
             'id' => $this->id,
-            'message' => 'New Lab Request(s) Available',
-            'patient_name' => $this->medicalRecord->patient->first_name . ' ' . $this->medicalRecord->patient->last_name,
-            'consultation_id' => $this->medicalRecord->id,
-            'type' => 'lab_order',
+            'message' => 'New Prescription Order',
+            'patient_name' => $this->prescription->patient->first_name . ' ' . $this->prescription->patient->last_name,
+            'prescription_id' => $this->prescription->id,
+            'type' => 'pharmacy_order',
             'created_at' => now()->toIso8601String(),
         ];
     }
 
     /**
-     * IMPORTANT: Broadcast to the Lab Department Channel
+     * IMPORTANT: This tells Laravel to broadcast to the DEPARTMENT channel
+     * instead of the individual User channel.
      */
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('lab.requests'),
+            new PrivateChannel('pharmacy.orders'),
         ];
     }
 }

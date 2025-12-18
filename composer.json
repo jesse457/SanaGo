@@ -15,6 +15,7 @@
         "guzzlehttp/guzzle": "^7.10",
         "jantinnerezo/livewire-alert": "^4.0",
         "laravel/framework": "^12.0",
+        "laravel/mcp": "^0.4.2",
         "laravel/octane": "^2.13.2",
         "laravel/reverb": "^1.0",
         "laravel/tinker": "^2.10.1",
@@ -26,6 +27,7 @@
         "stancl/tenancy": "^3.9.1"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.16",
         "fakerphp/faker": "^1.23",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.18",

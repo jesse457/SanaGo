@@ -33,7 +33,7 @@
     isFullscreen: false
 }"
 x-init="window.addEventListener('open-lab-request-modal', () => labModal = true); window.addEventListener('open-prescription-modal', () => prescriptionModal = true); window.addEventListener('close-lab-request-modal', () => labModal = false); window.addEventListener('close-prescription-modal', () => prescriptionModal = false);"
-class="w-full h-full bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-300 font-sans">
+class="w-full h-full bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-300 font-sans overflow-y-auto">
 
     <div class="max-w-7xl mx-auto p-6">
        {{-- Breadcrumb --}}

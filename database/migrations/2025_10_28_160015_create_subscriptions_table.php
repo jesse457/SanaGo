@@ -28,7 +28,7 @@ return new class extends Migration
             $table->string('stripe_customer_id')->nullable(); // For Stripe integration
             $table->json('metadata')->nullable(); // Additional metadata
             $table->timestamps();
-
+$table->index('tenant_id');
             $table->index(['tenant_id', 'status']);
             $table->index(['status', 'ends_at']);
         });

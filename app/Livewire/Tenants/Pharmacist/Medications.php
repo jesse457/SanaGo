@@ -177,7 +177,7 @@ class Medications extends Component
 
             if ($newlyIssued > 0) {
                 // If a new amount is entered, validate it
-                $rules["dispensedQuantities.{$id}"] = ['required', 'integer', 'min:1', 'max:'.$remaining];
+                $rules["dispensedQuantities.{$id}"] = ['required', 'integer', 'min:1', 'max:' . $remaining];
                 $messages["dispensedQuantities.{$id}.min"] = __('pharmacist.medications_component.validation_quantity_min_for', ['medication' => $item->medication->name]);
                 $messages["dispensedQuantities.{$id}.max"] = __('pharmacist.medications_component.validation_quantity_max_for', ['medication' => $item->medication->name, 'remaining' => $remaining]);
                 $anyDispensed = true;
@@ -199,96 +199,95 @@ class Medications extends Component
 
         $pharmacistId = Auth::id();
         $pharmacistName = Auth::user()->name ?? __('pharmacist.medications_component.fallback_pharmacist_name');
-
-        DB::beginTransaction();
-
         try {
-            foreach ($items as $item) {
-                $itemId = $item->id;
-                $newlyIssued = (int) ($this->dispensedQuantities[$itemId] ?? 0);
-                $notes = trim($this->pharmacistNotes[$itemId] ?? '');
+            DB::transaction(function () use ($pharmacistName, $items, $pharmacistId) {
+                foreach ($items as $item) {
+                    $itemId = $item->id;
+                    $newlyIssued = (int) ($this->dispensedQuantities[$itemId] ?? 0);
+                    $notes = trim($this->pharmacistNotes[$itemId] ?? '');
 
-                if ($newlyIssued <= 0) {
-                    if ($notes !== ($item->notes ?? '')) {
+                    if ($newlyIssued <= 0) {
+                        if ($notes !== ($item->notes ?? '')) {
+                            $item->notes = $notes;
+                            $item->save();
+                        }
+
+                        continue;
+                    }
+
+                    $med = $item->medication;
+                    if (! $med) {
+                        throw new \Exception(__('pharmacist.medications_component.exception_medication_not_found', ['itemId' => $itemId]));
+                    }
+
+                    if (($med->stock_quantity ?? 0) < $newlyIssued) {
+                        throw new \Exception(__('pharmacist.medications_component.exception_insufficient_stock', [
+                            'medication' => $med->name,
+                            'available' => $med->stock_quantity,
+                            'required' => $newlyIssued,
+                        ]));
+                    }
+
+                    $totalPrice = ($med->unit_price_purchase ?? 0) * $newlyIssued;
+
+                    // Create dispensation record
+                    Dispensation::create([
+                        'prescription_item_id' => $itemId,
+                        'pharmacist_id' => $pharmacistId,
+                        'quantity_issued' => $newlyIssued,
+                        'batch_number' => 'N/A',
+                        'total_price' => $totalPrice,
+                        'dispensed_at' => now(),
+                    ]);
+                    $med->decrement('stock_quantity', $newlyIssued);
+                    // Increment the dispensed quantity on the prescription item
+                    $item->increment('dispensed_quantity', $newlyIssued);
+
+                    // Update notes if they were provided
+                    if ($notes) {
                         $item->notes = $notes;
                         $item->save();
                     }
 
-                    continue;
+                    $this->logActivity(
+                        'dispensation',
+                        __('pharmacist.medications_component.activity_log_dispensed', [
+                            'pharmacist' => $pharmacistName,
+                            'quantity' => $newlyIssued,
+                            'medication' => $med->name,
+                            'prescription_id' => $this->selectedPrescriptionId,
+                        ]),
+                        [
+                            'pharmacist_id' => $pharmacistId,
+                            'prescription_item_id' => $itemId,
+                            'quantity_issued' => $newlyIssued,
+                            'notes' => $notes,
+                        ]
+                    );
                 }
 
-                $med = $item->medication;
-                if (! $med) {
-                    throw new \Exception(__('pharmacist.medications_component.exception_medication_not_found', ['itemId' => $itemId]));
-                }
+                // Update prescription status
+                $this->selectedPrescription->refresh(); // Get the latest dispensed quantities
+                $allFullyDispensed = $this->selectedPrescription->items->every(function ($it) {
+                    return $it->quantity_prescribed <= ($it->dispensed_quantity ?? 0);
+                });
+                // NOTE: It's best practice to store status in a consistent format (e.g., English or a short code)
+                // and translate it only when displaying to the user.
+                $newStatus = $allFullyDispensed ? 'dispensed' : 'partial';
+                $this->selectedPrescription->update(['status' => $newStatus]);
 
-                if (($med->stock_quantity ?? 0) < $newlyIssued) {
-                    throw new \Exception(__('pharmacist.medications_component.exception_insufficient_stock', [
-                        'medication' => $med->name,
-                        'available' => $med->stock_quantity,
-                        'required' => $newlyIssued,
-                    ]));
-                }
 
-                $totalPrice = ($med->unit_price_purchase ?? 0) * $newlyIssued;
 
-                // Create dispensation record
-                Dispensation::create([
-                    'prescription_item_id' => $itemId,
-                    'pharmacist_id' => $pharmacistId,
-                    'quantity_issued' => $newlyIssued,
-                    'batch_number' => 'N/A',
-                    'total_price' => $totalPrice,
-                    'dispensed_at' => now(),
-                ]);
-                $med->decrement('stock_quantity', $newlyIssued);
-                // Increment the dispensed quantity on the prescription item
-                $item->increment('dispensed_quantity', $newlyIssued);
-
-                // Update notes if they were provided
-                if ($notes) {
-                    $item->notes = $notes;
-                    $item->save();
-                }
-
-                $this->logActivity(
-                    'dispensation',
-                    __('pharmacist.medications_component.activity_log_dispensed', [
-                        'pharmacist' => $pharmacistName,
-                        'quantity' => $newlyIssued,
-                        'medication' => $med->name,
-                        'prescription_id' => $this->selectedPrescriptionId,
-                    ]),
-                    [
-                        'pharmacist_id' => $pharmacistId,
-                        'prescription_item_id' => $itemId,
-                        'quantity_issued' => $newlyIssued,
-                        'notes' => $notes,
-                    ]
-                );
-            }
-
-            // Update prescription status
-            $this->selectedPrescription->refresh(); // Get the latest dispensed quantities
-            $allFullyDispensed = $this->selectedPrescription->items->every(function ($it) {
-                return $it->quantity_prescribed <= ($it->dispensed_quantity ?? 0);
+                LivewireAlert::title(__('pharmacist.medications_component.alert_title_success'))
+                    ->success()
+                    ->text(__('pharmacist.medications_component.alert_dispensed_successfully'))
+                    ->show();
+                $this->closeDispenseModal();
+                $this->loadPatientPrescriptions();
             });
-            // NOTE: It's best practice to store status in a consistent format (e.g., English or a short code)
-            // and translate it only when displaying to the user.
-            $newStatus = $allFullyDispensed ? 'dispensed' : 'partial';
-            $this->selectedPrescription->update(['status' => $newStatus]);
-
-            DB::commit();
-
-            LivewireAlert::title(__('pharmacist.medications_component.alert_title_success'))
-                ->success()
-                ->text(__('pharmacist.medications_component.alert_dispensed_successfully'))
-                ->show();
-            $this->closeDispenseModal();
-            $this->loadPatientPrescriptions();
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Dispensation failed: '.$e->getMessage());
+
+            Log::error('Dispensation failed: ' . $e->getMessage());
             // The exception message is now already localized before being thrown.
             LivewireAlert::title(__('pharmacist.medications_component.alert_title_error'))
                 ->error()

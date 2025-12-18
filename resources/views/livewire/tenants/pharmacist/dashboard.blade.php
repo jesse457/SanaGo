@@ -1,13 +1,12 @@
 <div class="flex-1 bg-gray-50 h-screen overflow-y-auto dark:bg-gray-900 font-sans">
     <section id="sales-reports" class="max-w-7xl mx-auto">
 
-        {{-- Sticky Header: Crisper border, less blur, clean white background --}}
+        {{-- Sticky Header --}}
         <div class="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4">
             <div class="flex items-center justify-between">
 
                 {{-- Left: Context --}}
                 <div class="flex items-center gap-3">
-                    {{-- Icon reduced in size for professional look --}}
                     <div class="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                         <x-heroicon-s-clipboard-document-list class="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     </div>
@@ -24,8 +23,80 @@
                 </div>
 
                 {{-- Right: Actions --}}
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3 md:gap-4">
                     <x-language-switcher />
+
+                    {{-- 🔔 NOTIFICATION BELL START --}}
+                    {{-- Only define local state for the dropdown visibility. Access notifications/unreadCount from Parent Scope --}}
+                    <div class="relative" x-data="{ openNotif: false }">
+                        <button @click="openNotif = !openNotif"
+                                class="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors focus:outline-none">
+                            <span class="sr-only">Notifications</span>
+                            <x-heroicon-o-bell class="w-6 h-6" />
+
+                            {{-- Red Dot Badge --}}
+                            <div x-show="unreadCount > 0"
+                                 x-transition.scale.origin.center
+                                 class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 border-2 border-white dark:border-gray-900 rounded-full"
+                                 x-cloak>
+                            </div>
+                        </button>
+
+                        {{-- Notification Dropdown --}}
+                        <div x-show="openNotif"
+                             @click.outside="openNotif = false"
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 translate-y-1"
+                             x-transition:enter-end="opacity-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 translate-y-0"
+                             x-transition:leave-end="opacity-0 translate-y-1"
+                             class="absolute right-0 mt-3 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden"
+                             x-cloak>
+
+                            <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800">
+                                <h3 class="text-sm font-bold text-gray-900 dark:text-white">Notifications</h3>
+                                <button @click="clearNotifications()" class="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400">Clear all</button>
+                            </div>
+
+                            <div class="max-h-[20rem] overflow-y-auto custom-scrollbar">
+                                {{-- Empty State --}}
+                                <template x-if="notifications.length === 0">
+                                    <div class="py-8 px-6 text-center">
+                                        <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 mb-3">
+                                            <x-heroicon-o-bell-slash class="w-5 h-5 text-gray-400"/>
+                                        </div>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">No new notifications</p>
+                                    </div>
+                                </template>
+
+                                {{-- List --}}
+                                <template x-for="notif in notifications" :key="notif.id">
+                                    <div @click="markAsRead(notif.id)"
+                                         class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors flex gap-3 group relative">
+                                        {{-- Icon --}}
+                                        <div class="flex-shrink-0 mt-1">
+                                            <div class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                                                <x-heroicon-s-clipboard-document-list class="w-4 h-4"/>
+                                            </div>
+                                        </div>
+                                        {{-- Content --}}
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-semibold text-gray-900 dark:text-white" :class="{'opacity-60': notif.read}" x-text="notif.message"></p>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex flex-col">
+                                                <span>Patient: <strong class="text-gray-700 dark:text-gray-300" x-text="notif.patient_name"></strong></span>
+                                                <span x-text="'Dr: ' + notif.doctor_name"></span>
+                                            </div>
+                                            <p class="text-[10px] text-gray-400 mt-1" x-text="new Date(notif.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})"></p>
+                                        </div>
+                                        {{-- Unread Indicator --}}
+                                        <div x-show="!notif.read" class="absolute right-4 top-4 w-2 h-2 rounded-full bg-blue-500"></div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- 🔔 NOTIFICATION BELL END --}}
 
                     {{-- Separator --}}
                     <div class="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
@@ -70,6 +141,7 @@
             </div>
         </div>
 
+        {{-- Rest of your dashboard content... --}}
         <div class="p-6 space-y-6">
             {{-- Alerts --}}
             @if (session()->has('message'))
@@ -85,7 +157,7 @@
                 </div>
             @endif
 
-            {{-- KPI Cards: Modern "Stamps" style --}}
+            {{-- KPI Cards --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Card 1 -->
                 <div class="group bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">

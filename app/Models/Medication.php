@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ParagonIE\CipherSweet\BlindIndex;
 use ParagonIE\CipherSweet\EncryptedRow;
+use ParagonIE\CipherSweet\Transformation\Lowercase;
 use Spatie\LaravelCipherSweet\Concerns\UsesCipherSweet;
 use Spatie\LaravelCipherSweet\Contracts\CipherSweetEncrypted;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
@@ -34,7 +35,9 @@ class Medication extends Model implements CipherSweetEncrypted
         $encryptedRow
             // first & last names - encrypted and searchable (exact match)
             ->addField('name')
-            ->addBlindIndex('name', new BlindIndex('name_index'))
+            ->addBlindIndex('name', new BlindIndex('name_index', [
+                new Lowercase(), // Normalize to lowercase
+            ]))
             ->addOptionalTextField('description');
 
         // transformations via BlindIndex options (see CipherSweet docs).

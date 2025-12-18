@@ -5,6 +5,7 @@ namespace App\Livewire\Tenants\Nurse;
 use App\Models\Supply;
 use App\Models\SupplyUsage as SupplyUsageModel;
 use App\Traits\UserActivitiesTrait;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
@@ -15,9 +16,9 @@ class SupplyUsage extends Component
 {
     use UserActivitiesTrait;
 
-    public $supplies;
+    public Collection $supplies;
 
-    public $quantitiesUsed = [];
+    public array $quantitiesUsed = [];
 
     // Properties for the success modal
     public $showSuccessModal = false;

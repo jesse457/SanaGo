@@ -64,7 +64,7 @@ use App\Livewire\Tenants\LabTechnician\CreateLabTestDefinition;
 use App\Livewire\Tenants\LabTechnician\Feedbacks as LabTechnicianFeedbacks;
 use App\Livewire\Tenants\LabTechnician\SendFeedback as LabTechnicianSendFeedback;
 use App\Livewire\Tenants\LabTechnician\Profile as LabTechnicianProfile;
-
+use App\Livewire\Tenants\Nurse\CreateCareReport;
 // -- Nurse Components --
 use App\Livewire\Tenants\Nurse\Dashboard as NurseDashboard;
 use App\Livewire\Tenants\Nurse\SupplyUsage;
@@ -72,7 +72,7 @@ use App\Livewire\Tenants\Nurse\RecordVitals;
 use App\Livewire\Tenants\Nurse\Profile as NurseProfile;
 use App\Livewire\Tenants\Nurse\Feedbacks as NurseFeedbacks;
 use App\Livewire\Tenants\Nurse\SendFeedback as NurseSendFeedback;
-
+use App\Livewire\Tenants\Nurse\ViewCareReports;
 // -- Pharmacist Components --
 use App\Livewire\Tenants\Pharmacist\Dashboard as PharmacistDashboard;
 use App\Livewire\Tenants\Pharmacist\FeedBackRequestList;
@@ -129,29 +129,29 @@ Route::middleware([
     // =========================================================================
     Route::middleware(['auth'])->group(function () {
 
-    // 1. Heartbeat: Tells the server "I am online"
-    Route::post('/user/heartbeat', function (Request $request) {
-        // Store 'true' in cache for 40 seconds (we will ping every 30s)
-        Cache::put('user-online-' . $request->user()->id, true, 40);
-        return response()->noContent();
-    });
+        // 1. Heartbeat: Tells the server "I am online"
+        Route::post('/user/heartbeat', function (Request $request) {
+            // Store 'true' in cache for 40 seconds (we will ping every 30s)
+            Cache::put('user-online-' . $request->user()->id, true, 40);
+            return response()->noContent();
+        });
 
-    // 2. Fetch Missed: Gets notifications saved while user was offline
-    Route::get('/user/notifications/missed', function (Request $request) {
-        // Get unread notifications
-        $notifications = $request->user()->unreadNotifications;
+        // 2. Fetch Missed: Gets notifications saved while user was offline
+        Route::get('/user/notifications/missed', function (Request $request) {
+            // Get unread notifications
+            $notifications = $request->user()->unreadNotifications;
 
-        // Mark them as read immediately since we are moving them to Frontend LocalStorage
-        $request->user()->unreadNotifications->markAsRead();
+            // Mark them as read immediately since we are moving them to Frontend LocalStorage
+            $request->user()->unreadNotifications->markAsRead();
 
-        return $notifications;
-    });
+            return $notifications;
+        });
 
-    // 3. Mark specific notification as read (if needed)
-    Route::post('/user/notifications/{id}/read', function (Request $request, $id) {
-        $request->user()->notifications()->where('id', $id)->first()?->markAsRead();
-        return response()->noContent();
-    });
+        // 3. Mark specific notification as read (if needed)
+        Route::post('/user/notifications/{id}/read', function (Request $request, $id) {
+            $request->user()->notifications()->where('id', $id)->first()?->markAsRead();
+            return response()->noContent();
+        });
         // Logout
         Route::post('/logout', function (Request $request) {
             Auth::guard('web')->logout();
@@ -246,6 +246,8 @@ Route::middleware([
             Route::get('/record-vitals', RecordVitals::class)->name('record-vitals');
             Route::get('/profile', NurseProfile::class)->name('profile');
             Route::get('/feedbacks', NurseFeedbacks::class)->name('feedbacks');
+            Route::get('/create-care-report', CreateCareReport::class)->name('create-care-report');
+            Route::get('/view-care-reports', ViewCareReports::class)->name('view-care-reports');
             Route::get('/send-feedback', NurseSendFeedback::class)->name('send-feedback');
         });
 

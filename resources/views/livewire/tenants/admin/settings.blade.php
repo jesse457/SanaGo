@@ -1,7 +1,3 @@
-
-
-
-
 <main class="w-full min-h-screen bg-slate-50 dark:bg-gray-900 font-sans text-slate-600 dark:text-slate-300"
     x-data="{
         activeTab: 'general',
@@ -54,48 +50,78 @@
                 </div>
             </div>
 
-            <!-- Scrollable Tabs -->
-            <div class="-mb-px">
-                <nav class="flex space-x-8 overflow-x-auto no-scrollbar" aria-label="Tabs">
+            <div class="w-full max-w-full min-w-0 overflow-hidden border-b border-gray-200 dark:border-gray-700">
+
+                <nav class="flex space-x-8 overflow-x-auto w-full no-scrollbar pb-1" aria-label="Tabs">
+
                     <template x-for="[key, tab] in Object.entries(tabs)" :key="key">
                         <button @click="activeTab = key" type="button"
-                            class="group relative py-4 px-1 text-sm font-medium transition-colors duration-200 outline-none focus:outline-none whitespace-nowrap"
-                            :class="activeTab === key ? 'text-blue-600 dark:text-blue-400' :
+                            class="group relative py-4 px-1 text-sm font-medium transition-colors duration-200 outline-none focus:outline-none whitespace-nowrap shrink-0"
+                            x-bind:class="activeTab === key ?
+                                'text-blue-600 dark:text-blue-400' :
                                 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'">
 
                             <!-- Icon + Label -->
                             <div class="flex items-center gap-2">
-                                <template x-if="key === 'general'"><x-heroicon-o-building-office class="w-4 h-4"
-                                        x-bind:class="activeTab === key ? 'text-blue-600' :
-                                            'text-slate-400 group-hover:text-slate-500'" /></template>
-                                <template x-if="key === 'departments'"><x-heroicon-o-building-office-2 class="w-4 h-4"
-                                        x-bind:class="activeTab === key ? 'text-blue-600' :
-                                            'text-slate-400 group-hover:text-slate-500'" /></template>
-                                <template x-if="key === 'wards'"><x-heroicon-o-rectangle-group class="w-4 h-4"
-                                        x-bind:class="activeTab === key ? 'text-blue-600' :
-                                            'text-slate-400 group-hover:text-slate-500'" /></template>
-                                <template x-if="key === 'bed-types'"><x-heroicon-o-tag class="w-4 h-4"
-                                        x-bind:class="activeTab === key ? 'text-blue-600' :
-                                            'text-slate-400 group-hover:text-slate-500'" /></template>
-                                <template x-if="key === 'beds'"><x-heroicon-o-server class="w-4 h-4"
-                                        x-bind:class="activeTab === key ? 'text-blue-600' :
-                                            'text-slate-400 group-hover:text-slate-500'" /></template>
-                                <template x-if="key === 'supplies'"><x-heroicon-o-archive-box class="w-4 h-4"
-                                        x-bind:class="activeTab === key ? 'text-blue-600' :
-                                            'text-slate-400 group-hover:text-slate-500'" /></template>
-                                <template x-if="key === 'subscription'"><x-heroicon-o-credit-card class="w-4 h-4"
-                                        x-bind:class="activeTab === key ? 'text-blue-600' :
-                                            'text-slate-400 group-hover:text-slate-500'" /></template>
+
+                                <!--
+                          ICON LOGIC:
+                          We use x-if because Blade components need to exist in the DOM
+                          but we toggle their visibility/rendering based on the loop key.
+                        -->
+                                <template x-if="key === 'general'">
+                                    <x-heroicon-o-building-office class="w-4 h-4" x-bind:class="activeTab === key
+                                        ? 'text-blue-600'
+                                        : 'text-slate-400 group-hover:text-slate-500'" />
+                                </template>
+                                <template x-if="key === 'departments'">
+                                    <x-heroicon-o-building-office-2 class="w-4 h-4" x-bind:class="activeTab === key
+                                        ? 'text-blue-600'
+                                        : 'text-slate-400 group-hover:text-slate-500'" />
+                                </template>
+                                <template x-if="key === 'wards'">
+                                    <x-heroicon-o-rectangle-group class="w-4 h-4" x-bind:class="activeTab === key
+                                        ? 'text-blue-600'
+                                        : 'text-slate-400 group-hover:text-slate-500'" />
+                                </template>
+                                <template x-if="key === 'bed-types'">
+                                    <x-heroicon-o-tag class="w-4 h-4" x-bind:class="activeTab === key
+                                        ? 'text-blue-600'
+                                        : 'text-slate-400 group-hover:text-slate-500'" />
+                                </template>
+                                <template x-if="key === 'beds'">
+                                    <x-heroicon-o-server class="w-4 h-4" x-bind:class="activeTab === key
+                                        ? 'text-blue-600'
+                                        : 'text-slate-400 group-hover:text-slate-500'" />
+                                </template>
+                                <template x-if="key === 'supplies'">
+                                    <x-heroicon-o-archive-box class="w-4 h-4" x-bind:class="activeTab === key
+                                        ? 'text-blue-600'
+                                        : 'text-slate-400 group-hover:text-slate-500'" />
+                                </template>
+                                <template x-if="key === 'subscription'">
+                                    <x-heroicon-o-credit-card class="w-4 h-4" x-bind:class="activeTab === key
+                                        ? 'text-blue-600'
+                                        : 'text-slate-400 group-hover:text-slate-500'" />
+                                </template>
+
                                 <span x-text="tab.label"></span>
                             </div>
 
                             <!-- Animated Underline -->
                             <span
                                 class="absolute bottom-0 left-0 h-0.5 w-full bg-blue-600 rounded-t-full transform origin-left transition-transform duration-300 ease-out"
-                                :class="activeTab === key ? 'scale-x-100' : 'scale-x-0'"></span>
+                                x-bind:class="activeTab === key ? 'scale-x-100' : 'scale-x-0'"></span>
                         </button>
                     </template>
                 </nav>
+            </div>
+
+            <!-- CONTENT AREA (Optional Example) -->
+            <div class="mt-4">
+                <div x-show="activeTab === 'general'">General Content...</div>
+                <div x-show="activeTab === 'departments'">Departments Content...</div>
+                <!-- Add other content blocks here -->
             </div>
         </div>
     </div>
@@ -186,8 +212,8 @@
                             <span wire:loading.remove
                                 wire:target="saveGeneralSettings">{{ __('admin.button_save_general_settings') }}</span>
                             <span wire:loading wire:target="saveGeneralSettings"
-                                class="flex items-center gap-2"><x-heroicon-o-arrow-path
-                                    class="w-4 h-4 animate-spin" /> {{ __('Saving...') }}</span>
+                                class="flex items-center gap-2"><x-heroicon-o-arrow-path class="w-4 h-4 animate-spin" />
+                                {{ __('Saving...') }}</span>
                         </button>
                     </div>
                 </form>
@@ -504,8 +530,7 @@
                             class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-slate-200 dark:border-gray-700 p-6">
                             <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">New Bed Type</h3>
                             <form wire:submit.prevent="addBedType" class="space-y-4">
-                                <input type="text" wire:model.defer="newBedTypeName"
-                                    placeholder="Name (e.g. ICU)"
+                                <input type="text" wire:model.defer="newBedTypeName" placeholder="Name (e.g. ICU)"
                                     class="block w-full rounded-lg border-slate-300 shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm dark:bg-gray-900 dark:border-gray-600 dark:text-white">
                                 <div class="relative rounded-md shadow-sm">
                                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -618,8 +643,7 @@
             @if (!$subscription)
                 <div
                     class="flex flex-col items-center justify-center py-16 px-4 text-center bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-slate-200 dark:border-gray-700">
-                    <div
-                        class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-full mb-4 text-blue-600 dark:text-blue-400">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-full mb-4 text-blue-600 dark:text-blue-400">
                         <x-heroicon-o-rocket-launch class="w-10 h-10" />
                     </div>
                     <h2 class="text-xl font-bold text-slate-900 dark:text-white">Upgrade Plan</h2>

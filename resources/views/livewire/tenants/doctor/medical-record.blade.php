@@ -8,17 +8,17 @@
                 <nav class="flex text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                     <ol class="flex items-center space-x-2">
                         <li>
-                            <a href="{{ route('doctor.dashboard') }}" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center">
+                            <a href="#" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center">
                                 <x-heroicon-s-home class="w-3 h-3 mr-1.5" />
-                                {{ __('doctor.home') }}
+                                Home
                             </a>
                         </li>
                         <li><x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300" /></li>
-                        <li class="text-gray-900 dark:text-white">{{ __('doctor.patients') }}</li>
+                        <li class="text-gray-900 dark:text-white">Patients</li>
                     </ol>
                 </nav>
                 <h1 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-                    {{ __('doctor.patient_consultation') }}
+                    Patient Consultation
                 </h1>
             </div>
         </div>
