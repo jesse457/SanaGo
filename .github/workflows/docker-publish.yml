@@ -2,17 +2,13 @@ name: Build and Push Docker Image to GHCR
 
 on:
   push:
-    branches:
-      - main
-    tags:
-      - 'v*.*.*'
+    branches: [main]
+    tags: ['v*.*.*']
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 env:
   REGISTRY: ghcr.io
-  # This changes the image name to your-username/sanago
   IMAGE_NAME: ${{ github.repository_owner }}/sanago
 
 jobs:
@@ -26,6 +22,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Required for GHA caching support in build-push-action
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -45,26 +42,19 @@ jobs:
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
         id: push-step
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6  # Updated to v6 for latest 2025 features
         with:
           context: .
-          file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Note: Caching also uses the new image name
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+          # 2025 BEST PRACTICE: Use type=gha for fastest caching on GitHub
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           build-args: |
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
             VCS_REF=${{ github.sha }}
-
-      - name: Image digest
-        run: echo "Image pushed with digest ${{ steps.push-step.outputs.digest }}"

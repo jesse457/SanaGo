@@ -18,6 +18,7 @@ RUN apt-get update && \
     npm \
     && rm -rf /var/lib/apt/lists/*
 
+ARG MAKEFLAGS="-j2"
 # Install PHP extensions required by Laravel
 RUN install-php-extensions \
     pcntl \
