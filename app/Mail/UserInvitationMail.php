@@ -5,6 +5,7 @@ namespace App\Mail;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address; // 👈 Added this
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -16,6 +17,7 @@ class UserInvitationMail extends Mailable
     public $user;
     public $resetUrl;
     public $tenantName;
+    public $tenantDomain;
 
     /**
      * Create a new message instance.
@@ -25,39 +27,54 @@ class UserInvitationMail extends Mailable
         $this->user = $user;
 
         // 1. Get Tenant Details
-        // We use the tenant() helper which is available because you are calling
-        // this mailable from inside the tenant scope ($tenant->run() or active request).
         $this->tenantName = tenant('name') ?? config('app.name');
 
         // 2. Get the Correct Domain
-        // We prioritize the 'domains' relationship (standard practice),
-        // but fallback to tenant('id') since your CreateTenant code uses the domain as the ID.
-        $tenantDomain = tenant()->domains->first()->domain ?? tenant('id');
+        // Priority: Verified domain record > tenant ID
+        $this->tenantDomain = tenant()->domains->first()->domain ?? tenant('id');
 
         // 3. Generate the Relative Path
-        // We pass 'false' as the 3rd argument to route().
-        // This gives us just "/reset-password?token=..." without the "http://localhost" part.
-        // This prevents the system from accidentally using the Landlord domain.
         $relativePath = route('tenant.password.reset', [
             'token' => $token,
             'email' => $user->email,
         ], false);
 
-        // 4. Construct the Full URL
-        // We manually stitch the protocol + tenant domain + relative path.
-        // This guarantees the link opens the specific hospital's portal.
-        $protocol = 'http://';
+        // 4. Construct the Full URL for Production
+        // We use https and remove :8000 because Nginx handles the proxy.
+        $protocol = app()->environment('production') ? 'https://' : 'http://';
 
-        $this->resetUrl = $protocol . $tenantDomain . ':8000' . $relativePath;
+        // Final URL: https://tenant.sanago.site/reset-password...
+        $this->resetUrl = $protocol . $this->tenantDomain . $relativePath;
     }
 
+    /**
+     * Get the message envelope.
+     */
     public function envelope(): Envelope
     {
+        /**
+         * IMPORTANT FOR RESEND:
+         * If you verified 'sanago.site' in Resend, you can usually send from
+         * any subdomain like 'noreply@tenant.sanago.site'.
+         *
+         * If the tenant uses a custom domain (tenant.com) that isn't verified yet,
+         * Resend will fail. In that case, use: noreply@sanago.site
+         */
+        $senderEmail = "noreply@" . $this->tenantDomain;
+
+        // Fallback check: If the domain doesn't contain your master domain and isn't verified
+        // You might want to force the master domain to ensure delivery:
+        // $senderEmail = "onboarding@sanago.site";
+
         return new Envelope(
+            from: new Address($senderEmail, $this->tenantName),
             subject: 'Welcome to ' . $this->tenantName . ' - Set your password',
         );
     }
 
+    /**
+     * Get the message content definition.
+     */
     public function content(): Content
     {
         return new Content(
