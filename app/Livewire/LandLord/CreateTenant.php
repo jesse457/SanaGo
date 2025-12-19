@@ -79,7 +79,6 @@ class CreateTenant extends Component
 
                 // 1. Create Tenant (Central Table)
                 $tenant = Tenant::create([
-                    'id' => $this->generatedDomain,
                     'name' => $this->tenantName,
                     'contact_email' => $this->hospitalContactEmail,
                     'phone_number' => $this->phoneNumber,
