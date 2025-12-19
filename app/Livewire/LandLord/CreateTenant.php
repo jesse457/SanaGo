@@ -51,7 +51,7 @@ class CreateTenant extends Component
                 'string',
                 'lowercase',
                 Rule::unique('domains', 'domain'), // Check the domains table
-                Rule::unique('tenants', 'id')      // [CRITICAL FIX] Check tenants table since ID = Domain
+               
             ],
             'adminName' => 'required|string|max:255',
             'adminEmail' => ['required', 'email', 'max:255'],
@@ -75,7 +75,7 @@ class CreateTenant extends Component
 
         try {
             // [FIX] Use explicit central connection for transaction
-            DB::connection(config('tenancy.database.central_connection'))->transaction(function () use ($password) {
+            DB::transaction(function () use ($password) {
 
                 // 1. Create Tenant (Central Table)
                 $tenant = Tenant::create([
