@@ -126,8 +126,8 @@ class CreateTenant extends Component
                 'sql'     => method_exists($e, 'getSql') ? $e->getSql() : 'N/A', // If it's a DB error
             ]);
 
-            // Show a friendly error to the user
-            $this->alert('error', 'Operation failed: Check logs for details.');
+              LivewireAlert::title('Error')->error()->text('Tenant creation failed.')->show();
+         
         }
     }
 
