@@ -19,7 +19,6 @@ WORKDIR /app
 
 COPY composer.json composer.lock ./
 
-# FIX 1: Use 'install' to respect lock file
 RUN composer config platform.php 8.3 && \
     composer install --no-dev --no-interaction --no-progress --no-scripts --prefer-dist --optimize-autoloader
 
@@ -45,35 +44,42 @@ RUN apt-get update && \
 RUN install-php-extensions pcntl pdo_pgsql redis bcmath zip gd intl opcache
 
 # Production PHP Configuration
+# Added upload limits here since you are using S3/MinIO
 RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini && \
     echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini && \
     echo "opcache.interned_strings_buffer=16" >> /usr/local/etc/php/conf.d/opcache.ini && \
     echo "opcache.max_accelerated_files=10000" >> /usr/local/etc/php/conf.d/opcache.ini && \
     echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini && \
-    echo "variables_order=EGPCS" >> /usr/local/etc/php/conf.d/custom.ini
+    echo "variables_order=EGPCS" >> /usr/local/etc/php/conf.d/custom.ini && \
+    echo "upload_max_filesize=100M" >> /usr/local/etc/php/conf.d/custom.ini && \
+    echo "post_max_size=100M" >> /usr/local/etc/php/conf.d/custom.ini
 
 WORKDIR /app
 
+# Ensure we copy files with correct ownership initially
 COPY --from=builder --chown=www-data:www-data /app /app
 COPY --chown=www-data:www-data supervisord.conf /etc/supervisor/supervisord.conf
 COPY --chown=www-data:www-data octane-supervisor.conf /etc/supervisor/conf.d/octane.conf
 
-
-
-# Permissions
-# FIX 3: Removed database folder permission (unnecessary for Postgres)
-RUN mkdir -p /app/storage/logs /app/bootstrap/cache /var/log/supervisor && \
-    chown -R www-data:www-data /app/storage /app/bootstrap/cache /var/log/supervisor && \
-    chmod -R 775 /app/storage /app/bootstrap/cache /var/log/supervisor
-
+# Permissions Fix
+# FIX 6: Create all storage subfolders explicitely
+# FIX 7: Create /var/run/supervisor so the non-root user can write the PID file there
+RUN mkdir -p /app/storage/logs \
+    /app/storage/framework/sessions \
+    /app/storage/framework/views \
+    /app/storage/framework/cache \
+    /app/bootstrap/cache \
+    /var/log/supervisor \
+    /var/run/supervisor \
+    && chown -R www-data:www-data /app/storage /app/bootstrap/cache /var/log/supervisor /var/run/supervisor \
+    && chmod -R 775 /app/storage /app/bootstrap/cache
 
 EXPOSE 8000
 
-# FIX 4: Ensure this path matches Laravel 11's default health check, or use /api/health if you made one
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8000/up || exit 1
 
+# Switch to non-root user
 USER www-data
 
-# FIX 5: Use the entrypoint script
 ENTRYPOINT ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
