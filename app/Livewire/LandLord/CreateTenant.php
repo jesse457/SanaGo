@@ -6,11 +6,11 @@ use App\Mail\UserInvitationMail;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Subscription;
-use Illuminate\Support\Facades\DB; // [FIX] Added for transaction
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
@@ -46,7 +46,13 @@ class CreateTenant extends Component
             'logo' => 'nullable|image|max:1024',
             'subscriptionTier' => ['required', Rule::in([Subscription::PLAN_BASIC, Subscription::PLAN_STANDARD, Subscription::PLAN_ENTERPRISE])],
             'billingCycle' => ['required', Rule::in([Subscription::BILLING_MONTHLY, Subscription::BILLING_YEARLY])],
-            'generatedDomain' => ['required', 'string', Rule::unique('domains', 'domain')],
+            'generatedDomain' => [
+                'required',
+                'string',
+                'lowercase',
+                Rule::unique('domains', 'domain'), // Check the domains table
+                Rule::unique('tenants', 'id')      // [CRITICAL FIX] Check tenants table since ID = Domain
+            ],
             'adminName' => 'required|string|max:255',
             'adminEmail' => ['required', 'email', 'max:255'],
         ];
@@ -54,7 +60,7 @@ class CreateTenant extends Component
 
     public function updatedTenantName($value)
     {
-        // Auto-generate domain based on name
+        // Auto-generate domain: myhospital.sanago.site
         $slug = Str::slug($value);
         $this->generatedDomain = $slug . '.' . config('tenancy.central_domains.0');
         $this->hospitalContactEmail = 'contact@' . $this->generatedDomain;
@@ -62,35 +68,41 @@ class CreateTenant extends Component
 
     public function createTenant()
     {
-        // 1. Validate inputs (this prevents simple unique errors from poisoning the DB)
         $this->validate();
 
+        // Generate a random password for the new Admin (they will reset it via email link)
         $password = Str::password(16);
 
         try {
-            // 2. Wrap the entire process in a transaction on the Central Connection
+            // [FIX] Use explicit central connection for transaction
             DB::connection(config('tenancy.database.central_connection'))->transaction(function () use ($password) {
 
-                // Create the Tenant
+                // 1. Create Tenant (Central Table)
                 $tenant = Tenant::create([
                     'id' => $this->generatedDomain,
                     'name' => $this->tenantName,
                     'contact_email' => $this->hospitalContactEmail,
+                    'phone_number' => $this->phoneNumber,
+                    'address' => $this->address,
                     'subscription_tier' => $this->subscriptionTier,
-                    // add other fields...
                 ]);
 
-                // Create the Domain
-                $tenant->domains()->create(['domain' => $this->generatedDomain]);
+                // 2. Create Domain (Linked to Tenant)
+                $tenant->domains()->create([
+                    'domain' => $this->generatedDomain
+                ]);
 
-                // Handle Logo
+                // 3. Handle Logo Upload (S3/MinIO)
                 if ($this->logo) {
                     $logoPath = $this->logo->store('logos', 's3');
                     $tenant->update(['logo' => $logoPath]);
                 }
 
-                // 3. Switch to Tenant Context
+                // 4. Create User and Subscription inside the Tenant Context
+                // In Single DB, this ensures 'tenant_id' is set on new records
                 $tenant->run(function () use ($password) {
+
+                    // Create Admin User
                     $user = User::create([
                         'name' => $this->adminName,
                         'email' => $this->adminEmail,
@@ -98,36 +110,45 @@ class CreateTenant extends Component
                         'role' => 'admin',
                     ]);
 
+                    // Generate Password Reset Token
                     $token = Password::broker()->createToken($user);
 
-                    // Queue mail to avoid timeout/blocking the transaction
+                    // Send Invitation Email via Queue (Dozzle will show the mail logs)
                     Mail::to($user->email)->queue(new UserInvitationMail($user, $token));
 
-                    // Subscription setup...
+                    // Create Initial Subscription Record
                     $sub = new Subscription();
                     $sub->plan = $this->subscriptionTier;
+                    $sub->billing_cycle = $this->billingCycle;
+                    $sub->status = Subscription::STATUS_ACTIVE;
+                    $sub->starts_at = now();
+                    $sub->ends_at = ($this->billingCycle === Subscription::BILLING_MONTHLY) ? now()->addMonth() : now()->addYear();
+
+                    // Model Logic (Calculates price/features)
+                    $sub->amount = $sub->getPlanAmount();
+                    $features = $sub->getDefaultFeatures();
+                    $sub->features = $features;
+                    $sub->max_users = $features['max_users'] ?? 0;
+                    $sub->max_storage = $features['max_storage'] ?? 0;
+
                     $sub->save();
                 });
             });
 
-            // 4. If we reach here, everything worked
+            // Reset form and notify user
             $this->reset();
-            LivewireAlert::title('Success')->success()->text('Tenant created successfully.')->show();
-
+            $this->subscriptionTier = Subscription::PLAN_BASIC;
+            $this->billingCycle = Subscription::BILLING_YEARLY;
+            LivewireAlert::title('Tenant Created')->success()->text('Invitation sent to ' . $this->adminEmail);
         } catch (Throwable $e) {
-            // ============================================================
-            // 5. THE SPECIFIC ERROR LOGGING
-            // ============================================================
+            // [FIX] Log specific error for Dozzle debugging
             Log::error('TENANT_CREATION_FAILED', [
-                'message' => $e->getMessage(),      // The actual error (e.g. "Table not found")
-                'file'    => $e->getFile(),         // Where it happened
-                'line'    => $e->getLine(),         // Exact line number
-                'domain'  => $this->generatedDomain,// The domain being created
-                'sql'     => method_exists($e, 'getSql') ? $e->getSql() : 'N/A', // If it's a DB error
+                'error' => $e->getMessage(),
+                'domain' => $this->generatedDomain,
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
-
-              LivewireAlert::title('Error')->error()->text('Tenant creation failed.')->show();
-         
+            LivewireAlert::title('Tenant Creation Failed')->error()->text('An error occurred while creating the tenant. Please check the logs for details.');
         }
     }
 
