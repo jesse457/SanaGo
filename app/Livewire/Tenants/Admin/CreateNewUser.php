@@ -117,7 +117,7 @@ class CreateNewUser extends Component
 
             // 3. Create Token and Mail
             $token = Password::broker()->createToken($user);
-            Mail::to($user->email)->queue(new UserInvitationMail($user, $token, tenant()->domain, tenant()->name));
+            Mail::to($user->email)->queue(new UserInvitationMail($user, $token, tenant()->domains->first()->domain ?? request()->getHost(), tenant('name')));
 
             // 4. Log Activity
             $this->logActivity(
@@ -148,11 +148,11 @@ class CreateNewUser extends Component
                 'line' => $e->getLine(),
                 'tenant_id' => tenant('id')
             ]);
-
-            $this->alert('error', 'Failed to create user: ' . $e->getMessage());
+            LivewireAlert::title('Error')->error()->text('Failed to create user: ' . $e->getMessage())->show();
             return null;
         }
     }
+
 
     public function resetForm()
     {
