@@ -116,7 +116,7 @@ class CreateNewUser extends Component
                 $token = Password::broker()->createToken($user);
                 // 3. Send Email
                 // [FIX] Queuing the modern email we created
-                Mail::to($user->email)->queue(new UserInvitationMail($user, $token));
+                Mail::to($user->email)->queue(new UserInvitationMail($user, $token,tenant()->domain, tenant()->name));
 
                 // 4. Log Activity
                 $this->logActivity(

@@ -74,6 +74,7 @@ class CreateTenant extends Component
         $password = Str::password(16);
 
         try {
+            DB::beginTransaction();
             // 1. Create Tenant (Central Table)
             $tenant = Tenant::create([
                 'name' => $this->tenantName,
@@ -129,6 +130,7 @@ class CreateTenant extends Component
 
                 $sub->save();
             });
+            DB::commit();
 
             // Reset form and notify user
             $this->reset();
@@ -136,6 +138,7 @@ class CreateTenant extends Component
             $this->billingCycle = Subscription::BILLING_YEARLY;
             LivewireAlert::title('Tenant Created')->success()->text('Invitation sent to ' . $this->adminEmail);
         } catch (Throwable $e) {
+            DB::rollBack();
             // [FIX] Log specific error for Dozzle debugging
             Log::error('TENANT_CREATION_FAILED', [
                 'error' => $e->getMessage(),
