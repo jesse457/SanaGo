@@ -28,6 +28,7 @@ class CreateTenant extends Component
     public $phoneNumber;
     public $address;
     public $logo = null;
+    public $tempUser; // To hold the created user for email sending
     public $generatedDomain;
     public $hospitalContactEmail;
 
@@ -51,7 +52,7 @@ class CreateTenant extends Component
                 'string',
                 'lowercase',
                 Rule::unique('domains', 'domain'), // Check the domains table
-               
+
             ],
             'adminName' => 'required|string|max:255',
             'adminEmail' => ['required', 'email', 'max:255'],
@@ -66,90 +67,85 @@ class CreateTenant extends Component
         $this->hospitalContactEmail = 'contact@' . $this->generatedDomain;
     }
 
-    public function createTenant()
-    {
-        $this->validate();
+   public function createTenant()
+{
+    $this->validate();
+    $password = Str::password(16);
 
-        // Generate a random password for the new Admin (they will reset it via email link)
-        $password = Str::password(16);
+    try {
+        $tenant = DB::transaction(function () use ($password) {
+            // 1. Create Tenant
+            $tenant = Tenant::create([
+                'name' => $this->tenantName,
+                'contact_email' => $this->hospitalContactEmail,
+                'phone_number' => $this->phoneNumber,
+                'address' => $this->address,
+                'subscription_tier' => $this->subscriptionTier,
+            ]);
 
-        try {
-            // [FIX] Use explicit central connection for transaction
-            DB::transaction(function () use ($password) {
+            // 2. Create Domain
+            $tenant->domains()->create([
+                'domain' => $this->generatedDomain
+            ]);
 
-                // 1. Create Tenant (Central Table)
-                $tenant = Tenant::create([
-                    'name' => $this->tenantName,
-                    'contact_email' => $this->hospitalContactEmail,
-                    'phone_number' => $this->phoneNumber,
-                    'address' => $this->address,
-                    'subscription_tier' => $this->subscriptionTier,
+            // 3. Create Tenant-Specific Data
+            // In Single DB, this applies the 'tenant_id' to these records
+            $tenant->run(function () use ($password, $tenant) {
+                $user = User::create([
+                    'name' => $this->adminName,
+                    'email' => $this->adminEmail,
+                    'password' => Hash::make($password),
+                    'role' => 'admin',
                 ]);
 
-                // 2. Create Domain (Linked to Tenant)
-                $tenant->domains()->create([
-                    'domain' => $this->generatedDomain
-                ]);
+                // Create Subscription
+                $sub = new Subscription();
+                $sub->plan = $this->subscriptionTier;
+                $sub->billing_cycle = $this->billingCycle;
+                $sub->status = Subscription::STATUS_ACTIVE;
+                $sub->starts_at = now();
+                $sub->ends_at = ($this->billingCycle === Subscription::BILLING_MONTHLY) ? now()->addMonth() : now()->addYear();
+                $sub->amount = $sub->getPlanAmount();
+                $sub->features = $sub->getDefaultFeatures();
+                $sub->save();
 
-                // 3. Handle Logo Upload (S3/MinIO)
-                if ($this->logo) {
-                    $logoPath = $this->logo->store('logos', 's3');
-                    $tenant->update(['logo' => $logoPath]);
-                }
-
-                // 4. Create User and Subscription inside the Tenant Context
-                // In Single DB, this ensures 'tenant_id' is set on new records
-                $tenant->run(function () use ($password) {
-
-                    // Create Admin User
-                    $user = User::create([
-                        'name' => $this->adminName,
-                        'email' => $this->adminEmail,
-                        'password' => Hash::make($password),
-                        'role' => 'admin',
-                    ]);
-
-                    // Generate Password Reset Token
-                    $token = Password::broker()->createToken($user);
-
-                    // Send Invitation Email via Queue (Dozzle will show the mail logs)
-                    Mail::to($user->email)->queue(new UserInvitationMail($user, $token));
-
-                    // Create Initial Subscription Record
-                    $sub = new Subscription();
-                    $sub->plan = $this->subscriptionTier;
-                    $sub->billing_cycle = $this->billingCycle;
-                    $sub->status = Subscription::STATUS_ACTIVE;
-                    $sub->starts_at = now();
-                    $sub->ends_at = ($this->billingCycle === Subscription::BILLING_MONTHLY) ? now()->addMonth() : now()->addYear();
-
-                    // Model Logic (Calculates price/features)
-                    $sub->amount = $sub->getPlanAmount();
-                    $features = $sub->getDefaultFeatures();
-                    $sub->features = $features;
-                    $sub->max_users = $features['max_users'] ?? 0;
-                    $sub->max_storage = $features['max_storage'] ?? 0;
-
-                    $sub->save();
-                });
+                // Store user/token in the closure scope for use after transaction
+                $this->tempUser = $user;
             });
 
-            // Reset form and notify user
-            $this->reset();
-            $this->subscriptionTier = Subscription::PLAN_BASIC;
-            $this->billingCycle = Subscription::BILLING_YEARLY;
-            LivewireAlert::title('Tenant Created')->success()->text('Invitation sent to ' . $this->adminEmail);
-        } catch (Throwable $e) {
-            // [FIX] Log specific error for Dozzle debugging
-            Log::error('TENANT_CREATION_FAILED', [
-                'error' => $e->getMessage(),
-                'domain' => $this->generatedDomain,
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-            LivewireAlert::title('Tenant Creation Failed')->error()->text('An error occurred while creating the tenant. Please check the logs for details.');
+            return $tenant;
+        });
+
+        // --- OUTSIDE TRANSACTION (Performance & Safety) ---
+
+        // 4. Handle Logo (S3)
+        if ($this->logo) {
+            $logoPath = $this->logo->store('logos', 's3');
+            $tenant->update(['logo' => $logoPath]);
         }
+
+        // 5. Send Email
+        $token = Password::broker()->createToken($this->tempUser);
+        Mail::to($this->tempUser->email)->queue(new UserInvitationMail($this->tempUser, $token));
+
+        $this->reset(['tenantName', 'phoneNumber', 'address', 'logo', 'generatedDomain', 'adminName', 'adminEmail']);
+        LivewireAlert::title('Tenant Created')->success()->text('Invitation sent to ' . $this->adminEmail);
+
+    } catch (Throwable $e) {
+        Log::error('TENANT_CREATION_FAILED', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ]);
+
+        // Provide a cleaner error message to the UI
+        $errorMessage = str_contains($e->getMessage(), 'SQLSTATE[23505]')
+            ? 'This domain or email is already taken.'
+            : 'Internal Server Error. Please check logs.';
+
+        LivewireAlert::title('Error')->error()->text($errorMessage);
     }
+}
 
     public function getPlansProperty()
     {

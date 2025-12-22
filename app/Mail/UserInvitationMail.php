@@ -19,60 +19,32 @@ class UserInvitationMail extends Mailable
     public $tenantName;
     public $tenantDomain;
 
-    /**
-     * Create a new message instance.
-     */
-    public function __construct(User $user, string $token)
+    // Receive the domain and name directly from the component
+    public function __construct(User $user, string $token, string $domain, string $name)
     {
         $this->user = $user;
+        $this->tenantDomain = $domain;
+        $this->tenantName = $name;
 
-        // 1. Get Tenant Details
-        $this->tenantName = tenant('name') ?? config('app.name');
-
-        // 2. Get the Correct Domain
-        // Priority: Verified domain record > tenant ID
-        $this->tenantDomain = tenant()->domains->first()->domain ?? tenant('id');
-
-        // 3. Generate the Relative Path
         $relativePath = route('tenant.password.reset', [
             'token' => $token,
             'email' => $user->email,
         ], false);
 
-        // 4. Construct the Full URL for Production
-        // We use https and remove :8000 because Nginx handles the proxy.
         $protocol = app()->environment('production') ? 'https://' : 'http://';
-
-        // Final URL: https://tenant.sanago.site/reset-password...
         $this->resetUrl = $protocol . $this->tenantDomain . $relativePath;
     }
 
-    /**
-     * Get the message envelope.
-     */
     public function envelope(): Envelope
     {
-        /**
-         * IMPORTANT FOR RESEND:
-         * If you verified 'sanago.site' in Resend, you can usually send from
-         * any subdomain like 'noreply@tenant.sanago.site'.
-         *
-         * If the tenant uses a custom domain (tenant.com) that isn't verified yet,
-         * Resend will fail. In that case, use: noreply@sanago.site
-         */
-        $senderEmail = "noreply@" . $this->tenantDomain;
-
-        // Fallback check: If the domain doesn't contain your master domain and isn't verified
-        // You might want to force the master domain to ensure delivery:
-        // $senderEmail = "onboarding@sanago.site";
-
+        // Using the passed-in domain string safely
         return new Envelope(
-            from: new Address($senderEmail, $this->tenantName),
+            from: new Address("noreply@sanago.site", $this->tenantName),
             subject: 'Welcome to ' . $this->tenantName . ' - Set your password',
         );
     }
 
-    /**
+      /**
      * Get the message content definition.
      */
     public function content(): Content
@@ -82,3 +54,4 @@ class UserInvitationMail extends Mailable
         );
     }
 }
+
