@@ -84,63 +84,72 @@ class CreateNewUser extends Component
         $this->generatedPassword = Str::password(16, true, true, true, false);
     }
 
-    public function saveUser()
+   public function saveUser()
     {
         $this->validate();
 
         $storedPath = null;
 
+        // Start Manual Transaction
+        DB::beginTransaction();
+
         try {
-            // 1. Start Transaction
-            DB::transaction(function () use ($storedPath) {
+            // 1. Upload File FIRST (If it fails, transaction hasn't even hit DB yet)
+            if ($this->profile_picture) {
+                $storedPath = $this->profile_picture->store('profile_pictures', 's3');
+            }
 
-                // Create User
-                $user = User::create([
-                    'name' => $this->name,
-                    'email' => $this->email,
-                    'phone_number' => $this->phone_number,
-                    'address' => $this->address,
-                    'gender' => $this->gender,
-                    'profile_picture' => $storedPath,
-                    'department_id' => $this->department_id,
-                    'hire_date' => $this->hire_date,
-                    'role' => $this->role,
-                    'is_active' => $this->is_active,
-                    'password' => Hash::make(Str::random(32)),
-                ]);
+            // 2. Create User
+            $user = User::create([
+                'name' => $this->name,
+                'email' => $this->email,
+                'phone_number' => $this->phone_number,
+                'address' => $this->address,
+                'gender' => $this->gender,
+                'profile_picture' => $storedPath,
+                'department_id' => $this->department_id,
+                'hire_date' => $this->hire_date,
+                'role' => $this->role,
+                'is_active' => $this->is_active,
+                'password' => Hash::make(Str::random(32)),
+                'tenant_id' => tenant('id'), // Ensure tenant_id is explicitly set if not global
+            ]);
 
-                // 2. Upload File (if exists)
-                if ($this->profile_picture) {
-                    $storedPath = $this->profile_picture->store('profile_pictures', 's3');
-                }
-                $token = Password::broker()->createToken($user);
-                // 3. Send Email
-                // [FIX] Queuing the modern email we created
-                Mail::to($user->email)->queue(new UserInvitationMail($user, $token,tenant()->domain, tenant()->name));
+            // 3. Create Token and Mail
+            $token = Password::broker()->createToken($user);
+            Mail::to($user->email)->queue(new UserInvitationMail($user, $token, tenant()->domain, tenant()->name));
 
-                // 4. Log Activity
-                $this->logActivity(
-                    'user_created',
-                    "admin created user {$user->name}",
-                    ['user_id' => $user->id]
-                );
-            });
+            // 4. Log Activity
+            $this->logActivity(
+                'user_created',
+                "admin created user {$user->name}",
+                ['user_id' => $user->id]
+            );
 
-            // 5. Success Response
+            // 5. Commit if everything succeeded
+            DB::commit();
+
             LivewireAlert::title('Success')->success()->text('User created and credentials sent to email.')->show();
             return redirect()->route('admin.user-management');
+
         } catch (\Throwable $e) {
-            // [FIX] Cleanup orphaned S3 file if DB transaction fails
+            // IMPORTANT: Rollback immediately to close the "Failed Transaction" state in Postgres
+            DB::rollBack();
+
+            // Cleanup S3 file since DB failed
             if ($storedPath) {
                 Storage::disk('s3')->delete($storedPath);
             }
 
-            Log::error('Error creating user.', [
-                'error' => $e->getMessage(),
+            // Log the REAL initial error (not the "transaction aborted" secondary error)
+            Log::error('USER_CREATION_FAILED', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'tenant_id' => tenant('id')
             ]);
 
-            LivewireAlert::title('Error')->error()->text('Failed to create user. Please try again.')->show();
+            $this->alert('error', 'Failed to create user: ' . $e->getMessage());
             return null;
         }
     }
