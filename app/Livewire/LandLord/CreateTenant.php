@@ -73,7 +73,7 @@ class CreateTenant extends Component
         $password = Str::password(16);
         $logoPath = null;
 
-        DB::beginTransaction();
+      
 
         try {
             // 1. Create Tenant (Central Table)
@@ -105,7 +105,7 @@ class CreateTenant extends Component
                     'email' => $this->adminEmail,
                     'password' => Hash::make($password),
                     'role' => 'admin',
-                    'tenant_id' => $tenant->id,
+
                 ]);
 
                 $token = Password::broker()->createToken($user);
@@ -128,8 +128,7 @@ class CreateTenant extends Component
                 $sub->save();
             });
 
-            // 5. Success!
-            DB::commit();
+
 
             $this->reset();
             $this->subscriptionTier = Subscription::PLAN_BASIC;
@@ -137,7 +136,7 @@ class CreateTenant extends Component
             LivewireAlert::title('Tenant Created')->success()->text('Invitation sent to ' . $this->adminEmail);
         } catch (\Throwable $e) {
             // CRITICAL: Undo the central transaction before logging/cleaning up
-            DB::rollBack();
+
 
             if ($logoPath) {
                 Storage::disk('s3')->delete($logoPath);
