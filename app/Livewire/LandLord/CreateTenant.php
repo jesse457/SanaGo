@@ -67,14 +67,19 @@ class CreateTenant extends Component
         $this->hospitalContactEmail = 'contact@' . $this->generatedDomain;
     }
 
-   public function createTenant()
+ public function createTenant()
 {
     $this->validate();
-    $password = Str::password(16);
+
+    // Set static password for testing as requested
+    $password = 'password';
+
+    // Use references to capture data inside the transaction for use outside
+    $token = null;
 
     try {
-        $tenant = DB::transaction(function () use ($password) {
-            // 1. Create Tenant
+        $tenant = DB::transaction(function () use ($password, &$token) {
+            // 1. Create Tenant (Central)
             $tenant = Tenant::create([
                 'name' => $this->tenantName,
                 'contact_email' => $this->hospitalContactEmail,
@@ -83,14 +88,13 @@ class CreateTenant extends Component
                 'subscription_tier' => $this->subscriptionTier,
             ]);
 
-            // 2. Create Domain
+            // 2. Create Domain (Central)
             $tenant->domains()->create([
                 'domain' => $this->generatedDomain
             ]);
 
-            // 3. Create Tenant-Specific Data
-            // In Single DB, this applies the 'tenant_id' to these records
-            $tenant->run(function () use ($password, $tenant) {
+            // 3. Create Tenant-Specific Data (Single DB scope)
+            $tenant->run(function () use ($password, &$token) {
                 $user = User::create([
                     'name' => $this->adminName,
                     'email' => $this->adminEmail,
@@ -98,7 +102,10 @@ class CreateTenant extends Component
                     'role' => 'admin',
                 ]);
 
-                // Create Subscription
+                // Generate Password Reset Token while inside the tenant context
+                $token = Password::broker()->createToken($user);
+
+                // Create Initial Subscription
                 $sub = new Subscription();
                 $sub->plan = $this->subscriptionTier;
                 $sub->billing_cycle = $this->billingCycle;
@@ -109,24 +116,36 @@ class CreateTenant extends Component
                 $sub->features = $sub->getDefaultFeatures();
                 $sub->save();
 
-                // Store user/token in the closure scope for use after transaction
+                // Assign to component property for access outside transaction
                 $this->tempUser = $user;
             });
 
             return $tenant;
         });
 
-        // --- OUTSIDE TRANSACTION (Performance & Safety) ---
+        // --- OUTSIDE TRANSACTION ---
+        // This prevents the "Poisoned Transaction" error if S3 or Mail fails.
 
-        // 4. Handle Logo (S3)
+        // 4. Handle Logo Upload
         if ($this->logo) {
-            $logoPath = $this->logo->store('logos', 's3');
-            $tenant->update(['logo' => $logoPath]);
+            try {
+                $logoPath = $this->logo->store('logos', 's3');
+                $tenant->update(['logo' => $logoPath]);
+            } catch (Throwable $e) {
+                Log::warning('Logo upload failed, but tenant was created.', ['error' => $e->getMessage()]);
+            }
         }
 
-        // 5. Send Email
-        $token = Password::broker()->createToken($this->tempUser);
-        Mail::to($this->tempUser->email)->queue(new UserInvitationMail($this->tempUser, $token, $this->generatedDomain, $this->tenantName));
+        // 5. Send Invitation Email
+        // We pass the string variables directly to avoid relationship lookup errors
+        if ($this->tempUser && $token) {
+            Mail::to($this->tempUser->email)->queue(new UserInvitationMail(
+                $this->tempUser,
+                $token,
+                $this->generatedDomain,
+                $this->tenantName
+            ));
+        }
 
         $this->reset(['tenantName', 'phoneNumber', 'address', 'logo', 'generatedDomain', 'adminName', 'adminEmail']);
         LivewireAlert::title('Tenant Created')->success()->text('Invitation sent to ' . $this->adminEmail);
@@ -136,12 +155,12 @@ class CreateTenant extends Component
             'message' => $e->getMessage(),
             'file' => $e->getFile(),
             'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString() // Added full trace for easier production debugging
         ]);
 
-        // Provide a cleaner error message to the UI
         $errorMessage = str_contains($e->getMessage(), 'SQLSTATE[23505]')
             ? 'This domain or email is already taken.'
-            : 'Internal Server Error. Please check logs.';
+            : 'Creation failed: ' . $e->getMessage();
 
         LivewireAlert::title('Error')->error()->text($errorMessage);
     }
