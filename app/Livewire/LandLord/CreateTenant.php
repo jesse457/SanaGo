@@ -126,7 +126,7 @@ class CreateTenant extends Component
 
         // 5. Send Email
         $token = Password::broker()->createToken($this->tempUser);
-        Mail::to($this->tempUser->email)->queue(new UserInvitationMail($this->tempUser, $token));
+        Mail::to($this->tempUser->email)->queue(new UserInvitationMail($this->tempUser, $token, $this->generatedDomain, $this->tenantName));
 
         $this->reset(['tenantName', 'phoneNumber', 'address', 'logo', 'generatedDomain', 'adminName', 'adminEmail']);
         LivewireAlert::title('Tenant Created')->success()->text('Invitation sent to ' . $this->adminEmail);
