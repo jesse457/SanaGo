@@ -90,8 +90,7 @@ class CreateNewUser extends Component
 
         $storedPath = null;
 
-        // Start Manual Transaction
-        DB::beginTransaction();
+
 
         try {
             // 1. Upload File FIRST (If it fails, transaction hasn't even hit DB yet)
@@ -126,15 +125,13 @@ class CreateNewUser extends Component
                 ['user_id' => $user->id]
             );
 
-            // 5. Commit if everything succeeded
-            DB::commit();
+
 
             LivewireAlert::title('Success')->success()->text('User created and credentials sent to email.')->show();
             return redirect()->route('admin.user-management');
 
         } catch (\Throwable $e) {
-            // IMPORTANT: Rollback immediately to close the "Failed Transaction" state in Postgres
-            DB::rollBack();
+         
 
             // Cleanup S3 file since DB failed
             if ($storedPath) {
