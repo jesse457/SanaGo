@@ -47,7 +47,7 @@ class CreateTenant extends Component
             'logo' => 'nullable|image|max:1024',
             'subscriptionTier' => ['required', Rule::in([Subscription::PLAN_BASIC, Subscription::PLAN_STANDARD, Subscription::PLAN_ENTERPRISE])],
             'billingCycle' => ['required', Rule::in([Subscription::BILLING_MONTHLY, Subscription::BILLING_YEARLY])],
-           
+
             'adminName' => 'required|string|max:255',
             'adminEmail' => ['required', 'email', 'max:255'],
         ];
@@ -61,95 +61,7 @@ class CreateTenant extends Component
         $this->hospitalContactEmail = 'contact@' . $this->generatedDomain;
     }
 
- public function createTenant()
-{
-    $this->validate();
 
-    // Set static password for testing as requested
-    $password = 'password';
-
-    // Use references to capture data inside the transaction for use outside
-    $token = null;
-
-    try {
-        $tenant = DB::transaction(function () use ($password, &$token) {
-            // 1. Create Tenant (Central)
-            $tenant = Tenant::create([
-                'name' => $this->tenantName,
-                'contact_email' => $this->hospitalContactEmail,
-                'phone_number' => $this->phoneNumber,
-                'address' => $this->address,
-                'subscription_tier' => $this->subscriptionTier,
-            ]);
-
-            // 2. Create Domain (Central)
-            $tenant->domains()->create([
-                'domain' => $this->generatedDomain
-            ]);
-
-            // 3. Create Tenant-Specific Data (Single DB scope)
-            $tenant->run(function () use ($password, &$token) {
-                $user = User::create([
-                    'name' => $this->adminName,
-                    'email' => $this->adminEmail,
-                    'password' => Hash::make($password),
-                    'role' => 'admin',
-                ]);
-
-                // Generate Password Reset Token while inside the tenant context
-                $token = Password::broker()->createToken($user);
-
-                // Create Initial Subscription
-                $sub = new Subscription();
-                $sub->plan = $this->subscriptionTier;
-                $sub->billing_cycle = $this->billingCycle;
-                $sub->status = Subscription::STATUS_ACTIVE;
-                $sub->starts_at = now();
-                $sub->ends_at = ($this->billingCycle === Subscription::BILLING_MONTHLY) ? now()->addMonth() : now()->addYear();
-                $sub->amount = $sub->getPlanAmount();
-                $sub->features = $sub->getDefaultFeatures();
-                $sub->save();
-
-                // Assign to component property for access outside transaction
-                $this->tempUser = $user;
-            });
-
-            return $tenant;
-        });
-
-        // --- OUTSIDE TRANSACTION ---
-        // This prevents the "Poisoned Transaction" error if S3 or Mail fails.
-
-        // 4. Handle Logo Upload
-        if ($this->logo) {
-            try {
-                $logoPath = $this->logo->store('logos', 's3');
-                $tenant->update(['logo' => $logoPath]);
-            } catch (Throwable $e) {
-                Log::warning('Logo upload failed, but tenant was created.', ['error' => $e->getMessage()]);
-            }
-        }
-
-
-
-        $this->reset(['tenantName', 'phoneNumber', 'address', 'logo', 'generatedDomain', 'adminName', 'adminEmail']);
-        LivewireAlert::title('Tenant Created')->success()->text('Invitation sent to ' . $this->adminEmail);
-
-    } catch (Throwable $e) {
-        Log::error('TENANT_CREATION_FAILED', [
-            'message' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'trace' => $e->getTraceAsString() // Added full trace for easier production debugging
-        ]);
-
-        $errorMessage = str_contains($e->getMessage(), 'SQLSTATE[23505]')
-            ? 'This domain or email is already taken.'
-            : 'Creation failed: ' . $e->getMessage();
-
-        LivewireAlert::title('Error')->error()->text($errorMessage);
-    }
-}
 
     public function getPlansProperty()
     {
