@@ -110,7 +110,7 @@ class CreateTenant extends Component
                 $token = Password::broker()->createToken($user);
 
                 // Send Invitation Email via Queue (Dozzle will show the mail logs)
-                Mail::to($user->email)->queue(new UserInvitationMail($user, $token));
+                Mail::to($user->email)->queue(new UserInvitationMail($user, $token, $this->generatedDomain, $this->tenantName));
 
                 // Create Initial Subscription Record
                 $sub = new Subscription();
