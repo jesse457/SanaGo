@@ -136,16 +136,7 @@ class CreateTenant extends Component
             }
         }
 
-        // 5. Send Invitation Email
-        // We pass the string variables directly to avoid relationship lookup errors
-        if ($this->tempUser && $token) {
-            Mail::to($this->tempUser->email)->queue(new UserInvitationMail(
-                $this->tempUser,
-                $token,
-                $this->generatedDomain,
-                $this->tenantName
-            ));
-        }
+     
 
         $this->reset(['tenantName', 'phoneNumber', 'address', 'logo', 'generatedDomain', 'adminName', 'adminEmail']);
         LivewireAlert::title('Tenant Created')->success()->text('Invitation sent to ' . $this->adminEmail);
