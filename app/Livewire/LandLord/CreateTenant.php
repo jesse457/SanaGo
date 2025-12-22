@@ -47,13 +47,7 @@ class CreateTenant extends Component
             'logo' => 'nullable|image|max:1024',
             'subscriptionTier' => ['required', Rule::in([Subscription::PLAN_BASIC, Subscription::PLAN_STANDARD, Subscription::PLAN_ENTERPRISE])],
             'billingCycle' => ['required', Rule::in([Subscription::BILLING_MONTHLY, Subscription::BILLING_YEARLY])],
-            'generatedDomain' => [
-                'required',
-                'string',
-                'lowercase',
-                Rule::unique('domains', 'domain'), // Check the domains table
-
-            ],
+           
             'adminName' => 'required|string|max:255',
             'adminEmail' => ['required', 'email', 'max:255'],
         ];
@@ -136,7 +130,7 @@ class CreateTenant extends Component
             }
         }
 
-     
+
 
         $this->reset(['tenantName', 'phoneNumber', 'address', 'logo', 'generatedDomain', 'adminName', 'adminEmail']);
         LivewireAlert::title('Tenant Created')->success()->text('Invitation sent to ' . $this->adminEmail);
