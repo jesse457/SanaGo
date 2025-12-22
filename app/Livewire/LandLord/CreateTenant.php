@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
@@ -149,7 +150,7 @@ class CreateTenant extends Component
                 'domain' => $this->generatedDomain
             ]);
 
-            $this->alert('error', 'Creation Failed: ' . $e->getMessage());
+            LivewireAlert::title('Tenant Creation Failed')->error()->text('Error: ' . $e->getMessage());
         }
     }
 
