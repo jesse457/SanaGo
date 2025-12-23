@@ -89,12 +89,13 @@ public function saveUser()
 {
     $this->validate();
     $storedPath = null;
+    $user = null; // Initialize user variable
 
     try {
-        // We use the result of the transaction to determine the redirect
-        DB::transaction(function () use (&$storedPath) {
+        // --- STEP 1: DATABASE TRANSACTION (Only User Creation) ---
+        DB::transaction(function () use (&$storedPath, &$user) {
 
-            // 1. Upload File
+            // 1. Upload File (Move inside or keep outside, but inside allows rollback if S3 fails immediately)
             if ($this->profile_picture) {
                 $storedPath = $this->profile_picture->store('profile_pictures', 's3');
             }
@@ -115,20 +116,28 @@ public function saveUser()
                 'tenant_id'       => tenant('id'),
             ]);
 
-            // 3. Create Token and Queue Mail
+            // Log activity here if needed
+            // $this->logActivity('user_created', "admin created user {$user->name}", ['user_id' => $user->id]);
+        });
+
+        // --- STEP 2: NON-TRANSACTIONAL OPERATIONS ---
+        // We do this AFTER the transaction commits successfully.
+
+        if ($user) {
+            // 3. Create Token
+            // This interacts with 'password_reset_tokens'.
+            // Doing it here ensures a clean state and won't crash the User creation transaction.
             $token = Password::broker()->createToken($user);
 
+            // 4. Queue Mail
             Mail::to($user->email)->queue(new UserInvitationMail(
                 $user,
                 $token,
                 tenant()->domains->first()->domain ?? request()->getHost(),
                 tenant('name')
             ));
+        }
 
-            // $this->logActivity('user_created', "admin created user {$user->name}", ['user_id' => $user->id]);
-        });
-
-        // Only runs if transaction succeeds
         LivewireAlert::title('Success')->success()->text('User created and credentials sent to email.')->show();
         return redirect()->route('admin.user-management');
 
@@ -138,25 +147,18 @@ public function saveUser()
             Storage::disk('s3')->delete($storedPath);
         }
 
-        // 2. DIG FOR THE REAL ERROR
-        // If the error is "Transaction aborted", the real error is usually inside getPrevious()
+        // 2. Get Real Error
         $realError = $e;
         if (str_contains($e->getMessage(), 'current transaction is aborted') && $e->getPrevious()) {
             $realError = $e->getPrevious();
         }
 
-        // 3. PREPARE CLEAN MESSAGE FOR UI
-        // If it's a database query error, the message includes the full SQL.
-        // We want to show the 'SQLSTATE' message, not the whole query.
         $uiMessage = $realError->getMessage();
 
         if ($realError instanceof \Illuminate\Database\QueryException) {
-            // This grabs just the error code and message (e.g., "Duplicate entry 'x' for key 'y'")
-            // ignoring the 50 lines of SQL context.
             $uiMessage = $realError->errorInfo[2] ?? $realError->getMessage();
         }
 
-        // 4. LOG THE FULL TECHNICAL DETAILS
         Log::error('USER_CREATION_FAILED', [
             'original_message' => $e->getMessage(),
             'root_cause'       => $realError->getMessage(),
@@ -164,10 +166,8 @@ public function saveUser()
             'line'             => $realError->getLine(),
         ]);
 
-        // 5. SHOW HUMAN READABLE ERROR
         LivewireAlert::title('Error')->error()->text('Failed to create user: ' . $uiMessage)->show();
 
-        // Do not redirect; let the user see the error and fix the form
         return null;
     }
 }
