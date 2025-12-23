@@ -84,7 +84,7 @@ class CreateNewUser extends Component
         $this->generatedPassword = Str::password(16, true, true, true, false);
     }
 
-  
+
 public function saveUser()
 {
     $this->validate();
@@ -125,7 +125,7 @@ public function saveUser()
                 tenant('name')
             ));
 
-            $this->logActivity('user_created', "admin created user {$user->name}", ['user_id' => $user->id]);
+            // $this->logActivity('user_created', "admin created user {$user->name}", ['user_id' => $user->id]);
         });
 
         // Only runs if transaction succeeds
