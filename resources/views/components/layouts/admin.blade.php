@@ -7,7 +7,7 @@
     <title>{{ config('app.name', 'Landlord Portal') }}</title>
 
     <!-- Fonts & Icons -->
-    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ Storage::disk('central_public')->url('images/logo.png') }}">
     <style>
         [x-cloak] { display: none !important; }
         /* Custom scrollbar for sidebar */

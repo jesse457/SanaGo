@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name', 'Laravel') }}</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <link rel="icon" type="image/png" href="{{ Storage::disk('central_public')->url('images/logo.png') }}">
     <style>
         [x-cloak] { display: none !important; }
         /* Smooth transition for the margin change */

@@ -8,14 +8,21 @@
 
     <title>{{ config('app.name', 'Laravel') }}</title>
 
+    <!-- Google Search Branding -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "url": "{{ url('/') }}",
+      "logo": "{{ asset('images/logo.png') }}"
+    }
+    </script>
+
+    <!-- Icons -->
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-
-   
-
-    <!-- Tailwind CSS CDN (if not using local build) -->
+    <link rel="apple-touch-icon" href="{{ asset('images/logo.png') }}">
 
     <style>
-
         body {
             font-family: 'Inter', sans-serif;
         }
@@ -27,34 +34,27 @@
 
         ::-webkit-scrollbar-track {
             background: #2a4365;
-            /* Darker blue for track */
             border-radius: 10px;
         }
 
         ::-webkit-scrollbar-thumb {
             background: #63b3ed;
-            /* Lighter blue for thumb */
             border-radius: 10px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
             background: #90cdf4;
-            /* Even lighter blue on hover */
         }
     </style>
-    <!-- Livewire Styles -->
-    @livewireStyles
 
-    <!-- Scripts -->
+    @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class=" antialiased bg-gray-100">
+<body class="antialiased bg-gray-100">
 
     {{ $slot }}
 
-    <!-- Livewire Scripts -->
     @livewireScripts
 </body>
-
 </html>
