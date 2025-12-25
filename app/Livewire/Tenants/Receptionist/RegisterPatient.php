@@ -38,11 +38,15 @@ class RegisterPatient extends Component
             'gender' => 'required|in:male,female,other',
             'address' => 'nullable|string|max:500',
             'phone' => [
-                'nullable', 'string', 'max:20',
+                'nullable',
+                'string',
+                'max:20',
                 Rule::unique('patients', 'phone')->where('tenant_id', $tenantId)->ignore(null, 'phone'),
             ],
             'email' => [
-                'required', 'email', 'max:255',
+                'required',
+                'email',
+                'max:255',
                 Rule::unique('patients', 'email')->where('tenant_id', $tenantId),
             ],
         ];
@@ -54,50 +58,46 @@ class RegisterPatient extends Component
 
         try {
             // [FIX] Start Transaction on the direct connection
-            DB::connection('pgsql_transaction')->beginTransaction();
+            DB::connection('pgsql_transaction')->transaction(function ($static) {
+                $patientUid = 'PT-' . Str::upper(Str::random(6));
+                while (Patient::where('patient_uid', $patientUid)->exists()) {
+                    $patientUid = 'PT-' . Str::upper(Str::random(6));
+                }
 
-            $patientUid = 'PT-'.Str::upper(Str::random(6));
-            while (Patient::where('patient_uid', $patientUid)->exists()) {
-                $patientUid = 'PT-'.Str::upper(Str::random(6));
-            }
+                $patient = Patient::create([
+                    'patient_uid' => $patientUid,
+                    'first_name' => $this->first_name,
+                    'last_name' => $this->last_name,
+                    'age' => $this->age,
+                    'gender' => $this->gender,
+                    'address' => $this->address,
+                    'phone' => $this->phone,
+                    'email' => $this->email,
+                ]);
 
-            $patient = Patient::create([
-                'patient_uid' => $patientUid,
-                'first_name' => $this->first_name,
-                'last_name' => $this->last_name,
-                'age' => $this->age,
-                'gender' => $this->gender,
-                'address' => $this->address,
-                'phone' => $this->phone,
-                'email' => $this->email,
-            ]);
+                $name = Auth::user()->name;
 
-            $name = Auth::user()->name;
+                $this->logActivity(
+                    'patient_registered',
+                    "Registered patient #$patient->id ($patientUid): {$this->first_name} {$this->last_name} by Receptionist {$name}",
+                    [
+                        'patient_id' => $patient->id,
+                        'receptionist_id' => Auth::id(),
+                    ]
+                );
+            });
 
-            $this->logActivity(
-                'patient_registered',
-                "Registered patient #$patient->id ($patientUid): {$this->first_name} {$this->last_name} by Receptionist {$name}",
-                [
-                    'patient_id' => $patient->id,
-                    'receptionist_id' => Auth::id(),
-                ]
-            );
-
-            // [FIX] Commit transaction
-            DB::connection('pgsql_transaction')->commit();
 
             LivewireAlert::title('Success')
                 ->success()
-                ->text('Patient '.$this->first_name.' '.$this->last_name.' has been successfully Registered')
+                ->text('Patient ' . $this->first_name . ' ' . $this->last_name . ' has been successfully Registered')
                 ->show();
 
             $this->resetForm();
-
         } catch (\Exception $e) {
-            // [FIX] Rollback immediately on error
-            DB::connection('pgsql_transaction')->rollBack();
 
-            Log::error('Patient registration failed: '.$e->getMessage());
+
+            Log::error('Patient registration failed: ' . $e->getMessage());
 
             // Handle Unique Violations specifically
             if (Str::contains($e->getMessage(), 'unique constraint')) {

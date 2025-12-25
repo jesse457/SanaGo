@@ -200,7 +200,7 @@ class Medications extends Component
         $pharmacistId = Auth::id();
         $pharmacistName = Auth::user()->name ?? __('pharmacist.medications_component.fallback_pharmacist_name');
         try {
-            DB::transaction(function () use ($pharmacistName, $items, $pharmacistId) {
+            DB::connection('pgsql_transaction')->transaction(function () use ($pharmacistName, $items, $pharmacistId) {
                 foreach ($items as $item) {
                     $itemId = $item->id;
                     $newlyIssued = (int) ($this->dispensedQuantities[$itemId] ?? 0);

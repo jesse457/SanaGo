@@ -282,7 +282,7 @@ class MedicalRecord extends Component
 
         try {
             // We use DB transaction to ensure data integrity
-            DB::transaction(function () use ($finalize) {
+            DB::connection('pgsql_transaction')->transaction(function () use ($finalize) {
 
                 // 1. SAVE MEDICAL RECORD
                 $data = [
@@ -381,7 +381,7 @@ class MedicalRecord extends Component
                     $currentRequestIds[] = $labReq->id;
                 }
 
-              
+
 
                 // 5. EVENT BROADCASTING (HIGH EFFICIENCY)
 

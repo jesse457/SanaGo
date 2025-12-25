@@ -10,6 +10,7 @@ use App\Traits\UserActivitiesTrait;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
@@ -54,6 +55,7 @@ class EnterResults extends Component
         ]);
 
         try {
+            DB::connection('pgsql_transaction')->transaction(function () {
             // 1. Update Request Status
             $this->labRequest->update([
                 'status' => 'Completed',
@@ -108,7 +110,7 @@ class EnterResults extends Component
                     'lab_result_id' => $result->id,
                 ]
             );
-
+        });
             LivewireAlert::title('Success')->text('Lab results saved & sent to doctor.')->success()->show();
 
             return redirect()->route('lab-technician.lab-results');

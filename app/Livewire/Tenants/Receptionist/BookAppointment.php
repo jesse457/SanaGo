@@ -152,7 +152,7 @@ class BookAppointment extends Component
         $nextPosition = null;
 
         try {
-            DB::transaction(function () use ($doctor, $patient, $appointmentDateTime, &$nextPosition) {
+            DB::connection('pgsql_transaction')->transaction(function () use ($doctor, $patient, $appointmentDateTime, &$nextPosition) {
 
                 // Block duplicate active appointments
                 $isAlreadyActive = Appointment::query()

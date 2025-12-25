@@ -10,6 +10,7 @@ use App\Models\Patient;
 use App\Traits\UserActivitiesTrait;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
@@ -114,6 +115,7 @@ class ViewAdmissionDetails extends Component
         }
 
         try {
+            DB::connection('pgsql_transaction')->transaction(function () use ($admissionToUpdate, $newStatus) {
             // Update the admission status
             $admissionToUpdate->update([
                 'status' => $newStatus,
@@ -136,10 +138,11 @@ class ViewAdmissionDetails extends Component
             $this->logActivity('Patient_discharged',
                 "Patient '{$this->patient->first_name} {$this->patient->last_name}' was Discharged "
             );
+        });
             LivewireAlert::title('Success')->success()->text("Patient '{$this->patient->first_name} {$this->patient->last_name}' successfully {$newStatus}.")->show();
         } catch (\Exception $e) {
             LivewireAlert::title('Success')->success()->text('Failed to update admission status if this error persist contact us')->show();
-            Log::error('Failed to update admission status: '.$e->getMessage());
+            Log::error('Failed to update admission status: ' . $e->getMessage());
         }
     }
 

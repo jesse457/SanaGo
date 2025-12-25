@@ -8,6 +8,7 @@ use App\Models\Patient;
 use App\Traits\UserActivitiesTrait;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
@@ -72,46 +73,46 @@ class AdmitPatient extends Component
         $this->validate();
 
         try {
-            // 2. Update the properties of the existing admission record
-            $this->admission->fill([
-                'bed_id' => $this->bedId,
-                'reason_for_admission' => $this->reasonForAdmission,
-                'admission_date' => $this->admissionDate,
-                'status' => 'Admitted', // This is the key status change
-                'observation_fee' => $this->observationFee,
-                'admitted_by' => Auth::id(), // Track who admitted the patient
-            ]);
+            DB::connection('pgsql_transaction')->transaction(function () {
+                // 2. Update the properties of the existing admission record
+                $this->admission->fill([
+                    'bed_id' => $this->bedId,
+                    'reason_for_admission' => $this->reasonForAdmission,
+                    'admission_date' => $this->admissionDate,
+                    'status' => 'Admitted', // This is the key status change
+                    'observation_fee' => $this->observationFee,
+                    'admitted_by' => Auth::id(), // Track who admitted the patient
+                ]);
 
-            // 3. Save the updated admission record
-            $this->admission->save();
+                // 3. Save the updated admission record
+                $this->admission->save();
 
-            // 4. Mark the newly selected bed as occupied
-            $bed = Bed::find($this->bedId);
-            if ($bed) {
-                $bed->is_occupied = true;
-                $bed->save();
-            }
+                // 4. Mark the newly selected bed as occupied
+                $bed = Bed::find($this->bedId);
+                if ($bed) {
+                    $bed->is_occupied = true;
+                    $bed->save();
+                }
 
-            // 5. Log the activity
-            $this->logActivity(
-                'Patient_Admission_Confirmed',
-                'Confirmed admission for patient '.$this->patient->full_name,
-                [
-                    'patient_id' => $this->patient->id,
-                    'admission_id' => $this->admission->id,
-                ]
-            );
-
+                // 5. Log the activity
+                $this->logActivity(
+                    'Patient_Admission_Confirmed',
+                    'Confirmed admission for patient ' . $this->patient->full_name,
+                    [
+                        'patient_id' => $this->patient->id,
+                        'admission_id' => $this->admission->id,
+                    ]
+                );
+            });
             // 6. Show success message and redirect
             LivewireAlert::title('Admission Confirmed!')
                 ->success()
                 ->text("Patient {$this->patient->full_name} has been successfully admitted.")
                 ->show();
 
-            $this->js('setTimeout(() => window.location.href = "'.route('receptionist.checkin').'", 2500)');
-
+            $this->js('setTimeout(() => window.location.href = "' . route('receptionist.checkin') . '", 2500)');
         } catch (\Exception $e) {
-            Log::error('Admission confirmation failed: '.$e->getMessage());
+            Log::error('Admission confirmation failed: ' . $e->getMessage());
             LivewireAlert::error('Error', 'Failed to admit patient. Please try again.')->show();
         }
     }
