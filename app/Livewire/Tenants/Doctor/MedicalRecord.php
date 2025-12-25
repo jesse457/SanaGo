@@ -78,7 +78,7 @@ class MedicalRecord extends Component
 
         // Optimized queries for dropdowns
         $this->allMedications = Medication::select('id', 'name', 'stock_quantity')->orderBy('name')->get();
-        $this->allLabTests = LabTestDefinition::select('id', 'test_name', 'code')->orderBy('test_name')->get();
+        $this->allLabTests = LabTestDefinition::all();
         $this->labTechnicianOptions = User::where('role', 'lab-technician')->select('id', 'name')->orderBy('name')->get();
     }
 

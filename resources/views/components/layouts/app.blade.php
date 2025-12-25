@@ -11,8 +11,8 @@
     <!-- Google Search Branding -->
     <script type="application/ld+json">
     {
-      "@context": "https://schema.org",
-      "@type": "Organization",
+      "@@context": "https://schema.org",
+      "@@type": "Organization",
       "url": "{{ url('/') }}",
       "logo": "{{ asset('images/logo.png') }}"
     }
@@ -23,28 +23,11 @@
     <link rel="apple-touch-icon" href="{{ asset('images/logo.png') }}">
 
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-
-        /* Custom scrollbar for better aesthetics */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #2a4365;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #63b3ed;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #90cdf4;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #2a4365; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #63b3ed; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #90cdf4; }
     </style>
 
     @livewireStyles
@@ -52,9 +35,7 @@
 </head>
 
 <body class="antialiased bg-gray-100">
-
     {{ $slot }}
-
     @livewireScripts
 </body>
 </html>
