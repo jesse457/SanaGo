@@ -1,4 +1,4 @@
-name: Build and Push Docker Image to GHCR
+name: Build, Push, and Deploy
 
 on:
   push:
@@ -20,9 +20,9 @@ jobs:
 
     steps:
       - name: Checkout repository
+        uses: appleboy/ssh-action@v1.2.0 # Updated to 2025 version
         uses: actions/checkout@v4
 
-      # Required for GHA caching support in build-push-action
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -46,15 +46,38 @@ jobs:
 
       - name: Build and push Docker image
         id: push-step
-        uses: docker/build-push-action@v6  # Updated to v6 for latest 2025 features
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # 2025 BEST PRACTICE: Use type=gha for fastest caching on GitHub
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            BUILD_DATE=${{ github.event.head_commit.timestamp }}
-            VCS_REF=${{ github.sha }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push  # Only run if build succeeds
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' # Only deploy on main branch pushes
+
+    steps:
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOST_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /var/www/my-app
+            # Log in to GHCR on your server (Optional if already logged in)
+            # echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Pull the new image
+            docker compose pull
+
+            # Restart containers with the new image
+            docker compose up -d
+
+            # Run Laravel optimizations (Removed -it for CI compatibility)
+            docker exec sanago_app php artisan optimize
