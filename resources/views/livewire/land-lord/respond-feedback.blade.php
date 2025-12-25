@@ -1,132 +1,189 @@
-<div class=" p-4 md:p-8 max-w-full mx-auto space-y-4 p-2 md:p-4  min-h-screen font-sans">
+<main class="w-full min-h-screen bg-slate-50 dark:bg-gray-950 font-sans text-slate-600 dark:text-slate-300 pb-20">
 
-    {{-- Breadcrumb --}}
-    <nav class="flex mb-6" aria-label="Breadcrumb">
-        <ol class="inline-flex items-center space-x-1 md:space-x-2 text-sm text-slate-500 dark:text-slate-400">
-            <li class="hover:text-indigo-600 transition"><a href="{{ route('landlord.dashboard') }}" wire:navigate>Dashboard</a></li>
-            <li><x-heroicon-s-chevron-right class="w-3 h-3 text-slate-400" /></li>
-            <li class="hover:text-indigo-600 transition"><a href="{{ route('landlord.feedbacks') }}" wire:navigate>Complaints</a></li>
-            <li><x-heroicon-s-chevron-right class="w-3 h-3 text-slate-400" /></li>
-            <li class="font-medium text-slate-900 dark:text-white truncate">Ticket #{{ $feedback->id }}</li>
-        </ol>
-    </nav>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {{-- LEFT COLUMN: Context Card --}}
-        <div class="space-y-6">
-            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 overflow-hidden">
-                <div class="p-5 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800">
-                    <h3 class="font-bold text-slate-900 dark:text-white">Ticket Details</h3>
+    {{-- 1. ENHANCED STICKY HEADER --}}
+    {{-- Removed lg:top-10 to prevent weird gaps on desktop. Sticky at top-0. --}}
+    <header class="sticky top-0 z-20 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-slate-200 dark:border-gray-800 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3 min-w-0">
+                <a href="{{ route('landlord.feedbacks') }}"
+                   class="p-2 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors text-slate-500"
+                   title="Back to List">
+                    <x-heroicon-m-arrow-left class="w-5 h-5" />
+                </a>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Ticket #{{ $feedback->id }}</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide {{ $feedback->status === 'open' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10' : 'bg-slate-100 text-slate-600' }}">
+                            {{ $feedback->status }}
+                        </span>
+                    </div>
+                    <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
+                        {{ $feedback->subject }}
+                    </h2>
                 </div>
+            </div>
 
-                <div class="p-5 space-y-5">
-                    {{-- User Info --}}
-                    <div class="flex items-center gap-3">
-                        <div class="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold">
-                            {{ substr($feedback->user->name ?? 'U', 0, 1) }}
-                        </div>
-                        <div class="overflow-hidden">
-                            <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ $feedback->user->name }}</p>
-                            <p class="text-xs text-slate-500 truncate">{{ $feedback->tenant->name ?? 'Unknown Tenant' }}</p>
+            {{-- Quick Action for Mobile (Status) --}}
+            <div class="lg:hidden">
+                <button @click="$dispatch('open-sidebar')" class="p-2 bg-slate-100 dark:bg-gray-800 rounded-lg">
+                    <x-heroicon-o-adjustments-horizontal class="w-5 h-5" />
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+            {{-- 2. LEFT COLUMN: Conversation (8 Cols) --}}
+            <div class="lg:col-span-8 space-y-8">
+
+                {{-- REPLY EDITOR --}}
+                <div x-data="{ tab: 'reply' }" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-slate-200 dark:border-gray-800 overflow-hidden">
+                    <div class="flex items-center justify-between p-2 border-b border-slate-100 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-950/50">
+                        <div class="flex gap-1">
+                            <button @click="tab = 'reply'"
+                                :class="tab === 'reply' ? 'bg-white dark:bg-gray-800 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500'"
+                                class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
+                                <x-heroicon-s-arrow-turn-down-left class="w-3.5 h-3.5"/> Reply
+                            </button>
+                            <button @click="tab = 'note'"
+                                :class="tab === 'note' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 ring-1 ring-amber-200 dark:ring-amber-800' : 'text-slate-500'"
+                                class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
+                                <x-heroicon-s-pencil-square class="w-3.5 h-3.5"/> Private Note
+                            </button>
                         </div>
                     </div>
 
-                    <hr class="border-slate-100 dark:border-slate-700/60">
+                    <form wire:submit="sendResponse" class="p-4">
+                        <div x-show="tab === 'reply'" x-transition>
+                            <textarea wire:model="response" rows="4"
+                                class="block w-full rounded-xl border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm p-4 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                placeholder="Write your message..."></textarea>
 
-                    {{-- Metadata --}}
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <span class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Status</span>
-                             <div x-data="{ status: @entangle('status') }" class="relative">
-                                <select wire:model.live="status" class="appearance-none w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-semibold rounded-lg py-2 pl-3 pr-8 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer">
-                                    <option value="open">Open</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="resolved">Resolved</option>
-                                    <option value="closed">Closed</option>
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-                                    <x-heroicon-s-chevron-down class="w-3 h-3" />
-                                </div>
+                            <div class="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-500 cursor-pointer">
+                                    <input type="checkbox" wire:model="sendEmail" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                    Notify user via email
+                                </label>
+                                <button type="submit"
+                                    class="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95">
+                                    <span>Send Response</span>
+                                    <x-heroicon-s-paper-airplane class="w-4 h-4"/>
+                                </button>
                             </div>
                         </div>
-                       
-                        <div class="col-span-2">
-                             <span class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Category</span>
-                             <div class="text-sm font-medium text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                                {{ ucfirst($feedback->category) }}
-                             </div>
+
+                        <div x-show="tab === 'note'" x-cloak x-transition>
+                            <textarea wire:model="internalNote" rows="3"
+                                class="block w-full rounded-xl border-amber-200 dark:border-amber-900/50 bg-amber-50/30 dark:bg-amber-900/10 text-sm p-4 text-amber-900 dark:text-amber-200 focus:ring-0"
+                                placeholder="Visible only to administrators..."></textarea>
+                            <div class="mt-4 flex justify-end">
+                                <button type="button" class="bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-5 py-2 rounded-xl text-xs font-bold transition-all">
+                                    Save Internal Note
+                                </button>
+                            </div>
                         </div>
-                        <div class="col-span-2">
-                             <span class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Submitted</span>
-                             <div class="text-sm text-slate-800 dark:text-slate-200">
-                                {{ $feedback->created_at->format('M d, Y \a\t h:i A') }}
-                             </div>
+                    </form>
+                </div>
+
+                {{-- TIMELINE --}}
+                <div class="relative space-y-0">
+                    {{-- Vertical Line --}}
+                    <div class="absolute left-5 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-gray-800"></div>
+
+                    {{-- Original Message --}}
+                    <div class="relative pl-12 pb-10">
+                        <div class="absolute left-0 top-0 h-10 w-10 rounded-full bg-slate-100 dark:bg-gray-800 border-4 border-slate-50 dark:border-gray-950 flex items-center justify-center z-10">
+                            <span class="text-xs font-bold text-slate-600 dark:text-slate-400">{{ substr($feedback->user->name, 0, 1) }}</span>
+                        </div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="font-bold text-slate-900 dark:text-white text-sm">{{ $feedback->user->name }}</span>
+                            <span class="text-[11px] text-slate-400">{{ $feedback->created_at->format('M d, Y • h:i A') }}</span>
+                        </div>
+                        <div class="bg-white dark:bg-gray-900 rounded-2xl rounded-tl-none border border-slate-200 dark:border-gray-800 p-5 shadow-sm">
+                            <div class="prose prose-sm prose-slate dark:prose-invert max-w-none">
+                                {!! nl2br(e($feedback->message)) !!}
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Response Example --}}
+                    <div class="relative pl-12">
+                        <div class="absolute left-0 top-0 h-10 w-10 rounded-full bg-indigo-600 border-4 border-slate-50 dark:border-gray-950 flex items-center justify-center z-10">
+                            <x-heroicon-s-user class="w-5 h-5 text-white" />
+                        </div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="font-bold text-slate-900 dark:text-white text-sm">You (Support)</span>
+                            <span class="text-[11px] text-slate-400">2 hours ago</span>
+                        </div>
+                        <div class="bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl rounded-tl-none border border-indigo-100 dark:border-indigo-800/50 p-5 shadow-sm">
+                            <p class="text-sm text-slate-700 dark:text-slate-300">Thank you for reporting this. We have assigned a technician to check the issue.</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        {{-- RIGHT COLUMN: Conversation --}}
-        <div class="lg:col-span-2 space-y-6">
+            {{-- 3. RIGHT COLUMN: Meta Info (4 Cols) --}}
+            {{-- Added lg:sticky so it stays visible while scrolling conversation --}}
+            <aside class="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
 
-            {{-- Original Message Bubble --}}
-            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 p-6 relative">
-                <div class="absolute top-0 left-0 w-1 h-full bg-slate-200 dark:bg-slate-700 rounded-l-2xl"></div>
-
-                <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4">{{ $feedback->subject }}</h2>
-
-                <div class="prose prose-sm prose-slate dark:prose-invert max-w-none text-slate-600 dark:text-slate-300">
-                    {!! nl2br(e($feedback->message)) !!}
-                </div>
-            </div>
-
-            {{-- Response Editor --}}
-            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 overflow-hidden ring-1 ring-indigo-500/10 dark:ring-indigo-500/20">
-                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800 flex justify-between items-center">
-                    <h3 class="font-bold text-slate-900 dark:text-white text-sm">Post a Reply</h3>
-
-                    <div class="flex items-center gap-4">
-                        <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 cursor-pointer">
-                            <input type="checkbox" wire:model="sendEmail" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                            Email
-                        </label>
-                        <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 cursor-pointer">
-                            <input type="checkbox" wire:model="sendInApp" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                            In-App
-                        </label>
-                    </div>
-                </div>
-
-                <form wire:submit="sendResponse" class="p-6 space-y-4">
-                    <div class="relative">
-                        <textarea wire:model="response" rows="6"
-                            class="block w-full rounded-xl border-0 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white shadow-inner ring-1 ring-inset ring-slate-200 dark:ring-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 resize-y p-4"
-                            placeholder="Write your response here..."></textarea>
-                        @error('response') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                {{-- Ticket Details Card --}}
+                <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-slate-200 dark:border-gray-800 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-100 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-950/50 flex items-center justify-between">
+                        <h3 class="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-widest">Properties</h3>
+                        <x-heroicon-o-information-circle class="w-4 h-4 text-slate-400" />
                     </div>
 
-                    <div class="flex items-center justify-between">
-                        <div class="text-xs text-slate-400">
-                            Responding to <span class="font-semibold">{{ $feedback->user->name }}</span>
+                    <div class="p-5 space-y-5">
+                        {{-- Status Select --}}
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Status</label>
+                            <select wire:model.live="status"
+                                class="w-full rounded-xl border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800 text-sm font-bold focus:ring-indigo-500 py-2.5">
+                                <option value="open">Open</option>
+                                <option value="pending">Pending</option>
+                                <option value="resolved">Resolved</option>
+                                <option value="closed">Closed</option>
+                            </select>
                         </div>
-                        <div class="flex gap-3">
-                            <button type="button" wire:click="saveDraft" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700 transition">
-                                Save Draft
-                            </button>
-                            <button type="submit" wire:loading.attr="disabled" class="px-6 py-2 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-500/20 disabled:opacity-70 disabled:cursor-not-allowed transition flex items-center gap-2">
-                                <span wire:loading.remove>Send Response</span>
-                                <span wire:loading class="flex items-center gap-2">
-                                    <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                    Sending...
-                                </span>
-                            </button>
+
+                        {{-- Priority --}}
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Priority</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button class="py-2 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 text-slate-600 hover:bg-white transition-colors">Low</button>
+                                <button class="py-2 rounded-lg text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700">Mid</button>
+                                <button class="py-2 rounded-lg text-xs font-bold border border-rose-200 bg-rose-50 text-rose-700 ring-2 ring-rose-500/10">High</button>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-100 dark:border-gray-800">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Requester</label>
+                            <div class="flex items-center gap-3 bg-slate-50 dark:bg-gray-800/50 p-3 rounded-xl">
+                                <div class="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+                                    {{ substr($feedback->tenant->name, 0, 1) }}
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ $feedback->tenant->name }}</p>
+                                    <p class="text-[11px] text-slate-500 truncate">{{ $feedback->user->email }}</p>
+                                </div>
+                            </div>
+                            <a href="#" class="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
+                                <span>View History</span>
+                                <x-heroicon-m-chevron-right class="w-3 h-3"/>
+                            </a>
                         </div>
                     </div>
-                </form>
-            </div>
+                </div>
+
+                {{-- Helpful Tips or Stats --}}
+                <div class="bg-indigo-600 rounded-2xl p-5 text-white shadow-lg shadow-indigo-500/20">
+                    <p class="text-xs font-bold opacity-80 uppercase tracking-widest mb-2">Average Response</p>
+                    <p class="text-2xl font-bold">2.4 Hours</p>
+                    <p class="text-[11px] opacity-70 mt-1">Keep it up! Fast responses increase tenant satisfaction.</p>
+                </div>
+            </aside>
         </div>
     </div>
-</div>
+</main>

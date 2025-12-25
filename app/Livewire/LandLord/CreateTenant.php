@@ -65,40 +65,29 @@ class CreateTenant extends Component
         $logoPath = null;
 
         try {
-            // [FIX] 1. Start Central DB Transaction
-            DB::connection('pgsql_transaction')->beginTransaction();
+            DB::transaction(function () use ($password) {
+                // Create Tenant
+                $tenant = Tenant::create([
+                    'name' => $this->tenantName,
+                    'contact_email' => $this->hospitalContactEmail,
+                    'phone_number' => $this->phoneNumber,
+                    'address' => $this->address,
+                    'subscription_tier' => $this->subscription_tier ?? $this->subscriptionTier,
+                ]);
 
-            // Create Tenant
-            $tenant = Tenant::create([
-                'name' => $this->tenantName,
-                'contact_email' => $this->hospitalContactEmail,
-                'phone_number' => $this->phoneNumber,
-                'address' => $this->address,
-                'subscription_tier' => $this->subscription_tier ?? $this->subscriptionTier,
-            ]);
+                // Create Domain
+                $tenant->domains()->create([
+                    'domain' => $this->generatedDomain
+                ]);
 
-            // Create Domain
-            $tenant->domains()->create([
-                'domain' => $this->generatedDomain
-            ]);
+                // Handle Logo
+                if ($this->logo) {
+                    $logoPath = $this->logo->store('logos', 's3');
+                    $tenant->update(['logo' => $logoPath]);
+                }
 
-            // Handle Logo
-            if ($this->logo) {
-                $logoPath = $this->logo->store('logos', 's3');
-                $tenant->update(['logo' => $logoPath]);
-            }
-
-            // [FIX] Commit Central Transaction BEFORE entering tenant context
-            // This ensures the tenant exists before we try to run commands on it
-            DB::connection('pgsql_transaction')->commit();
-
-            // 4. Run Tenant-Specific Logic
-            $tenant->run(function () use ($password, $tenant) {
-                $user = null;
-
-                // [FIX] Inner Transaction for Tenant DB (User + Subscription)
-                // We use DB::transaction() here because we are inside the tenant context
-                DB::transaction(function () use ($password, $tenant, &$user) {
+                // 4. Run Tenant-Specific Logic
+                $tenant->run(function () use ($password, $tenant) {
                     // Admin User
                     $user = User::create([
                         'name' => $this->adminName,
@@ -121,31 +110,31 @@ class CreateTenant extends Component
                     $sub->max_storage = $features['max_storage'] ?? 0;
                     $sub->tenant_id = $tenant->id;
                     $sub->save();
-                });
 
-                // [FIX] Send Mail OUTSIDE the inner transaction
-                // This prevents "Transaction Aborted" if Token generation conflicts
-                if ($user) {
-                    $token = Password::broker()->createToken($user);
-                    Mail::to($user->email)->queue(new UserInvitationMail(
-                        $user,
-                        $token,
-                        $this->generatedDomain,
-                        $this->tenantName
-                    ));
-                }
+                    // [FIX] Send Mail OUTSIDE the inner transaction
+                    // This prevents "Transaction Aborted" if Token generation conflicts
+                    if ($user) {
+                        $token = Password::broker()->createToken($user);
+                        Mail::to($user->email)->queue(new UserInvitationMail(
+                            $user,
+                            $token,
+                            $this->generatedDomain,
+                            $this->tenantName
+                        ));
+                    }
+                });
             });
 
             $this->reset();
             $this->subscriptionTier = Subscription::PLAN_BASIC;
             $this->billingCycle = Subscription::BILLING_YEARLY;
             LivewireAlert::title('Tenant Created')->success()->text('Invitation sent to ' . $this->adminEmail);
-
         } catch (\Throwable $e) {
             // [FIX] Rollback Central DB if failed before commit
             try {
                 DB::connection('pgsql_transaction')->rollBack();
-            } catch (\Exception $t) { /* ignore if no transaction active */ }
+            } catch (\Exception $t) { /* ignore if no transaction active */
+            }
 
             if ($logoPath) {
                 Storage::disk('s3')->delete($logoPath);

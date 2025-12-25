@@ -23,36 +23,34 @@
     @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-
 <body class="antialiased bg-gray-100 dark:bg-gray-900">
-    <!--
-        Root State Management
-        - sidebarExpanded: Persists state across page loads
-        - mobileOpen: Toggles mobile menu
-    -->
     <div x-data="{
             sidebarExpanded: localStorage.getItem('sidebarExpanded') === 'true',
             mobileOpen: false,
+            isOffline: !navigator.onLine,
             toggleSidebar() {
                 this.sidebarExpanded = !this.sidebarExpanded;
                 localStorage.setItem('sidebarExpanded', this.sidebarExpanded);
+            },
+            init() {
+                window.addEventListener('offline', () => this.isOffline = true);
+                window.addEventListener('online', () => this.isOffline = false);
             }
          }"
-         x-init="$watch('sidebarExpanded', value => localStorage.setItem('sidebarExpanded', value))"
-         class="min-h-screen flex text-gray-900 dark:text-gray-100 font-sans">
+         class="min-h-screen flex flex-col text-gray-900 dark:text-gray-100 font-sans">
 
-        <!-- Mobile Backdrop Overlay -->
-        <div x-show="mobileOpen"
-             x-transition:enter="transition-opacity ease-linear duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition-opacity ease-linear duration-300"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             @click="mobileOpen = false"
-             class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-20 lg:hidden"
-             x-cloak>
+        <!-- Offline Banner (Global) -->
+        <div x-show="isOffline" x-cloak x-transition
+             class="fixed top-0 inset-x-0 z-[100] bg-rose-600 text-white text-xs font-bold text-center py-2 shadow-md">
+            <div class="flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"></path></svg>
+                <span>YOU ARE OFFLINE. CHANGES MAY NOT SAVE.</span>
+            </div>
         </div>
+
+        <!-- Mobile Backdrop -->
+        <div x-show="mobileOpen" x-cloak x-transition:opacity @click="mobileOpen = false"
+             class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-40 lg:hidden"></div>
 
         <!-- Sidebar Component -->
         <livewire:land-lord.components.sidebar />
@@ -61,22 +59,21 @@
         <div class="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out"
              :class="sidebarExpanded ? 'lg:ml-64' : 'lg:ml-20'">
 
-            <!-- Mobile Header (Hamburger) -->
-            <div class="lg:hidden flex items-center justify-between bg-white dark:bg-gray-800 p-4 shadow-sm sticky top-0 z-10">
-                <button @click="mobileOpen = true" class="text-gray-600 dark:text-gray-300 focus:outline-none p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+            <!-- Mobile Header (Only visible on small screens) -->
+            <header class="lg:hidden flex items-center justify-between bg-white dark:bg-gray-800 px-4 h-16 shadow-sm sticky top-0 z-30">
+                <button @click="mobileOpen = true" class="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
-                <span class="font-bold text-lg text-indigo-600 dark:text-indigo-400">Landlord Portal</span>
-                <div class="w-6"></div> <!-- Spacer -->
-            </div>
+                <span class="font-bold text-indigo-600 dark:text-indigo-400">Landlord Portal</span>
+                <div class="w-10"></div>
+            </header>
 
-            <main class="flex-1 overflow-y-auto overflow-x-hidden  dark:bg-gray-900 bg-white">
-           
+            <!-- Page Content (Padding removed here to allow edge-to-edge UI) -->
+            <main class="flex-1">
                 {{ $slot }}
             </main>
         </div>
     </div>
-
     @livewireScripts
 </body>
 </html>
