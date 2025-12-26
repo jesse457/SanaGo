@@ -6,9 +6,7 @@
     <header class="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <button @click="mobileOpen = !mobileOpen" class="lg:hidden p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-lg">
-                    <x-heroicon-o-bars-3 class="w-6 h-6" />
-                </button>
+
                 <div class="flex items-center gap-3">
                     <div class="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hidden sm:block">
                         <x-heroicon-s-chart-pie class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -28,9 +26,15 @@
                         {{ $lowStockCount }} Low Stock
                     </div>
                 @endif
+        {{-- Dark Mode Toggle --}}
+                <button @click="$store.theme.toggle()" class="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <x-heroicon-o-sun x-show="!$store.theme.on" class="w-5 h-5 text-gray-500" />
+                    <x-heroicon-o-moon x-show="$store.theme.on" class="w-5 h-5 text-yellow-400" />
+                </button>
 
                 {{-- Profile --}}
                 <div class="relative" x-data="{ open: false }">
+
                     <button @click="open = !open" class="flex items-center gap-2 group">
                          <img src="{{ auth()->user()->profile_picture ?? 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->name) }}" class="w-8 h-8 rounded-full border border-gray-200">
                     </button>

@@ -50,7 +50,7 @@
             @foreach($menuItems as $item)
             @php $isActive = request()->routeIs($item['route']); @endphp
             <li x-data="{ tooltip: false }" class="relative">
-                <a href="{{ route($item['route']) }}"
+                <a href="{{ route($item['route']) }}" wire:navigate
                    @mouseenter="if(window.innerWidth > 1024 && !sidebarExpanded) tooltip = true"
                    @mouseleave="tooltip = false"
                    class="flex items-center rounded-lg px-3 py-2.5 transition-all duration-200 {{ $isActive ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }}">

@@ -11,7 +11,15 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-
+    <!-- Global Dark Mode Logic -->
+    <script>
+        if (localStorage.getItem('darkMode') === 'true' ||
+            (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <style>
         [x-cloak] { display: none !important; }
         .layout-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -154,5 +162,31 @@
     </div>
 
     @livewireScripts
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('theme', {
+                on: localStorage.getItem('darkMode') === 'true',
+                toggle() {
+                    this.on = !this.on;
+                    localStorage.setItem('darkMode', this.on);
+                    this.updateView();
+                },
+                updateView() {
+                    if (this.on) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                }
+            })
+        });
+
+        // Handle Livewire Navigation Persistence
+        document.addEventListener('livewire:navigated', () => {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.documentElement.classList.add('dark');
+            }
+        });
+    </script>
 </body>
 </html>

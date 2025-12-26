@@ -6,11 +6,7 @@
 
             {{-- Left: Mobile Toggle & Title --}}
             <div class="flex items-center gap-4">
-                {{-- Mobile Hamburger --}}
-                <button @click="open = true"
-                    class="lg:hidden p-2 -ml-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
-                    <x-heroicon-o-bars-3 class="w-6 h-6" />
-                </button>
+
 
                 <div class="flex items-center gap-3">
                     <div class="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hidden sm:block">
@@ -29,10 +25,10 @@
 
             {{-- Right: Actions & Profile --}}
             <div class="flex items-center gap-4">
-                {{-- Quick Action (Optional) --}}
-                <button class="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700 transition">
-                    <x-heroicon-o-plus class="w-4 h-4" />
-                    <span>New Vitals</span>
+                {{-- Dark Mode Toggle --}}
+                <button @click="$store.theme.toggle()" class="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <x-heroicon-o-sun x-show="!$store.theme.on" class="w-5 h-5 text-gray-500" />
+                    <x-heroicon-o-moon x-show="$store.theme.on" class="w-5 h-5 text-yellow-400" />
                 </button>
 
                 <div class="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>

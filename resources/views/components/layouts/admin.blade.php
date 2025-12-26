@@ -15,7 +15,15 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
     </style>
-
+  <!-- Global Dark Mode Logic -->
+    <script>
+        if (localStorage.getItem('darkMode') === 'true' ||
+            (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <!-- Chart.js is required for the dashboard -->
@@ -74,5 +82,31 @@
     </div>
 
     @livewireScripts
+      <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('theme', {
+                on: localStorage.getItem('darkMode') === 'true',
+                toggle() {
+                    this.on = !this.on;
+                    localStorage.setItem('darkMode', this.on);
+                    this.updateView();
+                },
+                updateView() {
+                    if (this.on) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                }
+            })
+        });
+
+        // Handle Livewire Navigation Persistence
+        document.addEventListener('livewire:navigated', () => {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.documentElement.classList.add('dark');
+            }
+        });
+    </script>
 </body>
 </html>

@@ -11,6 +11,6 @@ class ConsultationInfo extends Component
 {
     public function render()
     {
-        return view('livewire.tenants.doctor.consultation-info');
+        return view('livewire.tenants.doctor.consultation-info'         );
     }
 }

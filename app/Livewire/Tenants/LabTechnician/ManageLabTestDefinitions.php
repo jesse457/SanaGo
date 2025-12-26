@@ -4,6 +4,7 @@ namespace App\Livewire\Tenants\LabTechnician;
 
 use App\Models\LabTestDefinition;
 use App\Traits\UserActivitiesTrait;
+use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -76,12 +77,12 @@ class ManageLabTestDefinitions extends Component
     {
         // Validate against $rules
         $this->validate();
-
-        $test = LabTestDefinition::findOrFail($this->testId);
-        $test->update([
-            'test_name' => $this->test_name,
-            'description' => $this->description,
-            'price' => $this->price,
+        DB::connection('pgsql_transaction')->transaction(function () {
+            $test = LabTestDefinition::findOrFail($this->testId);
+            $test->update([
+                'test_name' => $this->test_name,
+                'description' => $this->description,
+                'price' => $this->price,
             'units' => $this->units,
         ]);
         $this->logActivity(
@@ -89,6 +90,7 @@ class ManageLabTestDefinitions extends Component
             'Lab test definition updated',
             ['lab_test_definition_id' => $test->id]
         );
+    });
 
         $this->showTestEditModal = false;
         $this->resetPage(); // optional, depending on UX

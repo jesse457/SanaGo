@@ -60,7 +60,13 @@ class UserManagement extends Component
     public function resetForm(): void
     {
         $this->reset([
-            'userId', 'name', 'email', 'role', 'phone_number', 'is_active', 'selected_shift_id',
+            'userId',
+            'name',
+            'email',
+            'role',
+            'phone_number',
+            'is_active',
+            'selected_shift_id',
         ]);
         $this->userShiftHistory = new Collection;
         $this->resetErrorBag();
@@ -71,9 +77,9 @@ class UserManagement extends Component
     {
         return User::with('shifts')
             ->where('role', '!=', 'admin')
-            ->when($this->search, fn ($q) => $q->where(fn ($sq) => $sq->where('name', 'LIKE', "%{$this->search}%")->orWhere('email', 'LIKE', "%{$this->search}%")))
-            ->when($this->filterRole, fn ($q) => $q->where('role', $this->filterRole))
-            ->when($this->filterStatus !== '', fn ($q) => $q->where('is_active', $this->filterStatus === 'active'))
+            ->when($this->search, fn($q) => $q->where(fn($sq) => $sq->where('name', 'LIKE', "%{$this->search}%")->orWhere('email', 'LIKE', "%{$this->search}%")))
+            ->when($this->filterRole, fn($q) => $q->where('role', $this->filterRole))
+            ->when($this->filterStatus !== '', fn($q) => $q->where('is_active', $this->filterStatus === 'active'))
             ->orderBy('name')
             ->paginate(10);
     }
@@ -190,7 +196,12 @@ class UserManagement extends Component
             $token = Password::broker()->createToken($user);
 
             // Queue the existing Mailable
-            Mail::to($user->email)->queue(new UserInvitationMail($user, $token));
+            Mail::to($user->email)->queue(new UserInvitationMail(
+                $user,
+                $token,
+                tenant()->domains->first()->domain ?? request()->getHost(),
+                tenant('name')
+            ));
 
             $this->logActivity('invitation_resent', "Resent invitation to: {$user->email}", ['user_id' => $user->id]);
 
@@ -198,7 +209,6 @@ class UserManagement extends Component
                 ->success()
                 ->text("A fresh invitation link has been sent to {$user->email}.")
                 ->show();
-
         } catch (\Exception $e) {
             // Log error internally if needed
             LivewireAlert::title('Error sending email')

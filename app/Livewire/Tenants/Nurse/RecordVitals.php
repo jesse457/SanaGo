@@ -6,6 +6,7 @@ use App\Models\Patient;
 use App\Models\Vital;
 use App\Traits\UserActivitiesTrait; // Assuming you have a Patient model
 use Illuminate\Support\Facades\Auth;   // The Vital model
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
@@ -164,6 +165,7 @@ class RecordVitals extends Component
         }
 
         try {
+            DB::connection('pgsql_transaction')->transaction(function () use ($systolic, $diastolic, $bmi) {
             Vital::create([
                 'patient_id' => $this->selectedPatientId, // Use the selected ID
                 'nurse_id' => Auth::id(),
@@ -190,6 +192,7 @@ class RecordVitals extends Component
                     'patient_id' => $this->selectedPatientId,
                 ]
             );
+        });
             LivewireAlert::title('Success')->success()->text('Vitals saved successfully')->show();
 
             // Reset all form fields, but keep the selected patient if desired

@@ -100,12 +100,17 @@
 
                     {{-- Separator --}}
                     <div class="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
+ {{-- Dark Mode Toggle --}}
+                <button @click="$store.theme.toggle()" class="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <x-heroicon-o-sun x-show="!$store.theme.on" class="w-5 h-5 text-gray-500" />
+                    <x-heroicon-o-moon x-show="$store.theme.on" class="w-5 h-5 text-yellow-400" />
+                </button>
 
-                    {{-- Profile Dropdown --}}
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open"
-                            class="flex items-center gap-2 group focus:outline-none">
-                            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=0f172a&color=fff&size=64"
+                {{-- Profile Dropdown --}}
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open"
+                        class="flex items-center gap-2 group focus:outline-none">
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=0f172a&color=fff&size=64"
                                 alt="avatar"
                                 class="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm group-hover:ring-2 ring-gray-100 transition">
 

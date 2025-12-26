@@ -4,6 +4,7 @@ namespace App\Livewire\Tenants\Pharmacist;
 
 use App\Models\Medication;
 use App\Traits\UserActivitiesTrait;
+use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -58,15 +59,18 @@ class CreateDrugs extends Component
         $this->validate();
 
         try {
-            $drug =  Medication::create([
-                'name' => $this->name,
-                'unit_price_purchase' => $this->unit_price_purchase,
-                'min_stock_level' => $this->min_stock_level,
-                'stock_quantity' => $this->stock_quantity,
+            DB::connection('pgsql_transaction')->transaction(function () {
+                $drug =  Medication::create([
+                    'name' => $this->name,
+                    'unit_price_purchase' => $this->unit_price_purchase,
+                    'min_stock_level' => $this->min_stock_level,
+                    'stock_quantity' => $this->stock_quantity,
                 'description' => $this->description,
                 'dosage_unit' => $this->dosage_unit,
             ]);
             $this->logActivity('Drug_created', "New drug '{$this->name}' was created.", ['drug_id' => $drug->id]);
+
+        });
             LivewireAlert::title(__('pharmacist.create_drugs_component.alert_success'))
                 ->text(__('pharmacist.create_drugs_component.alert_drug_created_successfully'))
                 ->success()

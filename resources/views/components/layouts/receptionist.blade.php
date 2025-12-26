@@ -4,8 +4,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name', 'Laravel') }}</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <link rel="icon" type="image/png" href="{{ Storage::disk('central_public')->url('images/logo.png') }}">
+        <!-- Global Dark Mode Logic -->
+    <script>
+        if (localStorage.getItem('darkMode') === 'true' ||
+            (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <style>
         [x-cloak] { display: none !important; }
         /* Smooth transition for the margin change */
@@ -77,12 +85,38 @@
                 </div>
             </header>
 
-            <main class="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 dark:bg-gray-900 p-4">
+            <main class="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 dark:bg-gray-900">
                 {{ $slot }}
             </main>
         </div>
     </div>
 
     @livewireScripts
+        <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('theme', {
+                on: localStorage.getItem('darkMode') === 'true',
+                toggle() {
+                    this.on = !this.on;
+                    localStorage.setItem('darkMode', this.on);
+                    this.updateView();
+                },
+                updateView() {
+                    if (this.on) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                }
+            })
+        });
+
+        // Handle Livewire Navigation Persistence
+        document.addEventListener('livewire:navigated', () => {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.documentElement.classList.add('dark');
+            }
+        });
+    </script>
 </body>
 </html>

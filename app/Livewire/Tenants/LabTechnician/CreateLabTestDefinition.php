@@ -5,6 +5,7 @@ namespace App\Livewire\Tenants\LabTechnician;
 use App\Models\LabTestDefinition;
 use App\Traits\UserActivitiesTrait;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
@@ -35,31 +36,33 @@ class CreateLabTestDefinition extends Component
     {
         // Validate all properties using the #[Rule] attributes
         $this->validate();
-
-        $data = [
-            'test_name' => $this->test_name,
-            'description' => $this->description,
-            'price' => $this->price,
-            'units' => $this->units,
-        ];
-        $labTech = Auth::user()->name;
         try {
+            $data = [
+                'test_name' => $this->test_name,
+                'description' => $this->description,
+                'price' => $this->price,
+                'units' => $this->units,
+            ];
+            $labTech = Auth::user()->name;
+            DB::connection('pgsql_transaction')->transaction(function () use ($data, $labTech) {
+                $labTest = LabTestDefinition::create($data);
+                $this->logActivity(
+                    'lab_test_updated',
+                    "{$labTech} created labtest {$labTest->test_name} ",
+                    [
+                        'lab_tech_id' => Auth::id(),
+                        'lab_test_id' => $labTest->id,
+                    ]
+                );
+            });
             // Create new record
-            $labTest = LabTestDefinition::create($data);
-            $this->logActivity(
-                'lab_test_updated',
-                "{$labTech} created labtest {$labTest->test_name} ",
-                [
-                    'lab_tech_id' => Auth::id(),
-                    'lab_test_id' => $labTest->id,
-                ]
-            );
+
             LivewireAlert::title('Success')->text('Lab test definition created successfully!')->success()->show();
 
             $this->resetForm();
         } catch (\Exception $e) {
             LivewireAlert::title('Error')->text('Server Error please Contact us in Feedback if this error persist')->error()->show();
-            Log::error('Error while savig Lab test'.$e->getMessage());
+            Log::error('Error while savig Lab test' . $e->getMessage());
         }
     }
 
