@@ -178,45 +178,63 @@
                     </a>
                 </div>
 
-                <!-- 3D Tilt Card -->
-                <div class="reveal-on-scroll delay-500 mt-20 relative w-full max-w-5xl perspective-1000 group"
-                    @mousemove="
-                        const card = $el.querySelector('.tilt-card');
-                        const xAxis = (window.innerWidth / 2 - $event.pageX) / 40;
-                        const yAxis = (window.innerHeight / 2 - $event.pageY) / 40;
-                        card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
-                     "
-                    @mouseleave="$el.querySelector('.tilt-card').style.transform = 'rotateY(0deg) rotateX(0deg)'">
+                <!-- 3D Tilt Card Component -->
+                <div class="reveal-on-scroll delay-500 mt-20 relative w-full max-w-6xl mx-auto perspective-2000"
+                    x-data="{
+                        rotateX: 0,
+                        rotateY: 0,
+                        // Check if dark mode is active on load
+                        isDark: localStorage.getItem('theme') === 'dark',
 
-                    <div
-                        class="tilt-card transition-transform duration-200 ease-out shadow-2xl shadow-blue-500/10 dark:shadow-black/50 rounded-2xl border border-white/60 dark:border-slate-700 bg-white/40 dark:bg-slate-900/50 backdrop-blur-md overflow-hidden ring-1 ring-black/5 relative">
+                        handleMouseMove(e) {
+                            const rect = this.$el.getBoundingClientRect();
+                            const x = e.clientX - rect.left;
+                            const y = e.clientY - rect.top;
+                            const centerX = rect.width / 2;
+                            const centerY = rect.height / 2;
+
+                            this.rotateX = -((y - centerY) / 50);
+                            this.rotateY = ((x - centerX) / 50);
+                        },
+
+                        reset() {
+                            this.rotateX = 0;
+                            this.rotateY = 0;
+                        }
+                    }" @theme-changed.window="isDark = $event.detail"
+                    @mousemove="handleMouseMove($event)" @mouseleave="reset()">
+
+                    <div class="tilt-card w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl transition-transform ease-out duration-200 will-change-transform overflow-hidden"
+                        :style="`transform: rotateX(${rotateX}deg) rotateY(${rotateY}deg)`">
+
+                        <!-- Browser Header -->
                         <div
-                            class="h-12 bg-white/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 flex items-center px-4 gap-2">
-                            <div class="w-3 h-3 rounded-full bg-red-400"></div>
-                            <div class="w-3 h-3 rounded-full bg-amber-400"></div>
-                            <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                            class="h-11 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 flex items-center px-4 gap-2">
+                            <div class="flex gap-1.5">
+                                <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                                <div class="w-3 h-3 rounded-full bg-amber-400"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                            </div>
+                            <div
+                                class="mx-auto w-full max-w-md h-6 bg-white dark:bg-slate-900/50 rounded-md border border-slate-200 dark:border-slate-700 flex items-center px-3">
+                                <div class="text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                                    sanago.system/admin/dashboard</div>
+                            </div>
                         </div>
-                        <div
-                            class="p-8 grid grid-cols-12 gap-6 h-[400px] md:h-[500px] bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-900">
-                            <div class="col-span-2 hidden md:block space-y-4">
-                                <div class="h-8 w-full bg-blue-100 dark:bg-blue-900/20 rounded animate-pulse"></div>
-                                <div class="h-8 w-3/4 bg-slate-100 dark:bg-slate-800 rounded"></div>
-                            </div>
-                            <div class="col-span-12 md:col-span-10 grid grid-cols-2 gap-6">
-                                <div
-                                    class="h-32 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-4">
-                                </div>
-                                <div
-                                    class="h-32 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-4">
-                                </div>
-                                <div
-                                    class="col-span-2 h-64 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 flex items-end space-x-4">
-                                    <div class="flex-1 bg-blue-500/20 rounded-t-lg h-[40%]"></div>
-                                    <div class="flex-1 bg-blue-600 rounded-t-lg h-[90%] shadow-lg shadow-blue-500/30">
-                                    </div>
-                                    <div class="flex-1 bg-blue-500/30 rounded-t-lg h-[60%]"></div>
-                                </div>
-                            </div>
+
+                        <!-- Image Wrapper -->
+                        <div class="relative w-full bg-white dark:bg-[#0B1120]">
+                            <!-- Light Mode Image -->
+                            <img x-show="!isDark" class="w-full h-auto block antialiased shadow-inner"
+                                src="{{ asset('images/dashboard-light.webp') }}"
+                                style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;"
+                                alt="SanaGo Dashboard Light">
+
+                            <!-- Dark Mode Image -->
+                            <img x-show="isDark" x-cloak class="w-full h-auto block antialiased shadow-inner"
+                                src="{{ asset('images/dashboard-dark.webp') }}"
+                                style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;"
+                                alt="SanaGo Dashboard Dark">
                         </div>
                     </div>
                 </div>
@@ -322,12 +340,25 @@
                                 <div class="flex justify-between items-center mb-6">
                                     <div
                                         class="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z">
-                                            </path>
-                                        </svg>
+                                        <template x-if="card.badge === 'Laboratory'">
+                                            <x-hugeicons-labs class="w-6 h-6 text-green-500" />
+                                        </template>
+                                        <template x-if="card.badge === 'Pharmacy'">
+                                            <x-hugeicons-medicine-01 class="w-6 h-6 text-green-500" />
+                                        </template>
+                                        <template x-if="card.badge === 'System Control'">
+                                            <x-hugeicons-microsoft-admin class="w-6 h-6 text-green-500" />
+                                        </template>
+                                        <template x-if="card.badge === 'Front Desk'">
+                                            <x-heroicon-m-computer-desktop class="w-6 h-6 text-green-500" />
+                                        </template>
+
+                                        <template x-if="card.badge === 'Clinical'">
+                                            <x-hugeicons-doctor-03 class="w-6 h-6 text-green-500" />
+                                        </template>
+                                        <template x-if="card.badge === 'Patient Care'">
+                                            <x-hugeicons-patient class="w-6 h-6 text-green-500" />
+                                        </template>
                                     </div>
                                     <span class="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full"
                                         :class="card.badgeClass" x-text="card.badge"></span>
@@ -705,6 +736,19 @@
         .reveal-on-scroll.animate-in {
             opacity: 1;
             transform: translateY(0);
+        }
+
+        .perspective-2000 {
+            perspective: 2000px;
+        }
+
+        .tilt-card {
+            transform-style: preserve-3d;
+        }
+
+        /* This makes the image feel like it's slightly floating inside the frame */
+        .tilt-card img {
+            transform: translateZ(20px);
         }
     </style>
 </div>

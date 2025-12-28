@@ -16,7 +16,7 @@
         }
     </script>
 
-    <link rel="icon" type="image/png" href="{{ Storage::disk('central_public')->url('images/logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ Storage::disk('central_public')->url('images/logo.webp') }}">
 
     <style>
         [x-cloak] { display: none !important; }
@@ -83,7 +83,7 @@
                     </h1>
                 </div>
 
-             
+
             </header>
 
             <main class="">

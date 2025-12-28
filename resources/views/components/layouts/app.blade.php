@@ -24,11 +24,11 @@
       "@@context": "https://schema.org",
       "@@type": "Organization",
       "url": "{{ url('/') }}",
-      "logo": "{{ asset('images/logo.png') }}"
+      "logo": "{{ asset('images/logo.webp') }}"
     }
     </script>
 
-    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.webp') }}">
 
     <style>
         body { font-family: 'Inter', sans-serif; }

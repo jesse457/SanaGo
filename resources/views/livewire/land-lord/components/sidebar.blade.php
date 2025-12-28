@@ -13,7 +13,7 @@
     <div class="h-16 flex items-center px-4 border-b border-gray-100 dark:border-gray-800 relative flex-shrink-0">
         <a href="{{ route('landlord.dashboard') }}" class="flex items-center gap-3 overflow-hidden">
             <div class="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                <img class="h-8 w-auto" src="{{ asset('images/logo.png') }}" alt="Logo">
+                <img class="h-8 w-auto" src="{{ asset('images/logo.webp') }}" alt="Logo">
             </div>
             <div class="flex flex-col transition-all duration-300"
                  :class="sidebarExpanded ? 'opacity-100' : 'lg:opacity-0 lg:w-0'">
