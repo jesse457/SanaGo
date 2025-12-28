@@ -49,7 +49,7 @@ return [
         'central_public' => [
             'driver' => 'local',
             'root' => public_path(), // This points to the main /public directory
-            'url' => env('APP_URL') . ':8000', // Adjust this if your 'public' is a subdirectory
+            'url' => env('APP_URL'), // Adjust this if your 'public' is a subdirectory
             'visibility' => 'public',
         ],
 

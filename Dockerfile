@@ -36,6 +36,7 @@ RUN composer dump-autoload --optimize --no-dev
 # Stage 2: Runtime
 FROM dunglas/frankenphp:1.10.1-php8.3
 
+# Install runtime dependencies (Supervisor)
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     supervisor curl \
@@ -55,27 +56,35 @@ RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini && \
 
 WORKDIR /app
 
-# COPY as ROOT (Default behavior)
-COPY --from=builder /app /app
+# 1. Setup Supervisor Logs/Pid folders and assign ownership to www-data BEFORE switching users
+RUN mkdir -p /var/log/supervisor /var/run/supervisor \
+    && chown -R www-data:www-data /var/log/supervisor /var/run/supervisor
+
+# 2. Copy Configs
 COPY supervisord.conf /etc/supervisor/supervisord.conf
 COPY octane-supervisor.conf /etc/supervisor/conf.d/octane.conf
 
-# Create directories and give FULL 777 permissions just in case
+# 3. Copy Application Code with Ownership
+# This avoids the need for 'chown -R' later which bloats image layers
+COPY --chown=www-data:www-data --from=builder /app /app
+
+# 4. Create Laravel specific directories if they don't exist and set correct permissions
+# 775 is safer than 777 (User/Group can write, World can only read)
 RUN mkdir -p /app/storage/logs \
     /app/storage/framework/sessions \
     /app/storage/framework/views \
     /app/storage/framework/cache \
     /app/bootstrap/cache \
-    /var/log/supervisor \
-    /var/run/supervisor \
-    && chmod -R 777 /app/storage /app/bootstrap/cache /var/log/supervisor /var/run/supervisor
+    && chown -R www-data:www-data /app/storage /app/bootstrap/cache \
+    && chmod -R 775 /app/storage /app/bootstrap/cache
 
 EXPOSE 8000
 
+# 5. Switch to non-root user
+USER www-data
+
+# Ensure Healthcheck uses localhost
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8000/up || exit 1
-
-# ⚠️ REMOVED "USER www-data" LINE.
-# This defaults to ROOT.
 
 ENTRYPOINT ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
