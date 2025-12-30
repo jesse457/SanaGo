@@ -16,7 +16,7 @@
                 <img class="h-8 w-auto" src="{{ asset('images/logo.webp') }}" alt="Logo">
             </div>
             <div class="flex flex-col transition-all duration-300"
-                 :class="sidebarExpanded ? 'opacity-100' : 'lg:opacity-0 lg:w-0'">
+                :class="sidebarExpanded ? 'opacity-100' : 'lg:opacity-0 lg:w-0'">
                 <span class="font-bold text-gray-900 dark:text-white leading-none text-base">SanaGo</span>
                 <span class="text-[10px] font-semibold text-gray-500 uppercase mt-0.5">Super Admin</span>
             </div>
@@ -26,12 +26,14 @@
         <button @click="toggleSidebar()"
             class="hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-indigo-600 rounded-full p-1 shadow-md z-50 transition-transform duration-300"
             :class="{ 'rotate-180': !sidebarExpanded }">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            <!-- Updated Icon to Hugeicons 'arrow-left-01' -->
+            <x-hugeicons-arrow-left-01 class="w-3 h-3" />
         </button>
 
         <!-- Mobile Close Button -->
         <button @click="mobileOpen = false" class="lg:hidden ml-auto p-2 text-gray-500">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            <!-- Updated Icon to Hugeicons 'cancel-01' -->
+            <x-hugeicons-cancel-01 class="w-6 h-6" />
         </button>
     </div>
 
@@ -39,38 +41,47 @@
     <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
         @php
             $menuItems = [
-                ['route' => 'landlord.dashboard', 'icon' => 'squares-2x2', 'label' => 'Dashboard'],
-                ['route' => 'landlord.manage-tenants', 'icon' => 'users', 'label' => 'Tenants'],
-                ['route' => 'landlord.feedbacks', 'icon' => 'chat-bubble-left-right', 'label' => 'Complaints'],
-                ['route' => 'landlord.settings', 'icon' => 'cog-6-tooth', 'label' => 'Settings'],
+                ['route' => 'landlord.dashboard', 'icon' => 'squares-2x2', 'label' => 'Dashboard','type' => 'heroicon'],
+                // ['route' => 'landlord.properties', 'icon' => 'building-03', 'label' => 'Properties','type' => 'heroicon'],
+                ['route' => 'landlord.manage-tenants', 'icon' => 'users', 'label' => 'Tenants','type' => 'heroicon'],
+                ['route' => 'landlord.feedbacks', 'icon' => 'chat-bubble-left-right', 'label' => 'Complaints','type' => 'heroicon'],
+                ['route' => 'landlord.settings', 'icon' => 'calendar-setting-01', 'label' => 'Settings','type' => 'hugeicon'],
+                ['route' => 'landlord.manage-demo', 'icon' => 'contact-book', 'label' => 'Demo Requests','type' => 'hugeicon'],
+                // ['route' => 'landlord.ai-settings', 'icon' => 'ai-security', 'label' => 'AI Settings','type' => 'heroicon'],
             ];
         @endphp
 
         <ul class="space-y-1">
-            @foreach($menuItems as $item)
-            @php $isActive = request()->routeIs($item['route']); @endphp
-            <li x-data="{ tooltip: false }" class="relative">
-                <a href="{{ route($item['route']) }}" wire:navigate
-                   @mouseenter="if(window.innerWidth > 1024 && !sidebarExpanded) tooltip = true"
-                   @mouseleave="tooltip = false"
-                   class="flex items-center rounded-lg px-3 py-2.5 transition-all duration-200 {{ $isActive ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
+            @foreach ($menuItems as $item)
+                @php $isActive = request()->routeIs($item['route']); @endphp
+                <li x-data="{ tooltip: false }" class="relative">
+                    <a href="{{ route($item['route']) }}" wire:navigate
+                        @mouseenter="if(window.innerWidth > 1024 && !sidebarExpanded) tooltip = true"
+                        @mouseleave="tooltip = false"
+                        class="flex items-center rounded-lg px-3 py-2.5 transition-all duration-200 {{ $isActive ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
 
-                    <div class="flex-shrink-0 {{ $isActive ? 'text-indigo-600' : 'text-gray-400' }}">
-                        <x-dynamic-component :component="'heroicon-o-'.$item['icon']" class="w-6 h-6" />
-                    </div>
+                        <div class="flex-shrink-0 {{ $isActive ? 'text-indigo-600' : 'text-gray-400' }}">
+                            <!-- Updated component to use Hugeicons namespace -->
+                            @if ($item['type'] == 'heroicon')
+                                <x-dynamic-component :component="'heroicon-o-' . $item['icon']" class="w-6 h-6" />
+                            @else
+                                <x-dynamic-component :component="'hugeicons-' . $item['icon']" class="w-6 h-6" />
+                            @endif
 
-                    <span class="ml-3 text-sm font-medium transition-all duration-300"
-                          :class="sidebarExpanded ? 'opacity-100' : 'lg:opacity-0 lg:w-0 overflow-hidden'">
-                        {{ $item['label'] }}
-                    </span>
+                        </div>
 
-                    <!-- Desktop Tooltip (only when collapsed) -->
-                    <div x-show="tooltip" x-cloak
-                         class="fixed left-20 px-2 py-1 bg-gray-900 text-white text-xs rounded shadow-lg z-[60]">
-                        {{ $item['label'] }}
-                    </div>
-                </a>
-            </li>
+                        <span class="ml-3 text-sm font-medium transition-all duration-300"
+                            :class="sidebarExpanded ? 'opacity-100' : 'lg:opacity-0 lg:w-0 overflow-hidden'">
+                            {{ $item['label'] }}
+                        </span>
+
+                        <!-- Desktop Tooltip (only when collapsed) -->
+                        <div x-show="tooltip" x-cloak
+                            class="fixed left-20 px-2 py-1 bg-gray-900 text-white text-xs rounded shadow-lg z-[60]">
+                            {{ $item['label'] }}
+                        </div>
+                    </a>
+                </li>
             @endforeach
         </ul>
     </nav>
@@ -78,7 +89,8 @@
     {{-- 3. PROFILE / LOGOUT --}}
     <div class="p-4 border-t border-gray-100 dark:border-gray-800">
         <div class="flex items-center gap-3" :class="sidebarExpanded ? 'justify-start' : 'lg:justify-center'">
-            <div class="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold flex-shrink-0">
+            <div
+                class="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold flex-shrink-0">
                 {{ substr(auth()->user()->name, 0, 1) }}
             </div>
             <div class="flex-1 min-w-0" x-show="sidebarExpanded || (window.innerWidth < 1024)">

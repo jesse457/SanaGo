@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Password;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-
+#[Layout('components.layouts.login')]
 class ResetPassword extends Component
 {
     public $token;

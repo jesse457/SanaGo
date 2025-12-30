@@ -14,11 +14,11 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // User::factory(10)->create();
-
+        $password = config('app.passwords.admin');
         $landlordAdmin = User::factory()->create([
             'email' => 'admin@healthnet.test', // Specific email for landlord admin
             'role' => 'landlord',
-            'password' => bcrypt('password'), // Default password
+            'password' => bcrypt($password), // Default password
             'is_active' => true,
         ]);
     }

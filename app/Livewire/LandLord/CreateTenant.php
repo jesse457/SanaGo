@@ -125,7 +125,7 @@ class CreateTenant extends Component
                 });
             });
 
-            $this->reset();
+             $this->reset(['tenantName', 'phone_number', 'address', 'subscriptionTier', 'generatedDomain', 'logo', 'adminName', 'adminEmail']);
             $this->subscriptionTier = Subscription::PLAN_BASIC;
             $this->billingCycle = Subscription::BILLING_YEARLY;
             LivewireAlert::title('Tenant Created')->success()->text('Invitation sent to ' . $this->adminEmail);

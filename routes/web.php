@@ -13,10 +13,12 @@ use App\Livewire\Home as HomePage;
 use App\Livewire\LandLord\CreateTenant;
 use App\Livewire\LandLord\Dashboard;
 use App\Livewire\LandLord\Feedback;
+use App\Livewire\LandLord\ManageDemo;
 use App\Livewire\LandLord\ManageSubscription;
 use App\Livewire\LandLord\ManageTenants;
 use App\Livewire\LandLord\RespondFeedback;
 use App\Livewire\LandLord\Settings;
+use App\Livewire\LandLord\ViewDemoRequest;
 use App\Livewire\Pricing;
 use App\Livewire\SendFeedback;
 use Illuminate\Support\Facades\Route;
@@ -39,7 +41,7 @@ Route::get('/api/health', function () {
 */
 
 Route::middleware(['web', 'universal'])
-    ->domain(config('tenancy.central_domains.0'))
+    ->domain(config('tenancy.central_domains.1'))
     ->group(function () {
 
         // --- PUBLIC PAGES ---
@@ -75,6 +77,9 @@ Route::middleware(['web', 'universal'])
                 Route::get('/settings', Settings::class)->name('settings');
                 Route::get('/manage-tenants', ManageTenants::class)->name('manage-tenants');
                 Route::get('/create-tenants', CreateTenant::class)->name('create-tenants');
+                 Route::get('/manage-demo', ManageDemo::class)->name('manage-demo');
+                      Route::get('/view-demo/{demoRequest}', ViewDemoRequest::class)->name('view-demo');
+
                 Route::get('/feedbacks', Feedback::class)->name('feedbacks');
                 Route::get('/respond-feedback/{feedback}', RespondFeedback::class)->name('respond-feedback');
                 Route::get('/send-feedback', SendFeedback::class)->name('send-feedback');

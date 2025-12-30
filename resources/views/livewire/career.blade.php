@@ -1,15 +1,12 @@
-
 <div x-data="{
     mobileMenuOpen: false,
     darkMode: localStorage.getItem('darkMode') === 'true',
     jobOpen: null,
 
     init() {
-        // Global Dark Mode Sync
-        if (this.darkMode || (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-            this.darkMode = true;
-        }
+        window.addEventListener('theme-changed', (e) => {
+            this.darkMode = e.detail;
+        });
 
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -21,16 +18,6 @@
         }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
 
         document.querySelectorAll('.reveal-on-scroll').forEach((el) => observer.observe(el));
-    },
-
-    toggleDarkMode() {
-        this.darkMode = !this.darkMode;
-        localStorage.setItem('darkMode', this.darkMode);
-        if (this.darkMode) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
     }
 }" class="min-h-screen relative overflow-x-hidden font-sans antialiased text-slate-900 dark:text-slate-50">
 
@@ -39,16 +26,13 @@
         <div class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-50/50 via-purple-50/30 to-white"></div>
     </div>
     <div class="fixed inset-0 bg-[#0B1120] -z-50 hidden dark:block"></div>
-
     <div class="fixed inset-0 overflow-hidden pointer-events-none -z-40">
         <ul class="circles">
             <li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
         </ul>
     </div>
 
-    <livewire:component.navbar />
-
-    <main class="pt-[72px]">
+    <main>
         <!-- HERO SECTION -->
         <section class="relative pt-20 pb-32">
             <div class="relative max-w-7xl mx-auto px-6 flex flex-col items-center text-center z-10">
@@ -152,13 +136,47 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Add more job cards here... -->
+
+                    <!-- Job Card 2 -->
+                    <div class="reveal-on-scroll bg-white dark:bg-slate-800/60 p-8 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl transition-all">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                            <div class="flex-grow">
+                                <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">Laravel Developer</h3>
+                                <div class="flex flex-wrap gap-2 mb-4">
+                                    <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-bold uppercase">Full-time</span>
+                                    <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-xs font-bold uppercase">Hybrid</span>
+                                </div>
+                                <p class="text-slate-600 dark:text-slate-300 max-w-2xl">Join our backend team to build robust API systems.</p>
+                            </div>
+                            <button @click="jobOpen = jobOpen === 'dev' ? null : 'dev'"
+                                    class="w-full md:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-500/25">
+                                <span x-text="jobOpen === 'dev' ? 'Close Details' : 'Apply Now'"></span>
+                            </button>
+                        </div>
+                         <div x-show="jobOpen === 'dev'" x-collapse x-cloak class="mt-8 pt-8 border-t border-slate-200 dark:border-slate-700">
+                            <div class="grid md:grid-cols-2 gap-8">
+                                <div>
+                                    <h4 class="font-bold text-slate-900 dark:text-white mb-4">Requirements:</h4>
+                                    <ul class="space-y-3">
+                                        <li class="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
+                                            <span class="text-blue-500">●</span> Strong PHP & Laravel knowledge
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="flex flex-col justify-end">
+                                    <a href="#" class="inline-flex items-center justify-center gap-2 px-6 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-2xl hover:opacity-90 transition-all">
+                                        Submit Application
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-12 text-center reveal-on-scroll">
-                    <p class="text-slate-600 dark:text-slate-300 mb-6">Don't see a position that matches your skills?</p>
+                    <p class="text-slate-600 dark:text-slate-300 mb-6">{{ __('career.spontaneous_application') }}</p>
                     <a href="mailto:careers@sanago.com" class="inline-flex items-center gap-2 px-8 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all">
-                        Send us your CV
+                        {{ __('career.send_cv') }}
                     </a>
                 </div>
             </div>
@@ -168,28 +186,15 @@
         <section class="py-24">
             <div class="max-w-5xl mx-auto px-6">
                 <div class="relative rounded-[3rem] bg-gradient-to-br from-blue-600 to-indigo-800 overflow-hidden px-6 py-20 text-center shadow-2xl reveal-on-scroll">
-                    <h2 class="relative text-3xl font-bold text-white sm:text-5xl mb-6">Ready to Join Our Team?</h2>
-                    <p class="relative text-xl text-blue-100 max-w-2xl mx-auto mb-10">Help us transform healthcare management through innovative technology solutions.</p>
+                    <h2 class="relative text-3xl font-bold text-white sm:text-5xl mb-6">{{ __('career.cta_title') }}</h2>
+                    <p class="relative text-xl text-blue-100 max-w-2xl mx-auto mb-10">{{ __('career.cta_subtitle') }}</p>
                     <div class="relative flex flex-col sm:flex-row justify-center gap-4">
                         <a href="#openings" class="rounded-full bg-white px-10 py-4 text-base font-bold text-blue-600 shadow-xl hover:bg-blue-50 transition-all">
-                            View Open Positions
+                            {{ __('career.view_openings_btn') }}
                         </a>
                     </div>
                 </div>
             </div>
         </section>
     </main>
-
-    <livewire:component.footer />
-
-    <style>
-        [x-cloak] { display: none !important; }
-        .circles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; margin: 0; padding: 0; }
-        .circles li { position: absolute; display: block; list-style: none; width: 20px; height: 20px; background: linear-gradient(to top right, rgba(59, 130, 246, 0.3), rgba(168, 85, 247, 0.3)); filter: blur(8px); animation: animate 25s linear infinite; bottom: -150px; border-radius: 50%; }
-        .dark .circles li { background: linear-gradient(to top right, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0)); filter: blur(10px); }
-        .circles li:nth-child(1) { left: 25%; width: 80px; height: 80px; animation-delay: 0s; }
-        @keyframes animate { 0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.8; } 100% { transform: translateY(-1000px) rotate(720deg) scale(1.5); opacity: 0; } }
-        .reveal-on-scroll { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
-        .reveal-on-scroll.animate-in { opacity: 1; transform: translateY(0); }
-    </style>
 </div>

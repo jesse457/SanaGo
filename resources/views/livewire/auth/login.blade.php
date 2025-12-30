@@ -8,7 +8,7 @@
         }
     }
 }"
-    class="min-h-screen grid lg:grid-cols-2 font-sans antialiased text-slate-900 dark:text-slate-50 transition-colors duration-300">
+    class="min-h-screen grid lg:grid-cols-2 font-sans antialiased text-slate-900 dark:text-slate-50 transition-colors duration-300 bg-white dark:bg-slate-950">
 
     <!-- Global Error Toast -->
     @if (session('error'))
@@ -16,116 +16,131 @@
             x-transition:enter="transform ease-out duration-300 transition"
             x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
             x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
-            class="fixed top-4 right-4 z-50 max-w-sm w-full bg-white dark:bg-slate-800 border-l-4 border-red-500 shadow-lg rounded-r-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
-            <div class="p-4">
-                <div class="flex items-start">
-                    <div class="flex-shrink-0">
-                        <x-heroicon-s-x-circle class="h-5 w-5 text-red-400" />
-                    </div>
-                    <div class="ml-3 w-0 flex-1 pt-0.5">
-                        <p class="text-sm font-medium text-slate-900 dark:text-white">Authentication Failed</p>
-                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ session('error') }}</p>
-                    </div>
-                    <div class="ml-4 flex-shrink-0 flex">
-                        <button @click="show = false"
-                            class="bg-white dark:bg-slate-800 rounded-md inline-flex text-slate-400 hover:text-slate-500 focus:outline-none">
-                            <x-heroicon-s-x-mark class="h-5 w-5" />
-                        </button>
-                    </div>
+            class="fixed top-6 right-6 z-[60] max-w-sm w-full bg-white dark:bg-slate-900 border border-red-100 dark:border-red-900/30 shadow-2xl rounded-2xl pointer-events-auto overflow-hidden">
+            <div class="p-4 flex items-center gap-4">
+                <div class="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                    <x-heroicon-s-x-circle class="h-6 w-6 text-red-600 dark:text-red-400" />
                 </div>
+                <div class="flex-1">
+                    <p class="text-sm font-bold text-slate-900 dark:text-white">{{ __('auth_login.auth_failed_title', 'Authentication Failed') }}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ session('error') }}</p>
+                </div>
+                <button @click="show = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <x-heroicon-s-x-mark class="h-5 w-5" />
+                </button>
             </div>
         </div>
     @endif
 
     <!-- Left Side: Login Form -->
-    <div class="flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24 bg-white dark:bg-slate-950 relative">
-        <div class="w-full max-w-sm mx-auto">
+    <div class="flex flex-col justify-center px-6 py-12 lg:px-16 xl:px-24 relative overflow-hidden">
+        <!-- Background Decor -->
+        <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-blue-50/50 dark:from-blue-900/10 to-transparent opacity-50"></div>
+
+        <!-- Theme Toggle -->
+        <div class="absolute top-8 right-8">
+            <button @click="darkMode = !darkMode; document.documentElement.classList.toggle('dark'); localStorage.setItem('darkMode', darkMode)"
+                class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                <x-heroicon-o-sun x-show="darkMode" class="w-5 h-5 text-yellow-500" />
+                <x-heroicon-o-moon x-show="!darkMode" class="w-5 h-5 text-slate-600" />
+            </button>
+        </div>
+
+        <div class="w-full max-w-md mx-auto relative z-10">
             <!-- Mobile Logo -->
-            <div class="lg:hidden mb-8">
-                <img class="h-8 w-auto" src="{{ Storage::disk('central_public')->url('images/logo.png') }}"
-                    alt="Logo">
+            <div class="lg:hidden mb-10">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                        <x-heroicon-s-shield-check class="h-6 w-6 text-white" />
+                    </div>
+                    <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Health<span class="text-blue-600">Systems</span></span>
+                </div>
             </div>
 
             <div class="mb-10">
-                <h2 class="mt-6 text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                    {{ __('auth_login.title') }}</h2>
-                <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">{{ __('auth_login.subtitle') }}</p>
+                <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+                    {{ __('auth_login.title') }}
+                </h2>
+                <p class="mt-3 text-slate-500 dark:text-slate-400 font-medium">
+                    {{ __('auth_login.subtitle') }}
+                </p>
             </div>
 
-            <form wire:submit.prevent="authenticate" class="space-y-6" novalidate>
+            <form wire:submit.prevent="authenticate" class="space-y-5" novalidate>
+                <!-- Email Field -->
                 <div>
-                    <label for="email"
-                        class="block text-sm font-semibold text-slate-700 dark:text-slate-300">{{ __('auth_login.email_label') }}</label>
-                    <div class="mt-2 relative rounded-md shadow-sm">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <x-heroicon-m-envelope class="h-5 w-5 text-slate-400" />
+                    <label for="email" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 ml-1">
+                        {{ __('auth_login.email_label') }}
+                    </label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <x-heroicon-m-envelope class="h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
                         </div>
-                        <input id="email" wire:model.live="email" type="email" required autocomplete="email"
-                            class="block w-full pl-10 sm:text-sm rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-blue-600 focus:border-blue-600 py-2.5 transition-colors
-                            @error('email') border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500 @enderror">
+                        <input id="email" wire:model="email" type="email" required autocomplete="email"
+                            placeholder="{{ __('auth_login.email_placeholder') }}"
+                            class="block w-full pl-11 pr-4 py-3.5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all
+                            @error('email') border-red-500 focus:ring-red-500/10 @enderror">
                     </div>
                     @error('email')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-2 text-xs font-medium text-red-600 dark:text-red-400 ml-1">{{ $message }}</p>
                     @enderror
                 </div>
 
-                <div x-data="{ show: false }">
-                    <label for="password"
-                        class="block text-sm font-semibold text-slate-700 dark:text-slate-300">{{ __('auth_login.password_label') }}</label>
-                    <div class="mt-2 relative rounded-md shadow-sm">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <x-heroicon-m-lock-closed class="h-5 w-5 text-slate-400" />
+                <!-- Password Field -->
+                <div>
+                    <label for="password" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 ml-1">
+                        {{ __('auth_login.password_label') }}
+                    </label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <x-heroicon-m-lock-closed class="h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
                         </div>
-                        <input id="password" wire:model.live="password" :type="show ? 'text' : 'password'" required
+                        <input id="password" wire:model="password" :type="showPassword ? 'text' : 'password'" required
                             autocomplete="current-password"
-                            class="block w-full pl-10 pr-10 sm:text-sm rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-blue-600 focus:border-blue-600 py-2.5 transition-colors
-                            @error('password') border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500 @enderror">
+                            placeholder="{{ __('auth_login.password_placeholder') }}"
+                            class="block w-full pl-11 pr-12 py-3.5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all
+                            @error('password') border-red-500 focus:ring-red-500/10 @enderror">
+
                         <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                            <button type="button" @click="show = !show"
-                                class="text-slate-400 hover:text-slate-500 focus:outline-none">
-                                <x-heroicon-m-eye x-show="!show" class="h-5 w-5" />
-                                <x-heroicon-m-eye-slash x-show="show" x-cloak class="h-5 w-5" />
+                            <button type="button" @click="showPassword = !showPassword"
+                                class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-all focus:outline-none">
+                                <x-heroicon-m-eye x-show="!showPassword" class="h-5 w-5" />
+                                <x-heroicon-m-eye-slash x-show="showPassword" x-cloak class="h-5 w-5" />
                             </button>
                         </div>
                     </div>
                     @error('password')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-2 text-xs font-medium text-red-600 dark:text-red-400 ml-1">{{ $message }}</p>
                     @enderror
                 </div>
 
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
+                <div class="flex items-center justify-between py-1">
+                    <label class="relative flex items-center cursor-pointer group">
                         <input id="remember-me" wire:model="remember" type="checkbox"
-                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer">
-                        <label for="remember-me"
-                            class="ml-2 block text-sm text-slate-900 dark:text-slate-300 cursor-pointer">{{ __('auth_login.remember_me') }}</label>
-                    </div>
-                    @if (tenant('id'))
-                        <div class="text-sm">
-                            <a href="{{ route('tenant.password.request') }}"
-                                class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">{{ __('auth_login.forgot_password') }}</a>
-                        </div>
-                    @else
-                        <div class="text-sm">
-                            <a href="{{ route('password.request') }}"
-                                class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">{{ __('auth_login.forgot_password') }}</a>
-                        </div>
-                    @endif
+                            class="peer h-5 w-5 border-slate-300 dark:border-slate-700 rounded-md text-blue-600 focus:ring-blue-600/20 bg-white dark:bg-slate-900 transition-all">
+                        <span class="ml-3 text-sm font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">
+                            {{ __('auth_login.remember_me') }}
+                        </span>
+                    </label>
 
+                    <a href="{{ tenant('id') ? route('tenant.password.request') : route('password.request') }}"
+                        class="text-sm font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
+                        {{ __('auth_login.forgot_password') }}
+                    </a>
                 </div>
 
-                <div>
-                    <button type="submit" wire:loading.attr="disabled"
-                        class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all">
+                <div class="pt-2">
+                    <button type="submit"
+                        wire:loading.attr="disabled"
+                        wire:target="authenticate"
+                        class="w-full flex justify-center items-center py-4 px-4 rounded-xl shadow-lg shadow-blue-600/20 text-sm font-extrabold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-950 focus:ring-blue-600 disabled:opacity-80 disabled:cursor-not-allowed transition-all transform active:scale-[0.98]">
+
                         <span wire:loading.remove wire:target="authenticate">{{ __('auth_login.sign_in_btn') }}</span>
-                        <span wire:loading wire:target="authenticate" class="flex items-center gap-2">
-                            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg"
-                                fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                </path>
+
+                        <span wire:loading wire:target="authenticate" class="flex items-center gap-3">
+                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                             {{ __('auth_login.signing_in') }}
                         </span>
@@ -133,40 +148,79 @@
                 </div>
             </form>
 
-            <div class="mt-8">
+            <div class="mt-10">
                 <div class="relative">
                     <div class="absolute inset-0 flex items-center">
-                        <div class="w-full border-t border-slate-200 dark:border-slate-800"></div>
+                        <div class="w-full border-t border-slate-100 dark:border-slate-800"></div>
                     </div>
                     <div class="relative flex justify-center text-sm">
-                        <span
-                            class="px-2 bg-white dark:bg-slate-950 text-slate-500">{{ __('auth_login.no_account_prefix') }}</span>
+                        <span class="px-4 bg-white dark:bg-slate-950 text-slate-400 font-medium italic">
+                            {{ __('auth_login.no_account_prefix') }}
+                        </span>
                     </div>
                 </div>
-               
             </div>
         </div>
 
         <!-- Footer Info -->
-        <div class="absolute bottom-6 left-0 right-0 text-center text-xs text-slate-400">
-            &copy; {{ date('Y') }} Protected by Enterprise Grade Security.
+        <div class="absolute bottom-8 left-0 right-0 text-center">
+            <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 dark:text-slate-600">
+                &copy; {{ date('Y') }} Enterprise Grade Security Protocol
+            </p>
         </div>
     </div>
 
-    <!-- Right Side: Corporate Visuals (Hidden on Mobile) -->
-    <div class="hidden lg:block relative bg-slate-900 flex-1 overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-slate-900/10 z-10"></div>
-        <!-- Replace with a high-quality medical or tech image -->
-        <img class="absolute inset-0 h-full w-full object-cover"
+    <!-- Right Side: Corporate Visuals -->
+    <div class="hidden lg:block relative overflow-hidden bg-slate-900">
+        <!-- Abstract Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-600/30 via-slate-900/90 to-slate-950 z-10"></div>
+
+        <!-- Image with subtle zoom animation -->
+        <img class="absolute inset-0 h-full w-full object-cover scale-105 animate-soft-zoom"
             src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80"
             alt="Hospital Technology">
 
-        <div class="absolute bottom-0 left-0 z-20 p-20 text-white">
-            <img class="h-12 w-auto mb-8" src="{{ Storage::disk('central_public')->url('images/logo.png') }}"
-                onerror="this.style.display='none'" alt="Logo">
-            <h3 class="text-4xl font-bold mb-4">Streamline Your<br>Hospital Operations</h3>
-            <p class="text-lg text-slate-300 max-w-md">Our multi-tenant platform manages patient records, billing, and
-                staff schedules with uncompromised security.</p>
+        <!-- Decorative Grid -->
+        <div class="absolute inset-0 z-10 opacity-20" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 40px 40px;"></div>
+
+        <div class="absolute inset-0 z-20 flex flex-col justify-between p-20">
+            <div class="flex items-center gap-2">
+              <img class="h-7 w-auto flex items-center" src="{{ asset('images/logo.webp') }}" alt="Sana Go Logo">
+
+                <span class="text-2xl font-bold tracking-tight text-white  tracking-widest">Sana<span class="text-blue-400">Go</span></span>
+            </div>
+
+            <div class="max-w-xl">
+                <h3 class="text-4xl font-extrabold text-white mb-6 leading-[1.1] tracking-tighter">
+                    Precision Medicine, <br>
+                    <span class="text-blue-400">Scalable Infrastructure.</span>
+                </h3>
+                <p class="text-lg text-slate-300 leading-relaxed font-light border-l-4 border-blue-500 pl-8">
+                    Manage patient data, specialized billing, and multi-facility operations with the world's most secure healthcare ERP.
+                </p>
+            </div>
+
+            <div class="flex items-center gap-8 text-white/50 text-sm font-semibold tracking-widest uppercase">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    HIPAA Compliant
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                    ISO 27001
+                </div>
+            </div>
         </div>
     </div>
+    <style>
+    @keyframes soft-zoom {
+        from { transform: scale(1); }
+        to { transform: scale(1.1); }
+    }
+    .animate-soft-zoom {
+        animation: soft-zoom 20s alternate infinite ease-in-out;
+    }
+</style>
+
 </div>
+

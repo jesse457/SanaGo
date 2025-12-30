@@ -8,12 +8,15 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Stancl\Tenancy\Facades\Tenancy;
 
 /**
  * Handles user login for both landlord and tenant accounts.
  */
+// Use the landlord layout for this Livewire component
+#[Layout('components.layouts.login')]
 class Login extends Component
 {
     /* --------------------
