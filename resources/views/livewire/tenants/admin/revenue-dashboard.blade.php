@@ -131,14 +131,7 @@
                 color="purple"
             />
 
-            {{-- Bed Fees Card --}}
-            <x-revenue-metric-card
-                title="Bed Fees"
-                amount="{{ $bedFeeRevenue }}"
-                total="{{ $totalRevenue }}"
-                icon="archive-box"
-                color="rose"
-            />
+
         </div>
 
         {{-- Detailed Data Section --}}

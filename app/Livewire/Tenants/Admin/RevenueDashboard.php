@@ -23,7 +23,6 @@ class RevenueDashboard extends Component
     public float $appointmentRevenue = 0.0;
     public float $labRevenue = 0.0;
     public float $admissionRevenue = 0.0;
-    public float $bedFeeRevenue = 0.0;
 
     // Comparison Stats
     public float $previousTotalRevenue = 0.0;
@@ -54,7 +53,6 @@ class RevenueDashboard extends Component
         $this->appointmentRevenue = $currentStats->total_appointment;
         $this->labRevenue = $currentStats->total_lab;
         $this->admissionRevenue = $currentStats->total_admission;
-        $this->bedFeeRevenue = $currentStats->total_bed_fee;
 
         $this->totalRevenue = $this->sumRevenueComponents($currentStats);
 
@@ -76,8 +74,7 @@ class RevenueDashboard extends Component
                 DB::raw('COALESCE(SUM(medication_revenue), 0) as total_medication'),
                 DB::raw('COALESCE(SUM(appointment_revenue), 0) as total_appointment'),
                 DB::raw('COALESCE(SUM(lab_revenue), 0) as total_lab'),
-                DB::raw('COALESCE(SUM(admission_revenue), 0) as total_admission'),
-                DB::raw('COALESCE(SUM(bed_fee_revenue), 0) as total_bed_fee')
+                DB::raw('COALESCE(SUM(admission_revenue), 0) as total_admission')
             )
             ->first();
 
@@ -87,7 +84,6 @@ class RevenueDashboard extends Component
             'total_appointment' => (float) $result->total_appointment,
             'total_lab'         => (float) $result->total_lab,
             'total_admission'   => (float) $result->total_admission,
-            'total_bed_fee'     => (float) $result->total_bed_fee,
         ];
     }
 
@@ -96,8 +92,7 @@ class RevenueDashboard extends Component
         return $stats->total_medication +
                $stats->total_appointment +
                $stats->total_lab +
-               $stats->total_admission +
-               $stats->total_bed_fee;
+               $stats->total_admission;
     }
 
     private function calculateGrowth(): void
@@ -147,9 +142,8 @@ class RevenueDashboard extends Component
                 DB::raw('SUM(appointment_revenue) as appointments'),
                 DB::raw('SUM(lab_revenue) as labs'),
                 DB::raw('SUM(admission_revenue) as admissions'),
-                DB::raw('SUM(bed_fee_revenue) as bed_fees'),
                 // SQL Calculation for row total to enable sorting
-                DB::raw('(SUM(medication_revenue) + SUM(appointment_revenue) + SUM(lab_revenue) + SUM(admission_revenue) + SUM(bed_fee_revenue)) as total')
+                DB::raw('(SUM(medication_revenue) + SUM(appointment_revenue) + SUM(lab_revenue) + SUM(admission_revenue)) as total')
             )
             ->groupBy('patient_id')
             ->orderByDesc('total') // Sort by the calculated total
