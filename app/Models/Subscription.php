@@ -318,9 +318,36 @@ class Subscription extends Model
 
         $tablesToCheck = [
             'users',
+            'patients',
+            'appointments',
+            'admissions',
+            'prescriptions',
+            'prescription_items',
+            'medications',
+            'medical_records',
+            'medical_record_attachments',
+            'lab_requests',
+            'lab_results',
+            'lab_result_attachments',
+            'lab_test_definitions',
+            'dispensations',
+            'invoices',
+            'vitals',
+            'nurse_care_reports',
+            'user_shifts',
+            'user_activities',
             'activity_logs',
+            'supplies',
+            'supply_usages',
+            'wards',
+            'beds',
+            'bed_types',
+            'revenue_summaries',
+            'notifications',
+            'feed_backs',
             'files',
-            // Add your specific hospital app tables here
+            'procedure_kits',
+          
         ];
 
         // Determine the database driver
@@ -334,43 +361,50 @@ class Subscription extends Model
 
             $size = 0;
 
-            if ($driver === 'pgsql') {
-                // PostgreSQL: Highly accurate internal row size
-                $size = DB::table($table)
-                    ->where('tenant_id', $tenantId)
-                    ->sum(DB::raw('pg_column_size(*)'));
-
-            } elseif ($driver === 'mysql' || $driver === 'mariadb') {
-                // MySQL: Sum the length of all columns as an approximation
-                // We construct a query like: SUM(LENGTH(COALESCE(`col1`, '')) + LENGTH(COALESCE(`col2`, '')) ...)
-                $columns = Schema::getColumnListing($table);
-
-                if (!empty($columns)) {
-                    $sumQuery = collect($columns)
-                        ->map(fn($col) => "LENGTH(COALESCE(`$col`, ''))")
-                        ->join(' + ');
-
+            try {
+                if ($driver === 'pgsql') {
+                    // PostgreSQL: Use pg_column_size on the entire row
+                    // We need to pass the table name as a parameter to pg_column_size
                     $size = DB::table($table)
                         ->where('tenant_id', $tenantId)
-                        ->sum(DB::raw($sumQuery));
+                        ->selectRaw("SUM(pg_column_size({$table}.*)) as total_size")
+                        ->value('total_size');
+
+                } elseif ($driver === 'mysql' || $driver === 'mariadb') {
+                    // MySQL: Sum the length of all columns as an approximation
+                    $columns = Schema::getColumnListing($table);
+
+                    if (!empty($columns)) {
+                        $sumQuery = collect($columns)
+                            ->map(fn($col) => "LENGTH(COALESCE(`$col`, ''))")
+                            ->join(' + ');
+
+                        $size = DB::table($table)
+                            ->where('tenant_id', $tenantId)
+                            ->sum(DB::raw($sumQuery));
+                    }
+
+                } elseif ($driver === 'sqlite') {
+                    // SQLite: Similar to MySQL
+                    $columns = Schema::getColumnListing($table);
+
+                    if (!empty($columns)) {
+                        $sumQuery = collect($columns)
+                            ->map(fn($col) => "length(coalesce(\"$col\", ''))")
+                            ->join(' + ');
+
+                        $size = DB::table($table)
+                            ->where('tenant_id', $tenantId)
+                            ->sum(DB::raw($sumQuery));
+                    }
                 }
 
-            } elseif ($driver === 'sqlite') {
-                // SQLite: Similar to MySQL, but uses different quoting and function names usually match
-                $columns = Schema::getColumnListing($table);
+                $totalSize += (int) ($size ?? 0);
 
-                if (!empty($columns)) {
-                    $sumQuery = collect($columns)
-                        ->map(fn($col) => "length(coalesce(\"$col\", ''))")
-                        ->join(' + ');
-
-                    $size = DB::table($table)
-                        ->where('tenant_id', $tenantId)
-                        ->sum(DB::raw($sumQuery));
-                }
+            } catch (\Exception $e) {
+                // Log but don't fail - continue with other tables
+                Log::warning("Failed to calculate size for table {$table}: " . $e->getMessage());
             }
-
-            $totalSize += (int) $size;
         }
 
         return $totalSize;
