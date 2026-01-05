@@ -6,7 +6,9 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -15,7 +17,6 @@ use Stancl\Tenancy\Facades\Tenancy;
 /**
  * Handles user login for both landlord and tenant accounts.
  */
-// Use the landlord layout for this Livewire component
 #[Layout('components.layouts.login')]
 class Login extends Component
 {
@@ -54,22 +55,25 @@ class Login extends Component
         // 1. Validate input
         $this->validate();
 
+        // 2. Check Rate Limiter (Prevent Brute Force)
+        $this->ensureIsNotRateLimited();
+
         Log::info('Login attempt', ['email' => $this->email]);
 
         try {
-            // 2. Retrieve user
+            // 3. Retrieve user
             $user = User::where('email', $this->email)->first();
 
-            // 3. Verify User exists and Password matches
+            // 4. Verify User exists and Password matches
             if (! $user || ! Hash::check($this->password, $user->password)) {
-                // Introduce a slight delay to prevent timing attacks
-                sleep(1);
+                RateLimiter::hit($this->throttleKey()); // Increment failure count
+
                 throw ValidationException::withMessages([
                     'email' => [__('The provided credentials do not match our records.')],
                 ]);
             }
 
-            // 4. Check for active status
+            // 5. Check for active status
             if (! $user->is_active) {
                 Log::warning('Login failed – inactive account', ['email' => $this->email]);
                 throw ValidationException::withMessages([
@@ -77,9 +81,12 @@ class Login extends Component
                 ]);
             }
 
-            // 5. Initialize tenancy *before* login if user is a tenant
-            // This ensures the session is created in the correct context if using single-db or scoped sessions
-            if ($user->role !== 'landlord' && ! empty($user->tenant_id)) {
+            // 6. Initialize tenancy Logic
+            if ($user->role === 'landlord') {
+                // Landlords belong to the central application; no tenant init needed.
+                Log::info('Landlord login proceeding', ['email' => $this->email]);
+            } elseif (! empty($user->tenant_id)) {
+                // Standard User: Must belong to a tenant
                 try {
                     Tenancy::initialize($user->tenant_id);
                     Log::info('Tenant initialised', ['tenant_id' => $user->tenant_id]);
@@ -89,24 +96,31 @@ class Login extends Component
                         'email' => [__('Tenant configuration error. Please contact support.')],
                     ]);
                 }
+            } else {
+                // User is not a landlord, but has no Tenant ID (Orphaned user)
+                Log::warning('Login failed – user has no tenant assigned', ['email' => $this->email]);
+                throw ValidationException::withMessages([
+                    'email' => [__('You do not have permission to access this account.')],
+                ]);
             }
 
-            // 6. Log the user in
-            Auth::Login($user, $this->remember);
+            // 7. Log the user in
+            Auth::login($user, $this->remember);
 
-            // 7. Regenerate the session for security
+            // 8. Regenerate the session for security
             Session::regenerate();
+
+            // Clear the rate limiter on success
+            RateLimiter::clear($this->throttleKey());
 
             Log::info('Login successful', ['email' => $this->email, 'role' => $user->role]);
 
-            // 8. Redirect
+            // 9. Redirect
             return $this->redirectToDashboard($user);
 
         } catch (ValidationException $e) {
-            // Livewire handles this automatically, no need to log the stack trace for validation errors
             throw $e;
         } catch (\Throwable $e) {
-            // Log unexpected errors
             Log::error('Login exception', [
                 'email' => $this->email,
                 'error' => $e->getMessage(),
@@ -120,7 +134,31 @@ class Login extends Component
     }
 
     /* --------------------
-       Helpers
+       Rate Limiting Helpers
+       -------------------- */
+    protected function ensureIsNotRateLimited(): void
+    {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+            return;
+        }
+
+        $seconds = RateLimiter::availableIn($this->throttleKey());
+
+        throw ValidationException::withMessages([
+            'email' => trans('auth.throttle', [
+                'seconds' => $seconds,
+                'minutes' => ceil($seconds / 60),
+            ]),
+        ]);
+    }
+
+    protected function throttleKey(): string
+    {
+        return Str::transliterate(Str::lower($this->email).'|'.request()->ip());
+    }
+
+    /* --------------------
+       Navigation Helpers
        -------------------- */
     protected function redirectToDashboard(User $user)
     {

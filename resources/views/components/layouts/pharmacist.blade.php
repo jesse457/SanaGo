@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name', 'ClinicOS Pharmacy') }}</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <link rel="icon" type="image/png" href="{{ Storage::disk('central_public')->url('images/logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ Storage::disk('central_public')->url('images/logo.webp') }}">
     @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <!-- Global Dark Mode Logic -->

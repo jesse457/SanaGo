@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name', 'ClinicOS Lab') }}</title>
-    <link rel="icon" type="image/png" href="{{ Storage::disk('central_public')->url('images/logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ Storage::disk('central_public')->url('images/logo.webp') }}">
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     @livewireStyles

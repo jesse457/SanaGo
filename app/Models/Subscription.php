@@ -347,7 +347,8 @@ class Subscription extends Model
             'feed_backs',
             'files',
             'procedure_kits',
-          
+            'demo_requests',
+            'subscriptions',
         ];
 
         // Determine the database driver
