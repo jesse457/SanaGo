@@ -10,14 +10,17 @@ use Livewire\WithPagination;
 #[Layout('components.layouts.landlord')]
 class ManageDemo extends Component
 {
-     use WithPagination;
+    use WithPagination;
 
     public $search = '';
+
     public $filterStatus = ''; // 'new', 'contacted', 'converted'
 
     // Modal State
     public $showDeleteModal = false;
+
     public $deleteId = null;
+
     public $deleteName = '';
 
     public function deleteConfirm($id)
@@ -39,20 +42,20 @@ class ManageDemo extends Component
         $this->showDeleteModal = false;
     }
 
-
     public function render()
     {
-          $requests = DemoRequest::query()
+        $requests = DemoRequest::query()
             ->when($this->search, function ($q) {
-                $q->where('full_name', 'like', '%' . $this->search . '%')
-                  ->orWhere('facility_name', 'like', '%' . $this->search . '%')
-                  ->orWhere('email', 'like', '%' . $this->search . '%');
+                $q->where('full_name', 'like', '%'.$this->search.'%')
+                    ->orWhere('facility_name', 'like', '%'.$this->search.'%')
+                    ->orWhere('email', 'like', '%'.$this->search.'%');
             })
             ->when($this->filterStatus, function ($q) {
                 $q->where('status', $this->filterStatus);
             })
             ->latest()
             ->paginate(9);
+
         return view('livewire.land-lord.manage-demo', [
             'requests' => $requests,
             'total_count' => DemoRequest::count(),

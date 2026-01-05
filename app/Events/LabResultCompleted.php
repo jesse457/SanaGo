@@ -3,9 +3,7 @@
 namespace App\Events;
 
 use App\Models\LabResult;
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -26,12 +24,12 @@ class LabResultCompleted implements ShouldBroadcast
         $this->labResult = $labResult;
     }
 
-     /**
+    /**
      * Logic: If tech is online, just Broadcast. If offline, store in DB.
      */
     public function via($notifiable)
     {
-        $isOnline = Cache::has('user-online-' . $notifiable->id);
+        $isOnline = Cache::has('user-online-'.$notifiable->id);
 
         if ($isOnline) {
             return ['broadcast'];
@@ -39,6 +37,7 @@ class LabResultCompleted implements ShouldBroadcast
 
         return ['database', 'broadcast'];
     }
+
     /**
      * Get the channels the event should broadcast on.
      *
@@ -47,19 +46,19 @@ class LabResultCompleted implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('App.Models.User.' . $this->labResult->doctor_id),
+            new PrivateChannel('App.Models.User.'.$this->labResult->doctor_id),
         ];
     }
 
-  public function broadcastWith(): array
-{
-    return [
-        'message' => 'Lab result completed for ' . ($this->labResult->labRequest->patient->name ?? 'Patient'),
-        'lab_result_id' => $this->labResult->id,
-        // Use ?-> to safely access nested properties
-        'patient_name' => $this->labResult->labRequest?->patient?->name,
-        'test_name' => $this->labResult->labRequest?->testDefinition?->test_name,
-        'status' => $this->labResult->status,
-    ];
-}
+    public function broadcastWith(): array
+    {
+        return [
+            'message' => 'Lab result completed for '.($this->labResult->labRequest->patient->name ?? 'Patient'),
+            'lab_result_id' => $this->labResult->id,
+            // Use ?-> to safely access nested properties
+            'patient_name' => $this->labResult->labRequest?->patient?->name,
+            'test_name' => $this->labResult->labRequest?->testDefinition?->test_name,
+            'status' => $this->labResult->status,
+        ];
+    }
 }

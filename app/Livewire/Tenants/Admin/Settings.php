@@ -33,22 +33,33 @@ class Settings extends Component
 
     // General Settings
     public string $hospitalName = '';
+
     public ?string $hospitalAddress = '';
+
     public ?string $hospitalEmail = '';
+
     public $hospitalLogo;
+
     public ?string $currentLogoUrl = null;
 
     // Search Filters
     public string $searchDepartment = '';
+
     public string $searchWard = '';
+
     public string $searchBedType = '';
+
     public string $searchBed = '';
+
     public string $searchSupply = '';
 
     // Unified Modal State
     public bool $showModal = false;
+
     public string $modalType = ''; // 'department', 'ward', 'bed-type', 'bed', 'supply'
+
     public string $modalAction = ''; // 'create', 'edit', 'delete'
+
     public ?int $editingId = null;
 
     // Unified Form Data
@@ -56,8 +67,11 @@ class Settings extends Component
 
     // Subscription modals
     public bool $showUpgradeModal = false;
+
     public bool $showCancelModal = false;
+
     public ?string $cancelReason = null;
+
     public ?string $cancelFeedback = null;
 
     // =========================================================================
@@ -75,7 +89,7 @@ class Settings extends Component
             try {
                 $this->currentLogoUrl = Storage::disk('s3')->temporaryUrl($tenant->logo, now()->addMinutes(10));
             } catch (\Exception $e) {
-                Log::error("S3 Logo Error: " . $e->getMessage());
+                Log::error('S3 Logo Error: '.$e->getMessage());
             }
         }
     }
@@ -92,25 +106,28 @@ class Settings extends Component
 
     public function getAllDepartmentsProperty()
     {
-        if (!$this->showModal || !in_array($this->modalType, ['ward'])) {
+        if (! $this->showModal || ! in_array($this->modalType, ['ward'])) {
             return collect();
         }
+
         return Department::where('tenant_id', tenant('id'))->get(['id', 'name']);
     }
 
     public function getAllWardsProperty()
     {
-        if (!$this->showModal || !in_array($this->modalType, ['bed'])) {
+        if (! $this->showModal || ! in_array($this->modalType, ['bed'])) {
             return collect();
         }
+
         return Ward::where('tenant_id', tenant('id'))->get(['id', 'name']);
     }
 
     public function getAllBedTypesProperty()
     {
-        if (!$this->showModal || !in_array($this->modalType, ['bed'])) {
+        if (! $this->showModal || ! in_array($this->modalType, ['bed'])) {
             return collect();
         }
+
         return BedType::where('tenant_id', tenant('id'))->get(['id', 'name']);
     }
 
@@ -119,9 +136,9 @@ class Settings extends Component
         if ($this->activeTab !== 'departments') {
             return new \Illuminate\Pagination\LengthAwarePaginator([], 0, 6, 1, ['path' => request()->url()]);
         }
-        
+
         return Department::where('tenant_id', tenant('id'))
-            ->when($this->searchDepartment, fn($q) => $q->where('name', 'like', '%' . $this->searchDepartment . '%'))
+            ->when($this->searchDepartment, fn ($q) => $q->where('name', 'like', '%'.$this->searchDepartment.'%'))
             ->orderBy('name')
             ->paginate(6, ['*'], 'deptPage');
     }
@@ -131,10 +148,10 @@ class Settings extends Component
         if ($this->activeTab !== 'wards') {
             return new \Illuminate\Pagination\LengthAwarePaginator([], 0, 8, 1, ['path' => request()->url()]);
         }
-        
+
         return Ward::with('department')
             ->where('tenant_id', tenant('id'))
-            ->when($this->searchWard, fn($q) => $q->where('name', 'like', '%' . $this->searchWard . '%'))
+            ->when($this->searchWard, fn ($q) => $q->where('name', 'like', '%'.$this->searchWard.'%'))
             ->orderBy('name')
             ->paginate(8, ['*'], 'wardPage');
     }
@@ -144,9 +161,9 @@ class Settings extends Component
         if ($this->activeTab !== 'bed-types') {
             return new \Illuminate\Pagination\LengthAwarePaginator([], 0, 6, 1, ['path' => request()->url()]);
         }
-        
+
         return BedType::where('tenant_id', tenant('id'))
-            ->when($this->searchBedType, fn($q) => $q->where('name', 'like', '%' . $this->searchBedType . '%'))
+            ->when($this->searchBedType, fn ($q) => $q->where('name', 'like', '%'.$this->searchBedType.'%'))
             ->orderBy('name')
             ->paginate(6, ['*'], 'btPage');
     }
@@ -156,10 +173,10 @@ class Settings extends Component
         if ($this->activeTab !== 'beds') {
             return new \Illuminate\Pagination\LengthAwarePaginator([], 0, 12, 1, ['path' => request()->url()]);
         }
-        
+
         return Bed::with(['ward.department', 'bedType'])
             ->where('tenant_id', tenant('id'))
-            ->when($this->searchBed, fn($q) => $q->where('bed_number', 'like', '%' . $this->searchBed . '%'))
+            ->when($this->searchBed, fn ($q) => $q->where('bed_number', 'like', '%'.$this->searchBed.'%'))
             ->orderBy('bed_number')
             ->paginate(12, ['*'], 'bedPage');
     }
@@ -169,9 +186,9 @@ class Settings extends Component
         if ($this->activeTab !== 'supplies') {
             return new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10, 1, ['path' => request()->url()]);
         }
-        
+
         return Supply::where('tenant_id', tenant('id'))
-            ->when($this->searchSupply, fn($q) => $q->where('name', 'like', '%' . $this->searchSupply . '%'))
+            ->when($this->searchSupply, fn ($q) => $q->where('name', 'like', '%'.$this->searchSupply.'%'))
             ->orderBy('name')
             ->paginate(10, ['*'], 'supplyPage');
     }
@@ -180,11 +197,30 @@ class Settings extends Component
     // PAGINATION RESET HOOKS
     // =========================================================================
 
-    public function updatingSearchDepartment(): void { $this->resetPage('deptPage'); }
-    public function updatingSearchWard(): void { $this->resetPage('wardPage'); }
-    public function updatingSearchBedType(): void { $this->resetPage('btPage'); }
-    public function updatingSearchBed(): void { $this->resetPage('bedPage'); }
-    public function updatingSearchSupply(): void { $this->resetPage('supplyPage'); }
+    public function updatingSearchDepartment(): void
+    {
+        $this->resetPage('deptPage');
+    }
+
+    public function updatingSearchWard(): void
+    {
+        $this->resetPage('wardPage');
+    }
+
+    public function updatingSearchBedType(): void
+    {
+        $this->resetPage('btPage');
+    }
+
+    public function updatingSearchBed(): void
+    {
+        $this->resetPage('bedPage');
+    }
+
+    public function updatingSearchSupply(): void
+    {
+        $this->resetPage('supplyPage');
+    }
 
     // =========================================================================
     // MODAL MANAGEMENT
@@ -310,7 +346,7 @@ class Settings extends Component
         $model->delete();
         $this->closeModal();
 
-        LivewireAlert::title('Deleted')->success()->text(ucfirst(str_replace('-', ' ', $this->modalType)) . ' deleted successfully')->show();
+        LivewireAlert::title('Deleted')->success()->text(ucfirst(str_replace('-', ' ', $this->modalType)).' deleted successfully')->show();
     }
 
     private function validateForm(): void
@@ -387,7 +423,7 @@ class Settings extends Component
             ]),
         };
 
-        LivewireAlert::title('Created')->success()->text(ucfirst(str_replace('-', ' ', $this->modalType)) . ' created successfully')->show();
+        LivewireAlert::title('Created')->success()->text(ucfirst(str_replace('-', ' ', $this->modalType)).' created successfully')->show();
     }
 
     private function updateItem(): void
@@ -412,7 +448,7 @@ class Settings extends Component
 
         $model->update($data);
 
-        LivewireAlert::title('Updated')->success()->text(ucfirst(str_replace('-', ' ', $this->modalType)) . ' updated successfully')->show();
+        LivewireAlert::title('Updated')->success()->text(ucfirst(str_replace('-', ' ', $this->modalType)).' updated successfully')->show();
     }
 
     // =========================================================================
@@ -422,7 +458,7 @@ class Settings extends Component
     public function cancelSubscription(): void
     {
         $this->validate(['cancelReason' => 'required|string']);
-        
+
         $sub = $this->subscription;
         if ($sub) {
             $sub->cancel();

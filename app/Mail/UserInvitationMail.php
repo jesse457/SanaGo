@@ -15,8 +15,11 @@ class UserInvitationMail extends Mailable
     use Queueable, SerializesModels;
 
     public $user;
+
     public $resetUrl;
+
     public $tenantName;
+
     public $tenantDomain;
 
     // Receive the domain and name directly from the component
@@ -32,19 +35,19 @@ class UserInvitationMail extends Mailable
         ], false);
 
         $protocol = app()->environment('production') ? 'https://' : 'http://';
-        $this->resetUrl = $protocol . $this->tenantDomain . $relativePath;
+        $this->resetUrl = $protocol.$this->tenantDomain.$relativePath;
     }
 
     public function envelope(): Envelope
     {
         // Using the passed-in domain string safely
         return new Envelope(
-            from: new Address("noreply@sanago.site", $this->tenantName),
-            subject: 'Welcome to ' . $this->tenantName . ' - Set your password',
+            from: new Address('noreply@sanago.site', $this->tenantName),
+            subject: 'Welcome to '.$this->tenantName.' - Set your password',
         );
     }
 
-      /**
+    /**
      * Get the message content definition.
      */
     public function content(): Content
@@ -54,4 +57,3 @@ class UserInvitationMail extends Mailable
         );
     }
 }
-

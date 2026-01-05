@@ -50,26 +50,24 @@ class Patient extends Model implements CipherSweetEncrypted
             // 1. First Name: Case-insensitive + Partial Match
             ->addField('first_name')
             ->addBlindIndex('first_name', new BlindIndex('first_name_index', [
-                new Lowercase(), // Normalize to lowercase
+                new Lowercase, // Normalize to lowercase
             ]))
 
             // 2. Last Name: Case-insensitive + Partial Match
             ->addField('last_name')
             ->addBlindIndex('last_name', new BlindIndex('last_name_index', [
-                new Lowercase(),
+                new Lowercase,
             ]))
 
             // 3. Email: Case-insensitive (Exact match usually preferred for emails)
             ->addField('email')
             ->addBlindIndex('email', new BlindIndex('email_index', [
-                new Lowercase()
+                new Lowercase,
             ]))
 
             // 4. Phone: Encrypted, Exact Match
             ->addField('phone')
             ->addBlindIndex('phone', new BlindIndex('phone_index'))
-
-           
 
             // 6. Address: Encrypted only (Not searchable)
             ->addField('address')

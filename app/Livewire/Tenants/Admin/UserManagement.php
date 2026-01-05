@@ -26,7 +26,9 @@ class UserManagement extends Component
 
     // --- Search and Filter Properties ---
     public string $search = '';
+
     public string $filterRole = '';
+
     public string $filterStatus = '';
 
     // --- Form Properties ---
@@ -77,9 +79,9 @@ class UserManagement extends Component
     {
         return User::with('shifts')
             ->where('role', '!=', 'admin')
-            ->when($this->search, fn($q) => $q->where(fn($sq) => $sq->where('name', 'LIKE', "%{$this->search}%")->orWhere('email', 'LIKE', "%{$this->search}%")))
-            ->when($this->filterRole, fn($q) => $q->where('role', $this->filterRole))
-            ->when($this->filterStatus !== '', fn($q) => $q->where('is_active', $this->filterStatus === 'active'))
+            ->when($this->search, fn ($q) => $q->where(fn ($sq) => $sq->where('name', 'LIKE', "%{$this->search}%")->orWhere('email', 'LIKE', "%{$this->search}%")))
+            ->when($this->filterRole, fn ($q) => $q->where('role', $this->filterRole))
+            ->when($this->filterStatus !== '', fn ($q) => $q->where('is_active', $this->filterStatus === 'active'))
             ->orderBy('name')
             ->paginate(10);
     }
@@ -130,7 +132,9 @@ class UserManagement extends Component
             'selected_shift_id' => 'nullable|exists:user_shifts,id',
         ]);
 
-        if (! $this->userId) return;
+        if (! $this->userId) {
+            return;
+        }
 
         $user = User::findOrFail($this->userId);
         $user->update($validated);
@@ -188,6 +192,7 @@ class UserManagement extends Component
                 ->info()
                 ->text('This user has already verified their email address.')
                 ->show();
+
             return;
         }
 

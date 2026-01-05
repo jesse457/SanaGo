@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ParagonIE\CipherSweet\BlindIndex;
 use ParagonIE\CipherSweet\EncryptedRow;
-use ParagonIE\CipherSweet\Transformation\Lowercase;
 use Spatie\LaravelCipherSweet\Concerns\UsesCipherSweet;
 use Spatie\LaravelCipherSweet\Contracts\CipherSweetEncrypted;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
@@ -32,6 +31,7 @@ class LabResult extends Model implements CipherSweetEncrypted
     protected $casts = [
         'result_date' => 'datetime',
     ];
+
     /**
      * Configure CipherSweet encryption for this model.
      *
@@ -48,9 +48,8 @@ class LabResult extends Model implements CipherSweetEncrypted
             // 2. Last Name: Case-insensitive + Partial Match
             ->addField('last_name');
 
-
-
     }
+
     public function labRequest()
     {
         return $this->belongsTo(LabRequest::class);

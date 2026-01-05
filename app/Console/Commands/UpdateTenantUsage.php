@@ -18,7 +18,9 @@ class UpdateTenantUsage extends Command
     protected $description = 'Clean up temporary files and calculate storage usage for all active tenants';
 
     private int $successCount = 0;
+
     private int $failureCount = 0;
+
     private int $cleanedFiles = 0;
 
     public function handle(): int
@@ -31,6 +33,7 @@ class UpdateTenantUsage extends Command
 
         if ($subscriptions->isEmpty()) {
             $this->warn('⚠️  No active subscriptions found.');
+
             return self::FAILURE;
         }
 
@@ -50,7 +53,7 @@ class UpdateTenantUsage extends Command
 
             try {
                 // Step 1: Cleanup temporary files
-                if (!$this->option('skip-cleanup')) {
+                if (! $this->option('skip-cleanup')) {
                     $cleaned = $this->cleanupTempFiles($subscription);
                     $this->cleanedFiles += $cleaned;
                 }
@@ -65,8 +68,8 @@ class UpdateTenantUsage extends Command
                     'tenant_id' => $tenantId,
                     'plan' => $subscription->plan ?? 'N/A',
                     'usage' => $usageData['formatted'],
-                    'percent' => $usageData['percentage'] . '%',
-                    'status' => '✅ OK'
+                    'percent' => $usageData['percentage'].'%',
+                    'status' => '✅ OK',
                 ];
 
                 $this->successCount++;
@@ -79,7 +82,7 @@ class UpdateTenantUsage extends Command
                     'plan' => $subscription->plan ?? 'N/A',
                     'usage' => 'ERROR',
                     'percent' => '0%',
-                    'status' => '❌ FAILED'
+                    'status' => '❌ FAILED',
                 ];
 
                 $this->failureCount++;
@@ -112,7 +115,7 @@ class UpdateTenantUsage extends Command
 
     private function cleanupTempFiles(Subscription $subscription): int
     {
-        if (!$subscription->tenant) {
+        if (! $subscription->tenant) {
             return 0;
         }
 
@@ -125,10 +128,10 @@ class UpdateTenantUsage extends Command
                 // Get all temporary files
                 $tempFiles = $disk->allFiles('livewire-tmp');
 
-                if (!empty($tempFiles)) {
+                if (! empty($tempFiles)) {
                     // Delete in batches to avoid memory issues
                     $chunks = array_chunk($tempFiles, 100);
-                    
+
                     foreach ($chunks as $chunk) {
                         $disk->delete($chunk);
                         $cleanedCount += count($chunk);
@@ -139,7 +142,7 @@ class UpdateTenantUsage extends Command
                     ]);
                 }
             } catch (\Exception $e) {
-                Log::warning("Failed to cleanup temp files for tenant: " . $e->getMessage(), [
+                Log::warning('Failed to cleanup temp files for tenant: '.$e->getMessage(), [
                     'tenant_id' => tenant('id'),
                 ]);
             }
@@ -183,7 +186,7 @@ class UpdateTenantUsage extends Command
             'trace' => $e->getTraceAsString(),
         ];
 
-        Log::error("Tenant usage calculation failed", $context);
+        Log::error('Tenant usage calculation failed', $context);
 
         // In production, you might want to send alerts here
         if (app()->environment('production')) {
@@ -206,7 +209,7 @@ class UpdateTenantUsage extends Command
         $this->newLine();
 
         // Display detailed table
-        if (!empty($results)) {
+        if (! empty($results)) {
             $this->table(
                 ['Tenant ID', 'Plan', 'Usage', 'Percent', 'Status'],
                 $results

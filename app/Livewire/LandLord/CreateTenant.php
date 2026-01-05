@@ -3,14 +3,14 @@
 namespace App\Livewire\LandLord;
 
 use App\Mail\UserInvitationMail;
+use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Models\Subscription;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -18,7 +18,6 @@ use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\WithFileUploads;
-use Throwable;
 
 #[Layout('components.layouts.landlord')]
 class CreateTenant extends Component
@@ -26,14 +25,23 @@ class CreateTenant extends Component
     use WithFileUploads;
 
     public $tenantName;
+
     public $phoneNumber;
+
     public $address;
+
     public $logo = null;
+
     public $generatedDomain;
+
     public $hospitalContactEmail;
+
     public $subscriptionTier = Subscription::PLAN_BASIC;
+
     public $billingCycle = Subscription::BILLING_YEARLY;
+
     public $adminName;
+
     public $adminEmail;
 
     public function rules()
@@ -54,8 +62,8 @@ class CreateTenant extends Component
     public function updatedTenantName($value)
     {
         $slug = Str::slug($value);
-        $this->generatedDomain = $slug . '.' . config('tenancy.central_domains.0');
-        $this->hospitalContactEmail = 'contact@' . $this->generatedDomain;
+        $this->generatedDomain = $slug.'.'.config('tenancy.central_domains.0');
+        $this->hospitalContactEmail = 'contact@'.$this->generatedDomain;
     }
 
     public function createTenant()
@@ -77,7 +85,7 @@ class CreateTenant extends Component
 
                 // Create Domain
                 $tenant->domains()->create([
-                    'domain' => $this->generatedDomain
+                    'domain' => $this->generatedDomain,
                 ]);
 
                 // Handle Logo
@@ -97,7 +105,7 @@ class CreateTenant extends Component
                     ]);
 
                     // Subscription
-                    $sub = new Subscription();
+                    $sub = new Subscription;
                     $sub->plan = $this->subscriptionTier;
                     $sub->billing_cycle = $this->billingCycle;
                     $sub->status = Subscription::STATUS_ACTIVE;
@@ -125,10 +133,10 @@ class CreateTenant extends Component
                 });
             });
 
-             $this->reset(['tenantName', 'phone_number', 'address', 'subscriptionTier', 'generatedDomain', 'logo', 'adminName', 'adminEmail']);
+            $this->reset(['tenantName', 'phone_number', 'address', 'subscriptionTier', 'generatedDomain', 'logo', 'adminName', 'adminEmail']);
             $this->subscriptionTier = Subscription::PLAN_BASIC;
             $this->billingCycle = Subscription::BILLING_YEARLY;
-            LivewireAlert::title('Tenant Created')->success()->text('Invitation sent to ' . $this->adminEmail);
+            LivewireAlert::title('Tenant Created')->success()->text('Invitation sent to '.$this->adminEmail);
         } catch (\Throwable $e) {
             // [FIX] Rollback Central DB if failed before commit
             try {
@@ -143,10 +151,10 @@ class CreateTenant extends Component
             Log::error('TENANT_CREATION_CRASH', [
                 'real_error' => $e->getMessage(),
                 'line' => $e->getLine(),
-                'domain' => $this->generatedDomain
+                'domain' => $this->generatedDomain,
             ]);
 
-            LivewireAlert::title('Tenant Creation Failed')->error()->text('Error: ' . $e->getMessage());
+            LivewireAlert::title('Tenant Creation Failed')->error()->text('Error: '.$e->getMessage());
         }
     }
 
@@ -156,6 +164,7 @@ class CreateTenant extends Component
 
         return collect($plans)->map(function ($plan) {
             $tempSub = new Subscription(['plan' => $plan]);
+
             return [
                 'id' => $plan,
                 'name' => $tempSub->getPlanDisplayName(),
@@ -168,7 +177,7 @@ class CreateTenant extends Component
     public function render()
     {
         return view('livewire.land-lord.create-tenant', [
-            'plans' => $this->plans
+            'plans' => $this->plans,
         ]);
     }
 }

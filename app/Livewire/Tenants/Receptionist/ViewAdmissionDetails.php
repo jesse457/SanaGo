@@ -116,33 +116,33 @@ class ViewAdmissionDetails extends Component
 
         try {
             DB::connection('pgsql_transaction')->transaction(function () use ($admissionToUpdate, $newStatus) {
-            // Update the admission status
-            $admissionToUpdate->update([
-                'status' => $newStatus,
-                'discharge_date' => now(),
-            ]);
+                // Update the admission status
+                $admissionToUpdate->update([
+                    'status' => $newStatus,
+                    'discharge_date' => now(),
+                ]);
 
-            // If discharged, free up the bed
-            if ($newStatus === 'Discharged' && $admissionToUpdate->bed_id) {
-                $bed = Bed::find($admissionToUpdate->bed_id);
-                if ($bed) {
-                    $bed->is_occupied = false;
-                    $bed->save();
+                // If discharged, free up the bed
+                if ($newStatus === 'Discharged' && $admissionToUpdate->bed_id) {
+                    $bed = Bed::find($admissionToUpdate->bed_id);
+                    if ($bed) {
+                        $bed->is_occupied = false;
+                        $bed->save();
+                    }
                 }
-            }
-            $this->patient->update(['is_admitted_approve' => false]);
-            // Reload data to reflect the change
-            $this->admissions = $this->patient->admissions->sortByDesc('admission_date');
-            $this->selectedAdmission = $this->admissions->firstWhere('id', $this->selectedAdmissionId);
-            $this->currentStatus = $this->selectedAdmission->status;
-            $this->logActivity('Patient_discharged',
-                "Patient '{$this->patient->first_name} {$this->patient->last_name}' was Discharged "
-            );
-        });
+                $this->patient->update(['is_admitted_approve' => false]);
+                // Reload data to reflect the change
+                $this->admissions = $this->patient->admissions->sortByDesc('admission_date');
+                $this->selectedAdmission = $this->admissions->firstWhere('id', $this->selectedAdmissionId);
+                $this->currentStatus = $this->selectedAdmission->status;
+                $this->logActivity('Patient_discharged',
+                    "Patient '{$this->patient->first_name} {$this->patient->last_name}' was Discharged "
+                );
+            });
             LivewireAlert::title('Success')->success()->text("Patient '{$this->patient->first_name} {$this->patient->last_name}' successfully {$newStatus}.")->show();
         } catch (\Exception $e) {
             LivewireAlert::title('Success')->success()->text('Failed to update admission status if this error persist contact us')->show();
-            Log::error('Failed to update admission status: ' . $e->getMessage());
+            Log::error('Failed to update admission status: '.$e->getMessage());
         }
     }
 

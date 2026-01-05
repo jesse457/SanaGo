@@ -123,10 +123,8 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
-
-
     'passwords' => [
-      'admin' => env('ADMIN_PASSWORD', 'SanaGoAdmin123!'),
+        'admin' => env('ADMIN_PASSWORD', 'SanaGoAdmin123!'),
     ],
 
 ];

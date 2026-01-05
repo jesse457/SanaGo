@@ -4,8 +4,8 @@ namespace App\Livewire;
 
 use App\Models\DemoRequest;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
-use Livewire\Component;
 use Livewire\Attributes\Validate;
+use Livewire\Component;
 
 class BookDemo extends Component
 {
@@ -28,7 +28,9 @@ class BookDemo extends Component
     public $region = 'Center';
 
     public $job_title;
+
     public $has_whatsapp = true;
+
     public $success = false;
 
     public function submit()
@@ -36,16 +38,16 @@ class BookDemo extends Component
         $this->validate();
 
         DemoRequest::create([
-            'full_name'     => $this->full_name,
-            'email'         => $this->email,
-            'phone_number'  => $this->phone_number,
-            'has_whatsapp'  => $this->has_whatsapp,
+            'full_name' => $this->full_name,
+            'email' => $this->email,
+            'phone_number' => $this->phone_number,
+            'has_whatsapp' => $this->has_whatsapp,
             'facility_name' => $this->facility_name,
             'facility_type' => $this->facility_type,
-            'region'        => $this->region,
-            'job_title'     => $this->job_title,
+            'region' => $this->region,
+            'job_title' => $this->job_title,
         ]);
-LivewireAlert::title('Demo request submitted successfully!')->success()->show();
+        LivewireAlert::title('Demo request submitted successfully!')->success()->show();
         $this->success = true;
         $this->reset(['full_name', 'email', 'phone_number', 'facility_name', 'job_title']);
     }

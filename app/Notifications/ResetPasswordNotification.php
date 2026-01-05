@@ -2,8 +2,8 @@
 
 namespace App\Notifications;
 
-use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 class ResetPasswordNotification extends Notification
 {
@@ -52,8 +52,7 @@ class ResetPasswordNotification extends Notification
                 'email' => $notifiable->getEmailForPasswordReset(),
             ], false);
 
-          
-            return 'http://' . $domain . ':8000' . $relativePath;
+            return 'http://'.$domain.':8000'.$relativePath;
         }
 
         // 2. Default: Landlord / Central App Context

@@ -45,7 +45,7 @@ class ResetPassword extends Component
                 $user->forceFill([
                     'password' => \Illuminate\Support\Facades\Hash::make($password),
                 ])->setRememberToken(\Illuminate\Support\Str::random(60));
-                if (!$user->hasVerifiedEmail()) {
+                if (! $user->hasVerifiedEmail()) {
                     $user->markEmailAsVerified();
                 }
                 $user->save();

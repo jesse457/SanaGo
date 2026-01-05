@@ -50,11 +50,11 @@ class SupplyUsage extends Component
 
         // Check if there's enough stock
         if ($supply->current_stock < $quantityUsed) {
-            session()->flash('error', 'Not enough ' . $supply->name . ' in stock. Available: ' . $supply->current_stock);
+            session()->flash('error', 'Not enough '.$supply->name.' in stock. Available: '.$supply->current_stock);
 
             return;
         }
-        DB::connection('pgsql_transaction')->transaction(function () use ($quantityUsed,$supply,$supplyId) {
+        DB::connection('pgsql_transaction')->transaction(function () use ($quantityUsed, $supply, $supplyId) {
             // Create a new SupplyUsage record
             SupplyUsageModel::create([
                 'supply_id' => $supply->id,
@@ -73,7 +73,7 @@ class SupplyUsage extends Component
 
             $this->logActivity(
                 'supply_used',
-                Auth::user()->name . ' recorded usage of ' . $quantityUsed . ' ' . $supply->unit_of_measure . ' of ' . $supply->name,
+                Auth::user()->name.' recorded usage of '.$quantityUsed.' '.$supply->unit_of_measure.' of '.$supply->name,
                 [
                     'supply_id' => $supply->id,
                     'user_id' => Auth::id(),
@@ -84,7 +84,7 @@ class SupplyUsage extends Component
 
         LivewireAlert::title('Success')
             ->success()
-            ->text($quantityUsed . ' ' . $supply->unit_of_measure . ' of ' . $supply->name . ' recorded. Stock: ' . $supply->current_stock)
+            ->text($quantityUsed.' '.$supply->unit_of_measure.' of '.$supply->name.' recorded. Stock: '.$supply->current_stock)
             ->show();
     }
 

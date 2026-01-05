@@ -30,7 +30,7 @@ class WeatherServer extends Server
      * @var array<int, class-string<\Laravel\Mcp\Server\Tool>>
      */
     protected array $tools = [
-        CurrentWeatherTool::class
+        CurrentWeatherTool::class,
     ];
 
     /**

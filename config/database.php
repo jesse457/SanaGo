@@ -89,22 +89,22 @@ return [
 
         // DIRECT CONNECTION (No Pooling - Use for Transactions/Locks)
         'pgsql_transaction' => [
-            'driver'   => 'pgsql',
-            'url'      => env('DB_URL'),
-            'host'     => env('DB_HOST', '127.0.0.1'),
+            'driver' => 'pgsql',
+            'url' => env('DB_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
             // Often poolers run on 6543 or 5432, and direct DB is on 5433 or exposed via a different internal host
-            'port'     => env('DB_PORT_DIRECT', env('DB_PORT', '5432')),
+            'port' => env('DB_PORT_DIRECT', env('DB_PORT', '5432')),
             'database' => env('DB_DATABASE', 'laravel'),
             'username' => env('DB_USERNAME', 'root'),
             'password' => env('DB_PASSWORD', ''),
-            'charset'  => env('DB_CHARSET', 'utf8'),
-            'prefix'   => '',
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode'  => 'prefer',
+            'sslmode' => 'prefer',
             // This option prevents PDO from using prepared statements,
             // which often causes issues in transaction-mode poolers
-            'options'  => [
+            'options' => [
                 PDO::ATTR_EMULATE_PREPARES => true,
             ],
         ],

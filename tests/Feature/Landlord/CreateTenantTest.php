@@ -3,10 +3,9 @@
 namespace Tests\Feature\Livewire;
 
 use App\Livewire\LandLord\CreateTenant;
-use App\Mail\UserInvitationMail;
+use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Models\Subscription;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Http\UploadedFile;
@@ -17,19 +16,16 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
-use function PHPUnit\Framework\assertTrue;
-
 class CreateTenantTest extends TestCase
 {
     use RefreshDatabase; // Resets the Central Database
     use WithFaker;
 
-   protected function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
-
-      // 1. Force the 'pgsql_transaction' config to use the sqlite driver
+        // 1. Force the 'pgsql_transaction' config to use the sqlite driver
         // This ensures ANY test that tries to use this connection gets SQLite
         Config::set('database.connections.pgsql_transaction', config('database.connections.sqlite'));
 
@@ -60,8 +56,8 @@ class CreateTenantTest extends TestCase
     {
         Livewire::test(CreateTenant::class)
             ->set('tenantName', 'St. Mary Hospital')
-            ->assertSet('generatedDomain', 'st-mary-hospital.' . config('tenancy.central_domains.0'))
-            ->assertSet('hospitalContactEmail', 'contact@st-mary-hospital.' . config('tenancy.central_domains.0'));
+            ->assertSet('generatedDomain', 'st-mary-hospital.'.config('tenancy.central_domains.0'))
+            ->assertSet('hospitalContactEmail', 'contact@st-mary-hospital.'.config('tenancy.central_domains.0'));
     }
 
     /** @test */
@@ -79,71 +75,70 @@ class CreateTenantTest extends TestCase
             ]);
     }
 
-  
-   /** @test */
-public function it_creates_tenant_and_related_records_in_single_db()
-{
-    // 1. Prepare Data
-    $name = 'General Hospital';
-    $domainSlug = 'general-hospital';
-    $fullDomain = $domainSlug . '.localhost';
-    $adminEmail = 'admin@general.com';
-    $logo = UploadedFile::fake()->image('logo.jpg');
+    /** @test */
+    public function it_creates_tenant_and_related_records_in_single_db()
+    {
+        // 1. Prepare Data
+        $name = 'General Hospital';
+        $domainSlug = 'general-hospital';
+        $fullDomain = $domainSlug.'.localhost';
+        $adminEmail = 'admin@general.com';
+        $logo = UploadedFile::fake()->image('logo.jpg');
 
-    // 2. Run Livewire
-    Livewire::test(CreateTenant::class)
-        ->set('tenantName', $name)
-        ->set('phoneNumber', '555-0199')
-        ->set('address', '123 Health St')
-        ->set('logo', $logo)
-        ->set('adminName', 'Dr. Strange')
-        ->set('adminEmail', $adminEmail)
-        ->set('subscriptionTier', Subscription::PLAN_ENTERPRISE)
-        ->set('billingCycle', Subscription::BILLING_YEARLY)
-        ->call('createTenant')
-        ->assertHasNoErrors();
+        // 2. Run Livewire
+        Livewire::test(CreateTenant::class)
+            ->set('tenantName', $name)
+            ->set('phoneNumber', '555-0199')
+            ->set('address', '123 Health St')
+            ->set('logo', $logo)
+            ->set('adminName', 'Dr. Strange')
+            ->set('adminEmail', $adminEmail)
+            ->set('subscriptionTier', Subscription::PLAN_ENTERPRISE)
+            ->set('billingCycle', Subscription::BILLING_YEARLY)
+            ->call('createTenant')
+            ->assertHasNoErrors();
 
-    // 3. Assert Tenant Created (JSON Column Lookups)
-    // We DO NOT check 'id' here because it is random.
-    // We check inside the 'data' column using '->'
-    $this->assertDatabaseHas('tenants', [
-        'data->name' => $name,
-        'data->contact_email' => 'contact@' . $fullDomain,
-        'data->subscription_tier' => Subscription::PLAN_ENTERPRISE,
-    ]);
+        // 3. Assert Tenant Created (JSON Column Lookups)
+        // We DO NOT check 'id' here because it is random.
+        // We check inside the 'data' column using '->'
+        $this->assertDatabaseHas('tenants', [
+            'data->name' => $name,
+            'data->contact_email' => 'contact@'.$fullDomain,
+            'data->subscription_tier' => Subscription::PLAN_ENTERPRISE,
+        ]);
 
-    // 4. Retrieve the created tenant to check ID/Relationships
-    // We must find it using the JSON column since we don't know the UUID
-    $tenant = Tenant::where('data->contact_email', 'contact@' . $fullDomain)->firstOrFail();
+        // 4. Retrieve the created tenant to check ID/Relationships
+        // We must find it using the JSON column since we don't know the UUID
+        $tenant = Tenant::where('data->contact_email', 'contact@'.$fullDomain)->firstOrFail();
 
-    // 5. Assert Domain
-    // Domains table usually has explicit 'tenant_id' foreign key,
-    // so we use the retrieved UUID ($tenant->id)
-    $this->assertDatabaseHas('domains', [
-        'domain' => $fullDomain,
-        'tenant_id' => $tenant->id,
-    ]);
+        // 5. Assert Domain
+        // Domains table usually has explicit 'tenant_id' foreign key,
+        // so we use the retrieved UUID ($tenant->id)
+        $this->assertDatabaseHas('domains', [
+            'domain' => $fullDomain,
+            'tenant_id' => $tenant->id,
+        ]);
 
-    // 6. Assert S3 Upload (Logo path is stored in JSON 'data')
-    $this->assertNotNull($tenant->logo); // Accessor usually handles the JSON decode
-    $this->assertTrue(Storage::disk('s3')->exists($tenant->logo));
+        // 6. Assert S3 Upload (Logo path is stored in JSON 'data')
+        $this->assertNotNull($tenant->logo); // Accessor usually handles the JSON decode
+        $this->assertTrue(Storage::disk('s3')->exists($tenant->logo));
 
-    // 7. Assert User & Subscription
-    // These tables usually have standard columns, not a 'data' blob (unless you configured them otherwise).
-    // They are linked by the UUID we retrieved.
+        // 7. Assert User & Subscription
+        // These tables usually have standard columns, not a 'data' blob (unless you configured them otherwise).
+        // They are linked by the UUID we retrieved.
 
-    $this->assertDatabaseHas('users', [
-        'email' => $adminEmail,
-        'role' => 'admin',
-        'tenant_id' => $tenant->id,
-    ]);
+        $this->assertDatabaseHas('users', [
+            'email' => $adminEmail,
+            'role' => 'admin',
+            'tenant_id' => $tenant->id,
+        ]);
 
-    $this->assertDatabaseHas('subscriptions', [
-        'plan' => Subscription::PLAN_ENTERPRISE,
-        'status' => Subscription::STATUS_ACTIVE,
-        'tenant_id' => $tenant->id,
-    ]);
-}
+        $this->assertDatabaseHas('subscriptions', [
+            'plan' => Subscription::PLAN_ENTERPRISE,
+            'status' => Subscription::STATUS_ACTIVE,
+            'tenant_id' => $tenant->id,
+        ]);
+    }
 
     /** @test */
     public function it_handles_transaction_failure_gracefully()
@@ -184,9 +179,8 @@ public function it_creates_tenant_and_related_records_in_single_db()
     public function it_prevents_duplicate_domains()
     {
         // Create a tenant first
-       $tenant = Tenant::create(['subscription_tier' => 'basic']);
-           $tenant->domains()->create(['domain' => 'taken.localhost']);
-
+        $tenant = Tenant::create(['subscription_tier' => 'basic']);
+        $tenant->domains()->create(['domain' => 'taken.localhost']);
 
         Livewire::test(CreateTenant::class)
             ->set('tenantName', 'New Guy')

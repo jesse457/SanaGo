@@ -8,7 +8,7 @@ use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 class DemoRequest extends Model
 {
-    use HasFactory,CentralConnection;
+    use CentralConnection,HasFactory;
 
     protected $fillable = [
         'full_name',
@@ -19,6 +19,6 @@ class DemoRequest extends Model
         'facility_type',
         'region',
         'job_title',
-        'status'
+        'status',
     ];
 }

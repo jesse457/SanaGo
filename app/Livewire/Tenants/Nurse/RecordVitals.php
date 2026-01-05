@@ -166,33 +166,33 @@ class RecordVitals extends Component
 
         try {
             DB::connection('pgsql_transaction')->transaction(function () use ($systolic, $diastolic, $bmi) {
-            Vital::create([
-                'patient_id' => $this->selectedPatientId, // Use the selected ID
-                'nurse_id' => Auth::id(),
-                'recorded_at' => now(),
-                'temperature_celsius' => $this->temperature,
-                'blood_pressure_systolic' => (int) $systolic,
-                'blood_pressure_diastolic' => (int) $diastolic,
-                'heart_rate_bpm' => $this->heartRate,
-                'spo2_percentage' => $this->oxygenSaturation,
-                'respiratory_rate' => $this->respiratoryRate,
-                'weight_kg' => $this->weightKg,
-                'height_cm' => $this->heightCm,
-                'bmi' => $bmi,
-                'flag_abnormal' => $this->flagAbnormal,
-                'notes' => $this->nurseNotes,
-
-            ]);
-            $nurse = Auth::user()->name;
-            $this->logActivity(
-                'vitals_recorded',
-                "{$nurse} recorded vitals for {$this->selectedPatientName} ",
-                [
+                Vital::create([
+                    'patient_id' => $this->selectedPatientId, // Use the selected ID
                     'nurse_id' => Auth::id(),
-                    'patient_id' => $this->selectedPatientId,
-                ]
-            );
-        });
+                    'recorded_at' => now(),
+                    'temperature_celsius' => $this->temperature,
+                    'blood_pressure_systolic' => (int) $systolic,
+                    'blood_pressure_diastolic' => (int) $diastolic,
+                    'heart_rate_bpm' => $this->heartRate,
+                    'spo2_percentage' => $this->oxygenSaturation,
+                    'respiratory_rate' => $this->respiratoryRate,
+                    'weight_kg' => $this->weightKg,
+                    'height_cm' => $this->heightCm,
+                    'bmi' => $bmi,
+                    'flag_abnormal' => $this->flagAbnormal,
+                    'notes' => $this->nurseNotes,
+
+                ]);
+                $nurse = Auth::user()->name;
+                $this->logActivity(
+                    'vitals_recorded',
+                    "{$nurse} recorded vitals for {$this->selectedPatientName} ",
+                    [
+                        'nurse_id' => Auth::id(),
+                        'patient_id' => $this->selectedPatientId,
+                    ]
+                );
+            });
             LivewireAlert::title('Success')->success()->text('Vitals saved successfully')->show();
 
             // Reset all form fields, but keep the selected patient if desired

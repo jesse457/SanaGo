@@ -3,11 +3,11 @@
 namespace App\Notifications;
 
 use App\Models\MedicalRecord; // Or LabRequest, depending on how you pass data
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Broadcasting\PrivateChannel;
 
 class NewLabOrderNotification extends Notification implements ShouldQueue
 {
@@ -41,7 +41,7 @@ class NewLabOrderNotification extends Notification implements ShouldQueue
         return [
             'id' => $this->id,
             'message' => 'New Lab Request(s) Available',
-            'patient_name' => $this->medicalRecord->patient->first_name . ' ' . $this->medicalRecord->patient->last_name,
+            'patient_name' => $this->medicalRecord->patient->first_name.' '.$this->medicalRecord->patient->last_name,
             'consultation_id' => $this->medicalRecord->id,
             'type' => 'lab_order',
             'created_at' => now()->toIso8601String(),

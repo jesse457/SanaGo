@@ -121,15 +121,15 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(SupplyUsage::class, 'user_id');
     }
 
-     /**
+    /**
      * Send the password reset notification.
      *
      * @param  string  $token
      * @return void
      */
-   public function sendPasswordResetNotification($token)
-{
-  
-    $this->notify(new ResetPasswordNotification($token));
-}
+    public function sendPasswordResetNotification($token)
+    {
+
+        $this->notify(new ResetPasswordNotification($token));
+    }
 }

@@ -10,6 +10,7 @@ use Livewire\Component;
 class ViewDemoRequest extends Component
 {
     public DemoRequest $demoRequest;
+
     public $notes = '';
 
     public function mount(DemoRequest $demoRequest)
@@ -21,7 +22,7 @@ class ViewDemoRequest extends Component
     public function updateStatus($status)
     {
         $this->demoRequest->update(['status' => $status]);
-        $this->dispatch('notify', title: 'Success', message: 'Status updated to ' . ucfirst($status), type: 'success');
+        $this->dispatch('notify', title: 'Success', message: 'Status updated to '.ucfirst($status), type: 'success');
     }
 
     public function saveNotes()
@@ -34,6 +35,7 @@ class ViewDemoRequest extends Component
     public function delete()
     {
         $this->demoRequest->delete();
+
         return redirect()->route('landlord.demo-requests');
     }
 

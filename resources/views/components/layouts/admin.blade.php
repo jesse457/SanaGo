@@ -68,7 +68,7 @@
                     <x-heroicon-o-bars-3-bottom-left class="w-6 h-6" />
                 </button>
                 <div class="flex items-center gap-2">
-                    <img class="h-6 w-auto" src="{{ {{ Storage::disk('central_public')->url('images/logo.webp')}}" alt="Logo">
+                    <img class="h-6 w-auto" src="{{ Storage::disk('central_public')->url('images/logo.webp') }}" alt="Logo">
                     <span class="font-bold text-indigo-600 text-sm">Portal</span>
                 </div>
                 <div class="w-10"></div>

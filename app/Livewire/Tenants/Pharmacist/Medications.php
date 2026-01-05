@@ -177,7 +177,7 @@ class Medications extends Component
 
             if ($newlyIssued > 0) {
                 // If a new amount is entered, validate it
-                $rules["dispensedQuantities.{$id}"] = ['required', 'integer', 'min:1', 'max:' . $remaining];
+                $rules["dispensedQuantities.{$id}"] = ['required', 'integer', 'min:1', 'max:'.$remaining];
                 $messages["dispensedQuantities.{$id}.min"] = __('pharmacist.medications_component.validation_quantity_min_for', ['medication' => $item->medication->name]);
                 $messages["dispensedQuantities.{$id}.max"] = __('pharmacist.medications_component.validation_quantity_max_for', ['medication' => $item->medication->name, 'remaining' => $remaining]);
                 $anyDispensed = true;
@@ -276,8 +276,6 @@ class Medications extends Component
                 $newStatus = $allFullyDispensed ? 'dispensed' : 'partial';
                 $this->selectedPrescription->update(['status' => $newStatus]);
 
-
-
                 LivewireAlert::title(__('pharmacist.medications_component.alert_title_success'))
                     ->success()
                     ->text(__('pharmacist.medications_component.alert_dispensed_successfully'))
@@ -287,7 +285,7 @@ class Medications extends Component
             });
         } catch (\Exception $e) {
 
-            Log::error('Dispensation failed: ' . $e->getMessage());
+            Log::error('Dispensation failed: '.$e->getMessage());
             // The exception message is now already localized before being thrown.
             LivewireAlert::title(__('pharmacist.medications_component.alert_title_error'))
                 ->error()

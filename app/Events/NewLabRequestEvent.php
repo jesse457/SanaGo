@@ -39,7 +39,7 @@ class NewLabRequestEvent implements ShouldBroadcast
     {
         return [
             'consultation_id' => $this->medicalRecord->id,
-            'patient_name' => $this->medicalRecord->patient->first_name . ' ' . $this->medicalRecord->patient->last_name,
+            'patient_name' => $this->medicalRecord->patient->first_name.' '.$this->medicalRecord->patient->last_name,
             'doctor_name' => $this->medicalRecord->doctor->name ?? 'Unknown',
             'urgency' => 'normal', // You could calculate max urgency here if needed
             'created_at' => now()->toIso8601String(),

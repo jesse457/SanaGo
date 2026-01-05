@@ -3,11 +3,11 @@
 namespace App\Notifications;
 
 use App\Models\Prescription;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Broadcasting\PrivateChannel;
 
 class NewPrescriptionOrder extends Notification implements ShouldQueue
 {
@@ -41,7 +41,7 @@ class NewPrescriptionOrder extends Notification implements ShouldQueue
         return [
             'id' => $this->id,
             'message' => 'New Prescription Order',
-            'patient_name' => $this->prescription->patient->first_name . ' ' . $this->prescription->patient->last_name,
+            'patient_name' => $this->prescription->patient->first_name.' '.$this->prescription->patient->last_name,
             'prescription_id' => $this->prescription->id,
             'type' => 'pharmacy_order',
             'created_at' => now()->toIso8601String(),

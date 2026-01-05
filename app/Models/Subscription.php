@@ -43,18 +43,25 @@ class Subscription extends Model
 
     // Constants for subscription plans
     const PLAN_BASIC = 'basic';
+
     const PLAN_STANDARD = 'standard';
+
     const PLAN_ENTERPRISE = 'enterprise';
 
     // Constants for subscription status
     const STATUS_ACTIVE = 'active';
+
     const STATUS_INACTIVE = 'inactive';
+
     const STATUS_CANCELLED = 'cancelled';
+
     const STATUS_EXPIRED = 'expired';
+
     const STATUS_SUSPENDED = 'suspended';
 
     // Constants for billing cycles
     const BILLING_MONTHLY = 'monthly';
+
     const BILLING_YEARLY = 'yearly';
 
     /**
@@ -150,6 +157,7 @@ class Subscription extends Model
     public function hasFeature($feature)
     {
         $features = $this->getPlanFeatures();
+
         return isset($features[$feature]) && $features[$feature];
     }
 
@@ -224,6 +232,7 @@ class Subscription extends Model
         }
 
         $this->update($data);
+
         return $this;
     }
 
@@ -235,6 +244,7 @@ class Subscription extends Model
                 'cancelled_at' => null,
             ]);
         }
+
         return $this;
     }
 
@@ -243,7 +253,6 @@ class Subscription extends Model
      * STORAGE CALCULATION METHODS
      * ==========================================
      */
-
     public function getUsedStorageInBytes(): int
     {
         return $this->getDatabaseUsageBytes() + $this->getS3UsageBytes();
@@ -268,14 +277,14 @@ class Subscription extends Model
         return round(($usedBytes / $limitBytes) * 100, 2);
     }
 
- public function getS3UsageBytes(): int
+    public function getS3UsageBytes(): int
     {
         // 1. Check/Load relationship
-        if (!$this->relationLoaded('tenant')) {
+        if (! $this->relationLoaded('tenant')) {
             $this->load('tenant');
         }
 
-        if (!$this->tenant) {
+        if (! $this->tenant) {
             return 0;
         }
 
@@ -375,9 +384,9 @@ class Subscription extends Model
                     // MySQL: Sum the length of all columns as an approximation
                     $columns = Schema::getColumnListing($table);
 
-                    if (!empty($columns)) {
+                    if (! empty($columns)) {
                         $sumQuery = collect($columns)
-                            ->map(fn($col) => "LENGTH(COALESCE(`$col`, ''))")
+                            ->map(fn ($col) => "LENGTH(COALESCE(`$col`, ''))")
                             ->join(' + ');
 
                         $size = DB::table($table)
@@ -389,9 +398,9 @@ class Subscription extends Model
                     // SQLite: Similar to MySQL
                     $columns = Schema::getColumnListing($table);
 
-                    if (!empty($columns)) {
+                    if (! empty($columns)) {
                         $sumQuery = collect($columns)
-                            ->map(fn($col) => "length(coalesce(\"$col\", ''))")
+                            ->map(fn ($col) => "length(coalesce(\"$col\", ''))")
                             ->join(' + ');
 
                         $size = DB::table($table)
@@ -404,7 +413,7 @@ class Subscription extends Model
 
             } catch (\Exception $e) {
                 // Log but don't fail - continue with other tables
-                Log::warning("Failed to calculate size for table {$table}: " . $e->getMessage());
+                Log::warning("Failed to calculate size for table {$table}: ".$e->getMessage());
             }
         }
 

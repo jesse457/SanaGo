@@ -36,7 +36,7 @@ class Medication extends Model implements CipherSweetEncrypted
             // first & last names - encrypted and searchable (exact match)
             ->addField('name')
             ->addBlindIndex('name', new BlindIndex('name_index', [
-                new Lowercase(), // Normalize to lowercase
+                new Lowercase, // Normalize to lowercase
             ]))
             ->addOptionalTextField('description');
 

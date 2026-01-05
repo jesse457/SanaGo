@@ -108,7 +108,7 @@ class TenancyServiceProvider extends ServiceProvider
                 ->middleware([
                     'web',
                     'universal',
-                     InitializeTenancyByDomain::class,
+                    InitializeTenancyByDomain::class,
                 ])
         );
 

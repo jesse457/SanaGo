@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -18,20 +19,40 @@ use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Password;
 
 #[Layout('components.layouts.admin')]
 class CreateNewUser extends Component
 {
     use UserActivitiesTrait, WithFileUploads;
 
-    public $name, $phone_number, $address, $gender, $profile_picture;
-    public $department_id, $hire_date, $role, $is_active = true;
-    public $email, $generatedPassword, $departments;
+    public $name;
+
+    public $phone_number;
+
+    public $address;
+
+    public $gender;
+
+    public $profile_picture;
+
+    public $department_id;
+
+    public $hire_date;
+
+    public $role;
+
+    public $is_active = true;
+
+    public $email;
+
+    public $generatedPassword;
+
+    public $departments;
 
     protected function rules()
     {
         $tenantId = tenant('id');
+
         return [
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->where('tenant_id', $tenantId)],
@@ -86,18 +107,18 @@ class CreateNewUser extends Component
 
                 // 2. Create User
                 $user = User::create([
-                    'name'            => $this->name,
-                    'email'           => $this->email,
-                    'phone_number'    => $this->phone_number,
-                    'address'         => $this->address,
-                    'gender'          => $this->gender,
+                    'name' => $this->name,
+                    'email' => $this->email,
+                    'phone_number' => $this->phone_number,
+                    'address' => $this->address,
+                    'gender' => $this->gender,
                     'profile_picture' => $storedPath,
-                    'department_id'   => $this->department_id,
-                    'hire_date'       => $this->hire_date,
-                    'role'            => $this->role,
-                    'is_active'       => $this->is_active,
-                    'password'        => Hash::make(Str::random(32)),
-                    'tenant_id'       => tenant('id'),
+                    'department_id' => $this->department_id,
+                    'hire_date' => $this->hire_date,
+                    'role' => $this->role,
+                    'is_active' => $this->is_active,
+                    'password' => Hash::make(Str::random(32)),
+                    'tenant_id' => tenant('id'),
                 ]);
             });
 
@@ -114,6 +135,7 @@ class CreateNewUser extends Component
             }
 
             LivewireAlert::title('Success')->success()->text('User created and credentials sent to email.')->show();
+
             return redirect()->route('admin.user-management');
 
         } catch (\Throwable $e) {
@@ -134,10 +156,11 @@ class CreateNewUser extends Component
 
             Log::error('USER_CREATION_FAILED', [
                 'root_cause' => $realError->getMessage(),
-                'line'       => $realError->getLine(),
+                'line' => $realError->getLine(),
             ]);
 
-            LivewireAlert::title('Error')->error()->text('Failed to create user: ' . $uiMessage)->show();
+            LivewireAlert::title('Error')->error()->text('Failed to create user: '.$uiMessage)->show();
+
             return null;
         }
     }

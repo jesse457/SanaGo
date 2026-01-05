@@ -83,14 +83,14 @@ class ManageLabTestDefinitions extends Component
                 'test_name' => $this->test_name,
                 'description' => $this->description,
                 'price' => $this->price,
-            'units' => $this->units,
-        ]);
-        $this->logActivity(
-            'Lab Test Updated',
-            'Lab test definition updated',
-            ['lab_test_definition_id' => $test->id]
-        );
-    });
+                'units' => $this->units,
+            ]);
+            $this->logActivity(
+                'Lab Test Updated',
+                'Lab test definition updated',
+                ['lab_test_definition_id' => $test->id]
+            );
+        });
 
         $this->showTestEditModal = false;
         $this->resetPage(); // optional, depending on UX

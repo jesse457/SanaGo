@@ -19,18 +19,27 @@ class RegisterPatient extends Component
     use UserActivitiesTrait;
 
     public string $first_name = '';
+
     public string $last_name = '';
+
     public ?int $age = null;
+
     public string $gender = '';
+
     public string $address = '';
+
     public string $phone = '';
+
     public string $email = '';
+
     public array $doctors = [];
+
     public array $foundPatients = [];
 
     protected function rules(): array
     {
         $tenantId = tenant('id');
+
         return [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -59,9 +68,9 @@ class RegisterPatient extends Component
         try {
             // [FIX] Start Transaction on the direct connection
             DB::connection('pgsql_transaction')->transaction(function ($static) {
-                $patientUid = 'PT-' . Str::upper(Str::random(6));
+                $patientUid = 'PT-'.Str::upper(Str::random(6));
                 while (Patient::where('patient_uid', $patientUid)->exists()) {
-                    $patientUid = 'PT-' . Str::upper(Str::random(6));
+                    $patientUid = 'PT-'.Str::upper(Str::random(6));
                 }
 
                 $patient = Patient::create([
@@ -87,17 +96,15 @@ class RegisterPatient extends Component
                 );
             });
 
-
             LivewireAlert::title('Success')
                 ->success()
-                ->text('Patient ' . $this->first_name . ' ' . $this->last_name . ' has been successfully Registered')
+                ->text('Patient '.$this->first_name.' '.$this->last_name.' has been successfully Registered')
                 ->show();
 
             $this->resetForm();
         } catch (\Exception $e) {
 
-
-            Log::error('Patient registration failed: ' . $e->getMessage());
+            Log::error('Patient registration failed: '.$e->getMessage());
 
             // Handle Unique Violations specifically
             if (Str::contains($e->getMessage(), 'unique constraint')) {

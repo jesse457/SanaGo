@@ -13,6 +13,7 @@ use Livewire\Component;
 class CreateDrugs extends Component
 {
     use UserActivitiesTrait;
+
     public string $name;
 
     public float $unit_price_purchase;
@@ -60,17 +61,17 @@ class CreateDrugs extends Component
 
         try {
             DB::connection('pgsql_transaction')->transaction(function () {
-                $drug =  Medication::create([
+                $drug = Medication::create([
                     'name' => $this->name,
                     'unit_price_purchase' => $this->unit_price_purchase,
                     'min_stock_level' => $this->min_stock_level,
                     'stock_quantity' => $this->stock_quantity,
-                'description' => $this->description,
-                'dosage_unit' => $this->dosage_unit,
-            ]);
-            $this->logActivity('Drug_created', "New drug '{$this->name}' was created.", ['drug_id' => $drug->id]);
+                    'description' => $this->description,
+                    'dosage_unit' => $this->dosage_unit,
+                ]);
+                $this->logActivity('Drug_created', "New drug '{$this->name}' was created.", ['drug_id' => $drug->id]);
 
-        });
+            });
             LivewireAlert::title(__('pharmacist.create_drugs_component.alert_success'))
                 ->text(__('pharmacist.create_drugs_component.alert_drug_created_successfully'))
                 ->success()

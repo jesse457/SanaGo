@@ -25,8 +25,9 @@ class Feedback extends Component
 
     public function render()
     {
-         $feedbacks = FeedbackModel::orderBy('created_at', 'desc')
+        $feedbacks = FeedbackModel::orderBy('created_at', 'desc')
             ->paginate(10);
+
         return view('livewire.land-lord.feedback', [
             'feedbacks' => $feedbacks,
         ]);

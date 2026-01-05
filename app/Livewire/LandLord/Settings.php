@@ -18,43 +18,56 @@ class Settings extends Component
     // 1. General & Branding
     // =========================================================================
     public $platformName = 'MediFlow SaaS';
+
     public $supportEmail = 'support@mediflow.com';
+
     public $logo; // Temporary file upload
+
     public $currentLogoUrl;
 
     // =========================================================================
     // 2. Billing & Gateways (NEW)
     // =========================================================================
     public bool $stripeEnabled = false;
+
     public $stripeKey = '';
+
     public $stripeSecret = '';
+
     public bool $paypalEnabled = false;
 
     // =========================================================================
     // 3. Tenant Defaults (NEW)
     // =========================================================================
     public int $trialDays = 14;
+
     public string $dbConnection = 'mysql';
 
     // =========================================================================
     // 4. Localization
     // =========================================================================
     public $timezone = 'Africa/Douala';
+
     public $currency = 'XAF';
+
     public $dateFormat = 'Y-m-d';
 
     // =========================================================================
     // 5. Security & Access
     // =========================================================================
     public bool $enforce2fa = false;
+
     public int $sessionTimeout = 120; // Minutes
+
     public int $passwordMinLength = 8;
 
     // =========================================================================
     // 6. Notifications
     // =========================================================================
     public bool $notifyNewTenant = true;
+
     public bool $notifyTicketCreated = true;
+
     public bool $notifyCriticalErrors = true;
 
     // =========================================================================
@@ -111,9 +124,9 @@ class Settings extends Component
             }
 
             // 2. Handle Maintenance Mode Logic
-            if ($this->maintenanceMode && !app()->isDownForMaintenance()) {
+            if ($this->maintenanceMode && ! app()->isDownForMaintenance()) {
                 // Artisan::call('down', ['--secret' => 'admin-access']);
-            } elseif (!$this->maintenanceMode && app()->isDownForMaintenance()) {
+            } elseif (! $this->maintenanceMode && app()->isDownForMaintenance()) {
                 // Artisan::call('up');
             }
 
@@ -132,12 +145,12 @@ class Settings extends Component
             // 4. Update Environment (Optional/Advanced)
             // You might want to update .env for things like STRIPE_KEY if not using DB settings config
 
-            Log::info('Landlord settings updated by user: ' . auth()->id());
+            Log::info('Landlord settings updated by user: '.auth()->id());
 
             session()->flash('success', 'Platform settings updated successfully.');
 
         } catch (\Exception $e) {
-            Log::error('Settings update failed: ' . $e->getMessage());
+            Log::error('Settings update failed: '.$e->getMessage());
             session()->flash('error', 'Failed to save settings. Check logs.');
         }
     }

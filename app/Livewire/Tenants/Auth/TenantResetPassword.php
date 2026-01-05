@@ -2,26 +2,27 @@
 
 namespace App\Livewire\Tenants\Auth;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Auth\Events\PasswordReset;
-use Livewire\Attributes\Layout;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Livewire\Component;
-
 
 class TenantResetPassword extends Component
 {
     public $token;
+
     public $email;
+
     public $password;
+
     public $password_confirmation;
 
     public function mount(Request $request, $token = null)
     {
         // Security Check
-        if (!tenant()) {
+        if (! tenant()) {
             abort(404);
         }
 
@@ -38,7 +39,7 @@ class TenantResetPassword extends Component
     public function resetPassword()
     {
         $this->validate();
-      
+
         // Because your User model uses 'BelongsToTenant',
         // Password::broker() will automatically respect the tenant scope.
         // It will fail if the email exists in the DB but belongs to a DIFFERENT tenant.
@@ -53,7 +54,7 @@ class TenantResetPassword extends Component
                 $user->forceFill([
                     'password' => Hash::make($password),
                 ])->setRememberToken(Str::random(60));
-                if (!$user->hasVerifiedEmail()) {
+                if (! $user->hasVerifiedEmail()) {
                     $user->markEmailAsVerified();
                 }
                 $user->save();

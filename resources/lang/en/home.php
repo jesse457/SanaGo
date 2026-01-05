@@ -32,8 +32,8 @@ return [
                 ['title' => 'Revenue Dashboard', 'desc' => 'Track revenue from medications, appointments, lab tests, and admissions'],
                 ['title' => 'Shift Management', 'desc' => 'Create and manage staff schedules and rotations'],
                 ['title' => 'User Management', 'desc' => 'Control access and permissions for all staff roles'],
-                ['title' => 'Hospital Settings', 'desc' => 'Configure departments, wards, beds, and medical supplies']
-            ]
+                ['title' => 'Hospital Settings', 'desc' => 'Configure departments, wards, beds, and medical supplies'],
+            ],
         ],
         [
             'icon' => 'doctor',
@@ -45,8 +45,8 @@ return [
                 ['title' => 'Clinical Dashboard', 'desc' => 'View real-time patient status and medical history'],
                 ['title' => 'Consultation Management', 'desc' => 'Record detailed diagnoses and treatment plans'],
                 ['title' => 'Lab Test Ordering', 'desc' => 'Request tests and receive results instantly'],
-                ['title' => 'e-Prescriptions', 'desc' => 'Digitally prescribe medications to the pharmacy module']
-            ]
+                ['title' => 'e-Prescriptions', 'desc' => 'Digitally prescribe medications to the pharmacy module'],
+            ],
         ],
         [
             'icon' => 'receptionist',
@@ -58,8 +58,8 @@ return [
                 ['title' => 'Appointment Booking', 'desc' => 'Schedule and manage patient doctor visits'],
                 ['title' => 'Patient Registration', 'desc' => 'Register new patients and manage digital records'],
                 ['title' => 'Admission Management', 'desc' => 'Process inpatient admissions and bed assignments'],
-                ['title' => 'Billing & Payments', 'desc' => 'Generate invoices and process patient payments']
-            ]
+                ['title' => 'Billing & Payments', 'desc' => 'Generate invoices and process patient payments'],
+            ],
         ],
         [
             'icon' => 'lab',
@@ -71,8 +71,8 @@ return [
                 ['title' => 'Request Management', 'desc' => 'Prioritize and process clinical lab requests'],
                 ['title' => 'Digital Result Entry', 'desc' => 'Document and upload encrypted test results'],
                 ['title' => 'Test Catalog', 'desc' => 'Manage available tests, templates, and pricing'],
-                ['title' => 'Automated Alerts', 'desc' => 'Notify doctors and patients when results are ready']
-            ]
+                ['title' => 'Automated Alerts', 'desc' => 'Notify doctors and patients when results are ready'],
+            ],
         ],
         [
             'icon' => 'pharmacist',
@@ -84,8 +84,8 @@ return [
                 ['title' => 'Dispensing Queue', 'desc' => 'Process digital prescriptions sent by doctors'],
                 ['title' => 'Inventory Tracking', 'desc' => 'Manage medicine batches, expiry dates, and stock'],
                 ['title' => 'Purchase Orders', 'desc' => 'Automate supply requests for low-stock items'],
-                ['title' => 'Sales Reporting', 'desc' => 'Detailed tracking of daily medication revenue']
-            ]
+                ['title' => 'Sales Reporting', 'desc' => 'Detailed tracking of daily medication revenue'],
+            ],
         ],
         [
             'icon' => 'nurse',
@@ -97,10 +97,10 @@ return [
                 ['title' => 'Vitals Monitoring', 'desc' => 'Record and track blood pressure, pulse, and temperature'],
                 ['title' => 'Medication Administration', 'desc' => 'Track scheduled doses for admitted patients'],
                 ['title' => 'Ward Supply Tracking', 'desc' => 'Manage consumables and ward-specific equipment'],
-                ['title' => 'Shift Documentation', 'desc' => 'Digital handovers and patient care logging']
-            ]
-        ]
+                ['title' => 'Shift Documentation', 'desc' => 'Digital handovers and patient care logging'],
             ],
+        ],
+    ],
     // Solutions (Cards)
     'solutions_title' => 'Role-Based Access System',
     'solutions_subtitle' => 'Specialized interfaces designed for the specific needs of each healthcare role.',
@@ -112,43 +112,43 @@ return [
             'badge' => 'System Control',
             'badgeClass' => 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300',
             'desc' => 'Oversight of hospital operations, staff shifts, revenue, and system configuration.',
-            'points' => ['Revenue Dashboard', 'Shift Management', 'User Control', 'Activity Logs']
+            'points' => ['Revenue Dashboard', 'Shift Management', 'User Control', 'Activity Logs'],
         ],
         [
             'title' => 'Doctor',
             'badge' => 'Clinical',
             'badgeClass' => 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
             'desc' => 'Management of patient consultations, lab orders, and digital prescriptions.',
-            'points' => ['Consultation History', 'Vitals View', 'Test Ordering', 'Admission Requests']
+            'points' => ['Consultation History', 'Vitals View', 'Test Ordering', 'Admission Requests'],
         ],
         [
             'title' => 'Receptionist',
             'badge' => 'Front Desk',
             'badgeClass' => 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300',
             'desc' => 'Patient registration, appointment scheduling, and admission workflows.',
-            'points' => ['Patient Records', 'Doctor Scheduling', 'Admission/Discharge', 'Bed Search']
+            'points' => ['Patient Records', 'Doctor Scheduling', 'Admission/Discharge', 'Bed Search'],
         ],
         [
             'title' => 'Lab Technician',
             'badge' => 'Laboratory',
             'badgeClass' => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300',
             'desc' => 'Process test requests, enter results, and manage the lab test catalog.',
-            'points' => ['Test Requests', 'Result Management', 'Catalog Pricing', 'SMS Alerts']
+            'points' => ['Test Requests', 'Result Management', 'Catalog Pricing', 'SMS Alerts'],
         ],
         [
             'title' => 'Pharmacist',
             'badge' => 'Pharmacy',
             'badgeClass' => 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
             'desc' => 'Dispense medication and manage the hospital drug inventory.',
-            'points' => ['Medication Dispensing', 'Inventory Alerts', 'Top Seller Stats', 'Drug Management']
+            'points' => ['Medication Dispensing', 'Inventory Alerts', 'Top Seller Stats', 'Drug Management'],
         ],
         [
             'title' => 'Nurse',
             'badge' => 'Patient Care',
             'badgeClass' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
             'desc' => 'Record patient vitals with notes and track ward supply usage.',
-            'points' => ['Vitals Recording', 'Nurse Notes', 'Supply Tracking', 'Admission Overview']
-        ]
+            'points' => ['Vitals Recording', 'Nurse Notes', 'Supply Tracking', 'Admission Overview'],
+        ],
     ],
 
     // Testimonials
@@ -158,33 +158,33 @@ return [
         [
             'name' => 'Dr. Sarah Johnson',
             'role' => 'Chief of Medicine',
-            'quote' => 'The role-based access ensures I only see the information relevant to my work, making patient management more efficient.'
+            'quote' => 'The role-based access ensures I only see the information relevant to my work, making patient management more efficient.',
         ],
         [
             'name' => 'Michael Chen',
             'role' => 'Hospital Administrator',
-            'quote' => 'The revenue dashboard and user management features have transformed how we oversee hospital operations.'
+            'quote' => 'The revenue dashboard and user management features have transformed how we oversee hospital operations.',
         ],
         [
             'name' => 'Elena Rodriguez',
             'role' => 'Head Nurse',
-            'quote' => 'Recording vitals and managing supplies through the dedicated nurse interface has streamlined our workflow significantly.'
+            'quote' => 'Recording vitals and managing supplies through the dedicated nurse interface has streamlined our workflow significantly.',
         ],
         [
             'name' => 'James Wilson',
             'role' => 'Lab Technician',
-            'quote' => 'The lab module makes it easy to manage test requests and deliver results quickly to physicians.'
+            'quote' => 'The lab module makes it easy to manage test requests and deliver results quickly to physicians.',
         ],
         [
             'name' => 'Patricia Kim',
             'role' => 'Pharmacist',
-            'quote' => 'The pharmacy interface helps us track inventory accurately and dispense medications efficiently.'
+            'quote' => 'The pharmacy interface helps us track inventory accurately and dispense medications efficiently.',
         ],
         [
             'name' => 'Amanda Davis',
             'role' => 'Receptionist',
-            'quote' => 'Managing appointments and patient admissions has never been easier with our dedicated interface.'
-        ]
+            'quote' => 'Managing appointments and patient admissions has never been easier with our dedicated interface.',
+        ],
     ],
 
     // Pricing
@@ -202,24 +202,24 @@ return [
     'faqs_data' => [
         [
             'q' => 'Is the system multi-language?',
-            'a' => 'Yes, the entire interface toggles instantly between English and French to support diverse staff.'
+            'a' => 'Yes, the entire interface toggles instantly between English and French to support diverse staff.',
         ],
         [
             'q' => 'How does the role-based access work?',
-            'a' => 'Each user role (Administrator, Doctor, Nurse, Receptionist, Lab Technician, Pharmacist) has a specialized interface with only the features relevant to their job responsibilities.'
+            'a' => 'Each user role (Administrator, Doctor, Nurse, Receptionist, Lab Technician, Pharmacist) has a specialized interface with only the features relevant to their job responsibilities.',
         ],
         [
             'q' => 'How is patient data secured?',
-            'a' => 'We use industry-standard encryption for patient names and test results. The system includes comprehensive audit logs to track all user activities.'
+            'a' => 'We use industry-standard encryption for patient names and test results. The system includes comprehensive audit logs to track all user activities.',
         ],
         [
             'q' => 'Can we customize the system for our hospital?',
-            'a' => 'Yes, administrators can configure departments, wards, bed types, and other settings to match your hospital\'s specific requirements.'
+            'a' => 'Yes, administrators can configure departments, wards, bed types, and other settings to match your hospital\'s specific requirements.',
         ],
         [
             'q' => 'How does the multi-tenant architecture work?',
-            'a' => 'Each hospital operates in its own secure environment with complete data isolation, while sharing the same application infrastructure for cost efficiency.'
-        ]
+            'a' => 'Each hospital operates in its own secure environment with complete data isolation, while sharing the same application infrastructure for cost efficiency.',
+        ],
     ],
 
     // Footer / CTA
@@ -235,5 +235,5 @@ return [
     'privacy' => 'Privacy',
     'terms' => 'Terms',
     'dpa' => 'DPA',
-    'systems_status' => 'Systems Operational'
+    'systems_status' => 'Systems Operational',
 ];

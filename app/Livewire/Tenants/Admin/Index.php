@@ -18,13 +18,41 @@ use Livewire\Component;
 #[Layout('components.layouts.admin')]
 class Index extends Component
 {
-    public $greeting, $userName, $userAvatar;
-    public $dailyTotalRevenue = 0, $totalPatientsAdmittedToday = 0, $totalAppointmentsToday = 0;
-    public $totalBeds = 0, $totalBedsOccupied = 0, $lowStockCount = 0;
-    public $patientFlowLabels = [], $patientFlowData = [];
-    public $encounterSummaryLabels = [], $encounterSummaryData = [];
-    public $totalDoctors = 0, $totalSystemUsers = 0, $totalDepartments = 0;
-    public $userRoleSummary = [], $recentAdmissions = [];
+    public $greeting;
+
+    public $userName;
+
+    public $userAvatar;
+
+    public $dailyTotalRevenue = 0;
+
+    public $totalPatientsAdmittedToday = 0;
+
+    public $totalAppointmentsToday = 0;
+
+    public $totalBeds = 0;
+
+    public $totalBedsOccupied = 0;
+
+    public $lowStockCount = 0;
+
+    public $patientFlowLabels = [];
+
+    public $patientFlowData = [];
+
+    public $encounterSummaryLabels = [];
+
+    public $encounterSummaryData = [];
+
+    public $totalDoctors = 0;
+
+    public $totalSystemUsers = 0;
+
+    public $totalDepartments = 0;
+
+    public $userRoleSummary = [];
+
+    public $recentAdmissions = [];
 
     public function mount()
     {
@@ -53,6 +81,7 @@ class Index extends Component
         // 1. Metrics (10 min cache)
         $metrics = Cache::remember("admin_metrics_{$tenantId}", 600, function () {
             $today = Carbon::today();
+
             return [
                 'rev_appt' => Appointment::whereDate('appointment_date', $today)->where('status', 'Completed')->sum('price'),
                 'rev_adm' => Admission::whereDate('created_at', $today)->sum('observation_fee'),
@@ -79,14 +108,16 @@ class Index extends Component
         // 3. Patient Flow Chart - 6 Months (1 hour cache)
         // DB Agnostic approach: Run 6 simple queries. Caching makes this instant.
         $flow = Cache::remember("admin_flow_{$tenantId}", 3600, function () {
-            $labels = []; $data = [];
+            $labels = [];
+            $data = [];
             for ($i = 5; $i >= 0; $i--) {
                 $month = Carbon::now()->subMonths($i);
                 $labels[] = $month->format('M');
                 $data[] = Appointment::whereMonth('appointment_date', $month->month)
-                                    ->whereYear('appointment_date', $month->year)
-                                    ->count();
+                    ->whereYear('appointment_date', $month->year)
+                    ->count();
             }
+
             return compact('labels', 'data');
         });
         $this->patientFlowLabels = $flow['labels'];
@@ -94,13 +125,15 @@ class Index extends Component
 
         // 4. Weekly Summary (30 min cache)
         $weekly = Cache::remember("admin_weekly_{$tenantId}", 1800, function () {
-            $labels = []; $data = [];
+            $labels = [];
+            $data = [];
             $start = Carbon::now()->startOfWeek();
             for ($i = 0; $i < 7; $i++) {
                 $day = $start->copy()->addDays($i);
                 $labels[] = $day->format('D');
                 $data[] = Appointment::whereDate('appointment_date', $day)->count();
             }
+
             return compact('labels', 'data');
         });
         $this->encounterSummaryLabels = $weekly['labels'];
@@ -120,11 +153,12 @@ class Index extends Component
                     ];
                 }
             }
+
             return [
                 'doc_count' => User::where('role', 'doctor')->count(),
                 'user_count' => User::count(),
                 'dept_count' => Department::count(),
-                'summary' => $summary
+                'summary' => $summary,
             ];
         });
         $this->totalDoctors = $system['doc_count'];
@@ -138,5 +172,8 @@ class Index extends Component
         });
     }
 
-    public function render() { return view('livewire.tenants.admin.index'); }
+    public function render()
+    {
+        return view('livewire.tenants.admin.index');
+    }
 }

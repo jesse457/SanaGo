@@ -1,39 +1,39 @@
 <?php
 
 return [
-   //pharmacist.php
-'dashboard' => [
-    // Dashboard Header
-    'dashboard_title' => 'Dashboard',
-    'welcome_message' => 'Welcome back, :name!',
-    'breadcrumb_home' => 'Home',
+    // pharmacist.php
+    'dashboard' => [
+        // Dashboard Header
+        'dashboard_title' => 'Dashboard',
+        'welcome_message' => 'Welcome back, :name!',
+        'breadcrumb_home' => 'Home',
 
-    // Dropdown Menu
-    'profile' => 'Profile',
-    'logout' => 'Logout',
+        // Dropdown Menu
+        'profile' => 'Profile',
+        'logout' => 'Logout',
 
-    // Flash Messages
-    'view_all' => 'View All →',
+        // Flash Messages
+        'view_all' => 'View All →',
 
-    // Dashboard Cards
-    'prescriptions_dispensed_today' => 'Prescriptions Dispensed Today',
-    'prescriptions_pending' => 'Prescriptions Pending',
-    'drugs_left_in_inventory' => 'Drugs Left in Inventory',
+        // Dashboard Cards
+        'prescriptions_dispensed_today' => 'Prescriptions Dispensed Today',
+        'prescriptions_pending' => 'Prescriptions Pending',
+        'drugs_left_in_inventory' => 'Drugs Left in Inventory',
 
-    // Top Sold Drugs Table
-    'top_sold_drugs' => 'Top Sold Drugs',
-    'medication' => 'Medication',
-    'current_stock' => 'Current Stock',
-    'min_level' => 'Min Level',
-    'code' => 'Code',
+        // Top Sold Drugs Table
+        'top_sold_drugs' => 'Top Sold Drugs',
+        'medication' => 'Medication',
+        'current_stock' => 'Current Stock',
+        'min_level' => 'Min Level',
+        'code' => 'Code',
 
-    // Empty State
-    'no_medications_found' => 'No Medications Found',
-    'try_adjusting_filters' => 'Try adjusting your search or filters.',
+        // Empty State
+        'no_medications_found' => 'No Medications Found',
+        'try_adjusting_filters' => 'Try adjusting your search or filters.',
 
-    // Pagination
-    'showing_to_of' => 'Showing :first to :last of :total',
-],
+        // Pagination
+        'showing_to_of' => 'Showing :first to :last of :total',
+    ],
 
     'create_drugs_page' => [
         // Create Drug Page
@@ -78,7 +78,7 @@ return [
         'alert_error' => 'Error',
         'alert_failed_to_create_drug' => 'Failed to create drug: :error',
     ],
-    //pharmacist.php
+    // pharmacist.php
     'manage_drugs_page' => [
         'manage_drugs_title' => 'Manage Drugs',
         'manage_drugs_description' => 'View, search, and manage all pharmaceutical products.',
@@ -196,7 +196,7 @@ return [
         'exception_insufficient_stock' => 'Insufficient stock for :medication. Available: :available, required: :required.',
     ],
 
-    'submit_feedback_page' =>  [  // Submit Feedback Page
+    'submit_feedback_page' => [  // Submit Feedback Page
         'breadcrumb_feedbacks' => 'Feedbacks',
         'breadcrumb_submit_feedback' => 'Submit Feedback',
         'submit_feedback_title' => 'Submit Feedback',
@@ -236,5 +236,5 @@ return [
         'new_password' => 'New Password',
         'confirm_password' => 'Confirm Password',
         'update_password' => 'Update Password',
-    ]
+    ],
 ];

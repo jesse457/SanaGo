@@ -97,7 +97,7 @@ class AdmitPatient extends Component
                 // 5. Log the activity
                 $this->logActivity(
                     'Patient_Admission_Confirmed',
-                    'Confirmed admission for patient ' . $this->patient->full_name,
+                    'Confirmed admission for patient '.$this->patient->full_name,
                     [
                         'patient_id' => $this->patient->id,
                         'admission_id' => $this->admission->id,
@@ -110,9 +110,9 @@ class AdmitPatient extends Component
                 ->text("Patient {$this->patient->full_name} has been successfully admitted.")
                 ->show();
 
-            $this->js('setTimeout(() => window.location.href = "' . route('receptionist.checkin') . '", 2500)');
+            $this->js('setTimeout(() => window.location.href = "'.route('receptionist.checkin').'", 2500)');
         } catch (\Exception $e) {
-            Log::error('Admission confirmation failed: ' . $e->getMessage());
+            Log::error('Admission confirmation failed: '.$e->getMessage());
             LivewireAlert::error('Error', 'Failed to admit patient. Please try again.')->show();
         }
     }

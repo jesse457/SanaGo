@@ -62,7 +62,7 @@ class CreateLabTestDefinition extends Component
             $this->resetForm();
         } catch (\Exception $e) {
             LivewireAlert::title('Error')->text('Server Error please Contact us in Feedback if this error persist')->error()->show();
-            Log::error('Error while savig Lab test' . $e->getMessage());
+            Log::error('Error while savig Lab test'.$e->getMessage());
         }
     }
 
