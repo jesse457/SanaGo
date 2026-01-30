@@ -92,7 +92,7 @@ class NurseService
     public function saveCareReport(array $data)
     {
         try {
-            return DB::transaction(function () use ($data) {
+            return DB::connection('pgsql_transaction')->transaction(function () use ($data) {
                 $report = NurseCareReport::create([
                     'patient_id' => $data['patient_id'],
                     'user_id' => Auth::id(),

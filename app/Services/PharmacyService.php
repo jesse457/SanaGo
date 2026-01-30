@@ -152,7 +152,7 @@ class PharmacyService
      */
     public function dispenseItems(Prescription $prescription, array $itemsData, int $pharmacistId): void
     {
-        DB::transaction(function () use ($prescription, $itemsData, $pharmacistId) {
+        DB::connection('pgsql_transaction')->transaction(function () use ($prescription, $itemsData, $pharmacistId) {
 
             foreach ($itemsData as $itemData) {
                 /** @var PrescriptionItem $prescriptionItem */

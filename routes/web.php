@@ -41,7 +41,7 @@ Route::get('/api/health', function () {
 */
 
 Route::middleware(['web', 'universal'])
-    ->domain(config('tenancy.central_domains.1'))
+    ->domain(config('tenancy.central_domains.0'))
     ->group(function () {
 
         // --- PUBLIC PAGES ---
