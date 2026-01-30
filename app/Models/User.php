@@ -8,11 +8,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable; // Important for tenancy
+use Laravel\Sanctum\HasApiTokens;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant; // Import BelongsTo for type hinting
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use BelongsToTenant, HasFactory, Notifiable;
+    use BelongsToTenant, HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -120,7 +121,11 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(SupplyUsage::class, 'user_id');
     }
-
+    public function notifications()
+    {
+        // This tells Notification::send() to use your custom class
+        return $this->morphMany(Notification::class, 'notifiable')->latest();
+    }
     /**
      * Send the password reset notification.
      *

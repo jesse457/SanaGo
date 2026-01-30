@@ -13,7 +13,7 @@
                                 <a href="{{ route($userRole . '.dashboard') }}" wire:navigate
                                     class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center">
                                     <x-heroicon-s-home class="w-3 h-3 mr-1.5" />
-                                    {{ __('receptionist.home') }}
+                                    {{ __('Home') }}
                                 </a>
                             </li>
                             <li>
@@ -21,14 +21,14 @@
                                     <x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300 mx-1" />
                                     <a href="{{ route($userRole . '.checkin') }}" wire:navigate
                                         class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                                        Admissions
+                                        {{ __('Admissions') }}
                                     </a>
                                 </div>
                             </li>
                             <li>
                                 <div class="flex items-center">
                                     <x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300 mx-1" />
-                                    <span class="text-gray-900 dark:text-white">Admission Details</span>
+                                    <span class="text-gray-900 dark:text-white">{{ __('Admission Details') }}</span>
                                 </div>
                             </li>
                         </ol>
@@ -37,10 +37,10 @@
                     {{-- Title --}}
                     <div>
                         <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-7">
-                            Admission Overview
+                            {{ __('Admission Overview') }}
                         </h2>
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-3xl">
-                            Detailed view of patient admission history and current status.
+                            {{ __('Detailed view of patient admission history and current status.') }}
                         </p>
                     </div>
                 </div>
@@ -68,7 +68,7 @@
                                 <div class="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                                     <span class="bg-slate-100 dark:bg-gray-800/50 px-1.5 py-0.5 rounded text-xs font-bold text-slate-700 dark:text-slate-300">{{ $patient->patient_uid }}</span>
                                     <span class="w-1 h-1 bg-slate-400 rounded-full"></span>
-                                    <span class="capitalize">{{ $patient->gender }}</span>
+                                    <span class="capitalize">{{ __($patient->gender) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -80,7 +80,7 @@
                             {{-- Admission Selector --}}
                             <div class="mb-8 max-w-md">
                                 <label for="admissionSelector" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                    Select Admission Record
+                                    {{ __('Select Admission Record') }}
                                 </label>
                                 <div class="relative">
                                     <select wire:model.live="selectedAdmissionId" id="admissionSelector"
@@ -104,9 +104,9 @@
                                         <div class="p-1 rounded-full border-2 border-current">
                                             <x-heroicon-s-information-circle class="w-5 h-5" />
                                         </div>
-                                        <span class="font-bold text-lg">{{ $selectedAdmission->status }}</span>
+                                        <span class="font-bold text-lg">{{ __($selectedAdmission->status) }}</span>
                                     </div>
-                                    <span class="text-xs font-bold opacity-75 uppercase tracking-wider">Current Status</span>
+                                    <span class="text-xs font-bold opacity-75 uppercase tracking-wider">{{ __('Current Status') }}</span>
                                 </div>
 
                                 {{-- Details Grid --}}
@@ -118,9 +118,9 @@
                                             <x-heroicon-o-user-circle class="w-6 h-6" />
                                         </div>
                                         <div>
-                                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Assigned Doctor</p>
+                                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('Assigned Doctor') }}</p>
                                             <p class="text-base font-bold text-slate-900 dark:text-white mt-1">
-                                                {{ $selectedAdmission->doctor->name ?? 'Not Assigned' }}
+                                                {{ $selectedAdmission->doctor->name ?? __('Not Assigned') }}
                                             </p>
                                         </div>
                                     </div>
@@ -131,11 +131,11 @@
                                             <x-heroicon-o-home-modern class="w-6 h-6" />
                                         </div>
                                         <div>
-                                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Bed Allocation</p>
+                                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('Bed Allocation') }}</p>
                                             <p class="text-base font-bold text-slate-900 dark:text-white mt-1">
-                                                Bed {{ $selectedAdmission->bed->bed_number ?? 'N/A' }}
+                                                {{ __('Bed') }} {{ $selectedAdmission->bed->bed_number ?? 'N/A' }}
                                                 <span class="text-sm font-medium text-slate-500 dark:text-slate-400 ml-1">
-                                                    ({{ $selectedAdmission->bed->ward->name ?? 'Ward N/A' }})
+                                                    ({{ $selectedAdmission->bed->ward->name ?? __('Ward N/A') }})
                                                 </span>
                                             </p>
                                         </div>
@@ -147,7 +147,7 @@
                                             <x-heroicon-o-calendar-days class="w-6 h-6" />
                                         </div>
                                         <div>
-                                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Admission Date</p>
+                                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('Admission Date') }}</p>
                                             <p class="text-base font-bold text-slate-900 dark:text-white mt-1">
                                                 {{ $selectedAdmission->admission_date->format('M d, Y') }}
                                             </p>
@@ -159,9 +159,9 @@
                                             <x-heroicon-o-arrow-right-on-rectangle class="w-6 h-6" />
                                         </div>
                                         <div>
-                                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Discharge Date</p>
+                                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('Discharge Date') }}</p>
                                             <p class="text-base font-bold text-slate-900 dark:text-white mt-1">
-                                                {{ $selectedAdmission->discharge_date?->format('M d, Y') ?? 'Ongoing' }}
+                                                {{ $selectedAdmission->discharge_date?->format('M d, Y') ?? __('Ongoing') }}
                                             </p>
                                         </div>
                                     </div>
@@ -173,7 +173,7 @@
                                                 <x-heroicon-o-document-text class="w-6 h-6" />
                                             </div>
                                             <div>
-                                                <p class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Reason for Admission</p>
+                                                <p class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('Reason for Admission') }}</p>
                                                 <p class="text-base text-slate-900 dark:text-white mt-1 leading-relaxed">
                                                     {{ $selectedAdmission->reason_for_admission }}
                                                 </p>
@@ -188,7 +188,7 @@
                                     <a wire:navigate href="{{ route($userRole . '.checkin') }}"
                                         class="inline-flex items-center justify-center px-6 py-2.5 border border-slate-300 dark:border-gray-600 shadow-sm text-sm font-bold rounded-xl text-slate-700 dark:text-slate-300 bg-white dark:bg-gray-800 hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors w-full sm:w-auto">
                                         <x-heroicon-s-arrow-left class="w-4 h-4 mr-2" />
-                                        Back to List
+                                        {{ __('Back to List') }}
                                     </a>
 
                                     @if ($selectedAdmission->status === 'Admitted')
@@ -198,19 +198,19 @@
 
                                             <span wire:loading.remove wire:target="updateAdmissionStatus" class="flex items-center gap-2">
                                                 <x-heroicon-s-arrow-right-on-rectangle class="w-5 h-5" />
-                                                Discharge Patient
+                                                {{ __('Discharge Patient') }}
                                             </span>
 
                                             <span wire:loading wire:target="updateAdmissionStatus" class="flex items-center gap-2">
                                                 <x-heroicon-o-arrow-path class="animate-spin h-5 w-5 text-white" />
-                                                Processing...
+                                                {{ __('Processing...') }}
                                             </span>
                                         </button>
                                     @elseif ($selectedAdmission->status === 'Discharged')
                                         <button disabled
                                             class="inline-flex items-center justify-center px-6 py-2.5 border border-transparent text-sm font-bold rounded-xl text-slate-400 bg-slate-100 dark:bg-gray-800/50 dark:text-slate-500 cursor-not-allowed w-full sm:w-auto">
                                             <x-heroicon-s-check-circle class="w-5 h-5 mr-2" />
-                                            Patient Discharged
+                                            {{ __('Patient Discharged') }}
                                         </button>
                                     @endif
                                 </div>
@@ -218,8 +218,8 @@
                                 {{-- Should not happen if admissions->isNotEmpty() is true and selectedId is set --}}
                                 <div class="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-slate-200 dark:border-gray-700 rounded-xl bg-slate-50 dark:bg-gray-800/50">
                                     <x-heroicon-o-inbox class="w-16 h-16 text-slate-300 dark:text-gray-600 mb-4" />
-                                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">No record selected</h3>
-                                    <p class="text-slate-500 dark:text-slate-400">Please select an admission record from the dropdown above.</p>
+                                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ __('No record selected') }}</h3>
+                                    <p class="text-slate-500 dark:text-slate-400">{{ __('Please select an admission record from the dropdown above.') }}</p>
                                 </div>
                             @endif
 
@@ -229,14 +229,14 @@
                                 <div class="h-20 w-20 bg-slate-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 border border-slate-100 dark:border-gray-700">
                                     <x-heroicon-o-folder-open class="w-10 h-10 text-slate-400" />
                                 </div>
-                                <h3 class="text-lg font-bold text-slate-900 dark:text-white">No Admission Records Found</h3>
+                                <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ __('No Admission Records Found') }}</h3>
                                 <p class="mt-2 text-sm text-slate-500 dark:text-slate-400 max-w-sm">
-                                    This patient has no admission history on file.
+                                    {{ __('This patient has no admission history on file.') }}
                                 </p>
                                 <a href="{{ route($userRole . '.checkin') }}" wire:navigate
                                     class="mt-6 inline-flex items-center text-sm font-bold text-blue-600 hover:text-blue-500 dark:text-blue-400">
                                     <x-heroicon-s-arrow-left class="w-4 h-4 mr-1" />
-                                    Return to Patient List
+                                    {{ __('Return to Patient List') }}
                                 </a>
                             </div>
                         @endif

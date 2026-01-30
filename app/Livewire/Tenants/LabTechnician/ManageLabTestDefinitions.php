@@ -3,98 +3,80 @@
 namespace App\Livewire\Tenants\LabTechnician;
 
 use App\Models\LabTestDefinition;
-use App\Traits\UserActivitiesTrait;
-use Illuminate\Support\Facades\DB;
+use App\Services\LabService;
+use Illuminate\Support\Facades\Log;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 #[Layout('components.layouts.lab-technician')]
 class ManageLabTestDefinitions extends Component
 {
-    use UserActivitiesTrait, WithPagination;
+    use WithPagination;
 
     public $search = '';
 
+    // Form properties
+    #[Rule('required|string|max:255')]
     public $test_name;
-
+    #[Rule('nullable|string|max:1000')]
     public $description;
-
+    #[Rule('required|numeric|min:0')]
     public $price;
-
+    #[Rule('nullable|string')]
     public $units;
 
     public $testId;
-
     public bool $showTestEditModal = false;
-
     public bool $showTestDeleteModal = false;
-
     public $deletingTestId = null;
-
-    protected $rules = [
-        // Validate attributes on the $test model using dot notation
-        'test_name' => 'nullable|string|max:255',
-        'description' => 'nullable|string|max:1000',
-        'price' => 'nullable|numeric|min:0',
-        'units' => 'nullable|string',
-
-    ];
-
-    protected $listeners = [
-        // If you want to use events to open modals from JS, etc.
-    ];
 
     public function updatedSearch()
     {
         $this->resetPage();
     }
 
-    /**
-     * Open edit modal and populate $test.
-     * Accepts either an ID or a model (Livewire can pass an id).
-     */
     public function viewEditTest($id)
     {
-        $this->testId = $id;
-        // If the blade calls with a model (rare), ensure you handle both.
         $test = LabTestDefinition::find($id);
+
+        if (! $test) {
+            LivewireAlert::title('Error')->text('Lab test definition not found.')->error()->show();
+            return;
+        }
+
+        $this->testId = $id;
         $this->test_name = $test->test_name;
         $this->price = $test->price;
         $this->description = $test->description;
         $this->units = $test->units;
-        if (! $test) {
-            LivewireAlert::error('Not found', 'Lab test definition not found.');
-
-            return;
-        }
 
         $this->showTestEditModal = true;
     }
 
-    public function updateTest()
+    public function updateTest(LabService $labService)
     {
-        // Validate against $rules
         $this->validate();
-        DB::connection('pgsql_transaction')->transaction(function () {
+
+        try {
             $test = LabTestDefinition::findOrFail($this->testId);
-            $test->update([
+
+            $labService->updateTestDefinition($test, [
                 'test_name' => $this->test_name,
                 'description' => $this->description,
                 'price' => $this->price,
                 'units' => $this->units,
             ]);
-            $this->logActivity(
-                'Lab Test Updated',
-                'Lab test definition updated',
-                ['lab_test_definition_id' => $test->id]
-            );
-        });
 
-        $this->showTestEditModal = false;
-        $this->resetPage(); // optional, depending on UX
-        LivewireAlert::title('Success')->success()->text('Lab test updated successfully')->show();
+            $this->showTestEditModal = false;
+            LivewireAlert::title('Success')->success()->text('Lab test updated successfully')->show();
+
+        } catch (\Exception $e) {
+            Log::error('Error updating Lab Test: ' . $e->getMessage());
+            LivewireAlert::title('Error')->text('Update failed. Please try again.')->error()->show();
+        }
     }
 
     public function viewDeleteTest($id)
@@ -103,47 +85,33 @@ class ManageLabTestDefinitions extends Component
         $this->showTestDeleteModal = true;
     }
 
-    public function deleteTest()
+    public function deleteTest(LabService $labService)
     {
-        if (! $this->deletingTestId) {
-            LivewireAlert::error('Error', 'No test selected for deletion.');
+        try {
+            $test = LabTestDefinition::find($this->deletingTestId);
 
-            return;
+            if ($test) {
+                $labService->deleteTestDefinition($test);
+                LivewireAlert::title('Deleted')->success()->text('Lab test deleted successfully')->show();
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error deleting Lab Test: ' . $e->getMessage());
+            LivewireAlert::title('Error')->text('Could not delete test. It may be linked to existing requests.')->error()->show();
         }
-
-        $model = LabTestDefinition::find($this->deletingTestId);
-        if (! $model) {
-            LivewireAlert::error('Not found', 'Lab test definition not found.');
-            $this->showTestDeleteModal = false;
-
-            return;
-        }
-
-        $model->delete();
 
         $this->showTestDeleteModal = false;
         $this->deletingTestId = null;
-        LivewireAlert::title('Deleted')->success()->text('Lab test deleted successfully')->show();
     }
 
-    public function render()
+    public function render(LabService $labService)
     {
-        $query = LabTestDefinition::query();
+        $filters = ['search' => $this->search];
 
-        if ($this->search) {
-            $terms = explode(' ', $this->search);
+        $labTests = $labService->getTestDefinitionsQuery($filters)->paginate(10);
 
-            $query->where(function ($q) use ($terms) {
-
-                // Search by test name (still indexed with blind search)
-                foreach ($terms as $term) {
-                    $q->orWhereBlind('test_name', 'test_name_index', $term);
-                }
-            });
-        }
-
-        $labTests = $query->orderBy('test_name')->paginate(10);
-
-        return view('livewire.tenants.lab-technician.manage-lab-test-definitions', compact('labTests'));
+        return view('livewire.tenants.lab-technician.manage-lab-test-definitions', [
+            'labTests' => $labTests
+        ]);
     }
 }

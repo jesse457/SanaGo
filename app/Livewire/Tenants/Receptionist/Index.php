@@ -2,11 +2,7 @@
 
 namespace App\Livewire\Tenants\Receptionist;
 
-use App\Models\Appointment;
-use App\Models\Invoice;
-use App\Models\Patient;
-use App\Models\User;
-use Carbon\Carbon;
+use App\Services\Dashboards\ReceptionistDashboardService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -16,65 +12,42 @@ class Index extends Component
     // Dashboard statistics
     public $totalPatientsRegistered;
 
-    public $appointmentsToday;
-
-    public $pendingPaymentsList;
-
     public $appointmentsTodayConfirmed;
 
     public $appointmentsTodayPending;
 
-    // Dropdown data for forms
+    // Lists
+    public $appointmentsToday;
+
+    public $pendingPaymentsList;
+
+    // Dropdown data
     public $patients;
 
     public $doctors;
 
     /**
-     * Initialize dashboard and dropdown data.
+     * Initialize dashboard using the Service.
+     * Laravel automatically injects the service here.
      */
-    public function mount()
+    public function mount(ReceptionistDashboardService $service)
     {
-        $this->loadDashboardData();
-        $this->loadPatientsAndDoctors();
+        // 1. Load Dashboard Data (Stats & Tables
+        $dashboardData = $service->getDashboardData();
+
+        $this->totalPatientsRegistered = $dashboardData['total_patients'];
+        $this->appointmentsTodayConfirmed = $dashboardData['today_confirmed_count'];
+        $this->appointmentsTodayPending = $dashboardData['today_pending_count'];
+        $this->appointmentsToday = $dashboardData['appointments_today'];
+        $this->pendingPaymentsList = $dashboardData['pending_payments'];
+
+        // 2. Load Form Dropdowns
+        $dropdownData = $service->getFormDropdowns();
+
+        $this->patients = $dropdownData['patients'];
+        $this->doctors = $dropdownData['doctors'];
     }
 
-    /**
-     * Load dashboard statistics: total patients, today's appointments, pending payments.
-     */
-    public function loadDashboardData()
-    {
-        $today = Carbon::today();
-
-        // Count total patients
-        $this->totalPatientsRegistered = Patient::count();
-
-        // Get today's appointments with related patient and doctor
-        $this->appointmentsToday = Appointment::whereDate('appointment_date', $today)
-            ->with(['patient', 'doctor'])
-            ->get();
-        // Get today's appointments with related patient and doctor
-        $this->appointmentsTodayPending = Appointment::whereDate('appointment_date', $today)->where('status', 'Waiting')->count();
-        $this->appointmentsTodayConfirmed = Appointment::whereDate('appointment_date', $today)->where('status', 'Confirmed')->count();
-        $this->pendingPaymentsList = Invoice::whereIn('status', ['unpaid', 'partial'])
-            ->with('patient')
-            ->orderByDesc('created_at')
-            ->limit(10)
-            ->get();
-    }
-
-    /**
-     * Load patients and doctors for dropdowns.
-     */
-    public function loadPatientsAndDoctors()
-    {
-        // Only select necessary columns for efficiency
-        $this->patients = Patient::select('id', 'first_name', 'last_name')->orderBy('first_name')->get();
-        $this->doctors = User::select('id', 'name')->where('role', 'doctor')->orderBy('name')->get();
-    }
-
-    /**
-     * Render the Livewire component view.
-     */
     public function render()
     {
         return view('livewire.tenants.receptionist.index');

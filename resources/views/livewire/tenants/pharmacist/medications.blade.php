@@ -14,13 +14,13 @@
                                 <a href="{{ route('pharmacist.dashboard') }}" wire:navigate
                                     class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center">
                                     <x-heroicon-s-home class="w-3 h-3 mr-1.5" />
-                                    {{ __('pharmacist.dashboard.breadcrumb_home') }}
+                                    {{ __('Home') }}
                                 </a>
                             </li>
                             <li>
                                 <div class="flex items-center">
                                     <x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300 mx-1" />
-                                    <span class="text-gray-900 dark:text-white">{{ __('pharmacist.dispense_medications_page.breadcrumb_dispense_medications') }}</span>
+                                    <span class="text-gray-900 dark:text-white">{{ __('Dispense Medications') }}</span>
                                 </div>
                             </li>
                         </ol>
@@ -29,10 +29,10 @@
                     {{-- Title --}}
                     <div>
                         <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-7">
-                            {{ __('pharmacist.dispense_medications_page.dispense_medications_title') }}
+                            {{ __('Dispense Medications') }}
                         </h2>
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            {{ __('pharmacist.dispense_medications_page.dispense_medications_description') }}
+                            {{ __('Select a patient, review prescriptions, and dispense medications safely.') }}
                         </p>
                     </div>
                 </div>
@@ -43,7 +43,7 @@
                         <x-heroicon-s-magnifying-glass class="w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                     </div>
                     <input id="patient-search" type="text" wire:model.live.debounce.300ms="search"
-                        placeholder="{{ __('pharmacist.dispense_medications_page.search_patients_placeholder') }}"
+                        placeholder="{{ __('Search patients by name or ID...') }}"
                         class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 dark:bg-gray-800 focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-gray-900 dark:text-gray-200" />
                 </div>
             </div>
@@ -57,7 +57,7 @@
                 {{-- Patients list --}}
                 <aside class="lg:col-span-1 bg-white dark:bg-gray-900 shadow-sm rounded-2xl p-6 border border-slate-200 dark:border-gray-800">
                     <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-gray-800">
-                        <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ __('pharmacist.dispense_medications_page.patients') }}</h2>
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ __('Patients') }}</h2>
                         <span class="text-xs font-bold text-slate-500 dark:text-slate-400 px-2 py-0.5 bg-slate-100 dark:bg-gray-800 rounded-full">{{ $patients->count() ?? 0 }}</span>
                     </div>
 
@@ -88,7 +88,7 @@
                             @empty
                                 <div class="text-center py-12 text-slate-500 dark:text-slate-400">
                                     <x-heroicon-o-user-group class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600 mb-3" />
-                                    <p class="mt-3 font-semibold text-sm">{{ __('pharmacist.dispense_medications_page.no_patients_found') }}</p>
+                                    <p class="mt-3 font-semibold text-sm">{{ __('No Patients Found') }}</p>
                                 </div>
                             @endforelse
                         </ul>
@@ -104,17 +104,17 @@
                                 <div class="flex items-start justify-between">
                                     <div>
                                         <h2 class="text-xl font-bold text-slate-900 dark:text-white">
-                                            {{ __('pharmacist.dispense_medications_page.prescriptions_for') }}
+                                            {{ __('Prescriptions for') }}
                                             <span class="text-blue-600 dark:text-blue-400">{{ $selectedPatient->first_name }}
                                                 {{ $selectedPatient->last_name }}</span>
                                         </h2>
-                                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ __('pharmacist.dispense_medications_page.select_prescription_view_items') }}</p>
+                                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ __('Select a prescription to view items and dispense.') }}</p>
                                     </div>
 
                                     <!-- Patient Info Badge -->
                                     <div class="flex items-center space-x-2">
                                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-slate-200">
-                                            Age: {{ $selectedPatient->age ?? 'N/A' }}
+                                            {{ __('Age') }}: {{ $selectedPatient->age ?? __('N/A') }}
                                         </span>
                                     </div>
                                 </div>
@@ -127,16 +127,16 @@
                                         <thead class="bg-slate-50 dark:bg-gray-800/50">
                                             <tr>
                                                 <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                                    {{ __('pharmacist.dispense_medications_page.date') }}
+                                                    {{ __('Date') }}
                                                 </th>
                                                 <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                                    {{ __('pharmacist.dispense_medications_page.prescribed_by') }}
+                                                    {{ __('Prescribed By') }}
                                                 </th>
                                                 <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                                    {{ __('pharmacist.dispense_medications_page.status') }}
+                                                    {{ __('Status') }}
                                                 </th>
                                                 <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                                    {{ __('pharmacist.dispense_medications_page.action') }}
+                                                    {{ __('Action') }}
                                                 </th>
                                             </tr>
                                         </thead>
@@ -187,21 +187,21 @@
                                                         };
                                                     @endphp
                                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm {{ $statusClasses }}">
-                                                        {{ ucfirst($status) }}
+                                                        {{ ucfirst(__($status)) }}
                                                     </span>
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-right">
                                                     <button wire:click="viewPrescriptionItems({{ $prescription->id }})"
                                                         class="inline-flex items-center px-4 py-2 border border-blue-200 text-sm leading-4 font-bold rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors dark:border-blue-800">
                                                         <x-heroicon-s-eye class="w-5 h-5 mr-2" />
-                                                        {{ __('pharmacist.dispense_medications_page.view_items') }}
+                                                        {{ __('View Items') }}
                                                     </button>
                                                 </td>
                                             </tr>
                                         @empty
                                             <div class="px-6 py-12 text-center">
                                                 <x-heroicon-o-folder-open class="mx-auto h-12 w-12 text-slate-400 mb-3" />
-                                                <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-white">{{ __('pharmacist.dispense_medications_page.no_prescriptions_found') }}</h3>
+                                                <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-white">{{ __('No Prescriptions Found') }}</h3>
                                             </div>
                                         @endforelse
                                     </tbody>
@@ -212,8 +212,8 @@
                         <div class="bg-white dark:bg-gray-900 shadow-sm rounded-lg overflow-hidden">
                             <div class="px-6 py-16 text-center">
                                 <x-heroicon-o-user-circle class="mx-auto h-12 w-12 text-slate-400 mb-3" />
-                                <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-white">{{ __('pharmacist.dispense_medications_page.select_a_patient') }}</h3>
-                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ __('pharmacist.dispense_medications_page.choose_patient_to_view') }}</p>
+                                <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-white">{{ __('Select a Patient') }}</h3>
+                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ __('Choose a patient from the list to see their prescriptions.') }}</p>
                             </div>
                         </div>
                     @endif
@@ -242,10 +242,10 @@
                     <div class="px-6 py-4 border-b border-slate-100 dark:border-gray-800 flex items-start justify-between bg-white dark:bg-gray-900">
                         <div>
                             <h3 id="modal-title" class="text-lg font-bold text-slate-900 dark:text-white">
-                                {{ __('pharmacist.dispense_medications_page.dispense_items_prescription', ['id' => $selectedPrescription->id ?? 'N/A']) }}
+                                {{ __('Dispense Items — Prescription #:id', ['id' => $selectedPrescription->id ?? 'N/A']) }}
                             </h3>
                             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                {{ __('pharmacist.dispense_medications_page.patient') }}:
+                                {{ __('Patient') }}:
                                 <span class="font-bold text-blue-600 dark:text-blue-400">
                                     {{ $selectedPatient->first_name ?? '' }} {{ $selectedPatient->last_name ?? '' }}
                                 </span>
@@ -265,25 +265,25 @@
                                         <thead class="bg-slate-50 dark:bg-gray-800/50">
                                             <tr>
                                                 <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                                    {{ __('pharmacist.dispense_medications_page.medication') }}
+                                                    {{ __('Medication') }}
                                                 </th>
                                                 <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                                    {{ __('pharmacist.dispense_medications_page.prescribed') }}
+                                                    {{ __('Prescribed') }}
                                                 </th>
                                                 <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                                    {{ __('pharmacist.dispense_medications_page.dispensed') }}
+                                                    {{ __('Dispensed') }}
                                                 </th>
                                                 <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                                    {{ __('pharmacist.dispense_medications_page.remaining') }}
+                                                    {{ __('Remaining') }}
                                                 </th>
                                                 <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                                    {{ __('pharmacist.dispense_medications_page.dispense_now') }}
+                                                    {{ __('Dispense Now') }}
                                                 </th>
                                                 <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                                    {{ __('pharmacist.dispense_medications_page.stock') }}
+                                                    {{ __('Stock') }}
                                                 </th>
                                                 <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                                    {{ __('pharmacist.dispense_medications_page.notes') }}
+                                                    {{ __('Notes') }}
                                                 </th>
                                             </tr>
                                         </thead>
@@ -358,7 +358,7 @@
                                                     <td class="px-6 py-4">
                                                         <textarea wire:model.live="pharmacistNotes.{{ $item->id }}" rows="2"
                                                             class="block w-full rounded-md border-slate-300 dark:border-gray-600 dark:bg-gray-800 py-1.5 text-slate-900 dark:text-white shadow-sm placeholder:text-slate-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                                            placeholder="{{ __('pharmacist.dispense_medications_page.notes') }}"></textarea>
+                                                            placeholder="{{ __('Notes') }}"></textarea>
                                                         @error('pharmacistNotes.' . $item->id)
                                                             <p class="mt-1 text-xs text-red-600 font-medium dark:text-red-400">
                                                                 {{ $message }}</p>
@@ -370,7 +370,7 @@
                                                     <td colspan="7" class="px-6 py-12 text-center">
                                                         <x-heroicon-o-folder-open class="h-12 w-12 text-slate-400 mx-auto mb-3" />
                                                         <h3 class="mt-2 text-sm font-bold text-slate-900 dark:text-white">
-                                                            {{ __('pharmacist.dispense_medications_page.no_items_available') }}</h3>
+                                                            {{ __('No Items Available') }}</h3>
                                                     </td>
                                                 </tr>
                                             @endforelse
@@ -381,19 +381,19 @@
 
                             <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-slate-100 dark:border-gray-800">
                                 <div class="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                                    <span class="font-bold">{{ __('pharmacist.dispense_medications_page.dispensation_tip') }}</span>
+                                    <span class="font-bold">{{ __('Enter the quantity to dispense now for each medication.') }}</span>
                                 </div>
 
                                 <div class="flex items-center space-x-3">
                                     <button type="button" @click="close()"
                                         class="inline-flex items-center px-5 py-2.5 rounded-xl border border-slate-300 dark:border-gray-600 text-sm font-bold text-slate-700 bg-white hover:bg-slate-50 dark:bg-gray-800 dark:text-slate-200 dark:hover:bg-gray-700">
-                                        {{ __('pharmacist.manage_drugs_page.cancel') }}
+                                        {{ __('Cancel') }}
                                     </button>
 
                                     <button type="submit" wire:loading.attr="disabled" wire:target="updateDispensation"
                                         class="inline-flex items-center px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors">
                                         <x-heroicon-s-check class="w-5 h-5 mr-2" />
-                                        {{ __('pharmacist.dispense_medications_page.save_dispensation') }}
+                                        {{ __('Save Dispensation') }}
                                     </button>
                                 </div>
                             </div>

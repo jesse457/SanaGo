@@ -2,16 +2,13 @@
 
 namespace App\Livewire\Tenants\Nurse;
 
-use App\Models\Patient;
-use App\Models\Vital;
-use App\Traits\UserActivitiesTrait; // Assuming you have a Patient model
-use Illuminate\Support\Facades\Auth;   // The Vital model
-use Illuminate\Support\Facades\DB;
+use App\Services\NurseService;
+use App\Traits\UserActivitiesTrait;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
-// Import for conditional validation rules
 use Livewire\Component;
 
 #[Layout('components.layouts.nurse')]
@@ -62,15 +59,15 @@ class RecordVitals extends Component
 
     public $showErrorModal = false;
 
-    public function mount()
+    public function mount(NurseService $nurseService)
     {
-        // Fetch all patients for the dropdown as before
-        $this->patients = Patient::orderBy('first_name')->orderBy('last_name')->get();
+        // Fetch all patients for the dropdown using service
+        $this->patients = $nurseService->getPatients();
 
         // Check if a patient ID was flashed from the dashboard
         if (Session::has('selectedPatientId')) {
             $patientId = Session::get('selectedPatientId');
-            $patient = Patient::find($patientId);
+            $patient = $nurseService->getPatient($patientId);
 
             if ($patient) {
                 $this->selectedPatientId = $patient->id;
@@ -82,7 +79,7 @@ class RecordVitals extends Component
     /**
      * Livewire lifecycle hook: Called when $selectedPatientId property changes.
      */
-    public function updatedSelectedPatientId()
+    public function updatedSelectedPatientId(NurseService $nurseService)
     {
         // When an existing patient is selected, hide the new patient form
         $this->showNewPatientForm = false;
@@ -93,7 +90,7 @@ class RecordVitals extends Component
         $this->resetValidation(); // Clear any existing validation errors
 
         if ($this->selectedPatientId) {
-            $patient = Patient::find($this->selectedPatientId);
+            $patient = $nurseService->getPatient($this->selectedPatientId);
             if ($patient) {
                 $this->selectedPatientName = $patient->first_name.' '.$patient->last_name;
             } else {
@@ -125,9 +122,8 @@ class RecordVitals extends Component
     /**
      * Saves the recorded vital signs and notes.
      */
-    public function saveVitals()
+    public function saveVitals(NurseService $nurseService)
     {
-
         // Add validation to ensure a patient is selected
         $this->validate([
             'selectedPatientId' => 'required|exists:patients,id', // Ensure a valid patient is selected
@@ -156,51 +152,40 @@ class RecordVitals extends Component
             'heightCm.max' => 'Height cannot exceed 250 cm.',
         ]);
 
-        [$systolic, $diastolic] = explode('/', $this->bloodPressure);
-
-        $bmi = null;
-        if ($this->weightKg && $this->heightCm && $this->heightCm > 0) {
-            $heightInMeters = $this->heightCm / 100;
-            $bmi = round($this->weightKg / ($heightInMeters * $heightInMeters), 2);
-        }
-
         try {
-            DB::connection('pgsql_transaction')->transaction(function () use ($systolic, $diastolic, $bmi) {
-                Vital::create([
-                    'patient_id' => $this->selectedPatientId, // Use the selected ID
-                    'nurse_id' => Auth::id(),
-                    'recorded_at' => now(),
-                    'temperature_celsius' => $this->temperature,
-                    'blood_pressure_systolic' => (int) $systolic,
-                    'blood_pressure_diastolic' => (int) $diastolic,
-                    'heart_rate_bpm' => $this->heartRate,
-                    'spo2_percentage' => $this->oxygenSaturation,
-                    'respiratory_rate' => $this->respiratoryRate,
-                    'weight_kg' => $this->weightKg,
-                    'height_cm' => $this->heightCm,
-                    'bmi' => $bmi,
-                    'flag_abnormal' => $this->flagAbnormal,
-                    'notes' => $this->nurseNotes,
+            $data = [
+                'selectedPatientId' => $this->selectedPatientId,
+                'bloodPressure' => $this->bloodPressure,
+                'temperature' => $this->temperature,
+                'heartRate' => $this->heartRate,
+                'oxygenSaturation' => $this->oxygenSaturation,
+                'respiratoryRate' => $this->respiratoryRate,
+                'weightKg' => $this->weightKg,
+                'heightCm' => $this->heightCm,
+                'nurseNotes' => $this->nurseNotes,
+                'flagAbnormal' => $this->flagAbnormal,
+            ];
 
-                ]);
-                $nurse = Auth::user()->name;
-                $this->logActivity(
-                    'vitals_recorded',
-                    "{$nurse} recorded vitals for {$this->selectedPatientName} ",
-                    [
-                        'nurse_id' => Auth::id(),
-                        'patient_id' => $this->selectedPatientId,
-                    ]
-                );
-            });
+            $nurseService->saveVitals($data);
+
+            $nurse = Auth::user()->name;
+            $this->logActivity(
+                'vitals_recorded',
+                "{$nurse} recorded vitals for {$this->selectedPatientName} ",
+                [
+                    'nurse_id' => Auth::id(),
+                    'patient_id' => $this->selectedPatientId,
+                ]
+            );
+
             LivewireAlert::title('Success')->success()->text('Vitals saved successfully')->show();
 
             // Reset all form fields, but keep the selected patient if desired
             $this->resetVitalFields();
             $this->resetValidation(); // Clear validation errors
-
         } catch (\Exception $e) {
-            Log::error('Error saving vitals: '.$e->getMessage(), ['patient_id' => $this->selectedPatientId, 'user_id' => Auth::id()]);
+            Log::error('Error saving vitals: ' . $e->getMessage(), ['patient_id' => $this->selectedPatientId, 'user_id' => Auth::id()]);
+            LivewireAlert::title('Error')->error()->text('Failed to save vitals. Please try again.')->show();
         }
     }
 

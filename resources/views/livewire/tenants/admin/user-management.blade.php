@@ -90,7 +90,7 @@
                     <div class="flex items-center justify-end w-full md:w-auto">
                         <button wire:click="$set('search', ''); $set('filterRole', ''); $set('filterStatus', '')"
                             class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium hover:underline transition-colors flex items-center gap-1">
-                            <x-heroicon-m-trash class="w-3 h-3" /> Clear Filters
+                            <x-heroicon-m-trash class="w-3 h-3" /> {{ __('Clear Filters') }}
                         </button>
                     </div>
                 @endif
@@ -106,7 +106,7 @@
                 <div
                     class="flex items-center gap-3 px-6 py-3 bg-white dark:bg-gray-800 rounded-full shadow-xl border border-slate-100 dark:border-gray-700 animate-bounce">
                     <x-heroicon-o-arrow-path class="animate-spin h-5 w-5 text-blue-600" />
-                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Updating...</span>
+                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ __('Updating...') }}</span>
                 </div>
             </div>
 
@@ -136,7 +136,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
-                            @forelse ($users as $user)
+                            @forelse ($this->users as $user)
                                 <tr wire:key="row-{{ $user->id }}"
                                     class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-150">
                                     <td class="px-6 py-4 whitespace-nowrap">
@@ -205,7 +205,7 @@
                                                     class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 text-amber-700 text-xs font-bold rounded-lg border border-amber-200 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-900/40 transition-colors shadow-sm mr-2"
                                                     title="User has not verified email. Click to resend invitation.">
                                                     <x-heroicon-m-paper-airplane class="w-3 h-3" />
-                                                    Resend
+                                                    {{ __('Resend') }}
                                                 </button>
                                             @endif
 
@@ -243,7 +243,7 @@
 
             {{-- MOBILE: Card View (Hidden on Desktop) --}}
             <div class="md:hidden space-y-4">
-                @forelse ($users as $user)
+                @forelse ($this->users as $user)
                     <div wire:key="mobile-card-{{ $user->id }}"
                         class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-slate-200 dark:border-gray-800 p-4 active:scale-[0.99] transition-transform">
                         <div class="flex items-start justify-between mb-3">
@@ -525,7 +525,7 @@
                                                     class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{ __('admin.shift_history_title') }}</label>
                                                 <div
                                                     class="h-[14rem] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 border border-slate-200 dark:border-gray-800 rounded-xl bg-slate-50 dark:bg-gray-800/50 p-2">
-                                                    @if ($userShiftHistory->isNotEmpty())
+                                                    @if ($this->userShiftHistory->isNotEmpty())
                                                         <ul class="space-y-2">
                                                             @foreach ($userShiftHistory as $pastShift)
                                                                 <li

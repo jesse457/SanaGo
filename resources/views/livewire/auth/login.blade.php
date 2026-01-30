@@ -45,6 +45,17 @@
             </div>
 
             <form wire:submit.prevent="authenticate" class="space-y-5">
+
+                    {{-- Error Alert --}}
+                    @if (session()->has('error'))
+                        <div class="p-4 mb-8 text-sm text-red-800 rounded-xl bg-red-50 dark:bg-red-900/20 dark:text-red-300 border border-red-100 dark:border-red-800 flex items-start gap-3"
+                            role="alert">
+                            <x-heroicon-m-exclamation-circle class="w-5 h-5 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <span class="font-bold">{{ __('admin.error_prefix') }}</span> {{ __('admin.session_error') }}
+                            </div>
+                        </div>
+                    @endif
                 <div>
                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 ml-1">Email / Staff ID</label>
                     <div class="relative group">
@@ -54,6 +65,8 @@
                         <input id="email" wire:model="email" type="text" required
                             class="block w-full pl-11 pr-4 py-3.5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:ring-blue-600 focus:border-blue-600 transition-all">
                     </div>
+                       @error('email') <p class="text-red-500 text-xs font-medium">{{ $message }}</p> @enderror
+
                 </div>
 
                 <div>
@@ -71,6 +84,8 @@
                             </button>
                         </div>
                     </div>
+                       @error('password') <p class="text-red-500 text-xs font-medium">{{ $message }}</p> @enderror
+
                 </div>
 
                 <div class="flex items-center justify-between py-1">
@@ -78,7 +93,7 @@
                         <input wire:model="remember" type="checkbox" class="h-5 w-5 border-slate-300 rounded text-blue-600">
                         <span class="ml-3 text-sm text-slate-600 dark:text-slate-400">Keep me logged in</span>
                     </label>
-                    <a href="#" class="text-sm font-bold text-blue-600">Forgot Password?</a>
+                    <a href="{{ route('tenant.password.request') }}" class="text-sm font-bold text-blue-600">Forgot Password?</a>
                 </div>
 
                 <div class="pt-2">

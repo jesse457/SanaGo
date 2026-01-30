@@ -13,7 +13,7 @@
                                 <a href="{{ route('lab-technician.dashboard') }}" wire:navigate
                                     class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center">
                                     <x-heroicon-s-home class="w-3 h-3 mr-1.5" />
-                                    Home
+                                    {{ __('Home') }}
                                 </a>
                             </li>
                             <li>
@@ -21,14 +21,14 @@
                                     <x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300 mx-1" />
                                     <a href="{{ route('lab-technician.test-requests') }}" wire:navigate
                                         class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                                        Lab Requests
+                                        {{ __('Lab Requests') }}
                                     </a>
                                 </div>
                             </li>
                             <li>
                                 <div class="flex items-center">
                                     <x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300 mx-1" />
-                                    <span class="text-gray-900 dark:text-white">{{ $labRequest->result ? 'Edit' : 'Enter' }} Results</span>
+                                    <span class="text-gray-900 dark:text-white">{{ $labRequest->result ? __('Edit') : __('Enter') }} {{ __('Lab Results') }}</span>
                                 </div>
                             </li>
                         </ol>
@@ -37,10 +37,10 @@
                     {{-- Title --}}
                     <div>
                         <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-7">
-                            <span>{{ $labRequest->result ? 'Edit' : 'Enter' }} Lab Results</span>
+                            <span>{{ $labRequest->result ? __('Edit') : __('Enter') }} {{ __('Lab Results') }}</span>
                         </h2>
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-3xl">
-                            Record analysis data, comments, and attachments for the requested test.
+                            {{ __('Record analysis data, comments, and attachments for the requested test.') }}
                         </p>
                     </div>
                 </div>
@@ -57,12 +57,12 @@
                     <div class="p-6 lg:p-8 bg-slate-50 dark:bg-gray-800/50 border-b border-slate-100 dark:border-gray-800">
                         <h3 class="text-base font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-6 flex items-center gap-2">
                             <x-heroicon-m-information-circle class="w-5 h-5" />
-                            Request Information
+                            {{ __('Request Information') }} - {{ __('hello jesse') }}
                         </h3>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-6">
                             {{-- Patient --}}
                             <div>
-                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Patient</p>
+                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">{{ __('Patient') }}</p>
                                 <div class="flex items-center gap-2">
                                     <div class="p-2 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
                                         <x-heroicon-m-user class="w-5 h-5 text-blue-500 dark:text-blue-400" />
@@ -78,7 +78,7 @@
 
                             {{-- Test --}}
                             <div>
-                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Test Name</p>
+                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">{{ __('Test Name') }}</p>
                                 <div class="flex items-center gap-2">
                                     <div class="p-2 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
                                         <x-heroicon-m-clipboard-document-check class="w-5 h-5 text-purple-500 dark:text-purple-400" />
@@ -91,7 +91,7 @@
 
                             {{-- Doctor --}}
                             <div>
-                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Requested By</p>
+                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">{{ __('Requested By') }}</p>
                                 <div class="flex items-center gap-2">
                                     <div class="p-2 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
                                         <x-heroicon-m-academic-cap class="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
@@ -104,7 +104,7 @@
 
                             {{-- Reason --}}
                             <div>
-                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Reason</p>
+                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">{{ __('Reason') }}</p>
                                 <div class="flex items-center gap-2">
                                     <div class="p-2 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
                                         <x-heroicon-m-chat-bubble-left-ellipsis class="w-5 h-5 text-amber-500 dark:text-amber-400" />
@@ -129,7 +129,7 @@
                             {{-- Results Text --}}
                             <div class="space-y-1.5">
                                 <label for="results_text" class="block text-sm font-bold text-slate-700 dark:text-white">
-                                    Diagnostic Results <span class="text-red-500">*</span>
+                                    {{ __('Diagnostic Results') }} <span class="text-red-500">*</span>
                                 </label>
                                 <div class="relative">
                                     <textarea id="results_text" wire:model.defer="results_text" rows="8"
@@ -145,7 +145,7 @@
                             {{-- Comments Text --}}
                             <div class="space-y-1.5">
                                 <label for="analysis_comments" class="block text-sm font-bold text-slate-700 dark:text-white">
-                                    Technician's Comments
+                                    {{ __('Technician\'s Comments') }}
                                 </label>
                                 <div class="relative">
                                     <textarea id="analysis_comments" wire:model.defer="analysis_comments" rows="8"
@@ -162,7 +162,7 @@
                         {{-- File Upload Section --}}
                         <div class="border-t border-slate-100 dark:border-gray-800 pt-8">
                             <label class="block text-sm font-bold text-slate-700 dark:text-white mb-4">
-                                Attachments & Reports
+                                {{ __('Attachments & Reports') }}
                             </label>
 
                             <div class="flex flex-col md:flex-row gap-6">
@@ -175,12 +175,12 @@
                                             </div>
                                             <div class="flex text-sm text-slate-600 dark:text-slate-400 justify-center">
                                                 <label for="file-upload" class="relative cursor-pointer rounded-md font-bold text-blue-600 dark:text-blue-400 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2 hover:text-blue-500">
-                                                    <span>Upload a file</span>
-                                                    <input id="file-upload" wire:model="attachments" type="file" multiple class="sr-only">
+                                                    <span>{{ __('Upload a file') }}</span>
+                                                    <input id="file-upload" wire:model="attachments" type="file"  class="sr-only">
                                                 </label>
-                                                <p class="pl-1">or drag and drop</p>
+                                                <p class="pl-1">{{ __('or drag and drop') }}</p>
                                             </div>
-                                            <p class="text-xs text-slate-500 dark:text-slate-400">PDF, PNG, JPG up to 10MB</p>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('PDF, PNG, JPG up to 10MB') }}</p>
                                         </div>
 
                                         {{-- Upload Progress Overlay --}}
@@ -188,7 +188,7 @@
                                             <div class="w-2/3 bg-slate-200 rounded-full h-2.5 dark:bg-gray-700 mb-2">
                                                 <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" :style="`width: ${progress}%`"></div>
                                             </div>
-                                            <span class="text-sm text-blue-600 font-medium">Uploading...</span>
+                                            <span class="text-sm text-blue-600 font-medium">{{ __('Uploading...') }}</span>
                                         </div>
                                     </div>
                                     @error('attachments.*') <p class="text-red-600 text-xs font-medium mt-2">{{ $message }}</p> @enderror
@@ -198,7 +198,7 @@
                                 <div class="w-full md:w-1/2 space-y-6">
                                     @if ($attachments)
                                         <div>
-                                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Ready to Upload</h4>
+                                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">{{ __('Ready to Upload') }}</h4>
                                             <ul class="space-y-2">
                                                 @foreach($attachments as $file)
                                                     <li class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
@@ -215,7 +215,7 @@
 
                                     @if($existingAttachments->count())
                                         <div>
-                                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Existing Files</h4>
+                                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">{{ __('Existing Files') }}</h4>
                                             <ul class="space-y-2">
                                                 @foreach($existingAttachments as $file)
                                                     <li class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-slate-200 dark:border-gray-700 hover:border-emerald-300 transition-colors group">
@@ -224,7 +224,7 @@
                                                             <span class="text-sm text-slate-700 dark:text-slate-200 truncate">{{ basename($file->file_path) }}</span>
                                                         </div>
                                                         <a href="#" class="text-xs font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            Download
+                                                            {{ __('Download') }}
                                                         </a>
                                                     </li>
                                                 @endforeach
@@ -239,7 +239,7 @@
                         <div class="mt-8 pt-6 border-t border-slate-100 dark:border-gray-800 flex justify-end gap-3">
                             <a href="{{ route('lab-technician.test-requests') }}"
                                class="rounded-xl bg-white dark:bg-gray-800 px-5 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-gray-700 hover:bg-slate-50 dark:hover:bg-gray-700 transition-all">
-                                Cancel
+                                {{ __('Cancel') }}
                             </a>
 
                             <button type="submit"
@@ -253,9 +253,9 @@
 
                                 <span wire:loading.remove wire:target="saveResults, attachments" class="flex items-center gap-2">
                                     <x-heroicon-m-check class="w-5 h-5" />
-                                    Save Results
+                                    {{ __('Save Results') }}
                                 </span>
-                                <span wire:loading wire:target="saveResults, attachments">Processing...</span>
+                                <span wire:loading wire:target="saveResults, attachments">{{ __('Processing...') }}</span>
                             </button>
                         </div>
                     </form>

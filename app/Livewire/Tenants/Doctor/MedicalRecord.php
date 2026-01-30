@@ -2,26 +2,14 @@
 
 namespace App\Livewire\Tenants\Doctor;
 
-// --- MODEL IMPORTS ---
-use App\Events\NewLabRequestEvent;
-use App\Events\NewPrescriptionEvent;
-use App\Models\LabRequest;
-use App\Models\LabTestDefinition;
 use App\Models\MedicalRecord as MedicalRecordModel;
-use App\Models\MedicalRecordAttachment;
-use App\Models\Medication;
 use App\Models\Patient;
-use App\Models\Prescription;
-// --- EVENT IMPORTS (EFFICIENCY UPGRADE) ---
-use App\Models\PrescriptionItem;
 use App\Models\User;
-// --- UTILITY IMPORTS ---
+use App\Services\MedicalRecordService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
@@ -32,20 +20,20 @@ class MedicalRecord extends Component
 {
     use WithFileUploads;
 
-    // --- STATE PROPERTIES ---
+    // Selections
     public ?Patient $patient = null;
 
     public ?MedicalRecordModel $medicalRecord = null;
 
-    // --- SEARCH & SELECTION ---
     #[Rule('required|exists:patients,id')]
     public ?int $selectedPatientId = null;
 
+    // Search
     public string $patientQuery = '';
 
     public Collection $patientResults;
 
-    // --- CLINICAL DATA ---
+    // Form Fields
     #[Rule('required|string|max:65535')]
     public ?string $complaint = null;
 
@@ -53,85 +41,72 @@ class MedicalRecord extends Component
     public ?string $diagnosisText = null;
 
     #[Rule('nullable|string|max:65535')]
-    public ?string $clinicalNotes = null;
+    public ?string $clinicalNotes = null; // Maps to general_notes
 
-    // --- MEDICATION DATA ---
+    // Items
     public Collection $allMedications;
 
     public array $prescriptionItems = [];
 
-    // --- LAB DATA ---
     public Collection $allLabTests;
 
     public array $labItems = [];
 
-    public Collection $labTechnicianOptions;
+    public Collection $labTechnicianOptions; // Added for the select dropdown
 
-    // --- ATTACHMENTS ---
+    // Files
     #[Rule(['attachments.*' => 'file|max:10240|mimes:jpg,jpeg,png,pdf'])]
     public $attachments = [];
 
-    public array $storedAttachments = [];
+    public $storedAttachments = [];
 
     public array $attachmentUrls = [];
 
     public bool $hasUnsavedChanges = false;
 
-    // --- MOUNT ---
-    public function mount(): void
+    public function mount(MedicalRecordService $service): void
     {
         $this->patientResults = collect();
-
-        // Optimized queries for dropdowns
-        $this->allMedications = Medication::select('id', 'name', 'stock_quantity')->orderBy('name')->get();
-        $this->allLabTests = LabTestDefinition::all();
-        $this->labTechnicianOptions = User::where('role', 'lab-technician')->select('id', 'name')->orderBy('name')->get();
+        $this->allMedications = $service->getAllMedications();
+        $this->allLabTests = $service->getAllLabDefinitions();
+        // Fetch users who are lab technicians (adjust role logic as per your app)
+        $this->labTechnicianOptions = User::where('role', 'lab-technician')->get();
     }
 
-    // --- PATIENT SEARCH ---
     public function updatedPatientQuery(): void
     {
-        $this->validate(['patientQuery' => 'nullable|string|min:2']);
         $q = trim($this->patientQuery);
-
-        if ($q === '') {
+        if ($q === '' || strlen($q) < 2) {
             $this->patientResults = collect();
 
             return;
         }
 
-        $terms = explode(' ', $this->patientQuery);
+        $terms = explode(' ', $q);
         $this->patientResults = Patient::query()
-            ->where(function ($q) use ($terms) {
-                try {
-                    // Blind Index Search Logic
-                    if (count($terms) === 2) {
-                        $q->WhereBlind('first_name', 'first_name_index', $terms[0]);
-                        $q->WhereBlind('last_name', 'last_name_index', $terms[1]);
-                    } else {
-                        foreach ($terms as $term) {
-                            $q->orWhereBlind('first_name', 'first_name_index', $term)
-                                ->orWhereBlind('last_name', 'last_name_index', $term)
-                                ->orWhere('patient_uid', 'like', "%$term%");
-                        }
+            ->where(function ($query) use ($terms) {
+                if (count($terms) === 2) {
+                    $query->whereBlind('first_name', 'first_name_index', $terms[0])
+                        ->whereBlind('last_name', 'last_name_index', $terms[1]);
+                } else {
+                    foreach ($terms as $term) {
+                        $query->orWhereBlind('first_name', 'first_name_index', $term)
+                            ->orWhereBlind('last_name', 'last_name_index', $term)
+                            ->orWhere('patient_uid', 'ilike', "%$term%");
                     }
-                } catch (\Throwable $e) {
                 }
-            })
-            ->limit(10)
-            ->get();
+            })->limit(10)->get();
     }
 
-    public function selectPatient(int $id): void
+    public function selectPatient(int $id, MedicalRecordService $service): void
     {
         $this->selectedPatientId = $id;
         $this->patientQuery = '';
         $this->patientResults = collect();
-        $this->updatedSelectedPatientId();
+        $this->updatedSelectedPatientId($service);
     }
 
-    // --- LOAD PATIENT DATA & DRAFT ---
-    public function updatedSelectedPatientId(): void
+    public function updatedSelectedPatientId(MedicalRecordService $service): void
     {
         if (! $this->selectedPatientId) {
             $this->resetContext();
@@ -140,31 +115,138 @@ class MedicalRecord extends Component
         }
 
         $this->patient = Patient::find($this->selectedPatientId);
-
-        if (! $this->patient) {
-            $this->resetContext();
-
-            return;
-        }
-
-        // Check for existing Draft
-        $this->medicalRecord = MedicalRecordModel::with(['attachments'])
-            ->where('patient_id', $this->selectedPatientId)
-            ->where('doctor_id', Auth::id())
-            ->where('finalized', false)
-            ->first();
+        $this->medicalRecord = $service->findLatestDraft($this->selectedPatientId, Auth::id());
 
         if ($this->medicalRecord) {
             $this->hasUnsavedChanges = true;
             $this->complaint = $this->medicalRecord->complaint;
             $this->diagnosisText = $this->medicalRecord->diagnosis_text;
             $this->clinicalNotes = $this->medicalRecord->general_notes;
-            $this->loadDraftPrescriptions();
-            $this->loadDraftLabs();
+
+            $this->prescriptionItems = $service->getDraftPrescriptionItems($this->medicalRecord->id);
+            $this->labItems = $service->getDraftLabRequests($this->medicalRecord->id);
         } else {
             $this->resetDraftFields();
         }
 
+        $this->loadStoredAttachments();
+    }
+
+    public function addMedication($medicationId)
+    {
+        $med = $this->allMedications->firstWhere('id', $medicationId);
+        if ($med) {
+            $this->prescriptionItems[] = [
+                'medication_id' => $med->id,
+                'name' => $med->name,
+                'dosage' => '',
+                'frequency' => '',
+                'duration' => '',
+            ];
+            $this->hasUnsavedChanges = true;
+        }
+    }
+
+    public function removeMedication($index)
+    {
+        unset($this->prescriptionItems[$index]);
+        $this->prescriptionItems = array_values($this->prescriptionItems);
+        $this->hasUnsavedChanges = true;
+    }
+
+    public function addLabTest($testId)
+    {
+        $lab = $this->allLabTests->firstWhere('id', $testId);
+        if ($lab) {
+            $this->labItems[] = [
+                'lab_test_definition_id' => $lab->id,
+                'test_name' => $lab->test_name,
+                'urgency' => 'normal',
+                'reason' => '',
+                'lab_tech_id' => null,
+            ];
+            $this->hasUnsavedChanges = true;
+        }
+    }
+
+    public function removeLabTest($index)
+    {
+        unset($this->labItems[$index]);
+        $this->labItems = array_values($this->labItems);
+        $this->hasUnsavedChanges = true;
+    }
+
+    public function removeTempAttachment($index)
+    {
+        unset($this->attachments[$index]);
+        $this->attachments = array_values($this->attachments);
+    }
+
+    public function saveDraft(MedicalRecordService $service): void
+    {
+        $this->saveAll($service, false);
+    }
+
+    public function saveAndSign(MedicalRecordService $service): void
+    {
+        $this->saveAll($service, true);
+    }
+
+    private function saveAll(MedicalRecordService $service, bool $finalize): void
+    {
+        $this->validate();
+
+        try {
+            // Clean up the data array. lab_tech_id belongs INSIDE the labItems array, not here.
+            $data = [
+                'id'             => $this->medicalRecord?->id,
+                'patient_id'     => $this->selectedPatientId,
+                'doctor_id'      => Auth::id(),
+                'complaint'      => $this->complaint,
+                'diagnosis_text' => $this->diagnosisText,
+                'general_notes'  => $this->clinicalNotes,
+            ];
+
+            // Ensure prescriptionItems and labItems are passed exactly as they are held in state
+            $this->medicalRecord = $service->saveOrUpdate(
+                $data,
+                $this->attachments,
+                $this->prescriptionItems,
+                $this->labItems, // This already contains lab_tech_id per item
+                $finalize
+            );
+
+            $this->attachments = [];
+
+            if ($finalize) {
+                $this->resetContext();
+                $this->dispatch('alert', ['type' => 'success', 'message' => 'Consultation Finalized and Lab/Prescription sent.']);
+            } else {
+                $this->updatedSelectedPatientId($service);
+                $this->dispatch('alert', ['type' => 'success', 'message' => 'Draft Saved Successfully.']);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Medical Record Error: ' . $e->getMessage());
+            $this->dispatch('alert', ['type' => 'error', 'message' => 'Failed to save record.']);
+        }
+    }
+
+    protected function loadStoredAttachments(): void
+    {
+        if (! $this->medicalRecord) {
+            $this->storedAttachments = [];
+
+            return;
+        }
+        $this->storedAttachments = $this->medicalRecord->attachments;
+        foreach ($this->storedAttachments as $att) {
+            $this->attachmentUrls[$att->id] = Storage::disk('s3')->temporaryUrl($att->file_path, now()->addMinutes(30));
+        }
+    }
+
+    public function removeStoredAttachment(int $id, MedicalRecordService $service): void
+    {
+        $service->deleteAttachment($id);
         $this->loadStoredAttachments();
     }
 
@@ -183,313 +265,8 @@ class MedicalRecord extends Component
         $this->clinicalNotes = null;
         $this->prescriptionItems = [];
         $this->labItems = [];
-        $this->storedAttachments = [];
-        $this->attachmentUrls = [];
         $this->attachments = [];
-    }
-
-    // --- UI HELPERS (ADD/REMOVE ITEMS) ---
-
-    public function addMedication($medicationId)
-    {
-        if (empty($medicationId)) {
-            return;
-        }
-        $med = $this->allMedications->where('id', $medicationId)->first();
-        if (! $med) {
-            $med = Medication::find($medicationId);
-        }
-
-        if ($med) {
-            foreach ($this->prescriptionItems as $item) {
-                if ($item['medication_id'] == $med->id) {
-                    return;
-                }
-            }
-            $this->prescriptionItems[] = [
-                'medication_id' => $med->id,
-                'name' => $med->name,
-                'dosage' => '', 'frequency' => '', 'duration' => '',
-            ];
-            $this->hasUnsavedChanges = true;
-        }
-    }
-
-    public function removeMedication($index)
-    {
-        unset($this->prescriptionItems[$index]);
-        $this->prescriptionItems = array_values($this->prescriptionItems);
-        $this->hasUnsavedChanges = true;
-    }
-
-    public function addLabTest($testId)
-    {
-        if (empty($testId)) {
-            return;
-        }
-        $lab = $this->allLabTests->where('id', $testId)->first();
-        if (! $lab) {
-            $lab = LabTestDefinition::find($testId);
-        }
-
-        if ($lab) {
-            foreach ($this->labItems as $item) {
-                if ($item['lab_test_definition_id'] == $lab->id) {
-                    return;
-                }
-            }
-            $this->labItems[] = [
-                'lab_test_definition_id' => $lab->id,
-                'test_name' => $lab->test_name,
-                'urgency' => 'normal',
-                'lab_tech_id' => '',
-                'reason' => '',
-            ];
-            $this->hasUnsavedChanges = true;
-        }
-    }
-
-    public function removeLabTest($index)
-    {
-        unset($this->labItems[$index]);
-        $this->labItems = array_values($this->labItems);
-        $this->hasUnsavedChanges = true;
-    }
-
-    // --- FILE UPLOADS ---
-
-    public function updatedAttachments(): void
-    {
-        $this->validateOnly('attachments.*');
-        $this->hasUnsavedChanges = true;
-    }
-
-    public function removeTempAttachment($index)
-    {
-        array_splice($this->attachments, $index, 1);
-    }
-
-    public function removeStoredAttachment(int $id): void
-    {
-        $att = MedicalRecordAttachment::where('id', $id)->first();
-        if ($att) {
-            try {
-                Storage::disk('s3')->delete($att->file_path);
-            } catch (\Exception $e) {
-            }
-            $att->delete();
-            $this->loadStoredAttachments();
-        }
-    }
-
-    protected function loadStoredAttachments(): void
-    {
-        if (! $this->medicalRecord) {
-            $this->storedAttachments = [];
-
-            return;
-        }
-        $this->storedAttachments = $this->medicalRecord->attachments()->get()->all();
-        $this->attachmentUrls = [];
-        foreach ($this->storedAttachments as $att) {
-            try {
-                $this->attachmentUrls[$att->id] = Storage::disk('s3')->temporaryUrl($att->file_path, now()->addMinutes(30));
-            } catch (\Exception $e) {
-                $this->attachmentUrls[$att->id] = '#';
-            }
-        }
-    }
-
-    // --- SAVE LOGIC ---
-
-    public function saveDraft(): void
-    {
-        $this->saveAll(false);
-    }
-
-    public function saveAndSign(): void
-    {
-        $this->saveAll(true);
-    }
-
-    public function saveAll(bool $finalize = false): void
-    {
-        $this->validate();
-        if (! $this->selectedPatientId) {
-            return;
-        }
-
-        try {
-            // We use DB transaction to ensure data integrity
-            DB::connection('pgsql_transaction')->transaction(function () use ($finalize) {
-
-                // 1. SAVE MEDICAL RECORD
-                $data = [
-                    'patient_id' => $this->selectedPatientId,
-                    'doctor_id' => Auth::id(),
-                    'complaint' => $this->complaint,
-                    'diagnosis_text' => $this->diagnosisText,
-                    'general_notes' => $this->clinicalNotes,
-                    'finalized' => $finalize,
-                    'record_type' => 'consultation',
-                ];
-
-                if ($this->medicalRecord) {
-                    $this->medicalRecord->update($data);
-                    $record = $this->medicalRecord;
-                } else {
-                    $record = MedicalRecordModel::create($data);
-                    $this->medicalRecord = $record;
-                }
-
-                // 2. ATTACHMENTS
-                if (! empty($this->attachments)) {
-                    foreach ($this->attachments as $file) {
-                        $path = $file->store('medical_records/'.$record->id, 's3');
-                        MedicalRecordAttachment::create([
-                            'medical_record_id' => $record->id,
-                            'file_path' => $path,
-                            'file_name' => $file->getClientOriginalName(),
-                            'file_type' => $file->getClientMimeType(),
-                        ]);
-                    }
-                    $this->attachments = [];
-                }
-
-                // 3. PRESCRIPTIONS (SYNC)
-                $prescriptionEventToFire = null;
-
-                if (count($this->prescriptionItems) > 0) {
-                    $prescription = Prescription::firstOrCreate(
-                        ['consultation_id' => $record->id],
-                        [
-                            'patient_id' => $this->selectedPatientId,
-                            'doctor_id' => Auth::id(),
-                            'prescription_date' => now(),
-                            'status' => $finalize ? 'prescribed' : 'draft',
-                        ]
-                    );
-
-                    if ($finalize) {
-                        $prescription->update(['status' => 'prescribed']);
-                        $prescriptionEventToFire = $prescription; // Prepare event data
-                    }
-
-                    $prescription->items()->delete(); // Sync strategy
-
-                    $prescItemsData = [];
-                    foreach ($this->prescriptionItems as $item) {
-                        $prescItemsData[] = [
-                            'tenant_id' => $prescription->tenant_id,
-                            'prescription_id' => $prescription->id,
-                            'medication_id' => $item['medication_id'],
-                            'dosage' => $item['dosage'], 'frequency' => $item['frequency'], 'duration' => $item['duration'],
-                            'quantity_prescribed' => 1, 'created_at' => now(), 'updated_at' => now(),
-                        ];
-                    }
-                    if (! empty($prescItemsData)) {
-                        PrescriptionItem::insert($prescItemsData);
-                    }
-
-                } else {
-                    // Empty list -> delete draft prescription
-                    Prescription::where('consultation_id', $record->id)->where('status', 'draft')->delete();
-                }
-
-                // 4. LAB REQUESTS (SYNC)
-                $currentRequestIds = [];
-                $labOrdersCreated = false;
-
-                foreach ($this->labItems as $lab) {
-                    $labReq = LabRequest::updateOrCreate(
-                        ['consultation_id' => $record->id, 'lab_test_definition_id' => $lab['lab_test_definition_id']],
-                        [
-                            'patient_id' => $this->selectedPatientId,
-                            'tenant_id' => $prescription->tenant_id,
-                            'requested_by_doctor_id' => Auth::id(),
-                            'urgency_level' => $lab['urgency'],
-                            // 'lab_tech_id' => $lab['lab_tech_id'], // Optional: specific assignment
-                            'reason_for_test' => $lab['reason'],
-                            'request_date' => now(),
-                        ]
-                    );
-
-                    if ($labReq->wasRecentlyCreated) {
-                        $labReq->status = 'requested';
-                        $labReq->save();
-                        $labOrdersCreated = true;
-                    }
-                    $currentRequestIds[] = $labReq->id;
-                }
-
-                // 5. EVENT BROADCASTING (HIGH EFFICIENCY)
-
-                // A. Broadcast to Pharmacy Department
-                if ($prescriptionEventToFire) {
-                    // This creates 1 Broadcast Event for ALL pharmacists
-                    event(new NewPrescriptionEvent($prescriptionEventToFire));
-                }
-
-                // B. Broadcast to Lab Department
-                if ($labOrdersCreated) {
-                    // This creates 1 Broadcast Event for ALL lab technicians
-                    event(new NewLabRequestEvent($record));
-                }
-
-            }); // End Transaction
-
-            $this->loadStoredAttachments();
-
-            if ($finalize) {
-                $this->resetContext();
-                LivewireAlert::title('Signed')->text('Consultation finalized & orders sent.')->success()->show();
-            } else {
-                $this->updatedSelectedPatientId();
-                LivewireAlert::title('Saved')->text('Draft saved.')->success()->show();
-            }
-        } catch (\Throwable $e) {
-            Log::error('Medical Record Save Error: '.$e->getMessage());
-            LivewireAlert::error('Failed to save record.')->show();
-        }
-    }
-
-    // --- DB LOADERS ---
-
-    protected function loadDraftPrescriptions()
-    {
-        if (! $this->medicalRecord) {
-            return;
-        }
-        $prescription = Prescription::with('items.medication')->where('consultation_id', $this->medicalRecord->id)->first();
-        $this->prescriptionItems = [];
-        if ($prescription) {
-            foreach ($prescription->items as $item) {
-                $this->prescriptionItems[] = [
-
-                    'medication_id' => $item->medication_id,
-                    'name' => $item->medication->name ?? 'Unknown',
-                    'dosage' => $item->dosage, 'frequency' => $item->frequency, 'duration' => $item->duration,
-                ];
-            }
-        }
-    }
-
-    protected function loadDraftLabs()
-    {
-        if (! $this->medicalRecord) {
-            return;
-        }
-        $labs = LabRequest::with('testDefinition')->where('consultation_id', $this->medicalRecord->id)->get();
-        $this->labItems = [];
-        foreach ($labs as $lab) {
-            $this->labItems[] = [
-                'lab_test_definition_id' => $lab->lab_test_definition_id,
-                'test_name' => $lab->testDefinition->test_name ?? 'Unknown',
-                'urgency' => $lab->urgency_level,
-                'lab_tech_id' => $lab->lab_tech_id,
-                'reason' => $lab->reason_for_test,
-            ];
-        }
+        $this->hasUnsavedChanges = false;
     }
 
     public function render()

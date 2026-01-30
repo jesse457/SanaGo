@@ -3,13 +3,13 @@
 namespace App\Notifications;
 
 use App\Models\Prescription;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\BroadcastMessage;
+use Illuminate\Notifications\Messages\BroadcastMessage; // Important
 use Illuminate\Notifications\Notification;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast; // Important
 
-class NewPrescriptionOrder extends Notification implements ShouldQueue
+class NewPrescriptionOrder extends Notification implements ShouldBroadcast
 {
     use Queueable;
 
@@ -20,42 +20,55 @@ class NewPrescriptionOrder extends Notification implements ShouldQueue
         $this->prescription = $prescription;
     }
 
-    public function via(object $notifiable): array
+    /**
+     * Get the notification's delivery channels.
+     */
+    public function via($notifiable)
     {
-        // Store in DB for history, Broadcast for real-time
+        // 'database' for the bell icon history
+        // 'broadcast' for the real-time toast/popup
         return ['database', 'broadcast'];
     }
 
-    public function toBroadcast(object $notifiable): BroadcastMessage
-    {
-        return new BroadcastMessage($this->getData());
-    }
-
-    public function toArray(object $notifiable): array
-    {
-        return $this->getData();
-    }
-
-    private function getData(): array
+    /**
+     * 1. Data stored in the Database (json column)
+     */
+    public function toArray($notifiable)
     {
         return [
-            'id' => $this->id,
-            'message' => 'New Prescription Order',
-            'patient_name' => $this->prescription->patient->first_name.' '.$this->prescription->patient->last_name,
-            'prescription_id' => $this->prescription->id,
-            'type' => 'pharmacy_order',
-            'created_at' => now()->toIso8601String(),
+            'id' => $this->prescription->id,
+            'message' => 'New prescription received for ' . $this->prescription->patient->name,
+            'patient_id' => $this->prescription->patient_id,
+            'doctor_name' => $this->prescription->doctor->name ?? 'Unknown Doctor',
+            'timestamp' => now()->toIso8601String(),
+            'type' => 'prescription'
         ];
     }
 
     /**
-     * IMPORTANT: This tells Laravel to broadcast to the DEPARTMENT channel
-     * instead of the individual User channel.
+     * 2. Data sent over WebSocket (Reverb)
      */
-    public function broadcastOn(): array
+    public function toBroadcast($notifiable): BroadcastMessage
     {
-        return [
-            new PrivateChannel('pharmacy.orders'),
-        ];
+        // This is the actual data you see in the browser console
+        return new BroadcastMessage([
+            'id' => $this->prescription->id,
+            'title' => 'New Prescription',
+            'message' => 'New prescription received for ' . $this->prescription->patient->name,
+            'patient_name' => $this->prescription->patient->name,
+            'link' => '/pharmacy/dispense/' . $this->prescription->id,
+            'type' => 'prescription', // Helps frontend decide icon/color
+        ]);
     }
+
+    /**
+     * OPTIONAL: If you want to use 'pharmacy.orders' channel instead of the specific user channel.
+     * WARNING: Only do this if you are broadcasting ONE event.
+     * Since your Service loops through users, keep this commented out or default behavior
+     * will correctly target App.Models.User.{id}
+     */
+    // public function broadcastOn()
+    // {
+    //     return new PrivateChannel('pharmacy.orders');
+    // }
 }

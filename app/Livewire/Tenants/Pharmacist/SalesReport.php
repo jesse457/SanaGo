@@ -45,11 +45,11 @@ class SalesReport extends Component
 
         $callback = function () {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['Rank', 'Medication Name', 'Quantity Sold']);
+            fputcsv($file, [__('Rank'), __('Medication Name'), __('Quantity Sold')]);
 
             $medications = $this->getTopSellingMedicationsProperty(); // Use the computed property
             foreach ($medications as $index => $med) {
-                fputcsv($file, [$index + 1, $med->name, $med->total_quantity_sold.' units']);
+                fputcsv($file, [$index + 1, $med->name, $med->total_quantity_sold.' '.__('units')]);
             }
             fclose($file);
         };
@@ -76,11 +76,11 @@ class SalesReport extends Component
             // This is a simplified example that generates a CSV-like structure
             // which Excel can open.
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['Rank', 'Medication Name', 'Quantity Sold']);
+            fputcsv($file, [__('Rank'), __('Medication Name'), __('Quantity Sold')]);
 
             $medications = $this->getTopSellingMedicationsProperty(); // Use the computed property
             foreach ($medications as $index => $med) {
-                fputcsv($file, [$index + 1, $med->name, $med->total_quantity_sold.' units']);
+                fputcsv($file, [$index + 1, $med->name, $med->total_quantity_sold.' '.__('units')]);
             }
             fclose($file);
         };

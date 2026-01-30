@@ -18,7 +18,7 @@ class FeedBackRequestList extends Component
 
     public ?FeedBack $modalFeedback = null; // instance of FeedBack or null
 
-    public string $modalTitle = 'Feedback Details';
+    public string $modalTitle = 'Feedback Details'; // We should probably translate this in mount or leave as is if it's a default, but let's translate usage
 
     // reply draft bound to textarea
     public string $replyDraft = '';
@@ -35,13 +35,13 @@ class FeedBackRequestList extends Component
             ->first();
 
         if (! $this->modalFeedback) {
-            session()->flash('error', 'Feedback not found.');
+            session()->flash('error', __('Feedback not found.'));
 
             return;
         }
 
         // initialize modal fields
-        $this->modalTitle = $this->modalFeedback->subject ?? 'Feedback Details';
+        $this->modalTitle = $this->modalFeedback->subject ?? __('Feedback Details');
         $this->replyDraft = $this->modalFeedback->response_draft ?? '';
 
         $this->showModal = true;

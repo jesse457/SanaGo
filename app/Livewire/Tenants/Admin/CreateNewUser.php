@@ -2,16 +2,8 @@
 
 namespace App\Livewire\Tenants\Admin;
 
-use App\Mail\UserInvitationMail;
 use App\Models\Department;
-use App\Models\User;
 use App\Traits\UserActivitiesTrait;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -90,60 +82,28 @@ class CreateNewUser extends Component
         $this->generatedPassword = Str::password(16, true, true, true, false);
     }
 
-    public function saveUser()
+    public function saveUser(\App\Services\UserService $userService)
     {
         $this->validate();
-        $storedPath = null;
-        $user = null;
 
         try {
-            // [FIX] Use the dedicated non-pooled connection for the transaction
-            DB::connection('pgsql_transaction')->transaction(function () use (&$storedPath, &$user) {
-
-                // 1. Upload to S3
-                if ($this->profile_picture) {
-                    $storedPath = $this->profile_picture->store('profile_pictures', 's3');
-                }
-
-                // 2. Create User
-                $user = User::create([
-                    'name' => $this->name,
-                    'email' => $this->email,
-                    'phone_number' => $this->phone_number,
-                    'address' => $this->address,
-                    'gender' => $this->gender,
-                    'profile_picture' => $storedPath,
-                    'department_id' => $this->department_id,
-                    'hire_date' => $this->hire_date,
-                    'role' => $this->role,
-                    'is_active' => $this->is_active,
-                    'password' => Hash::make(Str::random(32)),
-                    'tenant_id' => tenant('id'),
-                ]);
-            });
-
-            // [FIX] Token and Mail happen AFTER transaction commits
-            if ($user) {
-                $token = Password::broker()->createToken($user);
-
-                Mail::to($user->email)->queue(new UserInvitationMail(
-                    $user,
-                    $token,
-                    tenant()->domains->first()->domain ?? request()->getHost(),
-                    tenant('name')
-                ));
-            }
+            $userService->createUser([
+                'name' => $this->name,
+                'email' => $this->email,
+                'phone_number' => $this->phone_number,
+                'address' => $this->address,
+                'gender' => $this->gender,
+                'department_id' => $this->department_id,
+                'hire_date' => $this->hire_date,
+                'role' => $this->role,
+                'is_active' => $this->is_active,
+            ], $this->profile_picture, tenant('id'));
 
             LivewireAlert::title('Success')->success()->text('User created and credentials sent to email.')->show();
 
             return redirect()->route('admin.user-management');
 
         } catch (\Throwable $e) {
-            // Clean up S3
-            if ($storedPath) {
-                Storage::disk('s3')->delete($storedPath);
-            }
-
             // Extract real error
             $realError = $e;
             if (str_contains($e->getMessage(), 'current transaction is aborted') && $e->getPrevious()) {
@@ -154,11 +114,7 @@ class CreateNewUser extends Component
                 ? ($realError->errorInfo[2] ?? $realError->getMessage())
                 : $realError->getMessage();
 
-            Log::error('USER_CREATION_FAILED', [
-                'root_cause' => $realError->getMessage(),
-                'line' => $realError->getLine(),
-            ]);
-
+            // Error is already logged in Service, just show alert
             LivewireAlert::title('Error')->error()->text('Failed to create user: '.$uiMessage)->show();
 
             return null;

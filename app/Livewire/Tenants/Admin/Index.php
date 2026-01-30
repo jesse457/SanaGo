@@ -2,28 +2,22 @@
 
 namespace App\Livewire\Tenants\Admin;
 
-use App\Models\Admission;
-use App\Models\Appointment;
-use App\Models\Bed;
-use App\Models\Department;
-use App\Models\Supply;
-use App\Models\User;
-use Carbon\Carbon;
+use App\Services\Dashboards\AdminDashboardService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('components.layouts.admin')]
 class Index extends Component
 {
+    // Greeting Props
     public $greeting;
 
     public $userName;
 
     public $userAvatar;
 
+    // Metrics Props
     public $dailyTotalRevenue = 0;
 
     public $totalPatientsAdmittedToday = 0;
@@ -36,6 +30,7 @@ class Index extends Component
 
     public $lowStockCount = 0;
 
+    // Chart Props
     public $patientFlowLabels = [];
 
     public $patientFlowData = [];
@@ -44,6 +39,7 @@ class Index extends Component
 
     public $encounterSummaryData = [];
 
+    // System Props
     public $totalDoctors = 0;
 
     public $totalSystemUsers = 0;
@@ -52,124 +48,52 @@ class Index extends Component
 
     public $userRoleSummary = [];
 
+    // Table Props
     public $recentAdmissions = [];
 
-    public function mount()
+    public function mount(AdminDashboardService $dashboardService)
     {
-        $this->setGreeting();
-        $this->loadDashboardData();
+        $this->loadData($dashboardService);
     }
 
-    public function setGreeting()
+    public function loadData(AdminDashboardService $service)
     {
-        $hour = date('H');
-        $this->greeting = match (true) {
-            $hour < 12 => 'Good Morning',
-            $hour < 18 => 'Good Afternoon',
-            default => 'Good Evening',
-        };
+        // 1. Greeting
+        $greetData = $service->getGreetingData(Auth::user());
+        $this->greeting = $greetData['greeting'];
+        $this->userName = $greetData['user_name'];
+        $this->userAvatar = $greetData['user_avatar'];
 
-        $user = Auth::user();
-        $this->userName = $user->name ?? 'Administrator';
-        $this->userAvatar = $user->profile_picture ?? 'https://ui-avatars.com/api/?name='.urlencode($this->userName).'&color=7F9CF5&background=EBF4FF';
-    }
+        // 2. Daily Metrics
+        $metrics = $service->getDailyMetrics();
+        $this->dailyTotalRevenue = $metrics['total_revenue'];
+        $this->totalPatientsAdmittedToday = $metrics['admissions_today'];
+        $this->totalAppointmentsToday = $metrics['appointments_today'];
 
-    public function loadDashboardData()
-    {
-        $tenantId = tenant('id');
-
-        // 1. Metrics (10 min cache)
-        $metrics = Cache::remember("admin_metrics_{$tenantId}", 600, function () {
-            $today = Carbon::today();
-
-            return [
-                'rev_appt' => Appointment::whereDate('appointment_date', $today)->where('status', 'Completed')->sum('price'),
-                'rev_adm' => Admission::whereDate('created_at', $today)->sum('observation_fee'),
-                'adm_today' => Admission::whereDate('created_at', $today)->count(),
-                'appt_today' => Appointment::whereDate('appointment_date', $today)->count(),
-            ];
-        });
-        $this->dailyTotalRevenue = $metrics['rev_appt'] + $metrics['rev_adm'];
-        $this->totalPatientsAdmittedToday = $metrics['adm_today'];
-        $this->totalAppointmentsToday = $metrics['appt_today'];
-
-        // 2. Inventory (30 min cache)
-        $inv = Cache::remember("admin_inv_{$tenantId}", 1800, function () {
-            return [
-                'total_beds' => Bed::count(),
-                'occ_beds' => Bed::where('is_occupied', true)->count(),
-                'low_stock' => Supply::whereColumn('current_stock', '<=', 'min_stock_level')->count(),
-            ];
-        });
+        // 3. Inventory
+        $inv = $service->getInventoryMetrics();
         $this->totalBeds = $inv['total_beds'];
-        $this->totalBedsOccupied = $inv['occ_beds'];
-        $this->lowStockCount = $inv['low_stock'];
+        $this->totalBedsOccupied = $inv['occupied_beds'];
+        $this->lowStockCount = $inv['low_stock_count'];
 
-        // 3. Patient Flow Chart - 6 Months (1 hour cache)
-        // DB Agnostic approach: Run 6 simple queries. Caching makes this instant.
-        $flow = Cache::remember("admin_flow_{$tenantId}", 3600, function () {
-            $labels = [];
-            $data = [];
-            for ($i = 5; $i >= 0; $i--) {
-                $month = Carbon::now()->subMonths($i);
-                $labels[] = $month->format('M');
-                $data[] = Appointment::whereMonth('appointment_date', $month->month)
-                    ->whereYear('appointment_date', $month->year)
-                    ->count();
-            }
-
-            return compact('labels', 'data');
-        });
+        // 4. Charts
+        $flow = $service->getPatientFlowChart();
         $this->patientFlowLabels = $flow['labels'];
         $this->patientFlowData = $flow['data'];
 
-        // 4. Weekly Summary (30 min cache)
-        $weekly = Cache::remember("admin_weekly_{$tenantId}", 1800, function () {
-            $labels = [];
-            $data = [];
-            $start = Carbon::now()->startOfWeek();
-            for ($i = 0; $i < 7; $i++) {
-                $day = $start->copy()->addDays($i);
-                $labels[] = $day->format('D');
-                $data[] = Appointment::whereDate('appointment_date', $day)->count();
-            }
-
-            return compact('labels', 'data');
-        });
+        $weekly = $service->getWeeklyEncounterChart();
         $this->encounterSummaryLabels = $weekly['labels'];
         $this->encounterSummaryData = $weekly['data'];
 
-        // 5. System & Roles (2 hour cache)
-        $system = Cache::remember("admin_sys_{$tenantId}", 7200, function () {
-            $roles = ['doctor', 'nurse', 'pharmacist', 'admin', 'receptionist', 'lab-technician'];
-            $summary = [];
-            foreach ($roles as $role) {
-                $total = User::where('role', $role)->count();
-                if ($total > 0) {
-                    $summary[] = [
-                        'role_name' => $role,
-                        'total_users' => $total,
-                        'active_users' => User::where('role', $role)->where('is_active', true)->count(),
-                    ];
-                }
-            }
+        // 5. System
+        $sys = $service->getSystemOverview();
+        $this->totalDoctors = $sys['total_doctors'];
+        $this->totalSystemUsers = $sys['total_users'];
+        $this->totalDepartments = $sys['total_departments'];
+        $this->userRoleSummary = $sys['role_summary'];
 
-            return [
-                'doc_count' => User::where('role', 'doctor')->count(),
-                'user_count' => User::count(),
-                'dept_count' => Department::count(),
-                'summary' => $summary,
-            ];
-        });
-        $this->totalDoctors = $system['doc_count'];
-        $this->totalSystemUsers = $system['user_count'];
-        $this->totalDepartments = $system['dept_count'];
-        $this->userRoleSummary = $system['summary'];
-
-        // 6. Recent Admissions (5 min cache)
-        $this->recentAdmissions = Cache::remember("admin_recent_adm_{$tenantId}", 300, function () {
-            return Admission::with(['patient', 'bed.ward'])->latest()->take(5)->get();
-        });
+        // 6. Recent Admissions
+        $this->recentAdmissions = $service->getRecentAdmissions();
     }
 
     public function render()

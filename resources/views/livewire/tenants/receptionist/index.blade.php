@@ -12,7 +12,7 @@
                 </button>
 
                 <div>
-                    <h1 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white leading-tight">Reception</h1>
+                    <h1 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white leading-tight">{{ __('Reception') }}</h1>
                     <p class="text-xs text-gray-500 font-medium">{{ now()->format('l, F jS') }}</p>
                 </div>
             </div>
@@ -30,7 +30,7 @@
                         <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=4f46e5&color=fff" class="w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm">
                         <div class="hidden md:flex flex-col text-right">
                             <span class="text-sm font-semibold text-gray-900 dark:text-white leading-none">{{ Auth::user()->name }}</span>
-                            <span class="text-xs text-gray-500 leading-none mt-1">Receptionist</span>
+                            <span class="text-xs text-gray-500 leading-none mt-1">{{ __('Receptionist') }}</span>
                         </div>
                         <x-heroicon-s-chevron-down class="w-3 h-3 text-gray-400 group-hover:text-gray-600 transition-transform duration-200" x-bind:class="dd ? 'rotate-180' : ''"/>
                     </button>
@@ -49,18 +49,18 @@
 
                         <!-- Account Info (Mobile/Tablet specific info that might be hidden in trigger) -->
                         <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Signed in as</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Signed in as') }}</p>
                             <p class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ Auth::user()->email }}</p>
                         </div>
 
                         <div class="py-1">
                             <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                 <x-heroicon-s-user-circle class="w-4 h-4 mr-2 text-gray-400" />
-                                Your Profile
+                                {{ __('Your Profile') }}
                             </a>
                             <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                 <x-heroicon-s-cog-6-tooth class="w-4 h-4 mr-2 text-gray-400" />
-                                Settings
+                                {{ __('Settings') }}
                             </a>
                         </div>
 
@@ -69,7 +69,7 @@
                                 @csrf
                                 <button type="submit" class="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                                     <x-heroicon-s-arrow-right-on-rectangle class="w-4 h-4 mr-2" />
-                                    Sign out
+                                    {{ __('Sign out') }}
                                 </button>
                             </form>
                         </div>
@@ -95,7 +95,7 @@
             <div class="group bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-sm font-medium text-gray-500">Total Patients</p>
+                        <p class="text-sm font-medium text-gray-500">{{ __('Total Patients') }}</p>
                         <h3 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ $totalPatientsRegistered }}</h3>
                     </div>
                     <span class="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
@@ -108,7 +108,7 @@
             <div class="group bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-sm font-medium text-gray-500">Pending Today</p>
+                        <p class="text-sm font-medium text-gray-500">{{ __('Pending Today') }}</p>
                         <h3 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ $appointmentsTodayPending }}</h3>
                     </div>
                     <span class="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg">
@@ -121,7 +121,7 @@
             <div class="group bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow sm:col-span-2 lg:col-span-1">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-sm font-medium text-gray-500">Confirmed</p>
+                        <p class="text-sm font-medium text-gray-500">{{ __('Confirmed') }}</p>
                         <h3 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ $appointmentsTodayConfirmed }}</h3>
                     </div>
                     <span class="p-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg">
@@ -135,11 +135,11 @@
         <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm flex flex-col">
             <div class="px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">Today's Schedule</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Manage patient flow</p>
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('Today\'s Schedule') }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Manage patient flow') }}</p>
                 </div>
                 <div class="w-full sm:w-auto">
-                    <input type="text" placeholder="Search patient..." class="w-full sm:w-64 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="text" placeholder="{{ __('Search patient...') }}" class="w-full sm:w-64 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
             </div>
 
@@ -147,10 +147,10 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-800">
                         <tr>
-                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Time</th>
-                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Patient</th>
-                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 hidden sm:table-cell">Doctor</th>
-                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Status</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">{{ __('Time') }}</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">{{ __('Patient') }}</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 hidden sm:table-cell">{{ __('Doctor') }}</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">{{ __('Status') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
@@ -183,7 +183,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-12 text-center text-sm text-gray-500">No appointments scheduled</td>
+                                <td colspan="4" class="px-6 py-12 text-center text-sm text-gray-500">{{ __('No appointments scheduled') }}</td>
                             </tr>
                         @endforelse
                     </tbody>

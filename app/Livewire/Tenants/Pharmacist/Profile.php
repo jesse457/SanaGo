@@ -62,7 +62,7 @@ class Profile extends Component
                 'user_id' => Auth::id(),
             ]
         );
-        LivewireAlert::title('Success')->success()->text('Profile updated successfully!')->show();
+        LivewireAlert::title(__('Success'))->success()->text(__('Profile updated successfully!'))->show();
     }
 
     public function updatePassword()
@@ -75,7 +75,7 @@ class Profile extends Component
         $user = Auth::user();
 
         if (! Hash::check($this->current_password, $user->password)) {
-            $this->addError('current_password', 'Your current password is incorrect.');
+            $this->addError('current_password', __('Your current password is incorrect.'));
 
             return;
         }
@@ -93,7 +93,7 @@ class Profile extends Component
         );
         $this->reset(['current_password', 'new_password', 'new_password_confirmation']);
 
-        LivewireAlert::title('Success')->success()->text('Password updated successfully!')->show();
+        LivewireAlert::title(__('Success'))->success()->text(__('Password updated successfully!'))->show();
     }
 
     public function render()

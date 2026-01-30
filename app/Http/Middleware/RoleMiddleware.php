@@ -11,23 +11,40 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
+    /**
+     * Handle an incoming request.
+     */
     public function handle(Request $request, Closure $next, string $role): Response
     {
-        // 1. Check Authentication & Redirect smartly
+        // ---------------------------------------------------------------------
+        // 1. Check Authentication
+        // ---------------------------------------------------------------------
         if (! Auth::check()) {
-            // Check if we are in a tenant context
+            // API: Return 401 JSON
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+
+            // Web: Redirect to appropriate login
             if (function_exists('tenant') && tenant()) {
                 return redirect()->route('tenant.login');
             }
 
-            // Otherwise, go to central login
             return redirect()->route('login');
         }
 
         $user = Auth::user();
 
+        // ---------------------------------------------------------------------
         // 2. Check Active Status
+        // ---------------------------------------------------------------------
         if (! $user->is_active) {
+            // API: Return 403 Forbidden JSON
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Your account has been deactivated.'], 403);
+            }
+
+            // Web: Logout and Redirect
             Auth::logout();
             $route = (function_exists('tenant') && tenant()) ? 'tenant.login' : 'login';
 
@@ -35,18 +52,27 @@ class RoleMiddleware
                 ->with('error', 'Your account was deactivated.');
         }
 
+        // ---------------------------------------------------------------------
         // 3. Check Role Permission
+        // ---------------------------------------------------------------------
         if ($user->role !== $role) {
-            // Context-aware fallback dashboard
-            if (function_exists('tenant') && tenant()) {
-                // Use the generic tenant dashboard route
-                $dashboardRoute = 'dashboard';
-            } else {
-                // Central Landlord fallback
-                $dashboardRoute = 'landlord.dashboard';
+            // API: Return 403 Forbidden JSON
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Access denied. You do not have the required role.',
+                    'required_role' => $role,
+                ], 403);
             }
 
-            // Or use your specific role match list:
+            // Web: Redirect user to their OWN dashboard instead of a 403 page
+            // This improves UX by "bouncing" them to the right place
+            if (function_exists('tenant') && tenant()) {
+                $dashboardRoute = 'dashboard'; // Default tenant dashboard
+            } else {
+                $dashboardRoute = 'landlord.dashboard'; // Default landlord dashboard
+            }
+
+            // Map roles to specific routes
             $redirectRoute = match ($user->role) {
                 'admin' => 'admin.dashboard',
                 'doctor' => 'doctor.dashboard',

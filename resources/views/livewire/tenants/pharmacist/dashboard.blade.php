@@ -12,10 +12,10 @@
                     </div>
                     <div>
                         <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">
-                            {{ __('pharmacist.dashboard.dashboard_title') }}
+                            {{ __('Dashboard') }}
                         </h1>
                         <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                           {!! __('pharmacist.dashboard.welcome_message', [
+                           {!! __('Welcome back, :name!', [
                                 'name' => '<span class="text-gray-900 dark:text-gray-200">' . Auth::user()->name . '</span>',
                             ]) !!}
                         </p>
@@ -31,7 +31,7 @@
                     <div class="relative" x-data="{ openNotif: false }">
                         <button @click="openNotif = !openNotif"
                                 class="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors focus:outline-none">
-                            <span class="sr-only">Notifications</span>
+                            <span class="sr-only">{{ __('Notifications') }}</span>
                             <x-heroicon-o-bell class="w-6 h-6" />
 
                             {{-- Red Dot Badge --}}
@@ -55,8 +55,8 @@
                              x-cloak>
 
                             <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800">
-                                <h3 class="text-sm font-bold text-gray-900 dark:text-white">Notifications</h3>
-                                <button @click="clearNotifications()" class="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400">Clear all</button>
+                                <h3 class="text-sm font-bold text-gray-900 dark:text-white">{{ __('Notifications') }}</h3>
+                                <button @click="clearNotifications()" class="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400">{{ __('Clear all') }}</button>
                             </div>
 
                             <div class="max-h-[20rem] overflow-y-auto custom-scrollbar">
@@ -66,7 +66,7 @@
                                         <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 mb-3">
                                             <x-heroicon-o-bell-slash class="w-5 h-5 text-gray-400"/>
                                         </div>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">No new notifications</p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('No new notifications') }}</p>
                                     </div>
                                 </template>
 
@@ -84,8 +84,8 @@
                                         <div class="flex-1 min-w-0">
                                             <p class="text-sm font-semibold text-gray-900 dark:text-white" :class="{'opacity-60': notif.read}" x-text="notif.message"></p>
                                             <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex flex-col">
-                                                <span>Patient: <strong class="text-gray-700 dark:text-gray-300" x-text="notif.patient_name"></strong></span>
-                                                <span x-text="'Dr: ' + notif.doctor_name"></span>
+                                                <span>{{ __('Patient:') }} <strong class="text-gray-700 dark:text-gray-300" x-text="notif.patient_name"></strong></span>
+                                                <span x-text="'{{ __('Dr:') }} ' + notif.doctor_name"></span>
                                             </div>
                                             <p class="text-[10px] text-gray-400 mt-1" x-text="new Date(notif.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})"></p>
                                         </div>
@@ -116,7 +116,7 @@
 
                             <div class="hidden md:block text-left">
                                 <p class="text-xs font-semibold text-gray-700 dark:text-gray-200">{{ Auth::user()->name }}</p>
-                                <p class="text-[10px] text-gray-500 uppercase tracking-wider">Pharmacist</p>
+                                <p class="text-[10px] text-gray-500 uppercase tracking-wider">{{ __('Pharmacist') }}</p>
                             </div>
 
                             <x-heroicon-s-chevron-down
@@ -130,14 +130,14 @@
                             <a href="{{ route('pharmacist.profile') }}" wire:navigate
                                 class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                 <x-heroicon-o-user class="w-4 h-4 mr-3 text-gray-400" />
-                                {{ __('pharmacist.dashboard.profile') }}
+                                {{ __('Profile') }}
                             </a>
                             <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
                             <form method="POST" action="{{ route('auth.logout') }}">
                                 @csrf
                                 <button type="submit" class="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                                     <x-heroicon-o-arrow-left-on-rectangle class="w-4 h-4 mr-3" />
-                                    {{ __('pharmacist.dashboard.logout') }}
+                                    {{ __('Logout') }}
                                 </button>
                             </form>
                         </div>
@@ -168,7 +168,7 @@
                 <div class="group bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('pharmacist.dashboard.prescriptions_dispensed_today') }}</p>
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Prescriptions Dispensed Today') }}</p>
                             <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ $prescriptionsDispensedToday }}</h3>
                         </div>
                         <span class="p-2 bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded-lg">
@@ -181,7 +181,7 @@
                 <div class="group bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('pharmacist.dashboard.prescriptions_pending') }}</p>
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Prescriptions Pending') }}</p>
                             <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ $prescriptionsPending }}</h3>
                         </div>
                         <span class="p-2 bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 rounded-lg">
@@ -194,7 +194,7 @@
                 <div class="group bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('pharmacist.dashboard.drugs_left_in_inventory') }}</p>
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Drugs Left in Inventory') }}</p>
                             <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ $drugsLeftInInventory }}</h3>
                         </div>
                         <span class="p-2 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-lg">
@@ -209,11 +209,11 @@
                 {{-- Table Header --}}
                 <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <div>
-                        <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('pharmacist.dashboard.top_sold_drugs') }}</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Inventory overview and stock alerts</p>
+                        <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('Top Sold Drugs') }}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ __('Inventory overview and stock alerts') }}</p>
                     </div>
                     <a href="#" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700">
-                        {{ __('pharmacist.dashboard.view_all') }}
+                        {{ __('View All →') }}
                     </a>
                 </div>
 
@@ -223,16 +223,16 @@
                         <thead class="bg-gray-50 dark:bg-gray-800">
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    {{ __('pharmacist.dashboard.medication') }}
+                                    {{ __('Medication') }}
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    {{ __('pharmacist.dashboard.current_stock') }}
+                                    {{ __('Current Stock') }}
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    {{ __('pharmacist.dashboard.min_level') }}
+                                    {{ __('Min Level') }}
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    Status
+                                    {{ __('Status') }}
                                 </th>
                             </tr>
                         </thead>
@@ -265,11 +265,11 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-center">
                                         @if($medication->stock_quantity <= $medication->min_stock_level)
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800">
-                                                Low Stock
+                                                {{ __('Low Stock') }}
                                             </span>
                                         @else
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">
-                                                Healthy
+                                                {{ __('Healthy') }}
                                             </span>
                                         @endif
                                     </td>
@@ -281,8 +281,8 @@
                                             <div class="p-3 bg-gray-100 dark:bg-gray-800 rounded-full mb-3">
                                                 <x-heroicon-o-cube class="w-6 h-6 text-gray-400" />
                                             </div>
-                                            <p class="font-medium text-gray-900 dark:text-gray-200">{{ __('pharmacist.dashboard.no_medications_found') }}</p>
-                                            <p class="text-xs mt-1">{{ __('pharmacist.dashboard.try_adjusting_filters') }}</p>
+                                            <p class="font-medium text-gray-900 dark:text-gray-200">{{ __('No Medications Found') }}</p>
+                                            <p class="text-xs mt-1">{{ __('Try adjusting your search or filters.') }}</p>
                                         </div>
                                     </td>
                                 </tr>

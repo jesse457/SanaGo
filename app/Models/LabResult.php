@@ -43,10 +43,10 @@ class LabResult extends Model implements CipherSweetEncrypted
     {
         $encryptedRow
             // 1. First Name: Case-insensitive + Partial Match
-            ->addField('first_name')
+            ->addField('results_text')
 
             // 2. Last Name: Case-insensitive + Partial Match
-            ->addField('last_name');
+            ->addField('analysis_comments');
 
     }
 

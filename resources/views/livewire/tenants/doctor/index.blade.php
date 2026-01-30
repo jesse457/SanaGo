@@ -12,7 +12,7 @@
                         {{ __('doctor.dashboard') }}
                     </h1>
                     <p class="text-xs text-gray-500 dark:text-gray-400 font-medium truncate">
-                        {{ now()->format('H') < 12 ? 'Good morning' : (now()->format('H') < 18 ? 'Good afternoon' : 'Good evening') }},
+                        {{ now()->format('H') < 12 ? __('Good morning') : (now()->format('H') < 18 ? __('Good afternoon') : __('Good evening')) }},
                         <span class="text-gray-900 dark:text-gray-200 font-bold">{{ Auth::user()->name }}</span>
                     </p>
                 </div>
@@ -38,7 +38,7 @@
 
                     <div x-show="open" @click.outside="open = false" x-cloak x-transition
                          class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
-                        <div class="p-3 border-b border-gray-100 dark:border-gray-700 font-bold text-xs uppercase tracking-widest text-gray-500">Notifications</div>
+                        <div class="p-3 border-b border-gray-100 dark:border-gray-700 font-bold text-xs uppercase tracking-widest text-gray-500">{{ __('Notifications') }}</div>
                         <div class="max-h-64 overflow-y-auto">
                             @forelse($notifications ?? [] as $notif)
                                 <div class="p-3 border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30 flex gap-3">
@@ -48,7 +48,7 @@
                                     </div>
                                 </div>
                             @empty
-                                <div class="p-8 text-center text-gray-400">No notifications</div>
+                                <div class="p-8 text-center text-gray-400">{{ __('No notifications') }}</div>
                             @endforelse
                         </div>
                     </div>
@@ -100,16 +100,16 @@
             <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden flex flex-col">
                 <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/30 dark:bg-gray-800/30">
                     <h3 class="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tighter">{{ __('doctor.upcoming_schedule') }}</h3>
-                    <button class="text-xs font-bold text-blue-600 hover:text-blue-700 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 rounded-full transition">VIEW ALL</button>
+                    <button class="text-xs font-bold text-blue-600 hover:text-blue-700 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 rounded-full transition">{{ __('VIEW ALL') }}</button>
                 </div>
 
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">
-                                <th class="px-6 py-4">Time</th>
-                                <th class="px-6 py-4">Patient</th>
-                                <th class="hidden sm:table-cell px-6 py-4">Reason</th>
+                                <th class="px-6 py-4">{{ __('Time') }}</th>
+                                <th class="px-6 py-4">{{ __('Patient') }}</th>
+                                <th class="hidden sm:table-cell px-6 py-4">{{ __('Reason') }}</th>
                                 <th class="px-6 py-4"></th>
                             </tr>
                         </thead>
@@ -133,7 +133,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4" class="p-12 text-center text-gray-400 italic">No appointments for today</td></tr>
+                                <tr><td colspan="4" class="p-12 text-center text-gray-400 italic">{{ __('No appointments for today') }}</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -157,10 +157,10 @@
                                     <p class="text-xs text-gray-500">{{ $result->patient->first_name }} • {{ $result->created_at->format('d M, Y') }}</p>
                                 </div>
                             </div>
-                            <button class="px-4 py-2 text-xs font-black bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition">REVIEW</button>
+                            <button class="px-4 py-2 text-xs font-black bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition">{{ __('REVIEW') }}</button>
                         </div>
                     @empty
-                        <div class="p-12 text-center text-gray-400 italic">No pending results for review</div>
+                        <div class="p-12 text-center text-gray-400 italic">{{ __('No pending results for review') }}</div>
                     @endforelse
                 </div>
             </div>

@@ -20,8 +20,8 @@
 
             <div class="flex flex-col transition-opacity duration-300"
                  :class="(sidebarExpanded || mobileOpen) ? 'opacity-100' : 'lg:opacity-0 lg:w-0 lg:hidden'">
-                <span class="font-bold text-gray-900 dark:text-white leading-none tracking-tight text-base">Front Desk</span>
-                <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mt-0.5">Reception</span>
+                <span class="font-bold text-gray-900 dark:text-white leading-none tracking-tight text-base">{{ __('Front Desk') }}</span>
+                <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mt-0.5">{{ __('Reception') }}</span>
             </div>
         </a>
 
@@ -42,16 +42,16 @@
     <nav class="flex-1 overflow-y-auto overflow-x-hidden py-6 px-3 space-y-1 custom-scrollbar">
         <div class="px-3 mb-2 transition-all duration-300"
              :class="(sidebarExpanded || mobileOpen) ? 'opacity-100' : 'lg:opacity-0 lg:h-0 lg:overflow-hidden'">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-mono">Main Menu</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-mono">{{ __('Main Menu') }}</p>
         </div>
 
         @php
             $menuItems = [
-                ['route' => 'receptionist.dashboard', 'icon' => 'squares-2x2', 'label' => 'Dashboard'],
-                ['route' => 'receptionist.appointments', 'icon' => 'calendar-days', 'label' => 'Appointments'],
-                ['route' => 'receptionist.patients', 'icon' => 'users', 'label' => 'Patients'],
-                ['route' => 'receptionist.checkin', 'icon' => 'user-plus', 'label' => 'Check-in/Admit'],
-                ['route' => 'receptionist.feedback-history', 'icon' => 'chat-bubble-bottom-center-text', 'label' => 'Feedbacks'],
+                ['route' => 'receptionist.dashboard', 'icon' => 'squares-2x2', 'label' => __('Dashboard')],
+                ['route' => 'receptionist.appointments', 'icon' => 'calendar-days', 'label' => __('Appointments')],
+                ['route' => 'receptionist.patients', 'icon' => 'users', 'label' => __('Patients')],
+                ['route' => 'receptionist.checkin', 'icon' => 'user-plus', 'label' => __('Check-in/Admit')],
+                ['route' => 'receptionist.feedback-history', 'icon' => 'chat-bubble-bottom-center-text', 'label' => __('Feedbacks')],
             ];
         @endphp
 
@@ -101,12 +101,12 @@
 
             <div class="flex-1 overflow-hidden" x-show="sidebarExpanded || mobileOpen" x-transition.opacity>
                 <div class="truncate text-sm font-semibold text-gray-900 dark:text-white">{{ auth()->user()->name }}</div>
-                <div class="truncate text-xs text-gray-500">Receptionist</div>
+                <div class="truncate text-xs text-gray-500">{{ __('Receptionist') }}</div>
             </div>
 
             <form method="POST" action="{{ route('auth.logout') }}" x-show="sidebarExpanded || mobileOpen">
                 @csrf
-                <button type="submit" class="text-gray-400 hover:text-red-600 transition-colors p-1" title="Logout">
+                <button type="submit" class="text-gray-400 hover:text-red-600 transition-colors p-1" title="{{ __('Logout') }}">
                     <x-heroicon-m-arrow-right-on-rectangle class="w-5 h-5" />
                 </button>
             </form>

@@ -2,11 +2,8 @@
 
 namespace App\Livewire\Tenants\Nurse;
 
-use App\Models\NurseCareReport;
-use App\Models\Patient;
-use App\Models\Vital;
+use App\Services\NurseService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -63,7 +60,7 @@ class CreateCareReport extends Component
     /**
      * Search Logic: Runs when user types in the input
      */
-    public function updatedPatientSearch()
+    public function updatedPatientSearch(NurseService $nurseService)
     {
         if (strlen($this->patientSearch) < 2) {
             $this->searchResults = [];
@@ -72,14 +69,7 @@ class CreateCareReport extends Component
             return;
         }
 
-        // Fetch patients and filter in PHP (supports encrypted fields if necessary)
-        $allPatients = Patient::all();
-
-        $this->searchResults = $allPatients->filter(function ($patient) {
-            return str_contains(strtolower($patient->name), strtolower($this->patientSearch))
-                || str_contains($patient->patient_uid, $this->patientSearch);
-        })->take(10);
-
+        $this->searchResults = $nurseService->searchPatients($this->patientSearch);
         $this->showDropdown = true;
     }
 
@@ -93,34 +83,23 @@ class CreateCareReport extends Component
         $this->showDropdown = false;
     }
 
-    public function saveCareReport()
+    public function saveCareReport(NurseService $nurseService)
     {
         $this->validate();
 
-        DB::transaction(function () {
-            // 1. Create Report
-            NurseCareReport::create([
-                'patient_id' => $this->patient_id,
-                'user_id' => Auth::id(),
-                'report_time' => $this->report_time,
-                'shift_type' => $this->shift_type,
-                'interventions' => $this->interventions,
-                'observations' => $this->observations,
-            ]);
+        $data = [
+            'patient_id' => $this->patient_id,
+            'report_time' => $this->report_time,
+            'shift_type' => $this->shift_type,
+            'interventions' => $this->interventions,
+            'observations' => $this->observations,
+            'vitals_bp' => $this->vitals_bp,
+            'vitals_hr' => $this->vitals_hr,
+            'vitals_temp' => $this->vitals_temp,
+            'vitals_spo2' => $this->vitals_spo2,
+        ];
 
-            // 2. Create Vitals (if provided)
-            if ($this->vitals_bp || $this->vitals_hr || $this->vitals_temp || $this->vitals_spo2) {
-                Vital::create([
-                    'patient_id' => $this->patient_id,
-                    'user_id' => Auth::id(),
-                    'blood_pressure' => $this->vitals_bp,
-                    'heart_rate' => $this->vitals_hr,
-                    'temperature' => $this->vitals_temp,
-                    'oxygen_saturation' => $this->vitals_spo2,
-                    'recorded_at' => $this->report_time,
-                ]);
-            }
-        });
+        $nurseService->saveCareReport($data);
 
         session()->flash('success', 'Patient care report submitted successfully.');
         $this->reset(['patient_id', 'patientSearch', 'interventions', 'observations', 'vitals_bp', 'vitals_hr', 'vitals_temp', 'vitals_spo2']);

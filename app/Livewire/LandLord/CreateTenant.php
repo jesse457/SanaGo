@@ -62,7 +62,7 @@ class CreateTenant extends Component
     public function updatedTenantName($value)
     {
         $slug = Str::slug($value);
-        $this->generatedDomain = $slug.'.'.config('tenancy.central_domains.0');
+        $this->generatedDomain = $slug.'.'.config('tenancy.central_domains.1');
         $this->hospitalContactEmail = 'contact@'.$this->generatedDomain;
     }
 

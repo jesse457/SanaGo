@@ -41,7 +41,7 @@ Route::get('/api/health', function () {
 */
 
 Route::middleware(['web', 'universal'])
-    ->domain(config('tenancy.central_domains.0'))
+    ->domain(config('tenancy.central_domains.1'))
     ->group(function () {
 
         // --- PUBLIC PAGES ---
@@ -65,6 +65,7 @@ Route::middleware(['web', 'universal'])
                 abort(400);
             }
             Session::put('locale', $locale);
+
             return redirect()->back();
         })->name('language.switch');
 
@@ -77,8 +78,8 @@ Route::middleware(['web', 'universal'])
                 Route::get('/settings', Settings::class)->name('settings');
                 Route::get('/manage-tenants', ManageTenants::class)->name('manage-tenants');
                 Route::get('/create-tenants', CreateTenant::class)->name('create-tenants');
-                 Route::get('/manage-demo', ManageDemo::class)->name('manage-demo');
-                      Route::get('/view-demo/{demoRequest}', ViewDemoRequest::class)->name('view-demo');
+                Route::get('/manage-demo', ManageDemo::class)->name('manage-demo');
+                Route::get('/view-demo/{demoRequest}', ViewDemoRequest::class)->name('view-demo');
 
                 Route::get('/feedbacks', Feedback::class)->name('feedbacks');
                 Route::get('/respond-feedback/{feedback}', RespondFeedback::class)->name('respond-feedback');
@@ -88,6 +89,7 @@ Route::middleware(['web', 'universal'])
                     Illuminate\Support\Facades\Auth::logout();
                     Session::invalidate();
                     Session::regenerateToken();
+
                     return redirect()->route('login');
                 })->name('logout');
             });
