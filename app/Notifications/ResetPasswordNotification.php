@@ -52,7 +52,7 @@ class ResetPasswordNotification extends Notification
                 'email' => $notifiable->getEmailForPasswordReset(),
             ], false);
 
-            return 'http://'.$domain.':8000'.$relativePath;
+            return 'https://'.$domain.$relativePath;
         }
 
         // 2. Default: Landlord / Central App Context
