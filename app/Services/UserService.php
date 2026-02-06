@@ -76,24 +76,36 @@ class UserService
         }
     }
 
-    /**
+  /**
      * Update User & Manage Shift Pivot
+     *
+     * Handles updating user profile details and synchronizing the
+     * "active" shift assignment (removing conflicting future shifts).
      */
     public function updateUser(int $userId, array $data): User
     {
         return DB::connection('pgsql_transaction')->transaction(function () use ($userId, $data) {
             $user = User::findOrFail($userId);
+
+            // 1. Update basic user details
             $user->update(collect($data)->except('selected_shift_id')->toArray());
 
+            // 2. Handle Shift Assignment (if key exists in payload)
             if (array_key_exists('selected_shift_id', $data)) {
-                $currentUpcoming = $user->shifts()->where('shift_date', '>=', now()->startOfDay())->first();
-                if ($currentUpcoming?->id !== $data['selected_shift_id']) {
-                    if ($currentUpcoming) {
-                        $user->shifts()->detach($currentUpcoming->id);
-                    }
-                    if ($data['selected_shift_id']) {
-                        $user->shifts()->attach($data['selected_shift_id']);
-                    }
+                $newShiftId = $data['selected_shift_id'];
+
+                // Ensure strict integer or null for logic
+                $newShiftId = ($newShiftId === "" || $newShiftId === null) ? null : (int) $newShiftId;
+
+                // Cleanup: Detach ALL upcoming shifts to avoid conflicts/duplicates.
+                // This enforces the "Single Active Shift" logic from the UI.
+                $user->shifts()
+                     ->where('shift_date', '>=', now()->format('Y-m-d'))
+                     ->detach();
+
+                // Assignment: If a valid shift ID was selected, attach it.
+                if ($newShiftId) {
+                    $user->shifts()->attach($newShiftId);
                 }
             }
 
@@ -103,7 +115,6 @@ class UserService
             return $user;
         });
     }
-
     public function getAttachmentPreview(int $userId): array
     {
         $user = User::findOrFail($userId);

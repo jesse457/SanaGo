@@ -15,6 +15,9 @@ class AdminShiftController extends Controller
         $this->shiftService = $shiftService;
     }
 
+    /**
+     * GET /api/admin/shifts
+     */
     public function index()
     {
         return response()->json([
@@ -23,24 +26,64 @@ class AdminShiftController extends Controller
         ]);
     }
 
+    /**
+     * POST /api/admin/shifts
+     */
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'shift_type' => 'required|in:Day, Night, Morning, Evening',
-            'shift_date' => 'required|date',
-            'start_time' => 'required',
-            'end_time' => 'required',
-        ]);
+        $data = $this->validateShift($request);
 
         $shift = $this->shiftService->saveShift($data);
 
-        return response()->json(['success' => true, 'message' => 'Shift created', 'data' => $shift]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Shift created successfully',
+            'data' => $shift
+        ], 201);
     }
 
+    /**
+     * PUT/PATCH /api/admin/shifts/{id}
+     */
+    public function update(Request $request, $id)
+    {
+        $data = $this->validateShift($request);
+
+        // Pass the ID to the service to trigger update logic
+        $shift = $this->shiftService->saveShift($data, $id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Shift updated successfully',
+            'data' => $shift
+        ]);
+    }
+
+    /**
+     * DELETE /api/admin/shifts/{id}
+     */
     public function destroy($id)
     {
         $this->shiftService->deleteShift($id);
 
-        return response()->json(['success' => true, 'message' => 'Shift deleted']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Shift deleted successfully'
+        ]);
+    }
+
+    /**
+     * Helper to validate shift data
+     */
+    private function validateShift(Request $request): array
+    {
+        // Note: Removed spaces in 'in:' rule (e.g., 'Day,Night' instead of 'Day, Night')
+        // to prevent validation failures on exact string matching.
+        return $request->validate([
+            'shift_type' => 'required|in:Day,Night,Morning,Evening',
+            'shift_date' => 'required|date',
+            'start_time' => 'required|date_format:H:i', // Enforce time format
+            'end_time' => 'required|date_format:H:i',
+        ]);
     }
 }

@@ -21,7 +21,7 @@ trait HttpResponses
     /**
      * Send an error response.
      */
-    protected function error($data, ?string $message, int $code): JsonResponse
+protected function error($data, ?string $message, int $code): JsonResponse
     {
         return response()->json([
             'status' => 'Error',
