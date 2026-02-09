@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\Tenants\Receptionist\AdmissionController;
 use App\Http\Controllers\Api\Tenants\Receptionist\AppointmentController;
 use App\Http\Controllers\Api\Tenants\Receptionist\PatientController;
 use App\Http\Controllers\Api\Tenants\Receptionist\ReceptionistDashboardController;
+use App\Http\Controllers\Api\Tenants\SyncController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/ping', fn () => response()->noContent());
 Route::post('/login', [LoginController::class, 'login']);
 Broadcast::routes([ 'middleware' => ['auth:sanctum','tenant.auth']]);
+
 /*
 |--------------------------------------------------------------------------
 | PROTECTED ROUTES (Authenticated & Tenant Verified)
@@ -38,6 +40,50 @@ Route::middleware(['auth:sanctum', 'tenant.auth'])->group(function () {
 
     Route::post('/logout', [LoginController::class, 'logout']);
     Route::get('/user', fn (Request $request) => $request->user());
+
+    /*
+    |--------------------------------------------------------------------------
+    | SYNC API ROUTES (RxDB/Dexie Optimized)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('sync')->name('sync.')->controller(SyncController::class)->group(function () {
+
+        // Admin Sync
+        Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
+            Route::post('/pull', 'adminPull')->name('pull');
+            Route::post('/push', 'adminPush')->name('push');
+        });
+
+        // Receptionist Sync
+        Route::middleware('role:receptionist')->prefix('receptionist')->name('receptionist.')->group(function () {
+            Route::post('/pull', 'receptionistPull')->name('pull');
+            Route::post('/push', 'receptionistPush')->name('push');
+        });
+
+        // Doctor Sync
+        Route::middleware('role:doctor')->prefix('doctor')->name('doctor.')->group(function () {
+            Route::post('/pull', 'doctorPull')->name('pull');
+            Route::post('/push', 'doctorPush')->name('push');
+        });
+
+        // Lab Technician Sync
+        Route::middleware('role:lab-technician')->prefix('lab-technician')->name('lab-technician.')->group(function () {
+            Route::post('/pull', 'labTechnicianPull')->name('pull');
+            Route::post('/push', 'labTechnicianPush')->name('push');
+        });
+
+        // Nurse Sync
+        Route::middleware('role:nurse')->prefix('nurse')->name('nurse.')->group(function () {
+            Route::post('/pull', 'nursePull')->name('pull');
+            Route::post('/push', 'nursePush')->name('push');
+        });
+
+        // Pharmacist Sync
+        Route::middleware('role:pharmacist')->prefix('pharmacist')->name('pharmacist.')->group(function () {
+            Route::post('/pull', 'pharmacistPull')->name('pull');
+            Route::post('/push', 'pharmacistPush')->name('push');
+        });
+    });
 
     /*
     |--------------------------------------------------------------------------
@@ -214,4 +260,5 @@ Route::middleware(['auth:sanctum', 'tenant.auth'])->group(function () {
         Route::post('/{id}/mark-read', [App\Http\Controllers\Api\Tenants\NotificationController::class, 'markAsRead'])->name('mark-read');
         Route::delete('/{id}', [App\Http\Controllers\Api\Tenants\NotificationController::class, 'destroy'])->name('destroy');
     });
+
 });

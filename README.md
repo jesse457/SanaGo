@@ -86,8 +86,7 @@
 - **Revenue Analytics**: Real-time financial dashboards and reports
 
 ### 👥 User Management
-- **Role-Based Access Control (RBAC)**: 7 distinct roles with granular permissions
-- **Multi-Factor Authentication (MFA)**: TOTP-based 2FA for enhanced security
+- **Role-Based Access Control (RBAC)**: 7 distinct roles with granular permissions.
 - **Activity Logging**: Comprehensive audit trail of all user actions
 - **Shift Management**: Staff scheduling and attendance tracking
 
@@ -159,7 +158,7 @@
 |------------|---------|
 | **Spatie CipherSweet** | Field-level encryption for sensitive data |
 | **Laravel Sanctum** | API authentication |
-| **TOTP** | Two-factor authentication |
+
 
 ---
 
@@ -211,33 +210,33 @@ SanaGo uses a **single-database multi-tenant** approach with tenant_id scoping f
 
 ```
 User Request (hospital-a.sanago.com)
-         │
-         ▼
+          │
+          ▼
 ┌─────────────────────┐
 │  Caddy/FrankenPHP   │ ◄── Handles SSL, HTTP/2, routing
 └─────────────────────┘
-         │
-         ▼
+          │
+          ▼
 ┌─────────────────────┐
 │  Laravel Octane     │ ◄── High-performance PHP server
 └─────────────────────┘
-         │
-         ▼
+          │
+          ▼
 ┌─────────────────────┐
 │  Tenancy Middleware │ ◄── Identifies tenant from subdomain
 └─────────────────────┘
-         │
-         ▼
+          │
+          ▼
 ┌─────────────────────┐
 │  Set Tenant Context │ ◄── Sets tenant_id for query scoping
 └─────────────────────┘
-         │
-         ▼
+          │
+          ▼
 ┌─────────────────────┐
 │  Livewire Component │ ◄── Renders UI and handles interactions
 └─────────────────────┘
-         │
-         ▼
+          │
+          ▼
 ┌─────────────────────┐
 │  Response (HTML)    │ ◄── Sent back to user
 └─────────────────────┘
@@ -249,21 +248,21 @@ User Request (hospital-a.sanago.com)
 ┌──────────────┐
 │   Browser    │
 └──────┬───────┘
-       │
-       │ HTTP Request
-       ▼
+        │
+        │ HTTP Request
+        ▼
 ┌──────────────┐
 │  Livewire    │ ◄── Reactive components
 └──────┬───────┘
-       │
-       │ Eloquent ORM
-       ▼
+        │
+        │ Eloquent ORM
+        ▼
 ┌──────────────┐
 │  PostgreSQL  │ ◄── Tenant-specific database
 └──────┬───────┘
-       │
-       │ File Storage
-       ▼
+        │
+        │ File Storage
+        ▼
 ┌──────────────┐
 │    MinIO     │ ◄── S3-compatible object storage
 └──────────────┘
@@ -278,10 +277,24 @@ SanaGo-v1/
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/       # Traditional controllers (minimal use)
+│   │   │   ├── Api/           # API endpoints for mobile/integration
+│   │   │   │   ├── Auth/      # Authentication endpoints
+│   │   │   │   ├── Tenants/   # Tenant-specific API endpoints
+│   │   │   │   │   ├── Admin/
+│   │   │   │   │   ├── Doctor/
+│   │   │   │   │   ├── Nurse/
+│   │   │   │   │   ├── Pharmacist/
+│   │   │   │   │   ├── LabTechnician/
+│   │   │   │   │   └── Receptionist/
+│   │   │   └── Auth/          # Authentication controllers
 │   │   └── Middleware/        # Custom middleware
+│   │       ├── InitializeTenancyByAuthenticatedUser.php
+│   │       ├── RoleMiddleware.php
+│   │       └── SetLocale.php
 │   ├── Livewire/              # 🎯 Core application logic
 │   │   ├── Auth/              # Authentication components
 │   │   ├── LandLord/          # Central tenant management
+│   │   │   ├── Components/    # Shared UI components
 │   │   ├── Tenants/           # Tenant-specific components
 │   │   │   ├── Admin/         # Hospital administrator features
 │   │   │   ├── Doctor/        # Doctor-specific features
@@ -299,8 +312,17 @@ SanaGo-v1/
 │   │   ├── LabRequest.php
 │   │   ├── Medication.php
 │   │   ├── Tenant.php
+│   │   ├── Subscription.php
 │   │   └── ...
 │   ├── Services/              # Business logic services
+│   │   ├── Dashboard Services/ # Role-specific dashboard logic
+│   │   └── NotificationService.php
+│   ├── Events/                # Event listeners
+│   ├── Notifications/         # Notification classes
+│   ├── Mail/                  # Email templates
+│   ├── Console/               # Artisan commands
+│   │   └── Commands/
+│   │       └── UpdateTenantUsage.php
 │   ├── Traits/                # Reusable traits
 │   └── Providers/             # Service providers
 ├── database/
@@ -339,6 +361,14 @@ SanaGo-v1/
 │   ├── prometheus.yml
 │   ├── grafana/
 │   └── loki-config.yml
+├── docs/                      # Project documentation
+│   ├── TENANT_USAGE_COMMAND.md
+│   ├── REVENUE_TRACKING_UPDATE.md
+│   └── SETTINGS_OPTIMIZATION.md
+├── docs/                      # Project documentation
+│   ├── TENANT_USAGE_COMMAND.md
+│   ├── REVENUE_TRACKING_UPDATE.md
+│   └── SETTINGS_OPTIMIZATION.md
 ├── .github/
 │   └── workflows/             # CI/CD pipelines
 │       └── docker-publish.yml
@@ -470,6 +500,8 @@ docker-compose logs -f
 # Check database connection
 php artisan db:connection
 ```
+
+---
 
 ## 🎯 Usage Examples
 
@@ -657,7 +689,7 @@ APP_NAME=SanaGo
 APP_ENV=production
 APP_KEY=base64:...
 APP_DEBUG=false
-APP_URL=https://sanago.com
+APP_URL=https://sanago.site
 
 # Database (Central)
 DB_CONNECTION=pgsql
@@ -701,6 +733,8 @@ Edit `config/tenancy.php` to customize:
 - **Global scopes**: Automatic tenant_id filtering for all queries
 - **Storage**: S3 disk configuration for tenant file separation
 
+---
+
 ## 🔍 Troubleshooting
 
 ### Common Issues
@@ -709,16 +743,16 @@ Edit `config/tenancy.php` to customize:
 
 ```bash
 # Check container status
-docker-compose ps
+docker compose ps
 
 # View container logs
-docker-compose logs -f [service-name]  # e.g., docker-compose logs -f frankenphp
+docker compose logs -f [service-name]  # e.g., docker-compose logs -f frankenphp
 
 # Restart services
-docker-compose restart
+docker compose restart
 
 # Re-build containers (if Dockerfile or dependencies changed)
-docker-compose up -d --build
+docker compose up -d 
 ```
 
 #### 2. Database Connection Errors
@@ -886,6 +920,18 @@ php artisan view:clear
 # Optimize database
 php artisan optimize:clear
 php artisan db:optimize
+
+# Calculate tenant storage usage
+php artisan tenants:calculate-usage
+
+# Calculate usage without cleaning temp files
+php artisan tenants:calculate-usage --skip-cleanup
+
+# Calculate usage for specific tenant
+php artisan tenants:calculate-usage --tenant=4cfc153c-ab76-47b7-b051-84f86dd5d0f3
+
+# Force cleanup in non-production environment
+php artisan tenants:calculate-usage --force
 ```
 
 ---
@@ -1054,6 +1100,111 @@ GET /api/lab-results?patient_id=1
 # Health check
 GET /api/health
 ```
+
+### Sync API (RxDB/Dexie Optimized)
+
+The Sync API provides optimized data synchronization for offline-capable applications using RxDB and Dexie storage. It supports role-based data filtering and incremental sync with checkpointing.
+
+#### Pull Data
+
+```javascript
+// Pull data for admin dashboard
+fetch('/api/sync/admin/pull', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + localStorage.getItem('sanago_token')
+  },
+  body: JSON.stringify({
+    checkpoint: {
+      updated_at: '2024-01-01 00:00:00',
+      id: 0
+    },
+    context: 'dashboard' // Optional: dashboard | staff | settings
+  })
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Sync data:', data);
+});
+```
+
+#### Push Data
+
+```javascript
+// Push local changes to server
+fetch('/api/sync/admin/push', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + localStorage.getItem('sanago_token')
+  },
+  body: JSON.stringify({
+    collection: 'users',
+    changes: [
+      {
+        id: '1',
+        name: 'John Doe',
+        email: 'john@example.com',
+        role: 'doctor',
+        updated_at: '2024-01-15 10:30:00'
+      }
+    ]
+  })
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Push result:', data);
+});
+```
+
+#### Role-Specific Sync Endpoints
+
+| Role | Pull Endpoint | Push Endpoint | Allowed Collections |
+|------|---------------|---------------|---------------------|
+| Admin | `/api/sync/admin/pull` | `/api/sync/admin/push` | users, shifts, departments, wards, beds, supplies |
+| Doctor | `/api/sync/doctor/pull` | `/api/sync/doctor/push` | Read-only |
+| Nurse | `/api/sync/nurse/pull` | `/api/sync/nurse/push` | Read-only |
+| Receptionist | `/api/sync/receptionist/pull` | `/api/sync/receptionist/push` | patients |
+| Lab Technician | `/api/sync/lab-technician/pull` | `/api/sync/lab-technician/push` | lab_test_definitions |
+| Pharmacist | `/api/sync/pharmacist/pull` | `/api/sync/pharmacist/push` | medications |
+
+#### Pull Contexts
+
+Each role supports different contexts for targeted data synchronization:
+
+**Admin Contexts:**
+- `dashboard`: Get dashboard stats, users, shifts, departments
+- `staff`: Get users, shifts, departments
+- `settings`: Get departments, wards, bed_types, beds, supplies
+
+**Doctor Contexts:**
+- `dashboard`: Get dashboard stats, appointments, patients, medications
+- `consultation`: Get medications, lab definitions, lab technicians
+- `my_patients`: Get patient list and medical records
+- `schedule`: Get today's and week's appointments
+
+**Nurse Contexts:**
+- `dashboard`: Get dashboard stats, admitted patients, bed occupancy
+- `rounds`: Get admitted patients, vitals, supplies
+- `bed_map`: Get bed occupancy by ward
+- `supply_usage`: Get recent supply usages
+
+**Receptionist Contexts:**
+- `dashboard`: Get dashboard stats, recent patients, appointments
+- `patient_search`: Get patient list
+- `bed_management`: Get beds, wards, active admissions
+- `appointment_booking`: Get patients, doctors, today's appointments
+
+**Pharmacist Contexts:**
+- `dashboard`: Get dashboard stats, medications, pending prescriptions
+- `dispensing`: Get pending prescriptions, medications, patients
+- `inventory`: Get medications, low stock alerts, supplies
+
+**Lab Technician Contexts:**
+- `dashboard`: Get dashboard stats, pending requests, test definitions
+- `processing`: Get assigned test requests and equipment
+- `definitions`: Get test definitions
 
 Full API documentation available at `/api/documentation` (when enabled).
 
@@ -1243,7 +1394,7 @@ Unauthorized copying, distribution, or use of this software is strictly prohibit
 
 For internal team support:
 
-- **Issues**: [GitHub Issues](https://github.com/your-username/SanaGo-v1/issues) (Private repository)
+- **Issues**: [GitHub Issues](https://github.com/jesse457/SanaGo/issues) (Private repository)
 - **Team Discussions**: Contact project maintainers directly
 - **Documentation**: See `/docs` directory in this repository
 

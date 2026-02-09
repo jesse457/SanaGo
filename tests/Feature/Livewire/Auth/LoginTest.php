@@ -1,4 +1,4 @@
-lo<?php
+<?php
 
 namespace Tests\Feature\Livewire;
 
