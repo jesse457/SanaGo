@@ -26,30 +26,59 @@ class UserActivity extends Model implements CipherSweetEncrypted
 
     protected $casts = [
         'properties' => 'array',
+        // Ensure timestamps are properly cast
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     /**
-     * Configure CipherSweet encryption for this model.
-     *
-     * Fields added with ->addField(...) should correspond to text columns
-     * in your DB to store ciphertext. For exact-match searchable fields,
-     * add a BlindIndex.
+     * Configure CipherSweet encryption.
+     * Only encrypt fields that contain sensitive text data.
      */
     public static function configureCipherSweet(EncryptedRow $encryptedRow): void
     {
-        $encryptedRow
-
-            ->addField('description');
-
-        // If you want case-insensitive or transformed blind indexes, define
-        // transformations via BlindIndex options (see CipherSweet docs).
+        $encryptedRow->addField('description');
+        // Add more fields as needed, e.g.:
+        // ->addField('ip_address')
+        // ->addField('user_agent');
     }
 
     /**
      * Get the user that performed the activity.
+     * Null-safe: relationship may return null if user_id is null or user was deleted.
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withDefault(function ($user) {
+            // Provide safe defaults if user relation is missing
+            $user->id = null;
+            $user->name = 'Deleted User';
+            $user->email = 'unknown@example.com';
+            $user->profile_picture = null;
+        });
+    }
+
+    /**
+     * Null-safe accessor for activity type.
+     */
+    public function getActivityTypeAttribute(?string $value): string
+    {
+        return $value ?? 'unknown';
+    }
+
+    /**
+     * Null-safe accessor for description.
+     */
+    public function getDescriptionAttribute(?string $value): string
+    {
+        return $value ?? '';
+    }
+
+    /**
+     * Null-safe accessor for IP address.
+     */
+    public function getIpAddressAttribute(?string $value): ?string
+    {
+        return $value;
     }
 }

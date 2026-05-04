@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'SanaGo'),
 
     /*
     |--------------------------------------------------------------------------
@@ -121,6 +121,10 @@ return [
     'maintenance' => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
+    ],
+
+    'passwords' => [
+        'admin' => env('ADMIN_PASSWORD', 'SanaGoAdmin123!'),
     ],
 
 ];

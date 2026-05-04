@@ -18,3 +18,9 @@ Broadcast::channel('lab.requests', function ($user) {
     // Only allow users with the 'lab-technician' role
     return $user->role === 'lab-technician';
 });
+
+// 4. Nurse Admissions Channel
+Broadcast::channel('nurse.admissions', function ($user) {
+    // Only allow users with the 'nurse' role
+    return $user->role === 'nurse';
+});

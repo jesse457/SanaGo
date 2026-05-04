@@ -13,7 +13,7 @@
                                 <a href="{{ route('pharmacist.dashboard') }}" wire:navigate
                                     class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center">
                                     <x-heroicon-s-home class="w-3 h-3 mr-1.5" />
-                                    {{ __('pharmacist.create_drugs_page.breadcrumb_home') }}
+                                    {{ __('Home') }}
                                 </a>
                             </li>
                             <li>
@@ -21,14 +21,14 @@
                                     <x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300 mx-1" />
                                     <a href="{{ route('pharmacist.manage-drugs') }}" wire:navigate
                                         class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                                        {{ __('pharmacist.create_drugs_page.breadcrumb_manage_drugs') }}
+                                        {{ __('Manage Drugs') }}
                                     </a>
                                 </div>
                             </li>
                             <li>
                                 <div class="flex items-center">
                                     <x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300 mx-1" />
-                                    <span class="text-gray-900 dark:text-white">{{ __('pharmacist.create_drugs_page.breadcrumb_create_drugs') }}</span>
+                                    <span class="text-gray-900 dark:text-white">{{ __('Create Drugs') }}</span>
                                 </div>
                             </li>
                         </ol>
@@ -37,10 +37,10 @@
                     {{-- Title --}}
                     <div>
                         <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-7">
-                            {{ __('pharmacist.create_drugs_page.create_new_drug_title') }}
+                            {{ __('Create New Drug') }}
                         </h2>
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-3xl">
-                            Define the name, pricing, stock levels, and dosage for a new drug item.
+                            {{ __('Define the name, pricing, stock levels, and dosage for a new drug item.') }}
                         </p>
                     </div>
                 </div>
@@ -84,13 +84,13 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 {{-- Drug Name --}}
                                 <div>
-                                    <label for="drugName" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{ __('pharmacist.create_drugs_page.drug_name') }} <span class="text-red-500">*</span></label>
+                                    <label for="drugName" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{ __('Drug Name') }} <span class="text-red-500">*</span></label>
                                     <div class="relative">
                                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                             <x-heroicon-s-document-text class="h-5 w-5 text-slate-400 dark:text-slate-500" />
                                         </div>
                                         <input type="text" id="drugName" wire:model.live.debounce.300ms="name"
-                                            placeholder="{{ __('pharmacist.create_drugs_page.drug_name_placeholder') }}"
+                                            placeholder="{{ __('e.g., Paracetamol') }}"
                                             class="block w-full rounded-xl border py-2.5 pl-10 pr-4 shadow-sm sm:text-sm transition-all duration-200 dark:bg-gray-800 dark:text-white
                                             @error('name') border-red-500 focus:border-red-500 focus:ring-red-500 @else border-slate-300 dark:border-gray-700 focus:border-blue-600 focus:ring-blue-600 @enderror">
                                     </div>
@@ -104,13 +104,13 @@
 
                                 {{-- Unit Price --}}
                                 <div>
-                                    <label for="price" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{ __('pharmacist.create_drugs_page.unit_price') }} (Purchase) <span class="text-red-500">*</span></label>
+                                    <label for="price" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{ __('Unit Price') }} {{ __('(Purchase)') }} <span class="text-red-500">*</span></label>
                                     <div class="relative">
                                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                             <span class="text-slate-500 sm:text-sm font-bold">$</span>
                                         </div>
                                         <input type="number" id="price" wire:model="unit_price_purchase"
-                                            placeholder="{{ __('pharmacist.create_drugs_page.unit_price_placeholder') }}" step="0.01"
+                                            placeholder="{{ __('e.g., 2.50') }}" step="0.01"
                                             class="block w-full rounded-xl border py-2.5 pl-8 pr-4 shadow-sm sm:text-sm transition-all duration-200 dark:bg-gray-800 dark:text-white
                                             @error('unit_price_purchase') border-red-500 focus:border-red-500 focus:ring-red-500 @else border-slate-300 dark:border-gray-700 focus:border-blue-600 focus:ring-blue-600 @enderror">
                                     </div>
@@ -124,13 +124,13 @@
 
                                 {{-- Stock Quantity --}}
                                 <div>
-                                    <label for="stock_quantity" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{ __('pharmacist.create_drugs_page.stock_quantity') }} <span class="text-red-500">*</span></label>
+                                    <label for="stock_quantity" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{ __('Stock Quantity') }} <span class="text-red-500">*</span></label>
                                     <div class="relative">
                                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                             <x-heroicon-s-scale class="h-5 w-5 text-slate-400 dark:text-slate-500" />
                                         </div>
                                         <input type="number" id="stock_quantity" wire:model="stock_quantity"
-                                            placeholder="{{ __('pharmacist.create_drugs_page.stock_quantity_placeholder') }}"
+                                            placeholder="{{ __('e.g., 500') }}"
                                             class="block w-full rounded-xl border py-2.5 pl-10 pr-4 shadow-sm sm:text-sm transition-all duration-200 dark:bg-gray-800 dark:text-white
                                             @error('stock_quantity') border-red-500 focus:border-red-500 focus:ring-red-500 @else border-slate-300 dark:border-gray-700 focus:border-blue-600 focus:ring-blue-600 @enderror">
                                     </div>
@@ -144,13 +144,13 @@
 
                                 {{-- Min Stock Level --}}
                                 <div>
-                                    <label for="min_stock_level" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{ __('pharmacist.create_drugs_page.min_stock_level') }} <span class="text-red-500">*</span></label>
+                                    <label for="min_stock_level" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{ __('Min Stock Level') }} <span class="text-red-500">*</span></label>
                                     <div class="relative">
                                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                             <x-heroicon-s-archive-box-arrow-down class="h-5 w-5 text-slate-400 dark:text-slate-500" />
                                         </div>
                                         <input type="number" id="min_stock_level" wire:model="min_stock_level"
-                                            placeholder="{{ __('pharmacist.create_drugs_page.min_stock_level_placeholder') }}"
+                                            placeholder="{{ __('e.g., 50') }}"
                                             class="block w-full rounded-xl border py-2.5 pl-10 pr-4 shadow-sm sm:text-sm transition-all duration-200 dark:bg-gray-800 dark:text-white
                                             @error('min_stock_level') border-red-500 focus:border-red-500 focus:ring-red-500 @else border-slate-300 dark:border-gray-700 focus:border-blue-600 focus:ring-blue-600 @enderror">
                                     </div>
@@ -164,13 +164,13 @@
 
                                 {{-- Dosage Unit --}}
                                 <div>
-                                    <label for="dosage_unit" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{ __('pharmacist.create_drugs_page.dosage_unit') }} <span class="text-red-500">*</span></label>
+                                    <label for="dosage_unit" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{ __('Dosage Unit') }} <span class="text-red-500">*</span></label>
                                     <div class="relative">
                                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                             <x-heroicon-s-adjustments-horizontal class="h-5 w-5 text-slate-400 dark:text-slate-500" />
                                         </div>
                                         <input type="text" id="dosage_unit" wire:model="dosage_unit"
-                                            placeholder="{{ __('pharmacist.create_drugs_page.dosage_unit_placeholder') }}"
+                                            placeholder="{{ __('e.g., mg, tablets, ml') }}"
                                             class="block w-full rounded-xl border py-2.5 pl-10 pr-4 shadow-sm sm:text-sm transition-all duration-200 dark:bg-gray-800 dark:text-white
                                             @error('dosage_unit') border-red-500 focus:border-red-500 focus:ring-red-500 @else border-slate-300 dark:border-gray-700 focus:border-blue-600 focus:ring-blue-600 @enderror">
                                     </div>
@@ -187,12 +187,12 @@
                         {{-- Description --}}
                         <div class="border-t border-slate-100 dark:border-gray-800 pt-8 mt-8">
                             <div>
-                                <label for="description" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{ __('pharmacist.create_drugs_page.description') }} <span class="text-slate-400 font-normal ml-1 text-xs">(Optional)</span></label>
+                                <label for="description" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{ __('Description') }} <span class="text-slate-400 font-normal ml-1 text-xs">{{ __('(Optional)') }}</span></label>
                                 <div class="relative">
                                     <div class="pointer-events-none absolute inset-y-0 left-0 top-3 flex items-start pl-3">
                                         <x-heroicon-s-tag class="h-5 w-5 text-slate-400 dark:text-slate-500" />
                                     </div>
-                                    <textarea id="description" wire:model="description" placeholder="{{ __('pharmacist.create_drugs_page.description_placeholder') }}"
+                                    <textarea id="description" wire:model="description" placeholder="{{ __('Provide a detailed description of the drug, its uses, and side effects.') }}"
                                         rows="4"
                                         class="block w-full rounded-xl border py-2.5 pl-10 pr-4 shadow-sm sm:text-sm transition-all duration-200 dark:bg-gray-800 dark:text-white
                                         @error('description') border-red-500 focus:border-red-500 focus:ring-red-500 @else border-slate-300 dark:border-gray-700 focus:border-blue-600 focus:ring-blue-600 @enderror"></textarea>
@@ -213,11 +213,11 @@
                                 wire:loading.attr="disabled" wire:loading.class="opacity-75 cursor-not-allowed">
                                 <span wire:loading wire:target="saveDrug" class="flex items-center gap-2">
                                     <x-heroicon-o-arrow-path class="animate-spin h-5 w-5 text-white" />
-                                    <span>{{ __('pharmacist.create_drugs_page.creating_text') }}</span>
+                                    <span>{{ __('Creating...') }}</span>
                                 </span>
                                 <span wire:loading.remove wire:target="saveDrug" class="flex items-center gap-2">
                                     <x-heroicon-s-plus-circle class="w-5 h-5" />
-                                    {{ __('pharmacist.create_drugs_page.create_drug_button') }}
+                                    {{ __('Create Drug') }}
                                 </span>
                             </button>
                         </div>

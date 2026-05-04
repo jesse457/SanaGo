@@ -114,7 +114,7 @@ trait TracksRevenue
             'Appointment' => ['appointment_revenue'],
             'Dispensation' => ['medication_revenue'],
             'LabResult' => ['lab_revenue'],
-            'Admission' => ['admission_revenue', 'bed_fee_revenue'],
+            'Admission' => ['admission_revenue'], // Only track observation fee, not bed fee
             default => []
         };
     }
@@ -150,20 +150,20 @@ trait TracksRevenue
 
             // Only track revenue if Admitted or Discharged
             if (! in_array($status, ['Admitted', 'Discharged'])) {
-                return [0.0, 0.0];
+                return [0.0];
             }
 
             $startDateRaw = $val('admission_date');
             $dischargeDateRaw = $val('discharge_date');
 
             if (! $startDateRaw) {
-                return [0.0, 0.0];
+                return [0.0];
             }
 
             $start = Carbon::parse($startDateRaw);
 
-            // LOGIC FIX:
-            // If discharge_date is NULL (user hasn't discharged yet),
+            // LOGIC:
+            // If discharge_date is NULL (patient not discharged yet),
             // we assume it is DAY 1 (The initial admission).
             // We do NOT multiply by days elapsed since admission, because the bill isn't final.
             if (is_null($dischargeDateRaw)) {
@@ -179,20 +179,12 @@ trait TracksRevenue
                 $days = 1;
             }
 
-            // 1. Observation Fee Calculation
+            // Observation Fee Calculation (daily rate)
             $obsFee = (float) ($val('observation_fee') ?? 0);
             $totalObs = (float) ($days * $obsFee);
 
-            // 2. Bed Fee Calculation
-            $bedPricePerDay = 0.0;
-            // Eager load protection for Bed Type Price
-            if ($this->bed && $this->bed->bedType) {
-                $bedPricePerDay = (float) $this->bed->bedType->price_per_day;
-            }
-
-            $totalBed = (float) ($days * $bedPricePerDay);
-
-            return [$totalObs, $totalBed];
+            // Return only observation fee - bed fee is NOT tracked in revenue
+            return [$totalObs];
         }
 
         return [];

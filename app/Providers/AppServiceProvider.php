@@ -11,7 +11,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // These are safe as singletons ONLY if you don't use $this->state inside them
+        $this->app->singleton(\App\Services\AppointmentService::class);
+        $this->app->singleton(\App\Services\MedicalRecordService::class);
+        $this->app->singleton(\App\Services\PharmacyService::class);
+        $this->app->singleton(\App\Services\LabService::class);
     }
 
     /**

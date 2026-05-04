@@ -2,59 +2,65 @@
 
 namespace App\Notifications;
 
-use App\Models\MedicalRecord; // Or LabRequest, depending on how you pass data
+use App\Models\MedicalRecord;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
-class NewLabOrderNotification extends Notification implements ShouldQueue
+class NewLabOrderNotification extends Notification implements ShouldBroadcast
 {
     use Queueable;
 
     public $medicalRecord;
 
-    // We pass the MedicalRecord (Consultation) to group multiple tests
+    /**
+     * Create a new notification instance.
+     */
     public function __construct(MedicalRecord $medicalRecord)
     {
         $this->medicalRecord = $medicalRecord;
     }
 
-    public function via(object $notifiable): array
+    /**
+     * Get the notification's delivery channels.
+     */
+    public function via($notifiable)
     {
         return ['database', 'broadcast'];
     }
 
-    public function toBroadcast(object $notifiable): BroadcastMessage
-    {
-        return new BroadcastMessage($this->getData());
-    }
-
-    public function toArray(object $notifiable): array
-    {
-        return $this->getData();
-    }
-
-    private function getData(): array
+    /**
+     * Get the array representation of the notification (Database).
+     */
+    public function toArray($notifiable)
     {
         return [
-            'id' => $this->id,
-            'message' => 'New Lab Request(s) Available',
-            'patient_name' => $this->medicalRecord->patient->first_name . ' ' . $this->medicalRecord->patient->last_name,
-            'consultation_id' => $this->medicalRecord->id,
-            'type' => 'lab_order',
-            'created_at' => now()->toIso8601String(),
+            'id' => $this->medicalRecord->id,
+            'title' => 'New Lab Request',
+            'message' => 'New Lab Request for ' . $this->medicalRecord->patient->name,
+            'patient_id' => $this->medicalRecord->patient_id,
+            'doctor_name' => $this->medicalRecord->doctor->name ?? 'Unknown Doctor',
+            'link' => '/laboratory/requests', // Frontend route
+            'type' => 'lab_request',
+            'urgency' => 'Normal',
         ];
     }
 
     /**
-     * IMPORTANT: Broadcast to the Lab Department Channel
+     * Get the broadcast representation of the notification (WebSocket).
      */
-    public function broadcastOn(): array
+    public function toBroadcast($notifiable): BroadcastMessage
     {
-        return [
-            new PrivateChannel('lab.requests'),
-        ];
+        return new BroadcastMessage([
+            'id' => $this->medicalRecord->id,
+            'title' => 'New Lab Request',
+            'message' => 'New Lab Request for ' . $this->medicalRecord->patient->name,
+            'patient_name' => $this->medicalRecord->patient->name,
+            'link' => '/laboratory/requests', // Frontend route
+            'type' => 'lab_request',
+            'created_at' => now()->toIso8601String(),
+        ]);
     }
 }

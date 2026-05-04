@@ -18,8 +18,11 @@ class ManageSubscription extends Component
 
     // Usage Stats
     public int $currentUsers = 0;
+
     public int $currentStorage = 0; // In MB (integer for progress bars)
+
     public string $formattedStorage = '0 B'; // Human readable string
+
     public float $storagePercentage = 0;
 
     public function mount(Tenant $tenant)
@@ -44,7 +47,7 @@ class ManageSubscription extends Component
 
             // 2. Get Storage from Metadata (Cached by Scheduler)
             // We read from the 'usage_stats' key we populated in the Console Command
-            if ($this->subscription && !empty($this->subscription->metadata['usage_stats'])) {
+            if ($this->subscription && ! empty($this->subscription->metadata['usage_stats'])) {
                 $stats = $this->subscription->metadata['usage_stats'];
 
                 // Get raw bytes

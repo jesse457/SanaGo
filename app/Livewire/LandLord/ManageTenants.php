@@ -26,6 +26,8 @@ class ManageTenants extends Component
     // Edit form properties
     public $tenantName;
 
+    public $filterPlan;
+
     public $contactEmail;
 
     public $subscriptionTier = 'Basic';
@@ -160,7 +162,7 @@ class ManageTenants extends Component
     public function render()
     {
         // Start a new query on the Tenant model
-        $query = Tenant::with('domains');
+        $query = Tenant::with('domains', 'subscription');
 
         // If a search term is provided, add where clauses
         if ($this->search) {

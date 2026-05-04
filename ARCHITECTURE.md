@@ -9,6 +9,8 @@ This document provides an in-depth technical overview of the SanaGo Hospital Man
 - [Application Layers](#application-layers)
 - [Database Design](#database-design)
 - [Security Architecture](#security-architecture)
+- [Notification System](#notification-system)
+- [API Architecture](#api-architecture)
 - [Performance Optimization](#performance-optimization)
 - [Scalability](#scalability)
 
@@ -21,18 +23,23 @@ SanaGo is built on a modern, layered architecture designed for:
 - **Security**: Multi-layered security with encryption and isolation
 - **Performance**: Sub-100ms response times with Octane
 - **Maintainability**: Clean separation of concerns
+- **Real-time Capabilities**: WebSocket-based notifications via Laravel Reverb
+- **Multi-Tenancy**: Single-database architecture with complete tenant isolation
 
-### Technology Decisions
+### Technology Stack
 
-| Decision | Technology | Rationale |
-|----------|-----------|-----------|
-| **Framework** | Laravel 12 | Mature ecosystem, excellent ORM, built-in security |
-| **Frontend** | Livewire 3 | Full-stack reactivity without JavaScript complexity |
-| **Server** | FrankenPHP + Octane | 3-4x faster than traditional PHP-FPM |
-| **Database** | PostgreSQL | ACID compliance, JSON support, excellent for multi-tenancy |
-| **Cache** | Redis | In-memory performance, pub/sub for real-time features |
-| **Storage** | MinIO (S3) | Self-hosted, S3-compatible, cost-effective |
-| **Multi-Tenancy** | Stancl Tenancy | Single-database with tenant_id scoping for optimal performance |
+| Category | Technology | Version | Purpose |
+|----------|-----------|---------|---------|
+| **Framework** | Laravel | 12.x | Core application framework |
+| **Frontend** | Livewire | 3.x | Full-stack reactive UI components |
+| **Server** | FrankenPHP + Octane | Latest | High-performance PHP server |
+| **Database** | PostgreSQL | 15+ | Primary relational database |
+| **Cache** | Redis | 7+ | In-memory caching and pub/sub |
+| **Storage** | MinIO (S3) | Latest | Object storage for files |
+| **Multi-Tenancy** | Stancl Tenancy | 3.9.1 | Tenant management and isolation |
+| **Real-time** | Laravel Reverb | 1.0+ | WebSocket server for notifications |
+| **Encryption** | Spatie CipherSweet | 1.7 | Field-level data encryption |
+| **Authentication** | Laravel Sanctum | 4.0 | API token authentication |
 
 ---
 
@@ -43,21 +50,23 @@ SanaGo is built on a modern, layered architecture designed for:
 All tenants share a single PostgreSQL database with complete data isolation via tenant_id scoping:
 
 ```
-Single Database (sanago)
+Single Database (sanago_central)
 ├── Central Tables (no tenant_id)
 │   ├── tenants (id, name, created_at, data)
 │   ├── domains (id, domain, tenant_id)
 │   └── subscriptions (id, tenant_id, plan, status)
 │
 └── Tenant-Scoped Tables (with tenant_id column)
-    ├── users (tenant_id, ...)
-    ├── patients (tenant_id, ...)
-    ├── appointments (tenant_id, ...)
-    ├── medical_records (tenant_id, ...)
-    ├── prescriptions (tenant_id, ...)
-    ├── lab_requests (tenant_id, ...)
-    ├── medications (tenant_id, ...)
-    ├── invoices (tenant_id, ...)
+    ├── users (tenant_id, name, email, role, ...)
+    ├── patients (tenant_id, first_name, last_name, ...)
+    ├── appointments (tenant_id, patient_id, doctor_id, ...)
+    ├── medical_records (tenant_id, patient_id, diagnosis, ...)
+    ├── prescriptions (tenant_id, patient_id, doctor_id, ...)
+    ├── lab_requests (tenant_id, patient_id, test_type, ...)
+    ├── medications (tenant_id, name, stock_quantity, ...)
+    ├── lab_results (tenant_id, lab_request_id, results, ...)
+    ├── admissions (tenant_id, patient_id, bed_id, ...)
+    ├── invoices (tenant_id, patient_id, total_amount, ...)
     └── ... (30+ tables with automatic tenant_id filtering)
 ```
 
@@ -91,134 +100,454 @@ $patients = Patient::all(); // Automatically adds WHERE tenant_id = 'abc123'
 
 ## Application Layers
 
-### 1. Presentation Layer (Livewire Components)
+### 1. Presentation Layer (Livewire Components & API Controllers)
 
+**Livewire Components** (Primary UI):
 ```
-resources/views/livewire/
-├── tenants/
-│   ├── doctor/
-│   │   ├── Index.php              # Dashboard
-│   │   ├── DoctorAppointment.php  # Appointment management
-│   │   ├── MedicalRecord.php      # EMR interface
-│   │   └── Patient.php            # Patient list
-│   ├── pharmacist/
+app/Livewire/
+├── Tenants/
+│   ├── Admin/               # Hospital administration
+│   │   ├── Index.php        # Dashboard
+│   │   ├── Settings.php     # System settings
+│   │   ├── UserManagement.php
+│   │   ├── Shifts.php
+│   │   └── Components/
+│   ├── Doctor/              # Doctor-specific features
+│   │   ├── Index.php        # Dashboard
+│   │   ├── DoctorAppointment.php
+│   │   ├── MedicalRecord.php
+│   │   ├── Patient.php
+│   │   └── Components/
+│   ├── Nurse/               # Nursing features
 │   │   ├── Dashboard.php
-│   │   ├── DispenseMedication.php
-│   │   └── ManageDrugs.php
-│   └── ... (other roles)
-└── landlord/
-    ├── Dashboard.php              # Landlord overview
-    ├── ManageTenants.php          # Tenant CRUD
-    └── ManageSubscription.php     # Billing
+│   │   ├── RecordVitals.php
+│   │   ├── CreateCareReport.php
+│   │   └── Components/
+│   ├── LabTechnician/       # Laboratory operations
+│   │   ├── Index.php        # Dashboard
+│   │   ├── TestRequest.php
+│   │   ├── EnterResults.php
+│   │   ├── ManageLabTestDefinitions.php
+│   │   └── Components/
+│   ├── Pharmacist/          # Pharmacy management
+│   │   ├── Dashboard.php
+│   │   ├── Medications.php
+│   │   ├── ManageDrugsInventory.php
+│   │   └── Components/
+│   └── Receptionist/        # Front desk operations
+│       ├── Index.php        # Dashboard
+│       ├── Patients.php
+│       ├── Appointments.php
+│       ├── AdmitPatient.php
+│       └── Components/
+└── LandLord/                # System-wide management
+    ├── Dashboard.php
+    ├── ManageTenants.php
+    ├── ManageSubscription.php
+    └── Components/
 ```
 
-**Livewire Component Structure**:
-```php
-class DoctorAppointment extends Component
-{
-    // Properties (reactive state)
-    public $appointments;
-    public $selectedDate;
-    
-    // Lifecycle hooks
-    public function mount() { ... }
-    
-    // Actions (user interactions)
-    public function createAppointment() { ... }
-    public function cancelAppointment($id) { ... }
-    
-    // Computed properties
-    public function getTodayAppointmentsProperty() { ... }
-    
-    // Rendering
-    public function render() {
-        return view('livewire.tenants.doctor.appointment');
-    }
-}
+**API Controllers** (RESTful endpoints):
+```
+app/Http/Controllers/Api/
+├── Tenants/
+│   ├── NotificationController.php  # Notification management
+│   ├── Admin/                     # Admin endpoints
+│   │   ├── AdminDashboardController.php
+│   │   ├── AdminUserController.php
+│   │   ├── AdminShiftController.php
+│   │   ├── AdminRevenueController.php
+│   │   └── AdminSettingsController.php
+│   ├── Doctor/                     # Doctor endpoints
+│   │   ├── DoctorDashboardController.php
+│   │   ├── AppointmentController.php
+│   │   ├── DoctorPatientController.php
+│   │   ├── LabRequestController.php
+│   │   └── MedicalRecordApiController.php
+│   ├── LabTechnician/             # Lab technician endpoints
+│   │   ├── LabTechnicianDashboardController.php
+│   │   └── LabTechnicianController.php
+│   ├── Nurse/                     # Nurse endpoints
+│   │   └── NurseDashboardController.php
+│   ├── Pharmacist/                # Pharmacist endpoints
+│   │   ├── PharmacistDashboardController.php
+│   │   └── PharmacistController.php
+│   └── Receptionist/              # Receptionist endpoints
+│       ├── ReceptionistDashboardController.php
+│       ├── PatientController.php
+│       ├── AppointmentController.php
+│       └── AdmissionController.php
 ```
 
 ### 2. Business Logic Layer (Services)
 
+**Core Services**:
 ```php
 app/Services/
-├── AppointmentService.php
-├── BillingService.php
-├── LabService.php
-├── PrescriptionService.php
-└── PatientService.php
+├── NotificationService.php              # Notification management
+├── AppointmentService.php               # Appointment operations
+├── AdmissionService.php                 # Patient admissions
+├── BillingService.php                   # Invoice generation
+├── LabService.php                       # Lab operations
+├── MedicalRecordService.php             # Medical records
+├── AdminShiftService.php                # Shift management
+└── Dashboards/                          # Role-specific dashboards
+    ├── AdminDashboardService.php
+    ├── DoctorDashboardService.php
+    ├── NurseDashboardService.php
+    ├── LabTechnicianDashboardService.php
+    ├── PharmacistDashboardService.php
+    └── ReceptionistDashboardService.php
 ```
 
 **Example Service**:
 ```php
-class AppointmentService
+class NotificationService
 {
-    public function createAppointment(array $data): Appointment
+    public function sendNewLabOrderNotification(MedicalRecord $medicalRecord)
     {
-        // Validation
-        $this->validateAppointmentData($data);
+        $labTechnicians = User::where('role', 'lab_technician')->get();
         
-        // Business logic
-        $this->checkDoctorAvailability($data['doctor_id'], $data['date']);
+        foreach ($labTechnicians as $technician) {
+            $technician->notify(new NewLabOrderNotification($medicalRecord));
+        }
+    }
+    
+    public function sendNewPrescriptionNotification(Prescription $prescription)
+    {
+        $pharmacists = User::where('role', 'pharmacist')->get();
         
-        // Create appointment
-        $appointment = Appointment::create($data);
-        
-        // Side effects
-        $this->sendConfirmationEmail($appointment);
-        $this->createInvoice($appointment);
-        
-        return $appointment;
+        foreach ($pharmacists as $pharmacist) {
+            $pharmacist->notify(new NewPrescriptionOrder($prescription));
+        }
     }
 }
 ```
 
-### 3. Data Access Layer (Models)
+### 3. Data Access Layer (Models & Resources)
 
+**Core Models**:
 ```php
 app/Models/
-├── Patient.php
-├── Appointment.php
-├── MedicalRecord.php
-├── Prescription.php
-├── LabRequest.php
-└── ... (30+ models)
+├── User.php                          # User accounts
+├── Patient.php                       # Patient records
+├── Appointment.php                   # Appointments
+├── MedicalRecord.php                 # Medical records
+├── Prescription.php                  # Prescriptions
+├── PrescriptionItem.php              # Prescription items
+├── LabRequest.php                    # Lab requests
+├── LabResult.php                     # Lab results
+├── LabTestDefinition.php             # Lab test definitions
+├── Medication.php                    # Medications
+├── Dispensation.php                  # Medication dispensing
+├── Admission.php                     # Patient admissions
+├── Vital.php                         # Vital signs
+├── NurseCareReport.php               # Nursing care reports
+├── Department.php                    # Departments
+├── Ward.php                          # Wards
+├── Bed.php                           # Beds
+├── Supply.php                        # Supplies
+├── SupplyUsage.php                   # Supply usage
+├── Invoice.php                       # Invoices
+├── RevenueSummary.php                # Revenue tracking
+├── UserActivity.php                  # Audit logging
+├── UserShift.php                     # Staff shifts
+└── Notification.php                  # User notifications
+```
+
+**API Resources**:
+```php
+app/Http/Resources/
+├── NotificationResource.php
+├── PatientResource.php
+├── AppointmentResource.php
+├── MedicalRecordResource.php
+├── AdmissionResource.php
+├── LabRequestResource.php
+├── DepartmentResource.php
+└── UserResource.php
 ```
 
 **Model Relationships**:
 ```php
-class Patient extends Model
+class User extends Authenticatable implements MustVerifyEmail
 {
-    use BelongsToTenant;  // Automatically adds global scope for tenant_id
+    use BelongsToTenant, HasApiTokens, HasFactory, Notifiable;
     
-    protected $fillable = ['tenant_id', 'first_name', 'last_name', ...];
+    protected $fillable = [
+        'name', 'email', 'password', 'role', 'department_id', 'tenant_id'
+    ];
     
-    // Global scope automatically applied
-    protected static function booted()
+    public function department()
     {
-        static::addGlobalScope('tenant', function ($query) {
-            if (tenancy()->initialized) {
-                $query->where('tenant_id', tenant('id'));
-            }
+        return $this->belongsTo(Department::class);
+    }
+    
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class, 'doctor_id');
+    }
+    
+    public function prescriptions()
+    {
+        return $this->hasMany(Prescription::class, 'doctor_id');
+    }
+    
+    public function labRequests()
+    {
+        return $this->hasMany(LabRequest::class, 'requested_by_doctor_id');
+    }
+    
+    public function labResults()
+    {
+        return $this->hasMany(LabResult::class, 'lab_technician_id');
+    }
+    
+    public function dispensations()
+    {
+        return $this->hasMany(Dispensation::class, 'pharmacist_id');
+    }
+}
+```
+
+---
+
+## Notification System
+
+### Architecture Overview
+
+SanaGo implements a comprehensive notification system with support for both database and real-time notifications:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Notification System                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│ ┌──────────────────┐                                        │
+│ │  Notification    │                                        │
+│ │  Service         │                                        │
+│ └──────┬───────────┘                                        │
+│        │                                                    │
+│        ├──────────────────────────────────────────────────┐ │
+│        │                                                  │ │
+│        ▼                                                  ▼ │
+│ ┌──────────────┐                          ┌──────────────┐ │
+│ │  Database    │                          │  Broadcast   │ │
+│ │  Notifications │                        │  (Reverb)    │ │
+│ └──────────────┘                          └──────────────┘ │
+│        │                                                  │
+│        └──────────────────────────────────────────────────┘
+│                                                              │
+│ ┌─────────────────────────────────────────────────────────┐
+│ │  Notification Types (app/Notifications/)                 │
+│ │                                                           │
+│ │ ├─ NewLabOrderNotification.php       (Lab Technicians)  │
+│ │ ├─ NewPrescriptionOrder.php          (Pharmacists)      │
+│ │ ├─ NewPatientAdmissionNotification.php (Nurses)        │
+│ │ ├─ AppointmentReminderNotification.php (Doctors)       │
+│ │ └─ LabResultNotification.php         (Doctors)         │
+│ └─────────────────────────────────────────────────────────┘
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Notification Types
+
+#### 1. New Lab Order Notification
+```php
+class NewLabOrderNotification extends Notification implements ShouldQueue
+{
+    use Queueable;
+    
+    public $medicalRecord;
+    
+    public function __construct(MedicalRecord $medicalRecord)
+    {
+        $this->medicalRecord = $medicalRecord->load('patient', 'doctor');
+    }
+    
+    public function via(object $notifiable): array
+    {
+        return ['database', 'broadcast'];
+    }
+    
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage([
+            'data' => $this->getData(),
+            'read_at' => null,
+            'created_at' => now()->toIso8601String(),
+        ]);
+    }
+    
+    public function toDatabase(object $notifiable): array
+    {
+        return $this->getData();
+    }
+    
+    private function getData(): array
+    {
+        return [
+            'id' => $this->id,
+            'message' => 'New Lab Request(s) Available',
+            'patient_name' => $this->medicalRecord->patient->first_name . ' ' . 
+                             $this->medicalRecord->patient->last_name,
+            'doctor_name' => $this->medicalRecord->doctor->name ?? 'Unknown Doctor',
+            'consultation_id' => $this->medicalRecord->id,
+            'type' => 'lab_order',
+            'urgency' => 'normal',
+            'created_at' => now()->toIso8601String(),
+        ];
+    }
+    
+    public function broadcastOn(): array
+    {
+        return [new PrivateChannel('lab.requests')];
+    }
+}
+```
+
+#### 2. Notification Service
+```php
+class NotificationService
+{
+    public function sendNewLabOrderNotification(MedicalRecord $medicalRecord)
+    {
+        $labTechnicians = User::where('role', 'lab_technician')->get();
+        
+        foreach ($labTechnicians as $technician) {
+            $technician->notify(new NewLabOrderNotification($medicalRecord));
+        }
+    }
+    
+    public function sendNewPrescriptionNotification(Prescription $prescription)
+    {
+        $pharmacists = User::where('role', 'pharmacist')->get();
+        
+        foreach ($pharmacists as $pharmacist) {
+            $pharmacist->notify(new NewPrescriptionOrder($prescription));
+        }
+    }
+    
+    public function sendNewPatientAdmissionNotification(Admission $admission)
+    {
+        $nurses = User::where('role', 'nurse')->get();
+        
+        foreach ($nurses as $nurse) {
+            $nurse->notify(new NewPatientAdmissionNotification($admission));
+        }
+    }
+    
+    public function sendAppointmentReminderNotification(Appointment $appointment)
+    {
+        $doctor = User::find($appointment->doctor_id);
+        
+        if ($doctor) {
+            $doctor->notify(new AppointmentReminderNotification($appointment));
+        }
+    }
+}
+```
+
+---
+
+## API Architecture
+
+### Route Structure
+
+```php
+// routes/api.php
+Route::prefix('api')->group(function () {
+    // Public routes
+    Route::get('/ping', fn () => response()->noContent());
+    Route::post('/login', [LoginController::class, 'login']);
+    
+    // Protected routes (Authenticated & Tenant Verified)
+    Route::middleware(['auth:sanctum', 'tenant.auth'])->group(function () {
+        Route::post('/logout', [LoginController::class, 'logout']);
+        Route::get('/user', fn (Request $request) => $request->user());
+        
+        // Admin routes
+        Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
+            Route::get('/dashboard', [AdminDashboardController::class, 'index']);
+            Route::apiResource('users', AdminUserController::class);
+            Route::apiResource('shifts', AdminShiftController::class);
+            Route::get('/revenue', [AdminRevenueController::class, 'index']);
+            Route::prefix('settings')->group(function () {
+                Route::get('/options', [AdminSettingsController::class, 'options']);
+                Route::get('/{type}', [AdminSettingsController::class, 'index']);
+                Route::post('/{type}', [AdminSettingsController::class, 'store']);
+                Route::put('/{type}/{id}', [AdminSettingsController::class, 'update']);
+                Route::delete('/{type}/{id}', [AdminSettingsController::class, 'destroy']);
+            });
         });
-    }
-    
-    // Relationships (automatically scoped)
-    public function appointments() {
-        return $this->hasMany(Appointment::class);
-    }
-    
-    public function medicalRecords() {
-        return $this->hasMany(MedicalRecord::class);
-    }
-    
-    // Accessors/Mutators
-    public function getFullNameAttribute() {
-        return "{$this->first_name} {$this->last_name}";
-    }
-    
-    // Scopes
-    public function scopeActive($query) {
-        return $query->where('is_active', true);
+        
+        // Doctor routes
+        Route::middleware('role:doctor')->prefix('doctor')->name('doctor.')->group(function () {
+            Route::get('/dashboard', [DoctorDashboardController::class, 'index']);
+            Route::controller(DoctorAppointmentController::class)->prefix('appointments')->group(function () {
+                Route::get('/', 'index');
+                Route::patch('/{appointment}/start', 'start');
+                Route::patch('/{appointment}/end', 'end');
+            });
+            Route::controller(MedicalRecordApiController::class)->group(function () {
+                Route::get('/consultations/{id}', 'showConsultation');
+                Route::get('/patients/{patient}', 'show');
+                Route::prefix('medical-records')->group(function () {
+                    Route::post('/', 'store');
+                    Route::get('/context/{patientId}', 'getConsultationContext');
+                });
+            });
+        });
+        
+        // Lab Technician routes
+        Route::middleware('role:lab-technician')->prefix('lab-technician')->name('lab-technician.')->group(function () {
+            Route::get('/dashboard', [LabTechnicianDashboardController::class, 'index']);
+            Route::get('/lab-requests', [LabTechnicianController::class, 'getLabRequests']);
+            Route::patch('/lab-requests/{labRequest}/start', [LabTechnicianController::class, 'startRequest']);
+            Route::post('/lab-requests/{labRequest}/results', [LabTechnicianController::class, 'submitResults']);
+            Route::apiResource('test-definitions', LabTechnicianController::class);
+        });
+        
+        // Pharmacist routes
+        Route::middleware('role:pharmacist')->prefix('pharmacist')->name('pharmacist.')->group(function () {
+            Route::get('/dashboard', [PharmacistDashboardController::class, 'index']);
+            Route::get('/medications', [PharmacistDashboardController::class, 'medications']);
+            Route::apiResource('inventory', PharmacistController::class);
+            Route::get('/patients', [PharmacistController::class, 'getPatients']);
+            Route::get('/patients/{patientId}/prescriptions', [PharmacistController::class, 'getPatientPrescriptions']);
+            Route::post('/prescriptions/{prescriptionId}/dispense', [PharmacistController::class, 'dispenseItems']);
+        });
+        
+        // Shared routes
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [NotificationController::class, 'index']);
+            Route::get('/unread', [NotificationController::class, 'unread']);
+            Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+            Route::get('/{id}', [NotificationController::class, 'show']);
+            Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+            Route::post('/{id}/mark-read', [NotificationController::class, 'markAsRead']);
+            Route::delete('/{id}', [NotificationController::class, 'destroy']);
+        });
+    });
+});
+```
+
+### API Resource Example
+
+```php
+class NotificationResource extends JsonResource
+{
+    public function toArray($request): array
+    {
+        return [
+            'id' => $this->id,
+            'type' => $this->type,
+            'data' => $this->data,
+            'read_at' => $this->read_at,
+            'created_at' => $this->created_at->toISOString(),
+            'updated_at' => $this->updated_at->toISOString(),
+        ];
     }
 }
 ```

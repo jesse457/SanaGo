@@ -4,45 +4,77 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name', 'Laravel') }}</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" type="image/png" href="{{ Storage::disk('central_public')->url('images/logo.webp') }}">
     <style>
         [x-cloak] { display: none !important; }
-        /* Smooth transition for the margin change */
-        .main-transition { transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        body { font-family: 'Inter', sans-serif; }
+
+        /* Smooth transition for the margin change on Desktop */
+        .main-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* Custom scrollbar for a modern look */
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
     </style>
+        <!-- Global Dark Mode Logic -->
+    <script>
+        if (localStorage.getItem('darkMode') === 'true' ||
+            (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-{{-- 1. DEFINE STATE HERE (Globally) --}}
-<body class="antialiased bg-gray-50 dark:bg-gray-900 h-full overflow-hidden"
+<body class="antialiased bg-gray-50 dark:bg-[#0f172a] h-full overflow-hidden"
       x-data="{
-          sidebarExpanded: localStorage.getItem('sidebarExpanded') === 'true',
+          sidebarExpanded: localStorage.getItem('sidebarExpanded') !== 'false',
           mobileOpen: false,
           toggleSidebar() {
               this.sidebarExpanded = !this.sidebarExpanded;
               localStorage.setItem('sidebarExpanded', this.sidebarExpanded);
-              // Trigger a resize event so Chart.js redraws immediately
               setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 320);
           }
       }"
-      x-init="$watch('sidebarExpanded', value => localStorage.setItem('sidebarExpanded', value))">
+      {{-- Prevents background scrolling when mobile menu is open --}}
+      :class="{ 'overflow-hidden': mobileOpen }">
 
-    <div class="flex h-full">
-        <!-- Mobile Overlay -->
-        <div x-show="mobileOpen" x-transition.opacity @click="mobileOpen = false" class="fixed inset-0 bg-gray-900/80 z-40 lg:hidden" x-cloak></div>
+    <div class="flex h-full overflow-hidden">
 
-        <!-- Sidebar Component -->
+        <!-- 1. SIDEBAR COMPONENT -->
         <livewire:tenants.nurse.components.sidebar />
 
-        <!-- 2. DYNAMIC MARGIN HERE -->
-        <!-- The class binding depends on the parent x-data 'sidebarExpanded' -->
-        <div class="flex-1 flex flex-col h-full main-transition relative w-full"
-             :class="sidebarExpanded ? 'lg:ml-64' : 'lg:ml-20'">
+        <!-- 2. MAIN CONTENT AREA -->
+        <div class="flex-1 flex flex-col h-full min-w-0 main-transition relative"
+             :class="sidebarExpanded ? 'lg:ml-64' : 'lg:ml-[72px]'">
 
-            <main class="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 dark:bg-gray-900">
-                {{ $slot }}
+            {{-- MOBILE TOPBAR (Only visible on Mobile/Tablet) --}}
+            <header class="flex lg:hidden items-center justify-between h-16 px-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-30">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-rose-500 to-pink-600 flex items-center justify-center shadow-md text-white">
+                        <x-heroicon-m-heart class="w-5 h-5" />
+                    </div>
+                    <span class="font-bold text-gray-900 dark:text-white tracking-tight uppercase text-sm">Station</span>
+                </div>
+
+                <button @click="mobileOpen = true" class="p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none">
+                    <x-heroicon-o-bars-3-bottom-right class="w-7 h-7" />
+                </button>
+            </header>
+
+            {{-- CONTENT WRAPPER --}}
+            <main class="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 dark:bg-[#0f172a] custom-scrollbar">
+                {{-- Add standard padding for dashboard consistency --}}
+                <div class="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto">
+                    {{ $slot }}
+                </div>
             </main>
+
         </div>
     </div>
 

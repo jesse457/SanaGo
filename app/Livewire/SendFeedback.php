@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Feedback;
 use App\Models\Tenant;
+use App\Traits\LoggingTrait;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
@@ -11,7 +12,7 @@ use Livewire\WithFileUploads;
 
 class SendFeedback extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, LoggingTrait;
 
     #[Rule('required|min:3|max:150')]
     public string $subject = '';
@@ -39,8 +40,10 @@ class SendFeedback extends Component
      */
     public function mount()
     {
-        // No dynamic data is needed for this simple form,
-        // but this method is kept for future expansion.
+        $this->logDebug('SendFeedback component mounted', [
+            'user_id' => Auth::id(),
+            'tenant_id' => Auth::user()->tenant_id ?? null,
+        ]);
     }
 
     /**
@@ -48,50 +51,84 @@ class SendFeedback extends Component
      */
     public function submit()
     {
-        // Validate all form inputs
-        $this->validate();
+        try {
+            $this->logInfo('Feedback submission attempt', [
+                'user_id' => Auth::id(),
+                'tenant_id' => Auth::user()->tenant_id ?? null,
+                'category' => $this->category,
+                'priority' => $this->priority,
+            ]);
 
-        // Get the authenticated tenant (hospital)
-        $tenant = Tenant::find(Auth::user()->tenant_id);
+            // Validate all form inputs
+            $this->validate();
 
-        if (! $tenant) {
-            session()->flash('error', 'Could not find your hospital profile. Please log in again.');
+            // Get the authenticated tenant (hospital)
+            $tenant = Tenant::find(Auth::user()->tenant_id);
 
-            return;
+            if (! $tenant) {
+                $this->logWarning('Tenant not found for feedback submission', [
+                    'user_id' => Auth::id(),
+                    'tenant_id' => Auth::user()->tenant_id ?? null,
+                ]);
+
+                session()->flash('error', 'Could not find your hospital profile. Please log in again.');
+
+                return;
+            }
+
+            // Create a new Feedback record using the `create` method,
+            // which is a more concise and secure way to handle mass assignment.
+            $feedback = Feedback::create([
+                'tenant_id' => $tenant->id,
+                'subject' => $this->subject,
+                'category' => $this->category,
+                'priority' => $this->priority,
+                'department' => $this->department,
+                'message' => $this->message,
+            ]);
+
+            $this->logInfo('Feedback submitted successfully', [
+                'feedback_id' => $feedback->id,
+                'user_id' => Auth::id(),
+                'tenant_id' => $tenant->id,
+                'category' => $this->category,
+                'priority' => $this->priority,
+            ]);
+
+            // Note: File uploads are a bit more complex. You would typically save them
+            // to a storage disk and then store the path in the database.
+            // For this example, we'll assume a file system path field on the Feedback model.
+            // if (!empty($this->attachments)) {
+            //     foreach ($this->attachments as $attachment) {
+            //         $path = $attachment->store('feedback-attachments');
+            //         // Save $path to your database
+            //     }
+            // }
+
+            // Dispatch a notification or event to the landlord
+            $this->dispatch('feedback-submitted', $feedback->id);
+
+            // Set the state to "submitted" for a success message
+            $this->submitted = true;
+
+            // Reset the form fields for a new submission
+            $this->reset(['subject', 'category', 'priority', 'department', 'message', 'attachments']);
+
+            // Dispatch a toast notification
+            $this->dispatch('notify', type: 'success', message: 'Thank you! Your feedback has been sent.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->logValidationError($e);
+            throw $e;
+        } catch (\Exception $e) {
+            $this->logException($e, [
+                'user_id' => Auth::id(),
+                'tenant_id' => Auth::user()->tenant_id ?? null,
+                'category' => $this->category,
+                'priority' => $this->priority,
+            ]);
+
+            $this->dispatch('notify', type: 'error', message: 'Error submitting feedback. Please try again.');
         }
-
-        // Create a new Feedback record using the `create` method,
-        // which is a more concise and secure way to handle mass assignment.
-        $feedback = Feedback::create([
-            'tenant_id' => $tenant->id,
-            'subject' => $this->subject,
-            'category' => $this->category,
-            'priority' => $this->priority,
-            'department' => $this->department,
-            'message' => $this->message,
-        ]);
-
-        // Note: File uploads are a bit more complex. You would typically save them
-        // to a storage disk and then store the path in the database.
-        // For this example, we'll assume a file system path field on the Feedback model.
-        // if (!empty($this->attachments)) {
-        //     foreach ($this->attachments as $attachment) {
-        //         $path = $attachment->store('feedback-attachments');
-        //         // Save $path to your database
-        //     }
-        // }
-
-        // Dispatch a notification or event to the landlord
-        $this->dispatch('feedback-submitted', $feedback->id);
-
-        // Set the state to "submitted" for a success message
-        $this->submitted = true;
-
-        // Reset the form fields for a new submission
-        $this->reset(['subject', 'category', 'priority', 'department', 'message', 'attachments']);
-
-        // Dispatch a toast notification
-        $this->dispatch('notify', type: 'success', message: 'Thank you! Your feedback has been sent.');
     }
 
     /**

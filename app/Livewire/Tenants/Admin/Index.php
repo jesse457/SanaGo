@@ -2,14 +2,7 @@
 
 namespace App\Livewire\Tenants\Admin;
 
-use App\Models\Admission;
-use App\Models\Appointment;
-use App\Models\Bed;
-use App\Models\Department;
-use App\Models\Patient;
-use App\Models\Supply;
-use App\Models\User; // Added Supply Model
-use Carbon\Carbon;
+use App\Services\Dashboards\AdminDashboardService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -17,14 +10,14 @@ use Livewire\Component;
 #[Layout('components.layouts.admin')]
 class Index extends Component
 {
-    // User Info
+    // Greeting Props
     public $greeting;
 
     public $userName;
 
     public $userAvatar;
 
-    // Metric Cards
+    // Metrics Props
     public $dailyTotalRevenue = 0;
 
     public $totalPatientsAdmittedToday = 0;
@@ -35,9 +28,9 @@ class Index extends Component
 
     public $totalBedsOccupied = 0;
 
-    public $lowStockCount = 0; // New Metric
+    public $lowStockCount = 0;
 
-    // Chart Data
+    // Chart Props
     public $patientFlowLabels = [];
 
     public $patientFlowData = [];
@@ -46,7 +39,7 @@ class Index extends Component
 
     public $encounterSummaryData = [];
 
-    // Bottom Section
+    // System Props
     public $totalDoctors = 0;
 
     public $totalSystemUsers = 0;
@@ -55,102 +48,52 @@ class Index extends Component
 
     public $userRoleSummary = [];
 
+    // Table Props
     public $recentAdmissions = [];
 
-    public function mount()
+    public function mount(AdminDashboardService $dashboardService)
     {
-        $this->setGreeting();
-        $this->loadDashboardData();
+        $this->loadData($dashboardService);
     }
 
-    public function setGreeting()
+    public function loadData(AdminDashboardService $service)
     {
-        $hour = date('H');
-        $this->greeting = match (true) {
-            $hour < 12 => 'Good Morning',
-            $hour < 18 => 'Good Afternoon',
-            default => 'Good Evening',
-        };
+        // 1. Greeting
+        $greetData = $service->getGreetingData(Auth::user());
+        $this->greeting = $greetData['greeting'];
+        $this->userName = $greetData['user_name'];
+        $this->userAvatar = $greetData['user_avatar'];
 
-        $user = Auth::user();
-        $this->userName = $user->name ?? 'Administrator';
-        $this->userAvatar = $user->profile_picture
-            ?? 'https://ui-avatars.com/api/?name='.urlencode($this->userName).'&color=7F9CF5&background=EBF4FF';
-    }
+        // 2. Daily Metrics
+        $metrics = $service->getDailyMetrics();
+        $this->dailyTotalRevenue = $metrics['total_revenue'];
+        $this->totalPatientsAdmittedToday = $metrics['admissions_today'];
+        $this->totalAppointmentsToday = $metrics['appointments_today'];
 
-    public function loadDashboardData()
-    {
-        // 1. Metrics
-        $today = Carbon::today();
+        // 3. Inventory
+        $inv = $service->getInventoryMetrics();
+        $this->totalBeds = $inv['total_beds'];
+        $this->totalBedsOccupied = $inv['occupied_beds'];
+        $this->lowStockCount = $inv['low_stock_count'];
 
-        // Revenue: Sum of Appointment Prices (Completed) + Admission Observation Fees
-        // Assuming 'price' and 'observation_fee' are numeric
-        $apptRevenue = Appointment::whereDate('appointment_date', $today)
-            ->where('status', 'Completed')
-            ->sum('price');
+        // 4. Charts
+        $flow = $service->getPatientFlowChart();
+        $this->patientFlowLabels = $flow['labels'];
+        $this->patientFlowData = $flow['data'];
 
-        $admissionRevenue = Admission::whereDate('created_at', $today)
-            ->sum('observation_fee');
+        $weekly = $service->getWeeklyEncounterChart();
+        $this->encounterSummaryLabels = $weekly['labels'];
+        $this->encounterSummaryData = $weekly['data'];
 
-        $this->dailyTotalRevenue = $apptRevenue + $admissionRevenue;
+        // 5. System
+        $sys = $service->getSystemOverview();
+        $this->totalDoctors = $sys['total_doctors'];
+        $this->totalSystemUsers = $sys['total_users'];
+        $this->totalDepartments = $sys['total_departments'];
+        $this->userRoleSummary = $sys['role_summary'];
 
-        $this->totalPatientsAdmittedToday = Admission::whereDate('created_at', $today)->count();
-        $this->totalAppointmentsToday = Appointment::whereDate('appointment_date', $today)->count();
-
-        // Bed Stats
-        $this->totalBeds = Bed::count();
-        $this->totalBedsOccupied = Bed::where('is_occupied', true)->count();
-
-        // Supply Stats (Low Stock)
-        $this->lowStockCount = Supply::whereColumn('current_stock', '<=', 'min_stock_level')->count();
-
-        // 2. Chart: Last 6 Months of Appointments
-        $data = [];
-        $labels = [];
-
-        for ($i = 5; $i >= 0; $i--) {
-            $date = Carbon::now()->subMonths($i);
-            $labels[] = $date->format('M');
-            $data[] = Appointment::whereMonth('appointment_date', $date->month)
-                ->whereYear('appointment_date', $date->year)
-                ->count();
-        }
-        $this->patientFlowLabels = $labels;
-        $this->patientFlowData = $data;
-
-        // 3. Encounter Summary (This Week)
-        $this->totalDoctors = User::where('role', 'doctor')->count(); // Ensure 'role' matches your DB string exactly (e.g. 'Doctor' vs 'doctor')
-        $this->totalSystemUsers = User::count();
-        $this->totalDepartments = Department::count();
-
-        $startOfWeek = Carbon::now()->startOfWeek();
-        for ($i = 0; $i < 7; $i++) {
-            $day = $startOfWeek->copy()->addDays($i);
-            $this->encounterSummaryLabels[] = $day->format('D'); // Mon, Tue...
-            $this->encounterSummaryData[] = Appointment::whereDate('appointment_date', $day)->count();
-        }
-
-        // 4. Role Summary
-        $roles = ['doctor', 'nurse', 'pharmacist', 'admin', 'receptionist', 'lab-technician'];
-        foreach ($roles as $role) {
-            $usersInRole = User::where('role', $role)->get();
-            $count = $usersInRole->count();
-            $active = $usersInRole->where('is_active', true)->count();
-
-            if ($count > 0) {
-                $this->userRoleSummary[] = [
-                    'role_name' => $role,
-                    'total_users' => $count,
-                    'active_users' => $active,
-                ];
-            }
-        }
-
-        // 5. Recent Admissions (Eager load patient to avoid N+1)
-        $this->recentAdmissions = Admission::with(['patient', 'bed.ward'])
-            ->latest()
-            ->take(5)
-            ->get();
+        // 6. Recent Admissions
+        $this->recentAdmissions = $service->getRecentAdmissions();
     }
 
     public function render()

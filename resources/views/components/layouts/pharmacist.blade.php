@@ -5,9 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name', 'ClinicOS Pharmacy') }}</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" type="image/png" href="{{ Storage::disk('central_public')->url('images/logo.webp') }}">
     @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-
+    <!-- Global Dark Mode Logic -->
+    <script>
+        if (localStorage.getItem('darkMode') === 'true' ||
+            (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <style>
         [x-cloak] { display: none !important; }
         .main-transition { transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }

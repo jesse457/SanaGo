@@ -13,22 +13,22 @@
                                 <a href="{{ route('receptionist.dashboard') }}" wire:navigate
                                     class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center">
                                     <x-heroicon-s-home class="w-3 h-3 mr-1.5" />
-                                   Home
+                                   {{ __('Home') }}
                                 </a>
                             </li>
                             <li>
                                 <div class="flex items-center">
                                     <x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300 mx-1" />
-                                    <span class="text-gray-900 dark:text-white">Patient Management</span>
+                                    <span class="text-gray-900 dark:text-white">{{ __('Patient Management') }}</span>
                                 </div>
                             </li>
                         </ol>
                     </nav>
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-7">
-                        Patient Management
+                        {{ __('Patient Management') }}
                     </h2>
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        View, search, and manage patient records and history.
+                        {{ __('View, search, and manage patient records and history.') }}
                     </p>
                 </div>
 
@@ -40,7 +40,7 @@
                             class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000">
                         </div>
                         <x-heroicon-o-user-plus class="w-5 h-5" />
-                        <span>New Patient</span>
+                        <span>{{ __('New Patient') }}</span>
                     </a>
                 </div>
             </div>
@@ -56,7 +56,7 @@
                         </div>
                         <input type="text" wire:model.live.debounce.300ms="search"
                             class="block w-full pl-9 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg leading-5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition duration-150 ease-in-out"
-                            placeholder="Search by name, ID, or phone number...">
+                            placeholder="{{ __('Search by name, ID, or phone number...') }}">
                         <div wire:loading wire:target="search" class="absolute inset-y-0 right-0 pr-3 flex items-center">
                             <x-heroicon-o-arrow-path class="animate-spin h-4 w-4 text-blue-500" />
                         </div>
@@ -67,7 +67,7 @@
                         <div class="flex items-center justify-end w-full md:w-auto">
                             <button wire:click="$set('search', '')"
                                 class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium hover:underline transition-colors flex items-center gap-1">
-                                <x-heroicon-m-trash class="w-3 h-3" /> Clear Search
+                                <x-heroicon-m-trash class="w-3 h-3" /> {{ __('Clear Search') }}
                             </button>
                         </div>
                     @endif
@@ -84,7 +84,7 @@
                 <div
                     class="flex items-center gap-3 px-6 py-3 bg-white dark:bg-gray-800 rounded-full shadow-xl border border-slate-100 dark:border-gray-700 animate-bounce">
                     <x-heroicon-o-arrow-path class="animate-spin h-5 w-5 text-blue-600" />
-                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Updating...</span>
+                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ __('Updating...') }}</span>
                 </div>
             </div>
 
@@ -95,11 +95,11 @@
                     <table class="min-w-full divide-y divide-slate-100 dark:divide-gray-800">
                         <thead class="bg-slate-50 dark:bg-gray-950">
                             <tr>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Patient Details</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Demographics</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Last Visit</th>
-                                <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{{ __('Patient Details') }}</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{{ __('Contact') }}</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{{ __('Demographics') }}</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{{ __('Last Visit') }}</th>
+                                <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">{{ __('Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
@@ -155,7 +155,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button wire:click="openEditModal({{ $patient->id }})"
                                             class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            title="Edit Patient">
+                                            title="{{ __('Edit Patient') }}">
                                             <x-heroicon-s-pencil-square class="w-4 h-4" />
                                         </button>
                                     </td>
@@ -166,9 +166,9 @@
                                         <div class="w-16 h-16 bg-slate-50 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-gray-700">
                                             <x-heroicon-o-user-minus class="h-8 w-8 text-slate-400" />
                                         </div>
-                                        <h3 class="text-base font-bold text-slate-900 dark:text-white">No patients found</h3>
+                                        <h3 class="text-base font-bold text-slate-900 dark:text-white">{{ __('No patients found') }}</h3>
                                         <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                            We couldn't find any patients matching your search.
+                                            {{ __('We couldn\'t find any patients matching your search.') }}
                                         </p>
                                     </td>
                                 </tr>
@@ -203,11 +203,11 @@
 
                         <div class="grid grid-cols-2 gap-2 text-xs mb-3">
                             <div class="bg-slate-50 dark:bg-gray-800/50 p-2 rounded-lg">
-                                <span class="block text-slate-400 uppercase text-[10px] font-bold">Age / Sex</span>
+                                <span class="block text-slate-400 uppercase text-[10px] font-bold">{{ __('Age / Sex') }}</span>
                                 <span class="font-medium text-slate-700 dark:text-slate-300">{{ $patient->age }} Yrs • {{ ucfirst($patient->gender) }}</span>
                             </div>
                             <div class="bg-slate-50 dark:bg-gray-800/50 p-2 rounded-lg">
-                                <span class="block text-slate-400 uppercase text-[10px] font-bold">Phone</span>
+                                <span class="block text-slate-400 uppercase text-[10px] font-bold">{{ __('Phone') }}</span>
                                 <span class="font-medium text-slate-700 dark:text-slate-300">{{ $patient->phone ?? '--' }}</span>
                             </div>
                         </div>
@@ -216,9 +216,9 @@
                             @php $lastVisit = $patient->appointments()->orderByDesc('appointment_date')->first(); @endphp
                             <div class="text-xs text-slate-500">
                                 @if ($lastVisit)
-                                    Last Visit: <span class="font-bold text-slate-700 dark:text-slate-300">{{ \Illuminate\Support\Carbon::parse($lastVisit->appointment_date)->format('M d, Y') }}</span>
+                                    {{ __('Last Visit') }}: <span class="font-bold text-slate-700 dark:text-slate-300">{{ \Illuminate\Support\Carbon::parse($lastVisit->appointment_date)->format('M d, Y') }}</span>
                                 @else
-                                    <span class="text-amber-600 font-bold">New Patient</span>
+                                    <span class="text-amber-600 font-bold">{{ __('New Patient') }}</span>
                                 @endif
                             </div>
                         </div>
@@ -226,7 +226,7 @@
                 @empty
                     <div class="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-slate-300 dark:border-gray-700">
                         <x-heroicon-o-user-minus class="mx-auto h-12 w-12 text-slate-300" />
-                        <h3 class="mt-2 text-sm font-bold text-slate-900 dark:text-white">No patients found</h3>
+                        <h3 class="mt-2 text-sm font-bold text-slate-900 dark:text-white">{{ __('No patients found') }}</h3>
                     </div>
                 @endforelse
             </div>
@@ -273,7 +273,7 @@
                             {{-- Modal Header --}}
                             <div class="bg-white dark:bg-gray-900 px-6 py-5 border-b border-slate-100 dark:border-gray-800 flex items-center justify-between sticky top-0 z-10">
                                 <h3 class="text-xl font-bold text-slate-900 dark:text-white">
-                                    Edit Patient Information
+                                    {{ __('Edit Patient Information') }}
                                 </h3>
                                 <button @click="open = false; $wire.cancelEdit()"
                                     class="rounded-xl bg-slate-50 dark:bg-gray-800 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400">
@@ -287,27 +287,27 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {{-- UID --}}
                                         <div class="space-y-1.5">
-                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Patient UID</label>
+                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">{{ __('Patient UID') }}</label>
                                             <input type="text" wire:model="patient_uid" readonly
                                                 class="block w-full rounded-xl border-slate-200 bg-slate-100 dark:bg-gray-700 dark:border-gray-600 text-slate-500 dark:text-gray-400 cursor-not-allowed shadow-sm sm:text-sm py-2.5" />
                                         </div>
 
                                         {{-- Gender --}}
                                         <div class="space-y-1.5">
-                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Gender</label>
+                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">{{ __('Gender') }}</label>
                                             <select wire:model="gender"
                                                 class="block w-full rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-800 text-slate-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5">
-                                                <option value="">Select Gender</option>
-                                                <option value="male">Male</option>
-                                                <option value="female">Female</option>
-                                                <option value="other">Other</option>
+                                                <option value="">{{ __('Select Gender') }}</option>
+                                                <option value="male">{{ __('Male') }}</option>
+                                                <option value="female">{{ __('Female') }}</option>
+                                                <option value="other">{{ __('Other') }}</option>
                                             </select>
                                             @error('gender') <span class="text-xs text-red-500 font-medium">{{ $message }}</span> @enderror
                                         </div>
 
                                         {{-- First Name --}}
                                         <div class="space-y-1.5">
-                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">First Name</label>
+                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">{{ __('First Name') }}</label>
                                             <input type="text" wire:model="first_name"
                                                 class="block w-full rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-800 text-slate-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5" />
                                             @error('first_name') <span class="text-xs text-red-500 font-medium">{{ $message }}</span> @enderror
@@ -315,7 +315,7 @@
 
                                         {{-- Last Name --}}
                                         <div class="space-y-1.5">
-                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Last Name</label>
+                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">{{ __('Last Name') }}</label>
                                             <input type="text" wire:model="last_name"
                                                 class="block w-full rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-800 text-slate-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5" />
                                             @error('last_name') <span class="text-xs text-red-500 font-medium">{{ $message }}</span> @enderror
@@ -323,7 +323,7 @@
 
                                         {{-- Age --}}
                                         <div class="space-y-1.5">
-                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Age</label>
+                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">{{ __('Age') }}</label>
                                             <input type="number" wire:model="age"
                                                 class="block w-full rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-800 text-slate-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5" />
                                             @error('age') <span class="text-xs text-red-500 font-medium">{{ $message }}</span> @enderror
@@ -331,7 +331,7 @@
 
                                         {{-- Phone --}}
                                         <div class="space-y-1.5">
-                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Phone Number</label>
+                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">{{ __('Phone Number') }}</label>
                                             <input type="text" wire:model="phone"
                                                 class="block w-full rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-800 text-slate-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5" />
                                             @error('phone') <span class="text-xs text-red-500 font-medium">{{ $message }}</span> @enderror
@@ -339,7 +339,7 @@
 
                                         {{-- Email --}}
                                         <div class="md:col-span-2 space-y-1.5">
-                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Email Address</label>
+                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">{{ __('Email Address') }}</label>
                                             <input type="email" wire:model="email"
                                                 class="block w-full rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-800 text-slate-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5" />
                                             @error('email') <span class="text-xs text-red-500 font-medium">{{ $message }}</span> @enderror
@@ -347,7 +347,7 @@
 
                                         {{-- Address --}}
                                         <div class="md:col-span-2 space-y-1.5">
-                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Address</label>
+                                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">{{ __('Address') }}</label>
                                             <textarea wire:model="address" rows="3"
                                                 class="block w-full rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-800 text-slate-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5"></textarea>
                                             @error('address') <span class="text-xs text-red-500 font-medium">{{ $message }}</span> @enderror
@@ -358,14 +358,14 @@
                                     <div class="flex flex-row-reverse gap-3 pt-6 border-t border-slate-200 dark:border-gray-700">
                                         <button type="submit" wire:loading.attr="disabled"
                                             class="inline-flex justify-center w-full sm:w-auto rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:bg-blue-700 disabled:opacity-50 transition-all">
-                                            <span wire:loading.remove wire:target="savePatient">Save Changes</span>
+                                            <span wire:loading.remove wire:target="savePatient">{{ __('Save Changes') }}</span>
                                             <span wire:loading wire:target="savePatient" class="flex items-center gap-2">
-                                                <x-heroicon-o-arrow-path class="animate-spin h-4 w-4" /> Saving...
+                                                <x-heroicon-o-arrow-path class="animate-spin h-4 w-4" /> {{ __('Saving...') }}
                                             </span>
                                         </button>
                                         <button type="button" @click="open = false; $wire.cancelEdit()"
                                             class="inline-flex justify-center w-full sm:w-auto rounded-xl bg-white dark:bg-gray-800 px-5 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-gray-600 hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors">
-                                            Cancel
+                                            {{ __('Cancel') }}
                                         </button>
                                     </div>
                                 </form>

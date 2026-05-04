@@ -2,26 +2,34 @@
 
 namespace App\Livewire\Tenants\Auth;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log; // Imported Log Facade
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-
+#[Layout('components.layouts.login')]
 class TenantResetPassword extends Component
 {
     public $token;
+
     public $email;
+
     public $password;
+
     public $password_confirmation;
 
     public function mount(Request $request, $token = null)
     {
         // Security Check
-        if (!tenant()) {
+        if (! tenant()) {
+            Log::warning('Password reset attempted without valid tenant context.', [
+                'ip' => $request->ip(),
+                'email' => $request->query('email')
+            ]);
             abort(404);
         }
 
@@ -37,39 +45,77 @@ class TenantResetPassword extends Component
 
     public function resetPassword()
     {
+        // 1. Log the attempt start
+        Log::info('Tenant password reset attempt started.', [
+            'tenant_id' => tenant()->id ?? 'unknown',
+            'email' => $this->email,
+            'ip' => request()->ip(),
+        ]);
+
         $this->validate();
-      
-        // Because your User model uses 'BelongsToTenant',
-        // Password::broker() will automatically respect the tenant scope.
-        // It will fail if the email exists in the DB but belongs to a DIFFERENT tenant.
-        $status = Password::broker()->reset(
-            [
-                'token' => $this->token,
-                'email' => $this->email,
-                'password' => $this->password,
-                'password_confirmation' => $this->password_confirmation,
-            ],
-            function ($user, $password) {
-                $user->forceFill([
-                    'password' => Hash::make($password),
-                ])->setRememberToken(Str::random(60));
-                if (!$user->hasVerifiedEmail()) {
-                    $user->markEmailAsVerified();
+
+        try {
+            // Because your User model uses 'BelongsToTenant',
+            // Password::broker() will automatically respect the tenant scope.
+            $status = Password::broker()->reset(
+                [
+                    'token' => $this->token,
+                    'email' => $this->email,
+                    'password' => $this->password,
+                    'password_confirmation' => $this->password_confirmation,
+                ],
+                function ($user, $password) {
+                    $user->forceFill([
+                        'password' => Hash::make($password),
+                    ])->setRememberToken(Str::random(60));
+
+                    if (! $user->hasVerifiedEmail()) {
+                        $user->markEmailAsVerified();
+                    }
+
+                    $user->save();
+
+                    event(new PasswordReset($user));
                 }
-                $user->save();
+            );
 
-                event(new PasswordReset($user));
+            // 2. Check for Success
+            if ($status == Password::PASSWORD_RESET) {
+                Log::info('Tenant password reset successful.', [
+                    'tenant_id' => tenant()->id ?? 'unknown',
+                    'email' => $this->email,
+                ]);
+
+                session()->flash('status', trans($status));
+
+                // Redirect to the TENANT login route
+                return redirect()->route('tenant.login');
             }
-        );
 
-        if ($status == Password::PASSWORD_RESET) {
-            session()->flash('status', trans($status));
+            // 3. Log Logic Failure (e.g., Invalid Token, User not found)
+            // We log the raw status string (e.g., passwords.token) and the translated message.
+            Log::warning('Tenant password reset failed.', [
+                'tenant_id' => tenant()->id ?? 'unknown',
+                'email' => $this->email,
+                'status_code' => $status,
+                'reason' => trans($status),
+            ]);
 
-            // Redirect to the TENANT login route
-            return redirect()->route('tenant.login');
+            $this->addError('email', trans($status));
+
+        } catch (\Throwable $e) {
+            // 4. Log System/Crash Errors (DB connection, Mailer issues, code bugs)
+            Log::error('Tenant password reset system exception.', [
+                'tenant_id' => tenant()->id ?? 'unknown',
+                'email' => $this->email,
+                'error_message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(), // Full stack trace for deep debugging
+            ]);
+
+            $this->addError('email', 'An unexpected system error occurred. Please try again later.');
         }
-
-        $this->addError('email', trans($status));
     }
 
     public function render()

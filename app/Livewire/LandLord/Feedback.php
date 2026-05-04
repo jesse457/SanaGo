@@ -5,17 +5,13 @@ namespace App\Livewire\LandLord;
 use App\Models\FeedBack as FeedbackModel;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 // Use the landlord layout for this Livewire component
 #[Layout('components.layouts.landlord')]
 class Feedback extends Component
 {
-    /**
-     * The feedbacks to be displayed in the table.
-     *
-     * @var \Illuminate\Database\Eloquent\Collection
-     */
-    public $feedbacks;
+    use WithPagination;
 
     /**
      * Mount the component and fetch the data.
@@ -24,12 +20,16 @@ class Feedback extends Component
     {
         // Fetch all feedbacks and load their related tenant model to display the name.
         // Orders by the latest feedback first.
-        $this->feedbacks = FeedbackModel::orderBy('created_at', 'desc')
-            ->get();
+
     }
 
     public function render()
     {
-        return view('livewire.land-lord.feedback');
+        $feedbacks = FeedbackModel::orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('livewire.land-lord.feedback', [
+            'feedbacks' => $feedbacks,
+        ]);
     }
 }

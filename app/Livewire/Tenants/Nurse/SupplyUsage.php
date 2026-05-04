@@ -7,6 +7,7 @@ use App\Models\SupplyUsage as SupplyUsageModel;
 use App\Traits\UserActivitiesTrait;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -53,36 +54,38 @@ class SupplyUsage extends Component
 
             return;
         }
+        DB::connection('pgsql_transaction')->transaction(function () use ($quantityUsed, $supply, $supplyId) {
+            // Create a new SupplyUsage record
+            SupplyUsageModel::create([
+                'supply_id' => $supply->id,
+                'user_id' => Auth::id(),
+                'patient_id' => null, // Placeholder: You'll need a mechanism to select a patient if this is for specific patient usage
+                'quantity_used' => $quantityUsed,
+                'usage_date' => now(),
+            ]);
 
-        // Create a new SupplyUsage record
-        SupplyUsageModel::create([
-            'supply_id' => $supply->id,
-            'user_id' => Auth::id(),
-            'patient_id' => null, // Placeholder: You'll need a mechanism to select a patient if this is for specific patient usage
-            'quantity_used' => $quantityUsed,
-            'usage_date' => now(),
-        ]);
+            // Decrease the current stock of the supply
+            $supply->current_stock -= $quantityUsed;
+            $supply->save();
 
-        // Decrease the current stock of the supply
-        $supply->current_stock -= $quantityUsed;
-        $supply->save();
+            // Reset the quantity used input for this supply
+            $this->quantitiesUsed[$supplyId] = 0;
 
-        // Reset the quantity used input for this supply
-        $this->quantitiesUsed[$supplyId] = 0;
+            $this->logActivity(
+                'supply_used',
+                Auth::user()->name.' recorded usage of '.$quantityUsed.' '.$supply->unit_of_measure.' of '.$supply->name,
+                [
+                    'supply_id' => $supply->id,
+                    'user_id' => Auth::id(),
+                    'quantity_used' => $quantityUsed,
+                ]
+            );
+        });
+
         LivewireAlert::title('Success')
             ->success()
             ->text($quantityUsed.' '.$supply->unit_of_measure.' of '.$supply->name.' recorded. Stock: '.$supply->current_stock)
             ->show();
-        $this->logActivity(
-            'supply_used',
-            Auth::user()->name.' recorded usage of '.$quantityUsed.' '.$supply->unit_of_measure.' of '.$supply->name,
-            [
-                'supply_id' => $supply->id,
-                'user_id' => Auth::id(),
-                'quantity_used' => $quantityUsed,
-            ]
-        );
-
     }
 
     public function render()

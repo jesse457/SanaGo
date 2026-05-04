@@ -2,8 +2,8 @@
 
 namespace App\Notifications;
 
-use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 class ResetPasswordNotification extends Notification
 {
@@ -36,6 +36,7 @@ class ResetPasswordNotification extends Notification
     /**
      * Context-aware URL generation
      */
+
     protected function generateResetUrl($notifiable)
     {
         // 1. Check if we are running inside a Tenant Context
@@ -52,8 +53,7 @@ class ResetPasswordNotification extends Notification
                 'email' => $notifiable->getEmailForPasswordReset(),
             ], false);
 
-          
-            return 'http://' . $domain . ':8000' . $relativePath;
+            return 'https://'.$domain.$relativePath;
         }
 
         // 2. Default: Landlord / Central App Context

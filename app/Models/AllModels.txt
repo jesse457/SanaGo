@@ -1,0 +1,1824 @@
+<?php
+
+namespace App\Models;
+
+// Consolidated model definitions from app/Models
+
+use App\Traits\TracksRevenue;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
+use Stancl\Tenancy\Database\Concerns\CentralConnection;
+use ParagonIE\CipherSweet\BlindIndex;
+use ParagonIE\CipherSweet\EncryptedRow;
+use Spatie\LaravelCipherSweet\Concerns\UsesCipherSweet;
+use Spatie\LaravelCipherSweet\Contracts\CipherSweetEncrypted;
+use ParagonIE\CipherSweet\Transformation\Lowercase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Stancl\Tenancy\Database\Concerns\HasDomains;
+use App\Notifications\ResetPasswordNotification;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
+
+// === Models ===
+
+class Admission extends Model
+{
+    use BelongsToTenant, HasFactory,TracksRevenue;
+
+    protected $fillable = [
+        'patient_id',
+        'doctor_id',
+        'bed_id',
+        'admission_date',
+        'observation_fee',
+        'discharge_date',
+        'reason_for_admission',
+        'status',
+    ];
+
+    protected $casts = [
+        'admission_date' => 'datetime',
+        'discharge_date' => 'datetime',
+    ];
+
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class);
+    }
+
+    public function doctor()
+    {
+        return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function bed()
+    {
+        return $this->belongsTo(Bed::class);
+    }
+}
+
+class Appointment extends Model
+{
+    use BelongsToTenant, HasFactory, TracksRevenue;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'patient_id',
+        'doctor_id',
+        'tenant_id',
+        'appointment_date',
+        'appointment_time', // Represents check-in/scheduled arrival time
+        'price',
+        'reason_for_visit',
+        'status', // New statuses: Waiting, In Consultation, Completed, Canceled
+        'notes',
+        'queue_position',
+        'actual_start_time',
+        'actual_end_time',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'appointment_date' => 'date',
+        'appointment_time' => 'datetime',
+        'actual_start_time' => 'datetime',
+        'actual_end_time' => 'datetime',
+    ];
+
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class);
+    }
+
+    public function doctor()
+    {
+        return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    // New scope to find patients waiting on a specific day for a doctor
+    public function scopeInQueueForDoctor($query, $doctorId, $date)
+    {
+        return $query->where('doctor_id', $doctorId)
+            ->whereDate('appointment_date', $date)
+            ->whereIn('status', ['Waiting', 'In Consultation']);
+    }
+
+    // Other helper methods can be added here
+    public function startConsultation()
+    {
+        $this->status = 'In Consultation';
+        $this->actual_start_time = now();
+        $this->save();
+    }
+
+    public function endConsultation()
+    {
+        $this->status = 'Completed';
+        $this->actual_end_time = now();
+        $this->save();
+    }
+
+    public function cancel()
+    {
+        $this->status = 'Canceled';
+        $this->save();
+    }
+}
+
+class Bed extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'ward_id',
+        'tenant_id',
+        'bed_type_id',
+        'bed_number', // e.g., "A-101"
+        'is_occupied',
+    ];
+
+    protected $casts = [
+        'is_occupied' => 'boolean',
+    ];
+
+    /**
+     * Scope a query to only include available beds.
+     */
+    public function scopeAvailable($query)
+    {
+        return $query->where('is_occupied', false);
+    }
+
+    public function ward()
+    {
+        return $this->belongsTo(Ward::class);
+    }
+
+    public function bedType()
+    {
+        return $this->belongsTo(BedType::class);
+    }
+
+    public function admissions()
+    {
+        return $this->hasMany(Admission::class);
+    }
+}
+
+class BedType extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'name',
+        'description',
+        'price_per_day',
+    ];
+
+    public function beds()
+    {
+        return $this->hasMany(Bed::class);
+    }
+}
+
+class DemoRequest extends Model
+{
+    use CentralConnection,HasFactory;
+
+    protected $fillable = [
+        'full_name',
+        'email',
+        'phone_number',
+        'has_whatsapp',
+        'facility_name',
+        'facility_type',
+        'region',
+        'job_title',
+        'status',
+    ];
+}
+
+class Department extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'tenant_id',
+        'name',
+        'description',
+    ];
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
+
+    public function wards()
+    {
+        return $this->hasMany(Ward::class);
+    }
+}
+
+use App\Traits\TracksRevenue;
+    use Illuminate\Database\Eloquent\Factories\HasFactory;
+    use Illuminate\Database\Eloquent\Model;
+    use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
+
+    class Dispensation extends Model
+    {
+        use BelongsToTenant, HasFactory,TracksRevenue;
+
+        protected $fillable = [
+            'prescription_item_id',
+            'tenant_id',
+            'pharmacist_id',
+            'quantity_issued',
+            'batch_number',
+            'total_price',
+            'dispensed_at',
+        ];
+
+        protected $casts = [
+            'dispensed_at' => 'datetime',
+        ];
+
+        public function prescriptionItem()
+        {
+            return $this->belongsTo(PrescriptionItem::class);
+        }
+
+        public function pharmacist()
+        {
+            return $this->belongsTo(User::class, 'pharmacist_id');
+        }
+    }
+
+class FeedBack extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'subject',
+        'category',
+        'message',
+        'response',
+        'response_draft',
+        'user_id',
+        'status',
+    ];
+
+    // helper: has a published response
+    public function hasResponse(): bool
+    {
+        return ! empty($this->response);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // helper: formatted response or fallback
+    public function getResponseOrFallbackAttribute()
+    {
+        return $this->response ?: null;
+    }
+}
+
+class Invoice extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'patient_id',
+        'amount',
+        'status',
+        'payment_method',
+    ];
+
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class);
+    }
+}
+
+class LabRequest extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'patient_id',
+        'requested_by_doctor_id',
+        'lab_test_definition_id',
+        'lab_tech_id',
+        'consultation_id',
+        'reason_for_test',
+        'urgency_level',
+        'request_date',
+        'status',
+    ];
+
+    protected $casts = [
+        'request_date' => 'datetime',
+    ];
+
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class);
+    }
+
+    public function labTechnician()
+    {
+        return $this->belongsTo(User::class, 'lab_tech_id');
+    }
+
+    public function doctor()
+    {
+        return $this->belongsTo(User::class, 'requested_by_doctor_id');
+    }
+
+    public function consultation()
+    {
+        return $this->belongsTo(MedicalRecord::class, 'consultation_id');
+    }
+
+    public function testDefinition()
+    {
+        return $this->belongsTo(LabTestDefinition::class, 'lab_test_definition_id');
+    }
+
+    public function result()
+    {
+        return $this->hasOne(LabResult::class);
+    }
+}
+
+class LabResult extends Model implements CipherSweetEncrypted
+{
+    use BelongsToTenant, HasFactory, TracksRevenue,UsesCipherSweet;
+
+    protected $fillable = [
+
+        'lab_request_id',
+        'lab_technician_id',
+        'doctor_id',
+        'consultation_id',
+        'result_date',
+        'results_text',
+        'analysis_comments',
+        'status',
+        'price',
+    ];
+
+    protected $casts = [
+        'result_date' => 'datetime',
+    ];
+
+    /**
+     * Configure CipherSweet encryption for this model.
+     *
+     * Fields added with ->addField(...) should correspond to text columns
+     * in your DB to store ciphertext. For exact-match searchable fields,
+     * add a BlindIndex.
+     */
+    public static function configureCipherSweet(EncryptedRow $encryptedRow): void
+    {
+        $encryptedRow
+            // 1. First Name: Case-insensitive + Partial Match
+            ->addField('results_text')
+
+            // 2. Last Name: Case-insensitive + Partial Match
+            ->addField('analysis_comments');
+
+    }
+
+    public function labRequest()
+    {
+        return $this->belongsTo(LabRequest::class);
+    }
+
+    public function labTechnician()
+    {
+        return $this->belongsTo(User::class, 'lab_technician_id');
+    }
+
+    public function doctor()
+    {
+        return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function consultation()
+    {
+        return $this->belongsTo(MedicalRecord::class, 'consultation_id');
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(LabResultAttachment::class);
+    }
+}
+
+class LabResultAttachment extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'lab_result_id',
+        'tenant_id',
+        'file_path',
+        'file_name',
+        'file_type',
+    ];
+
+    public function labResult()
+    {
+        return $this->belongsTo(LabResult::class);
+    }
+}
+
+class LabTestDefinition extends Model implements CipherSweetEncrypted
+{
+    use BelongsToTenant, HasFactory,UsesCipherSweet;
+
+    protected $fillable = [
+        'test_name',
+        'description',
+        'price',
+        'test_code', // Example of a new field
+        'normal_range', // Example of a new field
+        'units', // Example of a new field
+
+    ];
+
+    /**
+     * Configure CipherSweet encryption for this model.
+     *
+     * Fields added with ->addField(...) should correspond to text columns
+     * in your DB to store ciphertext. For exact-match searchable fields,
+     * add a BlindIndex.
+     */
+    public static function configureCipherSweet(EncryptedRow $encryptedRow): void
+    {
+        $encryptedRow
+            // first & last names - encrypted and searchable (exact match)
+            ->addField('test_name')
+            ->addBlindIndex('test_name', new BlindIndex('test_name_index'))
+            ->addOptionalTextField('description');
+
+        // If you want case-insensitive or transformed blind indexes, define
+        // transformations via BlindIndex options (see CipherSweet docs).
+    }
+
+    public function labRequests()
+    {
+        return $this->hasMany(LabRequest::class);
+    }
+}
+
+class MedicalRecord extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'patient_id',
+        'doctor_id',
+        'complaint',
+        'general_notes',
+        'diagnosis_text',
+        'treatment_plan',
+        'finalized',
+        'record_type',
+    ];
+
+    protected $casts = [
+        'finalized' => 'boolean',
+    ];
+
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class);
+    }
+
+    public function doctor()
+    {
+        return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function prescription()
+    {
+        return $this->hasMany(Prescription::class, 'consultation_id');
+    }
+
+    public function labResults()
+    {
+        return $this->hasMany(LabResult::class, 'consultation_id');
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(MedicalRecordAttachment::class);
+    }
+
+    public function vitals()
+    {
+        return $this->hasMany(Vital::class);
+    }
+}
+
+class MedicalRecordAttachment extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'medical_record_id',
+        'file_path',
+        'file_name',
+        'file_type',
+    ];
+
+    public function medicalRecord()
+    {
+        return $this->belongsTo(MedicalRecord::class);
+    }
+}
+
+class Medication extends Model implements CipherSweetEncrypted
+{
+    use BelongsToTenant, HasFactory,UsesCipherSweet;
+
+    protected $fillable = [
+        'name',
+        'description',
+        'stock_quantity',
+        'min_stock_level',
+        'unit_price_purchase',
+    ];
+
+    /**
+     * Configure CipherSweet encryption for this model.
+     *
+     * Fields added with ->addField(...) should correspond to text columns
+     * in your DB to store ciphertext. For exact-match searchable fields,
+     * add a BlindIndex.
+     */
+    public static function configureCipherSweet(EncryptedRow $encryptedRow): void
+    {
+        $encryptedRow
+            // first & last names - encrypted and searchable (exact match)
+            ->addField('name')
+            ->addBlindIndex('name', new BlindIndex('name_index', [
+                new Lowercase, // Normalize to lowercase
+            ]))
+            ->addOptionalTextField('description');
+
+        // transformations via BlindIndex options (see CipherSweet docs).
+    }
+
+    public function prescriptionItems()
+    {
+        return $this->hasMany(PrescriptionItem::class);
+    }
+}
+
+use Illuminate\Notifications\DatabaseNotification; // Extend the native class
+
+class Notification extends DatabaseNotification
+{
+    use BelongsToTenant, HasFactory;
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'notifications';
+
+    /**
+     * The "type" of the auto-incrementing ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'id', // ID must be fillable because Laravel generates the UUID before saving
+        'type',
+        'notifiable_type',
+        'notifiable_id',
+        'data',
+        'read_at',
+        'tenant_id', // Required for BelongsToTenant
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'data' => 'array',
+        'read_at' => 'datetime',
+        'id' => 'string',
+    ];
+
+    // ==========================================
+    // Custom Helper Methods
+    // ==========================================
+
+    /**
+     * Get the notification message from the data array.
+     */
+    public function getMessageAttribute(): string
+    {
+        return $this->data['message'] ?? 'New Notification';
+    }
+
+    /**
+     * Get the notification type/category from the data array.
+     */
+    public function getNotificationTypeAttribute(): string
+    {
+        return $this->data['type'] ?? 'general';
+    }
+
+    /**
+     * Get the URL/Action link from the data array.
+     */
+    public function getLinkAttribute(): ?string
+    {
+        return $this->data['link'] ?? null;
+    }
+
+    // ==========================================
+    // Scope Overrides (Fixed Logic)
+    // ==========================================
+
+    /**
+     * Scope a query to only include unread notifications.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeUnread($query)
+    {
+        // FIXED: Standard Laravel uses null check on read_at, not a boolean column
+        return $query->whereNull('read_at');
+    }
+
+    /**
+     * Scope a query to only include read notifications.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeRead($query)
+    {
+        // FIXED: Check where read_at is NOT null
+        return $query->whereNotNull('read_at');
+    }
+
+    /**
+     * Scope a query to only include notifications of a specific type.
+     */
+    public function scopeOfType($query, $type)
+    {
+        return $query->where('type', $type);
+    }
+}
+
+class NurseCareReport extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'patient_id',
+        'user_id',
+        'report_time',
+        'shift_type',
+        'interventions',
+        'observations',
+    ];
+
+    protected $casts = [
+        'report_time' => 'datetime',
+    ];
+
+    /**
+     * Relationship: The patient this report belongs to.
+     */
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class);
+    }
+
+    /**
+     * Relationship: The nurse (user) who created this report.
+     */
+    public function nurse()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+}
+
+use ParagonIE\CipherSweet\Transformation\Trigram; // <--- Import Trigram
+
+class Patient extends Model implements CipherSweetEncrypted
+{
+    use BelongsToTenant, HasFactory, UsesCipherSweet;
+
+    protected $fillable = [
+        'patient_uid',
+        'first_name',
+        'last_name',
+        'phone',
+        'email',
+        'address',
+        'referral_note_path',
+        'age',
+        'gender',
+        'is_admitted_approve',
+    ];
+
+    protected $casts = [
+        'dob' => 'date',
+    ];
+
+    /**
+     * Accessor to combine First and Last name.
+     */
+    public function getNameAttribute()
+    {
+        return "{$this->first_name} {$this->last_name}";
+    }
+
+    /**
+     * Configure CipherSweet encryption.
+     */
+    public static function configureCipherSweet(EncryptedRow $encryptedRow): void
+    {
+        $encryptedRow
+            // 1. First Name: Case-insensitive + Partial Match
+            ->addField('first_name')
+            ->addBlindIndex('first_name', new BlindIndex('first_name_index', [
+                new Lowercase, // Normalize to lowercase
+            ]))
+
+            // 2. Last Name: Case-insensitive + Partial Match
+            ->addField('last_name')
+            ->addBlindIndex('last_name', new BlindIndex('last_name_index', [
+                new Lowercase,
+            ]))
+
+            // 3. Email: Case-insensitive (Exact match usually preferred for emails)
+            ->addField('email')
+            ->addBlindIndex('email', new BlindIndex('email_index', [
+                new Lowercase,
+            ]))
+
+            // 4. Phone: Encrypted, Exact Match
+            ->addField('phone')
+            ->addBlindIndex('phone', new BlindIndex('phone_index'))
+
+            // 6. Address: Encrypted only (Not searchable)
+            ->addField('address')
+
+            // 7. Optional fields
+            ->addOptionalTextField('id_document_path')
+            ->addOptionalTextField('referral_note_path');
+    }
+
+    // -----------------------
+    // Relationships & Scopes
+    // -----------------------
+
+    public function scopeFuture($query)
+    {
+        return $query->where('scheduled_at', '>', now());
+    }
+
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
+    public function medicalRecords()
+    {
+        return $this->hasMany(MedicalRecord::class);
+    }
+
+    public function vitals()
+    {
+        return $this->hasMany(Vital::class);
+    }
+
+    public function prescriptions()
+    {
+        return $this->hasMany(Prescription::class);
+    }
+
+    public function labRequests()
+    {
+        return $this->hasMany(LabRequest::class);
+    }
+
+    public function admissions()
+    {
+        return $this->hasMany(Admission::class);
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function supplyUsages()
+    {
+        return $this->hasMany(SupplyUsage::class);
+    }
+}
+
+class Prescription extends Model
+{
+    use BelongsToTenant, HasFactory,TracksRevenue;
+
+    protected $fillable = [
+        'patient_id',
+        'doctor_id',
+        'consultation_id',
+        'pharmacist_id',
+        'prescription_date',
+        'general_notes',
+        'status',
+    ];
+
+    protected $casts = [
+        'prescription_date' => 'datetime',
+    ];
+
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class);
+    }
+
+    public function doctor()
+    {
+        return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function consultation()
+    {
+        return $this->belongsTo(MedicalRecord::class, 'consultation_id');
+    }
+
+    public function pharmacist()
+    {
+        return $this->belongsTo(User::class, 'pharmacist_id');
+    }
+
+    public function items()
+    {
+        return $this->hasMany(PrescriptionItem::class);
+    }
+}
+
+class PrescriptionItem extends Model
+{
+    use BelongsToTenant,HasFactory; // No BelongsToTenant directly as it's through Prescription
+
+    protected $fillable = [
+        'prescription_id',
+        'medication_id',
+        'dosage',
+        'frequency',
+        'duration',
+        'quantity_prescribed',
+        'dispensed_quantity',
+        'notes',
+    ];
+
+    public function prescription()
+    {
+        return $this->belongsTo(Prescription::class);
+    }
+
+    public function medication()
+    {
+        return $this->belongsTo(Medication::class);
+    }
+
+    public function dispensations()
+    {
+        return $this->hasMany(Dispensation::class);
+    }
+}
+
+class ProcedureKit extends Model
+{
+    use BelongsToTenant,HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'description',
+        'price',
+        'kit_code',
+        'is_active',
+    ];
+}
+
+class RevenueSummary extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'patient_id',
+        'transaction_date',
+        'medication_revenue',
+        'appointment_revenue',
+        'lab_revenue',
+        'bed_fee_revenue',
+    ];
+
+    protected $casts = [
+        'transaction_date' => 'date',
+    ];
+
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class);
+    }
+}
+
+use Illuminate\Support\Facades\Schema; // Added Schema facade
+
+class Subscription extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'plan',
+        'status',
+        'amount',
+        'currency',
+        'billing_cycle',
+        'starts_at',
+        'ends_at',
+        'trial_ends_at',
+        'cancelled_at',
+        'features',
+        'max_users',
+        'max_storage',
+        'stripe_subscription_id',
+        'stripe_customer_id',
+        'metadata',
+    ];
+
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'starts_at' => 'datetime',
+        'ends_at' => 'datetime',
+        'trial_ends_at' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'features' => 'array',
+        'metadata' => 'array',
+    ];
+
+    // Constants for subscription plans
+    const PLAN_BASIC = 'basic';
+
+    const PLAN_STANDARD = 'standard';
+
+    const PLAN_ENTERPRISE = 'enterprise';
+
+    // Constants for subscription status
+    const STATUS_ACTIVE = 'active';
+
+    const STATUS_INACTIVE = 'inactive';
+
+    const STATUS_CANCELLED = 'cancelled';
+
+    const STATUS_EXPIRED = 'expired';
+
+    const STATUS_SUSPENDED = 'suspended';
+
+    // Constants for billing cycles
+    const BILLING_MONTHLY = 'monthly';
+
+    const BILLING_YEARLY = 'yearly';
+
+    /**
+     * Boot method to set amount based on plan
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($subscription) {
+            if (empty($subscription->amount) && ! empty($subscription->plan)) {
+                $subscription->amount = $subscription->getPlanAmount();
+            }
+        });
+
+        static::updating(function ($subscription) {
+            if ($subscription->isDirty('plan') && empty($subscription->amount)) {
+                $subscription->amount = $subscription->getPlanAmount();
+            }
+        });
+    }
+
+    public function getPlanAmount()
+    {
+        return match ($this->plan) {
+            self::PLAN_BASIC => 15000,
+            self::PLAN_STANDARD => 30000,
+            self::PLAN_ENTERPRISE => 100000,
+            default => 0,
+        };
+    }
+
+    public function isActive()
+    {
+        return $this->status === self::STATUS_ACTIVE &&
+               (! $this->ends_at || $this->ends_at->isFuture());
+    }
+
+    public function onTrial()
+    {
+        return $this->trial_ends_at && $this->trial_ends_at->isFuture();
+    }
+
+    public function isCancelled()
+    {
+        return $this->status === self::STATUS_CANCELLED ||
+               $this->cancelled_at !== null;
+    }
+
+    public function isExpired()
+    {
+        return $this->ends_at && $this->ends_at->isPast();
+    }
+
+    public function getPlanFeatures()
+    {
+        return $this->features ?? $this->getDefaultFeatures();
+    }
+
+    public function getDefaultFeatures()
+    {
+        return match ($this->plan) {
+            self::PLAN_BASIC => [
+                'max_users' => 10,
+                'max_storage' => 1024,
+                'api_access' => false,
+                'priority_support' => false,
+                'custom_domain' => false,
+                'advanced_analytics' => false,
+            ],
+            self::PLAN_STANDARD => [
+                'max_users' => 50,
+                'max_storage' => 5120,
+                'api_access' => true,
+                'priority_support' => false,
+                'custom_domain' => true,
+                'advanced_analytics' => false,
+            ],
+            self::PLAN_ENTERPRISE => [
+                'max_users' => -1,
+                'max_storage' => -1,
+                'api_access' => true,
+                'priority_support' => true,
+                'custom_domain' => true,
+                'advanced_analytics' => true,
+                'dedicated_support' => true,
+                'custom_integrations' => true,
+            ],
+            default => [],
+        };
+    }
+
+    public function hasFeature($feature)
+    {
+        $features = $this->getPlanFeatures();
+
+        return isset($features[$feature]) && $features[$feature];
+    }
+
+    public function getNextBillingDate()
+    {
+        if (! $this->isActive()) {
+            return null;
+        }
+
+        $billingCycle = $this->billing_cycle;
+        $startDate = $this->starts_at;
+
+        return match ($billingCycle) {
+            self::BILLING_MONTHLY => $startDate->copy()->addMonth(),
+            self::BILLING_YEARLY => $startDate->copy()->addYear(),
+            default => null,
+        };
+    }
+
+    public function getPlanDisplayName()
+    {
+        return match ($this->plan) {
+            self::PLAN_BASIC => 'Basic',
+            self::PLAN_STANDARD => 'Standard',
+            self::PLAN_ENTERPRISE => 'Enterprise',
+            default => ucfirst($this->plan),
+        };
+    }
+
+    public function getStatusDisplayName()
+    {
+        return match ($this->status) {
+            self::STATUS_ACTIVE => 'Active',
+            self::STATUS_INACTIVE => 'Inactive',
+            self::STATUS_CANCELLED => 'Cancelled',
+            self::STATUS_EXPIRED => 'Expired',
+            self::STATUS_SUSPENDED => 'Suspended',
+            default => ucfirst($this->status),
+        };
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', self::STATUS_ACTIVE)
+            ->where(function ($q) {
+                $q->whereNull('ends_at')
+                    ->orWhere('ends_at', '>', now());
+            });
+    }
+
+    public function scopeByPlan($query, $plan)
+    {
+        return $query->where('plan', $plan);
+    }
+
+    public function scopeExpiringSoon($query, $days = 7)
+    {
+        return $query->where('ends_at', '<=', now()->addDays($days))
+            ->where('ends_at', '>', now())
+            ->where('status', self::STATUS_ACTIVE);
+    }
+
+    public function cancel($immediately = false)
+    {
+        $data = [
+            'status' => self::STATUS_CANCELLED,
+            'cancelled_at' => now(),
+        ];
+
+        if ($immediately) {
+            $data['ends_at'] = now();
+        }
+
+        $this->update($data);
+
+        return $this;
+    }
+
+    public function resume()
+    {
+        if ($this->isCancelled() && $this->ends_at && $this->ends_at->isFuture()) {
+            $this->update([
+                'status' => self::STATUS_ACTIVE,
+                'cancelled_at' => null,
+            ]);
+        }
+
+        return $this;
+    }
+
+    /**
+     * ==========================================
+     * STORAGE CALCULATION METHODS
+     * ==========================================
+     */
+    public function getUsedStorageInBytes(): int
+    {
+        return $this->getDatabaseUsageBytes() + $this->getS3UsageBytes();
+    }
+
+    public function getStorageUsagePercentage(): float
+    {
+        $limit = $this->getPlanFeatures()['max_storage'] ?? 0;
+
+        if ($limit == -1) {
+            return 0;
+        }
+
+        $limitBytes = $limit * 1024 * 1024;
+
+        if ($limitBytes <= 0) {
+            return 100;
+        }
+
+        $usedBytes = $this->getUsedStorageInBytes();
+
+        return round(($usedBytes / $limitBytes) * 100, 2);
+    }
+
+    public function getS3UsageBytes(): int
+    {
+        // 1. Check/Load relationship
+        if (! $this->relationLoaded('tenant')) {
+            $this->load('tenant');
+        }
+
+        if (! $this->tenant) {
+            return 0;
+        }
+
+        return $this->tenant->run(function () {
+
+            if (config('filesystems.disks.s3') === null) {
+                return 0;
+            }
+
+            $size = 0;
+            try {
+                // Get all files in the tenant's root
+                $files = Storage::disk('s3')->allFiles('/');
+
+                foreach ($files as $file) {
+                    // EXCLUSION LOGIC:
+                    // Skip if the file is inside the livewire-tmp directory
+                    if (str_starts_with($file, 'livewire-tmp')) {
+                        continue;
+                    }
+
+                    $size += Storage::disk('s3')->size($file);
+                }
+            } catch (\Exception $e) {
+                return 0;
+            }
+
+            return $size;
+        });
+    }
+
+    /**
+     * Calculate size of Database rows for this tenant.
+     * Database Agnostic (Postgres, MySQL, SQLite)
+     */
+    public function getDatabaseUsageBytes(): int
+    {
+        $tenantId = $this->tenant_id;
+        $totalSize = 0;
+
+        $tablesToCheck = [
+            'users',
+            'patients',
+            'appointments',
+            'admissions',
+            'prescriptions',
+            'prescription_items',
+            'medications',
+            'medical_records',
+            'medical_record_attachments',
+            'lab_requests',
+            'lab_results',
+            'lab_result_attachments',
+            'lab_test_definitions',
+            'dispensations',
+            'invoices',
+            'vitals',
+            'nurse_care_reports',
+            'user_shifts',
+            'user_activities',
+            'activity_logs',
+            'supplies',
+            'supply_usages',
+            'wards',
+            'beds',
+            'bed_types',
+            'revenue_summaries',
+            'notifications',
+            'feed_backs',
+            'files',
+            'procedure_kits',
+            'demo_requests',
+            'subscriptions',
+        ];
+
+        // Determine the database driver
+        $connection = DB::connection();
+        $driver = $connection->getDriverName();
+
+        foreach ($tablesToCheck as $table) {
+            if (! Schema::hasTable($table)) {
+                continue;
+            }
+
+            $size = 0;
+
+            try {
+                if ($driver === 'pgsql') {
+                    // PostgreSQL: Use pg_column_size on the entire row
+                    // We need to pass the table name as a parameter to pg_column_size
+                    $size = DB::table($table)
+                        ->where('tenant_id', $tenantId)
+                        ->selectRaw("SUM(pg_column_size({$table}.*)) as total_size")
+                        ->value('total_size');
+
+                } elseif ($driver === 'mysql' || $driver === 'mariadb') {
+                    // MySQL: Sum the length of all columns as an approximation
+                    $columns = Schema::getColumnListing($table);
+
+                    if (! empty($columns)) {
+                        $sumQuery = collect($columns)
+                            ->map(fn ($col) => "LENGTH(COALESCE(`$col`, ''))")
+                            ->join(' + ');
+
+                        $size = DB::table($table)
+                            ->where('tenant_id', $tenantId)
+                            ->sum(DB::raw($sumQuery));
+                    }
+
+                } elseif ($driver === 'sqlite') {
+                    // SQLite: Similar to MySQL
+                    $columns = Schema::getColumnListing($table);
+
+                    if (! empty($columns)) {
+                        $sumQuery = collect($columns)
+                            ->map(fn ($col) => "length(coalesce(\"$col\", ''))")
+                            ->join(' + ');
+
+                        $size = DB::table($table)
+                            ->where('tenant_id', $tenantId)
+                            ->sum(DB::raw($sumQuery));
+                    }
+                }
+
+                $totalSize += (int) ($size ?? 0);
+
+            } catch (\Exception $e) {
+                // Log but don't fail - continue with other tables
+                Log::warning("Failed to calculate size for table {$table}: ".$e->getMessage());
+            }
+        }
+
+        return $totalSize;
+    }
+
+    public function formatBytes($bytes, $precision = 2)
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $bytes = max($bytes, 0);
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = min($pow, count($units) - 1);
+        $bytes /= pow(1024, $pow);
+
+        return round($bytes, $precision).' '.$units[$pow];
+    }
+}
+
+class Supply extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'name',
+        'tenant_id',
+        'unit_of_measure',
+        'current_stock',
+        'min_stock_level',
+    ];
+
+    public function usages()
+    {
+        return $this->hasMany(SupplyUsage::class);
+    }
+}
+
+class SupplyUsage extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'supply_id',
+        'tenant_id',
+        'user_id',
+        'patient_id',
+        'quantity_used',
+        'usage_date',
+    ];
+
+    protected $casts = [
+        'usage_date' => 'datetime',
+    ];
+
+    public function supply()
+    {
+        return $this->belongsTo(Supply::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class);
+    }
+}
+
+use Stancl\Tenancy\Database\Models\Tenant as BaseTenant; // Import the Str facade
+
+class Tenant extends BaseTenant
+{
+    use HasDomains,HasFactory;
+
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false; // Important for UUIDs
+
+    /**
+     * The "type" of the primary key ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string'; // Important for UUIDs
+
+    /**
+     * The "booting" method of the model.
+     *
+     * @return void
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Listen for the "creating" event on the User model
+        static::creating(function ($model) {
+            $model->{$model->getKeyName()} = (string) Str::uuid();
+        });
+    }
+
+    /**
+     * Get the subscription associated with the tenant.
+     */
+    public function subscription()
+    {
+        return $this->hasOne(Subscription::class);
+    }
+
+    /**
+     * Get the active subscription for the tenant.
+     */
+    public function activeSubscription()
+    {
+        return $this->subscription()->active();
+    }
+
+    /**
+     * Check if tenant has an active subscription
+     */
+    public function hasActiveSubscription()
+    {
+        return $this->activeSubscription()->exists();
+    }
+
+    /**
+     * Get the current plan for the tenant
+     */
+    public function getCurrentPlan()
+    {
+        return $this->activeSubscription()?->plan ?? 'free';
+    }
+
+    /**
+     * Check if tenant can access a feature
+     */
+    public function canAccessFeature($feature)
+    {
+        $subscription = $this->activeSubscription();
+
+        return $subscription ? $subscription->hasFeature($feature) : false;
+    }
+
+    /**
+     * Get the maximum number of users allowed
+     */
+    public function getMaxUsers()
+    {
+        $subscription = $this->activeSubscription();
+
+        return $subscription ? $subscription->max_users : 5; // Default for free plan
+    }
+
+    /**
+     * Get the maximum storage allowed in MB
+     */
+    public function getMaxStorage()
+    {
+        $subscription = $this->activeSubscription();
+
+        return $subscription ? $subscription->max_storage : 512; // Default for free plan
+    }
+}
+
+use Illuminate\Notifications\Notifiable; // Important for tenancy
+use Stancl\Tenancy\Database\Concerns\BelongsToTenant; // Import BelongsTo for type hinting
+
+class User extends Authenticatable implements MustVerifyEmail
+{
+    use BelongsToTenant, HasApiTokens, HasFactory, Notifiable;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'phone_number',
+        'role',
+        'email',
+        'password',
+        'is_active',
+        'department_id',
+        'tenant_id',
+        'can_assign_shift',
+        'profile_picture', // Ensure profile_picture is fillable
+        'address', // Add if it's a user property
+        'date_of_birth', // Add if it's a user property
+        'gender', // Add if it's a user property
+        'hire_date', // Add if it's a user property
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_active' => 'boolean',
+        'can_assign_shift' => 'boolean',
+        'date_of_birth' => 'date', // Cast as date if storing as date
+        'hire_date' => 'date', // Cast as date if storing as date
+    ];
+
+    // Relationships
+
+    /**
+     * Get the department that the user belongs to.
+     */
+    public function department(): BelongsTo // Changed to singular and added return type hinting
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function shifts()
+    {
+        return $this->belongsToMany(UserShift::class);
+    }
+
+    public function activities()
+    {
+        return $this->hasMany(UserActivity::class);
+    }
+
+    public function patients()
+    {
+        // For doctors: patients under their care
+        return $this->hasMany(Patient::class, 'assigned_doctor_id'); // Assuming you'd add assigned_doctor_id to patients if needed
+    }
+
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class, 'doctor_id');
+    }
+
+    public function prescriptions()
+    {
+        return $this->hasMany(Prescription::class, 'doctor_id');
+    }
+
+    public function labRequests()
+    {
+        return $this->hasMany(LabRequest::class, 'requested_by_doctor_id');
+    }
+
+    public function labResults()
+    {
+        return $this->hasMany(LabResult::class, 'lab_technician_id');
+    }
+
+    public function vitalsRecorded()
+    {
+        return $this->hasMany(Vital::class, 'nurse_id');
+    }
+
+    public function dispensations()
+    {
+        return $this->hasMany(Dispensation::class, 'pharmacist_id');
+    }
+
+    public function suppliesUsed()
+    {
+        return $this->hasMany(SupplyUsage::class, 'user_id');
+    }
+    public function notifications()
+    {
+        // This tells Notification::send() to use your custom class
+        return $this->morphMany(Notification::class, 'notifiable')->latest();
+    }
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+
+        $this->notify(new ResetPasswordNotification($token));
+    }
+}
+
+class UserActivity extends Model implements CipherSweetEncrypted
+{
+    use BelongsToTenant, HasFactory, UsesCipherSweet;
+
+    protected $fillable = [
+        'user_id',
+        'activity_type',
+        'description',
+        'ip_address',
+        'tenant_id',
+        'user_agent',
+        'properties',
+    ];
+
+    protected $casts = [
+        'properties' => 'array',
+    ];
+
+    /**
+     * Configure CipherSweet encryption for this model.
+     *
+     * Fields added with ->addField(...) should correspond to text columns
+     * in your DB to store ciphertext. For exact-match searchable fields,
+     * add a BlindIndex.
+     */
+    public static function configureCipherSweet(EncryptedRow $encryptedRow): void
+    {
+        $encryptedRow
+
+            ->addField('description');
+
+        // If you want case-insensitive or transformed blind indexes, define
+        // transformations via BlindIndex options (see CipherSweet docs).
+    }
+
+    /**
+     * Get the user that performed the activity.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+}
+
+class UserShift extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'shift_type',
+        'start_time',
+        'end_time',
+        'shift_date',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'shift_type' => 'string', // <-- THIS IS THE FIX
+        'shift_date' => 'date',
+        'start_time' => 'datetime:H:i',
+        'end_time' => 'datetime:H:i',
+    ];
+
+    public function user()
+    {
+        return $this->belongsToMany(User::class);
+    }
+}
+
+class Vital extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'patient_id',
+        'medical_record_id',
+        'nurse_id',
+        'recorded_at',
+        'tenant_id',
+        'temperature_celsius',
+        'blood_pressure_systolic',
+        'blood_pressure_diastolic',
+        'heart_rate_bpm',
+        'respiratory_rate',
+        'spo2_percentage',
+        'weight_kg',
+        'bmi',
+        'flag_abnormal',
+        'notes',
+    ];
+
+    protected $casts = [
+        'recorded_at' => 'datetime',
+        'flag_abnormal' => 'boolean',
+    ];
+
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class);
+    }
+
+    public function medicalRecord()
+    {
+        return $this->belongsTo(MedicalRecord::class);
+    }
+
+    public function nurse()
+    {
+        return $this->belongsTo(User::class, 'nurse_id');
+    }
+}
+
+class Ward extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'name',
+        'tenant_id',
+        'ward_number',
+        'department_id',
+        'description',
+    ];
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function beds()
+    {
+        return $this->hasMany(Bed::class);
+    }
+}
+

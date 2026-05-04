@@ -10,7 +10,7 @@
 
 **A modern, scalable, multi-tenant hospital management system built with Laravel, Livewire, and FrankenPHP**
 
-[Features](#-features) • [Architecture](#-architecture) • [Installation](#-installation) • [Documentation](#-documentation) • [Contributing](#-contributing)
+[Features](#-features) • [Architecture](#-architecture) • [Installation](#-installation) • [Usage](#-usage) • [Troubleshooting](#-troubleshooting)
 
 </div>
 
@@ -28,6 +28,8 @@
 - [User Roles](#-user-roles)
 - [Core Modules](#-core-modules)
 - [API Documentation](#-api-documentation)
+- [Usage Examples](#-usage-examples)
+- [Troubleshooting](#-troubleshooting)
 - [Deployment](#-deployment)
 - [Security](#-security)
 - [Contributing](#-contributing)
@@ -46,7 +48,9 @@
 - **🚀 High Performance**: Powered by Laravel Octane + FrankenPHP for blazing-fast response times
 - **🌍 Internationalization**: Full multi-language support (English, French, Spanish) with easy extensibility
 - **🔒 Enterprise Security**: Role-based access control, data encryption, audit logging, and HIPAA-compliant features
-- **📊 Advanced Analytics**: Built-in monitoring with Prometheus, Grafana, and comprehensive reporting
+- **📊 Advanced Analytics**: Role-specific dashboards with real-time KPIs and metrics
+- **📱 Responsive Design**: Mobile-first interface accessible from any device
+- **🔄 Notifications**: Real-time notifications via Laravel Reverb for critical events
 - **☁️ Cloud-Native**: Docker-ready with S3-compatible storage (MinIO) and horizontal scalability
 
 ---
@@ -82,16 +86,25 @@
 - **Revenue Analytics**: Real-time financial dashboards and reports
 
 ### 👥 User Management
-- **Role-Based Access Control (RBAC)**: 7 distinct roles with granular permissions
-- **Multi-Factor Authentication (MFA)**: TOTP-based 2FA for enhanced security
+- **Role-Based Access Control (RBAC)**: 7 distinct roles with granular permissions.
 - **Activity Logging**: Comprehensive audit trail of all user actions
 - **Shift Management**: Staff scheduling and attendance tracking
 
 ### 📊 Analytics & Reporting
-- **Real-time Dashboards**: Role-specific KPIs and metrics
+- **Real-time Dashboards**: Role-specific KPIs and metrics for admins, doctors, nurses, lab technicians, and pharmacists
 - **Custom Reports**: Flexible report builder with export options
 - **Performance Monitoring**: Prometheus metrics and Grafana visualizations
 - **Log Aggregation**: Centralized logging with Loki and Promtail
+
+### 🔔 Notification System
+- **Real-time Alerts**: Push notifications via Laravel Reverb
+- **Email Notifications**: Automated emails for appointments, lab results, etc.
+- **Notification Types**:
+  - New lab orders for lab technicians
+  - New prescriptions for pharmacists  
+  - New patient admissions for nurses
+  - Appointment reminders for doctors
+  - Lab results ready for doctors
 
 ### 🌐 Multi-Tenancy Features
 - **Tenant Isolation**: Complete data separation using tenant_id scoping in a single database
@@ -145,7 +158,7 @@
 |------------|---------|
 | **Spatie CipherSweet** | Field-level encryption for sensitive data |
 | **Laravel Sanctum** | API authentication |
-| **TOTP** | Two-factor authentication |
+
 
 ---
 
@@ -197,33 +210,33 @@ SanaGo uses a **single-database multi-tenant** approach with tenant_id scoping f
 
 ```
 User Request (hospital-a.sanago.com)
-         │
-         ▼
+          │
+          ▼
 ┌─────────────────────┐
 │  Caddy/FrankenPHP   │ ◄── Handles SSL, HTTP/2, routing
 └─────────────────────┘
-         │
-         ▼
+          │
+          ▼
 ┌─────────────────────┐
 │  Laravel Octane     │ ◄── High-performance PHP server
 └─────────────────────┘
-         │
-         ▼
+          │
+          ▼
 ┌─────────────────────┐
 │  Tenancy Middleware │ ◄── Identifies tenant from subdomain
 └─────────────────────┘
-         │
-         ▼
+          │
+          ▼
 ┌─────────────────────┐
 │  Set Tenant Context │ ◄── Sets tenant_id for query scoping
 └─────────────────────┘
-         │
-         ▼
+          │
+          ▼
 ┌─────────────────────┐
 │  Livewire Component │ ◄── Renders UI and handles interactions
 └─────────────────────┘
-         │
-         ▼
+          │
+          ▼
 ┌─────────────────────┐
 │  Response (HTML)    │ ◄── Sent back to user
 └─────────────────────┘
@@ -235,21 +248,21 @@ User Request (hospital-a.sanago.com)
 ┌──────────────┐
 │   Browser    │
 └──────┬───────┘
-       │
-       │ HTTP Request
-       ▼
+        │
+        │ HTTP Request
+        ▼
 ┌──────────────┐
 │  Livewire    │ ◄── Reactive components
 └──────┬───────┘
-       │
-       │ Eloquent ORM
-       ▼
+        │
+        │ Eloquent ORM
+        ▼
 ┌──────────────┐
 │  PostgreSQL  │ ◄── Tenant-specific database
 └──────┬───────┘
-       │
-       │ File Storage
-       ▼
+        │
+        │ File Storage
+        ▼
 ┌──────────────┐
 │    MinIO     │ ◄── S3-compatible object storage
 └──────────────┘
@@ -264,10 +277,24 @@ SanaGo-v1/
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/       # Traditional controllers (minimal use)
+│   │   │   ├── Api/           # API endpoints for mobile/integration
+│   │   │   │   ├── Auth/      # Authentication endpoints
+│   │   │   │   ├── Tenants/   # Tenant-specific API endpoints
+│   │   │   │   │   ├── Admin/
+│   │   │   │   │   ├── Doctor/
+│   │   │   │   │   ├── Nurse/
+│   │   │   │   │   ├── Pharmacist/
+│   │   │   │   │   ├── LabTechnician/
+│   │   │   │   │   └── Receptionist/
+│   │   │   └── Auth/          # Authentication controllers
 │   │   └── Middleware/        # Custom middleware
+│   │       ├── InitializeTenancyByAuthenticatedUser.php
+│   │       ├── RoleMiddleware.php
+│   │       └── SetLocale.php
 │   ├── Livewire/              # 🎯 Core application logic
 │   │   ├── Auth/              # Authentication components
 │   │   ├── LandLord/          # Central tenant management
+│   │   │   ├── Components/    # Shared UI components
 │   │   ├── Tenants/           # Tenant-specific components
 │   │   │   ├── Admin/         # Hospital administrator features
 │   │   │   ├── Doctor/        # Doctor-specific features
@@ -285,8 +312,17 @@ SanaGo-v1/
 │   │   ├── LabRequest.php
 │   │   ├── Medication.php
 │   │   ├── Tenant.php
+│   │   ├── Subscription.php
 │   │   └── ...
 │   ├── Services/              # Business logic services
+│   │   ├── Dashboard Services/ # Role-specific dashboard logic
+│   │   └── NotificationService.php
+│   ├── Events/                # Event listeners
+│   ├── Notifications/         # Notification classes
+│   ├── Mail/                  # Email templates
+│   ├── Console/               # Artisan commands
+│   │   └── Commands/
+│   │       └── UpdateTenantUsage.php
 │   ├── Traits/                # Reusable traits
 │   └── Providers/             # Service providers
 ├── database/
@@ -325,6 +361,14 @@ SanaGo-v1/
 │   ├── prometheus.yml
 │   ├── grafana/
 │   └── loki-config.yml
+├── docs/                      # Project documentation
+│   ├── TENANT_USAGE_COMMAND.md
+│   ├── REVENUE_TRACKING_UPDATE.md
+│   └── SETTINGS_OPTIMIZATION.md
+├── docs/                      # Project documentation
+│   ├── TENANT_USAGE_COMMAND.md
+│   ├── REVENUE_TRACKING_UPDATE.md
+│   └── SETTINGS_OPTIMIZATION.md
 ├── .github/
 │   └── workflows/             # CI/CD pipelines
 │       └── docker-publish.yml
@@ -341,49 +385,55 @@ SanaGo-v1/
 
 ### Prerequisites
 
-- **PHP** 8.2 or higher
-- **Composer** 2.x
-- **Node.js** 18+ and NPM
-- **PostgreSQL** 15+
-- **Redis** 7+
 - **Docker** & Docker Compose (for containerized setup)
+- **PHP** 8.2 or higher (for local setup)
+- **Composer** 2.x (for local setup)
+- **Node.js** 18+ and NPM (for local setup)
+- **PostgreSQL** 15+ (for local setup)
+- **Redis** 7+ (for local setup)
 
 ### Option 1: Docker Setup (Recommended)
 
 ```bash
-# 1. Clone the private repository (requires authentication)
+# 1. Clone the repository
 git clone https://github.com/your-username/SanaGo-v1.git
 cd SanaGo-v1
 
-# Note: You'll need access to this private repository
-# Contact the repository owner for access
-
-# 2. Copy environment file
+# 2. Copy environment file and configure
 cp .env.example .env
+cp .env.dev .env.development
 
-# 3. Generate application key
-php artisan key:generate
+# 3. Build and start all services
+docker-compose up -d --build
 
-# 4. Start all services
-docker-compose up -d
+# 4. Wait for services to initialize (check status)
+docker-compose ps
 
-# 5. Run central migrations
+# 5. Run database migrations
 docker exec sanago-octane php artisan migrate
 
 # 6. Create your first tenant
 docker exec sanago-octane php artisan tenants:create hospital-a
 
-# 7. Run tenant migrations
+# 7. Run tenant-specific migrations
 docker exec sanago-octane php artisan tenants:migrate
 
-# 8. Access the application
-open http://localhost:8000
+# 8. Build frontend assets (if not already built)
+docker exec sanago-octane npm run build
+
+# 9. Access the application
+# Landlord (admin) interface: http://localhost:8000
+# Tenant interface: http://hospital-a.localhost:8000
+
+# Default credentials (after fresh install):
+# Email: admin@sanago.com
+# Password: password
 ```
 
-### Option 2: Local Setup
+### Option 2: Local Development Setup
 
 ```bash
-# 1. Clone the private repository and install dependencies
+# 1. Clone the repository and install dependencies
 git clone https://github.com/your-username/SanaGo-v1.git
 cd SanaGo-v1
 composer install
@@ -401,14 +451,19 @@ DB_DATABASE=sanago_central
 DB_USERNAME=your_user
 DB_PASSWORD=your_password
 
-# 4. Run migrations
+# 4. Start PostgreSQL and Redis services (using Docker or local install)
+# Using Docker:
+docker run -d --name sanago-postgres -e POSTGRES_USER=sanago -e POSTGRES_PASSWORD=secret -e POSTGRES_DB=sanago_central -p 5432:5432 postgres:15
+docker run -d --name sanago-redis -p 6379:6379 redis:alpine
+
+# 5. Run migrations
 php artisan migrate
 php artisan tenants:migrate
 
-# 5. Build assets
+# 6. Build assets
 npm run build
 
-# 6. Start development servers
+# 7. Start development servers
 php artisan octane:start --host=0.0.0.0 --port=8000
 # In another terminal:
 npm run dev
@@ -430,6 +485,196 @@ php artisan tenants:create hospital-name
 php artisan tenants:seed --tenants=hospital-name
 ```
 
+### Verifying Installation
+
+```bash
+# Check application health
+curl http://localhost:8000/up
+
+# Check if all services are running (Docker)
+docker-compose ps
+
+# View application logs
+docker-compose logs -f
+
+# Check database connection
+php artisan db:connection
+```
+
+---
+
+## 🎯 Usage Examples
+
+### 1. API Usage Examples
+
+#### Authentication
+
+```javascript
+// Login
+fetch('/api/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: 'admin@sanago.com',
+    password: 'password'
+  })
+})
+.then(response => response.json())
+.then(data => {
+  // Save token for subsequent requests
+  localStorage.setItem('token', data.access_token);
+});
+```
+
+#### Get User Notifications
+
+```javascript
+// Get unread notifications count
+fetch('/api/notifications/unread-count', {
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  }
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Unread notifications:', data.count);
+});
+
+// Get all notifications
+fetch('/api/notifications?per_page=10', {
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  }
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Notifications:', data.data);
+});
+```
+
+#### Doctor Dashboard
+
+```javascript
+// Get doctor's dashboard data
+fetch('/api/doctor/dashboard', {
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  }
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Dashboard:', data.data);
+  // Display appointments, patients, etc.
+});
+
+// Start an appointment
+fetch('/api/doctor/appointments/1/start', {
+  method: 'PATCH',
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  }
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Appointment started');
+});
+```
+
+#### Lab Technician Operations
+
+```javascript
+// Get pending lab requests
+fetch('/api/lab-technician/lab-requests', {
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  }
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Pending requests:', data.data);
+});
+
+// Submit lab results
+fetch('/api/lab-technician/lab-requests/1/results', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    results: {
+      hemoglobin: '14.5 g/dL',
+      white_blood_cells: '7.2 x10^9/L',
+      platelets: '250 x10^9/L'
+    },
+    notes: 'All values within normal range'
+  })
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Results submitted');
+});
+```
+
+#### Pharmacist Operations
+
+```javascript
+// Get medication inventory
+fetch('/api/pharmacist/inventory', {
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  }
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Inventory:', data.data);
+});
+
+// Dispense medication
+fetch('/api/pharmacist/prescriptions/1/dispense', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    items: [
+      { id: 1, quantity: 30 }
+    ]
+  })
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Medication dispensed');
+});
+```
+
+### 2. Livewire Component Usage
+
+#### Creating a Patient (Receptionist)
+
+1. Navigate to `/receptionist/patients`
+2. Click "Add New Patient"
+3. Fill out the patient information form
+4. Click "Save"
+
+#### Scheduling an Appointment
+
+1. Navigate to `/receptionist/appointments`
+2. Click "Schedule Appointment"
+3. Select patient, doctor, and date/time
+4. Add appointment notes
+5. Click "Create Appointment"
+
+#### Managing Lab Tests (Lab Technician)
+
+1. Navigate to `/lab-technician/test-requests`
+2. Select a pending lab request
+3. Click "Start Test"
+4. Enter test results
+5. Attach any required files (e.g., images, PDFs)
+6. Click "Submit Results"
+
 ---
 
 ## ⚙️ Configuration
@@ -444,7 +689,7 @@ APP_NAME=SanaGo
 APP_ENV=production
 APP_KEY=base64:...
 APP_DEBUG=false
-APP_URL=https://sanago.com
+APP_URL=https://sanago.site
 
 # Database (Central)
 DB_CONNECTION=pgsql
@@ -487,6 +732,207 @@ Edit `config/tenancy.php` to customize:
 - **Tenant identification**: Subdomain-based tenant resolution
 - **Global scopes**: Automatic tenant_id filtering for all queries
 - **Storage**: S3 disk configuration for tenant file separation
+
+---
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+#### 1. Docker Container Issues
+
+```bash
+# Check container status
+docker compose ps
+
+# View container logs
+docker compose logs -f [service-name]  # e.g., docker-compose logs -f frankenphp
+
+# Restart services
+docker compose restart
+
+# Re-build containers (if Dockerfile or dependencies changed)
+docker compose up -d 
+```
+
+#### 2. Database Connection Errors
+
+**Symptom**: "Could not connect to database" or similar errors
+
+```bash
+# Check if PostgreSQL container is running
+docker exec -it [postgres-container-name] pg_isready
+
+# Verify database credentials in .env file
+cat .env | grep DB_
+
+# Check if migrations were run successfully
+php artisan migrate:status
+
+# Re-run migrations (backup data first!)
+php artisan migrate:refresh --seed
+```
+
+#### 3. Frontend Assets Not Loading
+
+**Symptom**: Missing CSS/JS files or broken UI
+
+```bash
+# Re-build frontend assets
+npm run build
+
+# Check asset compilation errors
+npm run build -- --verbose
+
+# Clear Laravel cache
+php artisan cache:clear
+php artisan view:clear
+```
+
+#### 4. Notification System Not Working
+
+**Symptom**: Notifications not being received or real-time updates not showing
+
+```bash
+# Check Laravel Reverb configuration
+cat config/broadcasting.php
+
+# Verify Redis connection
+redis-cli ping
+
+# Check queue worker status
+php artisan queue:work --tries=3
+
+# Test notification sending
+php artisan tinker
+>>> $user = App\Models\User::first()
+>>> $user->notify(new App\Notifications\AppointmentReminderNotification($appointment))
+```
+
+#### 5. Tenant Isolation Issues
+
+**Symptom**: Data visible across tenants
+
+```bash
+# Check if tenant context is being set
+php artisan tinker
+>>> tenancy()->initialized
+>>> tenant()->id
+
+# Verify global scopes are applied
+php artisan tinker
+>>> App\Models\Patient::withoutGlobalScopes()->get()->pluck('tenant_id')
+
+# Check domain resolution
+php artisan tenants:list
+```
+
+#### 6. Performance Issues
+
+**Symptom**: Slow response times or timeouts
+
+```bash
+# Check PHP-FPM/octane worker status
+ps aux | grep php
+
+# Monitor Redis cache hit rate
+redis-cli info stats
+
+# Check database query performance
+php artisan debugbar:open
+
+# Optimize application
+php artisan optimize
+php artisan route:cache
+php artisan view:cache
+```
+
+#### 7. Email Notifications Not Sending
+
+**Symptom**: Emails not being received
+
+```bash
+# Check Mailpit (if using Docker)
+open http://localhost:8025
+
+# Verify mail configuration
+cat .env | grep MAIL_
+
+# Test email sending
+php artisan tinker
+>>> Mail::raw('Test email', function($message) {
+...     $message->to('test@example.com')
+...             ->subject('Test from SanaGo');
+... });
+```
+
+### Debugging Tools
+
+#### 1. Laravel Debugbar
+
+```bash
+# Enable debug mode in .env
+APP_DEBUG=true
+
+# Access debugbar in browser (bottom of page)
+# Check queries, routes, views, etc.
+```
+
+#### 2. Telescope (Production Debugging)
+
+```bash
+# Install Telescope (if not already installed)
+composer require laravel/telescope --dev
+php artisan telescope:install
+php artisan migrate
+
+# Access Telescope at /telescope
+```
+
+#### 3. Log Files
+
+```bash
+# View Laravel logs
+tail -f storage/logs/laravel.log
+
+# View server logs (Docker)
+docker-compose logs -f frankenphp
+
+# View PostgreSQL logs
+docker exec -it [postgres-container] cat /var/log/postgresql/postgresql*.log
+```
+
+### Maintenance and Backups
+
+```bash
+# Create database backup
+php artisan db:dump --database=sanago_central --path=./backups
+
+# Restore from backup
+php artisan db:restore --path=./backups/sanago_central.sql
+
+# Clear all caches
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+
+# Optimize database
+php artisan optimize:clear
+php artisan db:optimize
+
+# Calculate tenant storage usage
+php artisan tenants:calculate-usage
+
+# Calculate usage without cleaning temp files
+php artisan tenants:calculate-usage --skip-cleanup
+
+# Calculate usage for specific tenant
+php artisan tenants:calculate-usage --tenant=4cfc153c-ab76-47b7-b051-84f86dd5d0f3
+
+# Force cleanup in non-production environment
+php artisan tenants:calculate-usage --force
+```
 
 ---
 
@@ -654,6 +1100,111 @@ GET /api/lab-results?patient_id=1
 # Health check
 GET /api/health
 ```
+
+### Sync API (RxDB/Dexie Optimized)
+
+The Sync API provides optimized data synchronization for offline-capable applications using RxDB and Dexie storage. It supports role-based data filtering and incremental sync with checkpointing.
+
+#### Pull Data
+
+```javascript
+// Pull data for admin dashboard
+fetch('/api/sync/admin/pull', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + localStorage.getItem('sanago_token')
+  },
+  body: JSON.stringify({
+    checkpoint: {
+      updated_at: '2024-01-01 00:00:00',
+      id: 0
+    },
+    context: 'dashboard' // Optional: dashboard | staff | settings
+  })
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Sync data:', data);
+});
+```
+
+#### Push Data
+
+```javascript
+// Push local changes to server
+fetch('/api/sync/admin/push', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + localStorage.getItem('sanago_token')
+  },
+  body: JSON.stringify({
+    collection: 'users',
+    changes: [
+      {
+        id: '1',
+        name: 'John Doe',
+        email: 'john@example.com',
+        role: 'doctor',
+        updated_at: '2024-01-15 10:30:00'
+      }
+    ]
+  })
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Push result:', data);
+});
+```
+
+#### Role-Specific Sync Endpoints
+
+| Role | Pull Endpoint | Push Endpoint | Allowed Collections |
+|------|---------------|---------------|---------------------|
+| Admin | `/api/sync/admin/pull` | `/api/sync/admin/push` | users, shifts, departments, wards, beds, supplies |
+| Doctor | `/api/sync/doctor/pull` | `/api/sync/doctor/push` | Read-only |
+| Nurse | `/api/sync/nurse/pull` | `/api/sync/nurse/push` | Read-only |
+| Receptionist | `/api/sync/receptionist/pull` | `/api/sync/receptionist/push` | patients |
+| Lab Technician | `/api/sync/lab-technician/pull` | `/api/sync/lab-technician/push` | lab_test_definitions |
+| Pharmacist | `/api/sync/pharmacist/pull` | `/api/sync/pharmacist/push` | medications |
+
+#### Pull Contexts
+
+Each role supports different contexts for targeted data synchronization:
+
+**Admin Contexts:**
+- `dashboard`: Get dashboard stats, users, shifts, departments
+- `staff`: Get users, shifts, departments
+- `settings`: Get departments, wards, bed_types, beds, supplies
+
+**Doctor Contexts:**
+- `dashboard`: Get dashboard stats, appointments, patients, medications
+- `consultation`: Get medications, lab definitions, lab technicians
+- `my_patients`: Get patient list and medical records
+- `schedule`: Get today's and week's appointments
+
+**Nurse Contexts:**
+- `dashboard`: Get dashboard stats, admitted patients, bed occupancy
+- `rounds`: Get admitted patients, vitals, supplies
+- `bed_map`: Get bed occupancy by ward
+- `supply_usage`: Get recent supply usages
+
+**Receptionist Contexts:**
+- `dashboard`: Get dashboard stats, recent patients, appointments
+- `patient_search`: Get patient list
+- `bed_management`: Get beds, wards, active admissions
+- `appointment_booking`: Get patients, doctors, today's appointments
+
+**Pharmacist Contexts:**
+- `dashboard`: Get dashboard stats, medications, pending prescriptions
+- `dispensing`: Get pending prescriptions, medications, patients
+- `inventory`: Get medications, low stock alerts, supplies
+
+**Lab Technician Contexts:**
+- `dashboard`: Get dashboard stats, pending requests, test definitions
+- `processing`: Get assigned test requests and equipment
+- `definitions`: Get test definitions
 
 Full API documentation available at `/api/documentation` (when enabled).
 
@@ -843,7 +1394,7 @@ Unauthorized copying, distribution, or use of this software is strictly prohibit
 
 For internal team support:
 
-- **Issues**: [GitHub Issues](https://github.com/your-username/SanaGo-v1/issues) (Private repository)
+- **Issues**: [GitHub Issues](https://github.com/jesse457/SanaGo/issues) (Private repository)
 - **Team Discussions**: Contact project maintainers directly
 - **Documentation**: See `/docs` directory in this repository
 

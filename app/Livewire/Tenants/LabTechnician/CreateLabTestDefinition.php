@@ -2,9 +2,7 @@
 
 namespace App\Livewire\Tenants\LabTechnician;
 
-use App\Models\LabTestDefinition;
-use App\Traits\UserActivitiesTrait;
-use Illuminate\Support\Facades\Auth;
+use App\Services\LabService;
 use Illuminate\Support\Facades\Log;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
@@ -14,8 +12,6 @@ use Livewire\Component;
 #[Layout('components.layouts.lab-technician')]
 class CreateLabTestDefinition extends Component
 {
-    use UserActivitiesTrait;
-
     #[Rule('required|string|max:255')]
     public string $test_name;
 
@@ -29,37 +25,37 @@ class CreateLabTestDefinition extends Component
     public string $units;
 
     /**
-     * Saves a new test or updates an existing one.
+     * Saves a new test or updates an existing one using LabService.
      */
-    public function saveTest()
+    public function saveTest(LabService $labService)
     {
         // Validate all properties using the #[Rule] attributes
-        $this->validate();
+        $validatedData = $this->validate();
 
-        $data = [
-            'test_name' => $this->test_name,
-            'description' => $this->description,
-            'price' => $this->price,
-            'units' => $this->units,
-        ];
-        $labTech = Auth::user()->name;
         try {
-            // Create new record
-            $labTest = LabTestDefinition::create($data);
-            $this->logActivity(
-                'lab_test_updated',
-                "{$labTech} created labtest {$labTest->test_name} ",
-                [
-                    'lab_tech_id' => Auth::id(),
-                    'lab_test_id' => $labTest->id,
-                ]
-            );
-            LivewireAlert::title('Success')->text('Lab test definition created successfully!')->success()->show();
+            // Delegate logic to the service
+            $labService->createTestDefinition([
+                'test_name' => $this->test_name,
+                'description' => $this->description,
+                'price' => $this->price,
+                'units' => $this->units,
+            ]);
+
+            LivewireAlert::title('Success')
+                ->text('Lab test definition created successfully!')
+                ->success()
+                ->show();
 
             $this->resetForm();
+
         } catch (\Exception $e) {
-            LivewireAlert::title('Error')->text('Server Error please Contact us in Feedback if this error persist')->error()->show();
-            Log::error('Error while savig Lab test'.$e->getMessage());
+            // Log the error for debugging
+            Log::error('Error while saving Lab test: ' . $e->getMessage());
+
+            LivewireAlert::title('Error')
+                ->text('Server Error please Contact us in Feedback if this error persists')
+                ->error()
+                ->show();
         }
     }
 

@@ -15,8 +15,8 @@
             </div>
             <div class="flex flex-col transition-opacity duration-300"
                  :class="sidebarExpanded ? 'opacity-100' : 'opacity-0 w-0 hidden'">
-                <span class="font-bold text-gray-900 dark:text-white leading-none tracking-tight text-base">Pharmacy</span>
-                <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mt-0.5">Manager</span>
+                <span class="font-bold text-gray-900 dark:text-white leading-none tracking-tight text-base">{{ __('Pharmacy') }}</span>
+                <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mt-0.5">{{ __('Manager') }}</span>
             </div>
         </a>
         <button @click="toggleSidebar()" class="hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-emerald-600 rounded-full p-1 shadow-md z-50 transition-transform duration-300" :class="{ 'rotate-180': !sidebarExpanded }">
@@ -27,15 +27,16 @@
 
     <nav class="flex-1 overflow-y-auto overflow-x-hidden py-6 px-3 space-y-1 custom-scrollbar">
         <div class="px-3 mb-2 transition-all duration-300" :class="sidebarExpanded ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-mono">Main Menu</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-mono">{{ __('Main Menu') }}</p>
         </div>
 
         @php
             $menuItems = [
-                ['route' => 'pharmacist.dashboard', 'icon' => 'squares-2x2', 'label' => 'Dashboard'],
-                ['route' => 'pharmacist.medications', 'icon' => 'clipboard-document-check', 'label' => 'Dispense'],
-                ['route' => 'pharmacist.manage-drugs', 'icon' => 'rectangle-stack', 'label' => 'Inventory'],
-                ['route' => 'pharmacist.feedbacks', 'icon' => 'chat-bubble-left-right', 'label' => 'Feedback'],
+                ['route' => 'pharmacist.dashboard', 'icon' => 'squares-2x2', 'label' => __('Dashboard')],
+                ['route' => 'pharmacist.medications', 'icon' => 'clipboard-document-check', 'label' => __('Dispense')],
+                ['route' => 'pharmacist.manage-drugs', 'icon' => 'rectangle-stack', 'label' => __('Inventory')],
+                ['route' => 'pharmacist.sales-report', 'icon' => 'chart-bar', 'label' => __('Sales Report')],
+                ['route' => 'pharmacist.feedbacks', 'icon' => 'chat-bubble-left-right', 'label' => __('Feedback')],
             ];
         @endphp
 
@@ -67,7 +68,7 @@
             </div>
             <div class="flex-1 overflow-hidden" x-show="sidebarExpanded" x-transition.opacity>
                 <div class="truncate text-sm font-semibold text-gray-900 dark:text-white">{{ auth()->user()->name }}</div>
-                <div class="truncate text-xs text-gray-500">Pharmacist</div>
+                <div class="truncate text-xs text-gray-500">{{ __('Pharmacist') }}</div>
             </div>
             <form method="POST" action="{{ route('auth.logout') }}" x-show="sidebarExpanded">@csrf<button type="submit" class="text-gray-400 hover:text-red-600 transition-colors p-1"><x-heroicon-m-arrow-right-on-rectangle class="w-5 h-5" /></button></form>
         </div>

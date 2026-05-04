@@ -14,13 +14,21 @@ class Bed extends Model
         'ward_id',
         'tenant_id',
         'bed_type_id',
-        'bed_number',
+        'bed_number', // e.g., "A-101"
         'is_occupied',
     ];
 
     protected $casts = [
         'is_occupied' => 'boolean',
     ];
+
+    /**
+     * Scope a query to only include available beds.
+     */
+    public function scopeAvailable($query)
+    {
+        return $query->where('is_occupied', false);
+    }
 
     public function ward()
     {

@@ -3,12 +3,11 @@
 namespace App\Notifications;
 
 use App\Models\LabResult;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Support\Facades\Cache;
 
 class LabResultNotification extends Notification implements ShouldQueue
 {
@@ -39,7 +38,7 @@ class LabResultNotification extends Notification implements ShouldQueue
         // Ensure this matches the channel name in your Frontend Echo listener
         // Channel: private-App.Models.User.{id}
         return [
-            new PrivateChannel('App.Models.User.' . $this->labResult->doctor_id),
+            new PrivateChannel('App.Models.User.'.$this->labResult->doctor_id),
         ];
     }
 
@@ -70,13 +69,13 @@ class LabResultNotification extends Notification implements ShouldQueue
     {
         return [
             'id' => $this->id,
-            'message' => 'Lab result completed for ' . ($this->labResult->labRequest->patient->first_name ?? 'Patient'),
+            'message' => 'Lab result completed for '.($this->labResult->labRequest->patient->first_name ?? 'Patient'),
             'lab_result_id' => $this->labResult->id,
-            'patient_name' => ($this->labResult->labRequest->patient->first_name ?? '') . ' ' . ($this->labResult->labRequest->patient->last_name ?? ''),
+            'patient_name' => ($this->labResult->labRequest->patient->first_name ?? '').' '.($this->labResult->labRequest->patient->last_name ?? ''),
             'test_name' => $this->labResult->labRequest->testDefinition->test_name ?? 'Unknown Test',
             'urgency' => $this->labResult->labRequest->urgency_level ?? 'normal',
             'status' => $this->labResult->status,
-            'type' => 'lab_result'
+            'type' => 'lab_result',
         ];
     }
 }

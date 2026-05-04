@@ -49,7 +49,7 @@ class NewPrescriptionEvent implements ShouldBroadcast
 
         return [
             'id' => $this->prescription->id,
-            'patient_name' => optional($this->prescription->patient)->first_name . ' ' . optional($this->prescription->patient)->last_name,
+            'patient_name' => optional($this->prescription->patient)->first_name.' '.optional($this->prescription->patient)->last_name,
             'doctor_name' => optional($this->prescription->doctor)->name,
             'message' => 'New Prescription Order',
             'created_at' => $this->prescription->created_at->toIso8601String(),

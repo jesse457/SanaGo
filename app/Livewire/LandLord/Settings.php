@@ -4,7 +4,8 @@ namespace App\Livewire\LandLord;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
-use Livewire\Attributes\Layout; // Required for Logo Upload
+use Illuminate\Validation\Rule;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -13,86 +14,145 @@ class Settings extends Component
 {
     use WithFileUploads;
 
-    // --- Tab: General & Branding ---
+    // =========================================================================
+    // 1. General & Branding
+    // =========================================================================
     public $platformName = 'MediFlow SaaS';
 
     public $supportEmail = 'support@mediflow.com';
 
-    public $globalAnnouncement = '';
-
     public $logo; // Temporary file upload
 
-    public $currentLogoUrl; // For displaying existing logo
+    public $currentLogoUrl;
 
-    // --- Tab: Localization ---
+    // =========================================================================
+    // 2. Billing & Gateways (NEW)
+    // =========================================================================
+    public bool $stripeEnabled = false;
+
+    public $stripeKey = '';
+
+    public $stripeSecret = '';
+
+    public bool $paypalEnabled = false;
+
+    // =========================================================================
+    // 3. Tenant Defaults (NEW)
+    // =========================================================================
+    public int $trialDays = 14;
+
+    public string $dbConnection = 'mysql';
+
+    // =========================================================================
+    // 4. Localization
+    // =========================================================================
     public $timezone = 'Africa/Douala';
 
     public $currency = 'XAF';
 
     public $dateFormat = 'Y-m-d';
 
-    // --- Tab: Security ---
-    public $enforce2fa = false;
+    // =========================================================================
+    // 5. Security & Access
+    // =========================================================================
+    public bool $enforce2fa = false;
 
-    public $sessionTimeout = 120; // Minutes
+    public int $sessionTimeout = 120; // Minutes
 
-    public $passwordMinLength = 8;
+    public int $passwordMinLength = 8;
 
-    // --- Tab: Notifications ---
-    public $notifyNewTenant = true;
+    // =========================================================================
+    // 6. Notifications
+    // =========================================================================
+    public bool $notifyNewTenant = true;
 
-    public $notifyTicketCreated = true;
+    public bool $notifyTicketCreated = true;
 
-    public $notifyCriticalErrors = true;
+    public bool $notifyCriticalErrors = true;
 
-    // --- Tab: Maintenance ---
-    public $maintenanceMode = false;
+    // =========================================================================
+    // 7. Maintenance
+    // =========================================================================
+    public bool $maintenanceMode = false;
 
+    /**
+     * Load initial settings from Database/Env/Valuestore
+     */
     public function mount()
     {
-        // TODO: In a real app, load these from your Settings table
-        // Example:
-        // $settings = Setting::pluck('value', 'key');
-        // $this->platformName = $settings['platform_name'] ?? 'MediFlow SaaS';
-        // $this->maintenanceMode = app()->isDownForMaintenance();
+        // Simulation: In a real app, you would fetch these from a 'settings' table.
+        // $settings = Setting::all()->pluck('value', 'key');
+
+        // $this->platformName = $settings['app_name'] ?? config('app.name');
+        // $this->stripeEnabled = $settings['stripe_enabled'] === '1';
+        // $this->trialDays = intval($settings['default_trial_days'] ?? 14);
+
+        // For now, we use the default property values defined above.
+        $this->maintenanceMode = app()->isDownForMaintenance();
     }
 
+    /**
+     * Save all configuration tabs
+     */
     public function saveSettings()
     {
         $this->validate([
-            'platformName' => 'required|string|max:255',
+            // General
+            'platformName' => 'required|string|max:50',
             'supportEmail' => 'required|email',
             'logo' => 'nullable|image|max:2048', // 2MB Max
-            'sessionTimeout' => 'required|integer|min:5',
-            'passwordMinLength' => 'required|integer|min:8',
+
+            // Billing (Conditional Validation)
+            'stripeKey' => 'required_if:stripeEnabled,true',
+            'stripeSecret' => 'required_if:stripeEnabled,true',
+
+            // Defaults
+            'trialDays' => 'required|integer|min:0|max:365',
+            'dbConnection' => ['required', Rule::in(['mysql', 'pgsql', 'sqlite'])],
+
+            // Security
+            'sessionTimeout' => 'required|integer|min:5|max:1440', // Max 24 hours
+            'passwordMinLength' => 'required|integer|min:8|max:32',
         ]);
 
-        // 1. Handle Logo Upload
-        if ($this->logo) {
-            // Store file in public/storage/logos
-            $path = $this->logo->store('logos', 'public');
+        try {
+            // 1. Handle Logo Upload
+            if ($this->logo) {
+                $path = $this->logo->store('public/logos');
+                // Setting::updateOrCreate(['key' => 'logo_path'], ['value' => $path]);
+                $this->logo = null; // Reset input
+            }
 
-            // Save $path to database setting 'platform_logo'
-            // Setting::updateOrCreate(['key' => 'platform_logo'], ['value' => $path]);
+            // 2. Handle Maintenance Mode Logic
+            if ($this->maintenanceMode && ! app()->isDownForMaintenance()) {
+                // Artisan::call('down', ['--secret' => 'admin-access']);
+            } elseif (! $this->maintenanceMode && app()->isDownForMaintenance()) {
+                // Artisan::call('up');
+            }
 
-            // Reset the input to avoid re-uploading on next save
-            $this->logo = null;
+            // 3. Save to Database
+            // $settings = [
+            //     'platform_name' => $this->platformName,
+            //     'stripe_enabled' => $this->stripeEnabled,
+            //     'default_trial_days' => $this->trialDays,
+            //     // ... other fields
+            // ];
+
+            // foreach($settings as $key => $value) {
+            //     Setting::updateOrCreate(['key' => $key], ['value' => $value]);
+            // }
+
+            // 4. Update Environment (Optional/Advanced)
+            // You might want to update .env for things like STRIPE_KEY if not using DB settings config
+
+            Log::info('Landlord settings updated by user: '.auth()->id());
+
+            session()->flash('success', 'Platform settings updated successfully.');
+
+        } catch (\Exception $e) {
+            Log::error('Settings update failed: '.$e->getMessage());
+            session()->flash('error', 'Failed to save settings. Check logs.');
         }
-
-        // 2. Handle Maintenance Mode
-        // In Laravel, this usually creates a file in storage/framework
-        if ($this->maintenanceMode) {
-            // You might use Artisan::call('down') here, but be careful
-            // as it might lock you out if you haven't whitelisted your IP.
-            // Ideally, save a DB flag that your Middleware checks.
-        }
-
-        // 3. Save other settings to DB
-        // Setting::updateOrCreate(['key' => 'platform_name'], ['value' => $this->platformName]);
-        // Setting::updateOrCreate(['key' => 'currency'], ['value' => $this->currency]);
-        // ... save other fields
-
-        session()->flash('success', 'Platform settings updated successfully.');
     }
 
     /**
@@ -114,10 +174,10 @@ class Settings extends Component
     public function backupNow()
     {
         try {
-            // This assumes you have Spatie Backup or similar installed
+            // This assumes you have Spatie Backup installed
             // Artisan::call('backup:run --only-db');
 
-            // Simulating a delay for the UI loading state
+            // Simulate delay
             sleep(1);
 
             Log::info('Manual backup triggered by Landlord.');

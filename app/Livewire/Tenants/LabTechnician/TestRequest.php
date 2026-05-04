@@ -3,7 +3,7 @@
 namespace App\Livewire\Tenants\LabTechnician;
 
 use App\Models\LabRequest;
-use App\Traits\UserActivitiesTrait;
+use App\Services\LabService;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -12,83 +12,73 @@ use Livewire\WithPagination;
 #[Layout('components.layouts.lab-technician')]
 class TestRequest extends Component
 {
-    use UserActivitiesTrait, WithPagination;
+    use WithPagination;
 
-    public $search = '';
+    public string $search = '';
 
-    public $statusFilter = '';
+    public string $statusFilter = '';
 
-    // Reset paging when search changes
+    /**
+     * Reset pagination when search term is updated.
+     */
     public function updatingSearch(): void
     {
         $this->resetPage();
     }
 
-    // Reset paging when status filter changes
+    /**
+     * Reset pagination when status filter is updated.
+     */
     public function updatingStatusFilter(): void
     {
         $this->resetPage();
     }
 
-    public function updateStatus($id): void
+    /**
+     * Transition a request to 'In Progress' using LabService.
+     */
+    public function updateStatus(int $id, LabService $service): void
     {
         $labRequest = LabRequest::find($id);
 
-        if (! $labRequest) {
-            LivewireAlert::title('Error')->error()->text('Lab request not found.')->show();
-
+        // Basic validation: ensure request exists and isn't already started/completed
+        if (!$labRequest || $labRequest->status !== 'Pending') {
             return;
         }
 
-        if ($labRequest->status === 'In Progress') {
-            LivewireAlert::title('Info')->info()->text('Test is already in progress.')->show();
+        try {
+            // Service handles DB transaction, status update, and activity logging
+            $service->startRequest($labRequest);
 
-            return;
+            LivewireAlert::title('Success')
+                ->text('Test is now In Progress.')
+                ->success()
+                ->show();
+
+        } catch (\Exception $e) {
+            LivewireAlert::title('Error')
+                ->text('Could not start test request.')
+                ->error()
+                ->show();
         }
-
-        $labRequest->update([
-            'status' => 'In_Progress',
-        ]);
-        $this->logActivity(
-            'Status Updated',
-            'Lab request status changed to In_Progress',
-            ['lab_request_id' => $labRequest->id, 'new_status' => 'In_Progress']
-        );
-        LivewireAlert::title('Success')->success()->text('Test request is now In Progress.')->show();
-
-        // Optionally re-query / refresh the component view
-        $this->resetPage();
     }
 
-    public function render()
+    /**
+     * Render the list using the centralized query logic in LabService.
+     */
+    public function render(LabService $labService)
     {
-        $requests = LabRequest::query()->with(['patient', 'testDefinition'])
-            ->when($this->search, function ($query) {
-                $terms = explode(' ', $this->search);
+        // Define filters for the service
+        $filters = [
+            'search' => $this->search,
+            'status' => $this->statusFilter,
+        ];
 
-                $query->whereHas('patient', function ($patientQuery) use ($terms) {
-                    if (count($terms) === 2) {
-                        // Exact first + last name search (most efficient)
-                        $patientQuery->whereBlind('first_name', 'first_name_index', $terms[0])
-                            ->whereBlind('last_name', 'last_name_index', $terms[1]);
-                    } else {
-                        // Single term or multiple fragments: match against indexed fields
-                        foreach ($terms as $term) {
-                            $patientQuery->whereBlind('first_name', 'first_name_index', $term)
-                                ->orWhereBlind('last_name', 'last_name_index', $term)
-                                ->orWhere('patient_uid', 'ILIKE', "%{$term}%");
-                        }
-                    }
-                });
-            })
-            ->when($this->statusFilter, function ($query) {
-                $query->where('status', $this->statusFilter);
-            })
-            ->orderBy('request_date', 'desc')
-            ->paginate(10);
+        // Fetch query from service and apply pagination
+        $requests = $labService->getLabRequestsQuery($filters)->paginate(10);
 
         return view('livewire.tenants.lab-technician.test-request', [
-            'requests' => $requests,
+            'requests' => $requests
         ]);
     }
 }

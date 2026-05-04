@@ -12,7 +12,9 @@ use Livewire\Component;
 class ViewCareReports extends Component
 {
     public $patient_id = '';
+
     public Collection $patients;
+
     public $reports = [];
 
     public function mount()

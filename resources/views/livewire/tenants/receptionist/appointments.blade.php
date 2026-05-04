@@ -14,22 +14,22 @@
                                 <a href="{{ route('receptionist.dashboard') }}" wire:navigate
                                     class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center">
                                     <x-heroicon-s-home class="w-3 h-3 mr-1.5" />
-                                   Home
+                                   {{ __('Home') }}
                                 </a>
                             </li>
                             <li>
                                 <div class="flex items-center">
                                     <x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300 mx-1" />
-                                    <span class="text-gray-900 dark:text-white">Appointments</span>
+                                    <span class="text-gray-900 dark:text-white">{{ __('Appointments') }}</span>
                                 </div>
                             </li>
                         </ol>
                     </nav>
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-7">
-                        Manage Appointments
+                        {{ __('Manage Appointments') }}
                     </h2>
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Monitor patient flow, manage schedules, and track consultation status.
+                        {{ __('Monitor patient flow, manage schedules, and track consultation status.') }}
                     </p>
                 </div>
 
@@ -41,7 +41,7 @@
                             class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000">
                         </div>
                         <x-heroicon-o-plus class="w-5 h-5" />
-                        <span>Book Appointment</span>
+                        <span>{{ __('Book Appointment') }}</span>
                     </a>
                 </div>
             </div>
@@ -58,13 +58,13 @@
                         </div>
                         <input type="text" wire:model.live.debounce.400ms="patientSearch"
                             class="block w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg leading-5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition duration-150 ease-in-out"
-                            placeholder="Search Patient (Name, ID)...">
+                            placeholder="{{ __('Search Patient (Name, ID)...') }}">
                     </div>
 
                     {{-- Toggle Filters Button (Mobile/Desktop) --}}
                     <button @click="showFilters = !showFilters"
                         class="flex md:hidden w-full items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200">
-                        <x-heroicon-o-funnel class="w-4 h-4" /> Filters
+                        <x-heroicon-o-funnel class="w-4 h-4" /> {{ __('Filters') }}
                     </button>
 
                     {{-- Filter Inputs (Desktop: Always Visible / Mobile: Collapsible) --}}
@@ -76,7 +76,7 @@
                         {{-- Doctor --}}
                         <select wire:model.live="doctorFilter"
                             class="block w-full md:w-40 border border-gray-300 dark:border-gray-600 rounded-lg py-2 pl-3 pr-8 leading-5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            <option value="">All Doctors</option>
+                            <option value="">{{ __('All Doctors') }}</option>
                             @foreach ($doctors as $doctor)
                                 <option value="{{ $doctor->id }}">{{ $doctor->name }}</option>
                             @endforeach
@@ -85,12 +85,12 @@
                         {{-- Status --}}
                         <select wire:model.live="statusFilter"
                             class="block w-full md:w-40 border border-gray-300 dark:border-gray-600 rounded-lg py-2 pl-3 pr-8 leading-5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            <option value="">All Statuses</option>
-                            <option value="Scheduled">Scheduled</option>
-                            <option value="Waiting">Waiting</option>
-                            <option value="In Consultation">In Consultation</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Canceled">Canceled</option>
+                            <option value="">{{ __('All Statuses') }}</option>
+                            <option value="Scheduled">{{ __('Scheduled') }}</option>
+                            <option value="Waiting">{{ __('Waiting') }}</option>
+                            <option value="In Consultation">{{ __('In Consultation') }}</option>
+                            <option value="Completed">{{ __('Completed') }}</option>
+                            <option value="Canceled">{{ __('Canceled') }}</option>
                         </select>
                     </div>
                 </div>
@@ -100,7 +100,7 @@
                     <div class="flex items-center justify-end mt-3">
                         <button wire:click="resetFilters"
                             class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium hover:underline transition-colors flex items-center gap-1">
-                            <x-heroicon-m-trash class="w-3 h-3" /> Clear Filters
+                            <x-heroicon-m-trash class="w-3 h-3" /> {{ __('Clear Filters') }}
                         </button>
                     </div>
                 @endif
@@ -116,7 +116,7 @@
                 <div
                     class="flex items-center gap-3 px-6 py-3 bg-white dark:bg-gray-800 rounded-full shadow-xl border border-slate-100 dark:border-gray-700 animate-bounce">
                     <x-heroicon-o-arrow-path class="animate-spin h-5 w-5 text-blue-600" />
-                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Updating...</span>
+                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ __('Updating...') }}</span>
                 </div>
             </div>
 
@@ -127,12 +127,12 @@
                     <table class="min-w-full divide-y divide-slate-100 dark:divide-gray-800">
                         <thead class="bg-slate-50 dark:bg-gray-950">
                             <tr>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Patient</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Doctor</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Date & Time</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                                <th scope="col" class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Queue</th>
-                                <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{{ __('Patient') }}</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{{ __('Doctor') }}</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{{ __('Date & Time') }}</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{{ __('Status') }}</th>
+                                <th scope="col" class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">{{ __('Queue') }}</th>
+                                <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">{{ __('Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
@@ -205,18 +205,18 @@
                                         <div class="flex items-center justify-end gap-2">
                                             @if ($status === 'scheduled')
                                                 <button wire:click="confirmAppointment({{ $appointment->id }})"
-                                                    class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors" title="Check In">
+                                                    class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors" title="{{ __('Check In') }}">
                                                     <x-heroicon-s-check class="w-4 h-4" />
                                                 </button>
                                             @endif
 
                                             @if (in_array($status, ['scheduled', 'waiting']))
                                                 <button wire:click="openRescheduleModal({{ $appointment->id }})"
-                                                    class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" title="Reschedule">
+                                                    class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" title="{{ __('Reschedule') }}">
                                                     <x-heroicon-s-calendar-days class="w-4 h-4" />
                                                 </button>
                                                 <button wire:click="confirmCancelAppointment({{ $appointment->id }})"
-                                                    class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Cancel">
+                                                    class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="{{ __('Cancel') }}">
                                                     <x-heroicon-s-x-mark class="w-4 h-4" />
                                                 </button>
                                             @endif
@@ -224,7 +224,7 @@
                                             @if ($status === 'canceled')
                                                 <button wire:click="reinstateAppointment({{ $appointment->id }})"
                                                     class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800 transition-colors shadow-sm">
-                                                    <x-heroicon-s-arrow-uturn-left class="w-3 h-3" /> Restore
+                                                    <x-heroicon-s-arrow-uturn-left class="w-3 h-3" /> {{ __('Restore') }}
                                                 </button>
                                             @endif
 
@@ -240,9 +240,9 @@
                                         <div class="w-16 h-16 bg-slate-50 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-gray-700">
                                             <x-heroicon-o-calendar class="h-8 w-8 text-slate-400" />
                                         </div>
-                                        <h3 class="text-base font-bold text-slate-900 dark:text-white">No appointments found</h3>
+                                        <h3 class="text-base font-bold text-slate-900 dark:text-white">{{ __('No appointments found') }}</h3>
                                         <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                            Try adjusting your filters or search terms.
+                                            {{ __('Try adjusting your filters or search terms.') }}
                                         </p>
                                     </td>
                                 </tr>
@@ -287,11 +287,11 @@
 
                         <div class="grid grid-cols-2 gap-2 text-xs mb-3">
                             <div class="bg-slate-50 dark:bg-gray-800/50 p-2 rounded-lg">
-                                <span class="block text-slate-400 uppercase text-[10px] font-bold">Doctor</span>
+                                <span class="block text-slate-400 uppercase text-[10px] font-bold">{{ __('Doctor') }}</span>
                                 <span class="font-medium text-slate-700 dark:text-slate-300">{{ $appointment->doctor->name ?? '--' }}</span>
                             </div>
                             <div class="bg-slate-50 dark:bg-gray-800/50 p-2 rounded-lg">
-                                <span class="block text-slate-400 uppercase text-[10px] font-bold">Time</span>
+                                <span class="block text-slate-400 uppercase text-[10px] font-bold">{{ __('Time') }}</span>
                                 <span class="font-medium text-slate-700 dark:text-slate-300">
                                     {{ \Carbon\Carbon::parse($appointment->appointment_date)->format('M d') }},
                                     {{ \Carbon\Carbon::parse($appointment->appointment_time)->format('h:i A') }}
@@ -301,7 +301,7 @@
 
                         <div class="flex items-center justify-between border-t border-slate-100 dark:border-gray-800 pt-3">
                             <div class="text-xs font-bold text-slate-500">
-                                Queue: {{ $appointment->queue_position ?? '-' }}
+                                {{ __('Queue') }}: {{ $appointment->queue_position ?? '-' }}
                             </div>
                             <div class="flex gap-1">
                                 @if (strtolower($status) === 'scheduled')
@@ -328,7 +328,7 @@
                 @empty
                     <div class="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-slate-300 dark:border-gray-700">
                         <x-heroicon-o-calendar class="mx-auto h-12 w-12 text-slate-300" />
-                        <h3 class="mt-2 text-sm font-bold text-slate-900 dark:text-white">No appointments found</h3>
+                        <h3 class="mt-2 text-sm font-bold text-slate-900 dark:text-white">{{ __('No appointments found') }}</h3>
                     </div>
                 @endforelse
             </div>
@@ -375,7 +375,7 @@
                             {{-- Modal Header --}}
                             <div class="bg-white dark:bg-gray-900 px-6 py-4 border-b border-slate-100 dark:border-gray-800 flex items-center justify-between sticky top-0 z-10">
                                 <h3 class="text-lg font-bold leading-6 text-slate-900 dark:text-white">
-                                    Reschedule Appointment
+                                    {{ __('Reschedule Appointment') }}
                                 </h3>
                                 <button @click="open = false"
                                     class="rounded-lg bg-slate-50 dark:bg-gray-800 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400">
@@ -385,12 +385,12 @@
 
                             <div class="p-6 sm:p-8 space-y-6">
                                 <p class="text-sm text-slate-500 dark:text-slate-400">
-                                    Select a new date and time for the patient's appointment.
+                                    {{ __('Select a new date and time for the patient\'s appointment.') }}
                                 </p>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                     <div class="space-y-1.5">
-                                        <label for="rescheduleDate" class="block text-sm font-bold text-slate-700 dark:text-slate-300">New Date</label>
+                                        <label for="rescheduleDate" class="block text-sm font-bold text-slate-700 dark:text-slate-300">{{ __('New Date') }}</label>
                                         <div class="relative">
                                             <input type="date" id="rescheduleDate" wire:model.defer="rescheduleDate"
                                                 class="block w-full rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-800 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:text-white py-2.5" />
@@ -399,7 +399,7 @@
                                     </div>
 
                                     <div class="space-y-1.5">
-                                        <label for="rescheduleStart" class="block text-sm font-bold text-slate-700 dark:text-slate-300">New Time</label>
+                                        <label for="rescheduleStart" class="block text-sm font-bold text-slate-700 dark:text-slate-300">{{ __('New Time') }}</label>
                                         <div class="relative">
                                             <input type="time" id="rescheduleStart" wire:model.defer="rescheduleStart"
                                                 class="block w-full rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-800 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:text-white py-2.5" />
@@ -412,14 +412,14 @@
                             <div class="px-6 py-4 bg-slate-50 dark:bg-gray-900/50 flex flex-row-reverse gap-3 rounded-b-2xl border-t border-slate-100 dark:border-gray-800">
                                 <button type="button" wire:click="rescheduleAppointmentConfirm" wire:loading.attr="disabled"
                                     class="inline-flex w-full sm:w-auto justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:bg-blue-700 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all">
-                                    <span wire:loading.remove wire:target="rescheduleAppointmentConfirm">Confirm Change</span>
+                                    <span wire:loading.remove wire:target="rescheduleAppointmentConfirm">{{ __('Confirm Change') }}</span>
                                     <span wire:loading wire:target="rescheduleAppointmentConfirm" class="flex items-center gap-2">
-                                        <x-heroicon-o-arrow-path class="animate-spin h-4 w-4" /> Saving...
+                                        <x-heroicon-o-arrow-path class="animate-spin h-4 w-4" /> {{ __('Saving...') }}
                                     </span>
                                 </button>
                                 <button type="button" @click="open = false"
                                     class="inline-flex w-full sm:w-auto justify-center rounded-xl bg-white dark:bg-gray-800 px-5 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-gray-700 hover:bg-slate-50 dark:hover:bg-gray-700 transition-all">
-                                    Cancel
+                                    {{ __('Cancel') }}
                                 </button>
                             </div>
                         </div>

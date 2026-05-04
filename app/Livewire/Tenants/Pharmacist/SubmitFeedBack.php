@@ -51,7 +51,7 @@ class SubmitFeedBack extends Component
             // Step 5: Reset the form for a fresh submission.
             $this->reset(['subject', 'category', 'department', 'message']);
 
-            LivewireAlert::title(__('pharmacist.create_drugs_component.alert_success'))->success()->text(__('pharmacist.submit_feedback_page.feedback_submitted_successfully'))->show();
+            LivewireAlert::title(__('Success'))->success()->text(__('Feedback submitted successfully!'))->show();
 
             // 9. Redirect to the user management page.
             return redirect()->route('pharmacist.feedbacks');

@@ -2,16 +2,8 @@
 
 namespace App\Livewire\Tenants\Admin;
 
-use App\Mail\UserInvitationMail;
-use App\Mail\UserWelcomeMail; // [FIX] Imported the new Mailable
 use App\Models\Department;
-use App\Models\User;
 use App\Traits\UserActivitiesTrait;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -19,25 +11,34 @@ use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Password; // Required for token generation
 
 #[Layout('components.layouts.admin')]
 class CreateNewUser extends Component
 {
     use UserActivitiesTrait, WithFileUploads;
 
-    // --- Properties ---
     public $name;
+
     public $phone_number;
+
     public $address;
+
     public $gender;
+
     public $profile_picture;
+
     public $department_id;
+
     public $hire_date;
+
     public $role;
+
     public $is_active = true;
+
     public $email;
+
     public $generatedPassword;
+
     public $departments;
 
     protected function rules()
@@ -60,19 +61,16 @@ class CreateNewUser extends Component
 
     public function mount()
     {
-        // Load departments specific to this tenant
         $this->departments = Department::where('tenant_id', tenant('id'))->get(['id', 'name']);
         $this->generatePassword();
     }
 
     public function updated($propertyName)
     {
-        // Real-time validation for file uploads
         if ($propertyName === 'profile_picture') {
             try {
                 $this->validateOnly($propertyName);
             } catch (ValidationException $e) {
-                // Remove the failed file from temporary storage to save space
                 $this->profile_picture = null;
                 throw $e;
             }
@@ -84,63 +82,41 @@ class CreateNewUser extends Component
         $this->generatedPassword = Str::password(16, true, true, true, false);
     }
 
-    public function saveUser()
+    public function saveUser(\App\Services\UserService $userService)
     {
         $this->validate();
 
-        $storedPath = null;
-
         try {
-            // 1. Start Transaction
-            DB::transaction(function () use ($storedPath) {
+            $userService->createUser([
+                'name' => $this->name,
+                'email' => $this->email,
+                'phone_number' => $this->phone_number,
+                'address' => $this->address,
+                'gender' => $this->gender,
+                'department_id' => $this->department_id,
+                'hire_date' => $this->hire_date,
+                'role' => $this->role,
+                'is_active' => $this->is_active,
+            ], $this->profile_picture, tenant('id'));
 
-                // Create User
-                $user = User::create([
-                    'name' => $this->name,
-                    'email' => $this->email,
-                    'phone_number' => $this->phone_number,
-                    'address' => $this->address,
-                    'gender' => $this->gender,
-                    'profile_picture' => $storedPath,
-                    'department_id' => $this->department_id,
-                    'hire_date' => $this->hire_date,
-                    'role' => $this->role,
-                    'is_active' => $this->is_active,
-                    'password' => Hash::make(Str::random(32)),
-                ]);
-
-                // 2. Upload File (if exists)
-                if ($this->profile_picture) {
-                    $storedPath = $this->profile_picture->store('profile_pictures', 's3');
-                }
-                $token = Password::broker()->createToken($user);
-                // 3. Send Email
-                // [FIX] Queuing the modern email we created
-                Mail::to($user->email)->queue(new UserInvitationMail($user, $token));
-
-                // 4. Log Activity
-                $this->logActivity(
-                    'user_created',
-                    "admin created user {$user->name}",
-                    ['user_id' => $user->id]
-                );
-            });
-
-            // 5. Success Response
             LivewireAlert::title('Success')->success()->text('User created and credentials sent to email.')->show();
+
             return redirect()->route('admin.user-management');
+
         } catch (\Throwable $e) {
-            // [FIX] Cleanup orphaned S3 file if DB transaction fails
-            if ($storedPath) {
-                Storage::disk('s3')->delete($storedPath);
+            // Extract real error
+            $realError = $e;
+            if (str_contains($e->getMessage(), 'current transaction is aborted') && $e->getPrevious()) {
+                $realError = $e->getPrevious();
             }
 
-            Log::error('Error creating user.', [
-                'error' => $e->getMessage(),
-                'tenant_id' => tenant('id')
-            ]);
+            $uiMessage = $realError instanceof \Illuminate\Database\QueryException
+                ? ($realError->errorInfo[2] ?? $realError->getMessage())
+                : $realError->getMessage();
 
-            LivewireAlert::title('Error')->error()->text('Failed to create user. Please try again.')->show();
+            // Error is already logged in Service, just show alert
+            LivewireAlert::title('Error')->error()->text('Failed to create user: '.$uiMessage)->show();
+
             return null;
         }
     }

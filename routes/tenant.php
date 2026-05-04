@@ -3,86 +3,82 @@
 declare(strict_types=1);
 
 use App\Livewire\Auth\ForgotPassword;
+use App\Livewire\Auth\Login;
+use App\Livewire\Tenants\Admin\AdminFeedbackHistory;
+use App\Livewire\Tenants\Admin\AiAssistant;
+use App\Livewire\Tenants\Admin\CreateNewUser;
+use App\Livewire\Tenants\Admin\Index as AdminIndex;
+use App\Livewire\Tenants\Admin\Profile as AdminProfile;
+use App\Livewire\Tenants\Admin\RevenueDashboard;
+use App\Livewire\Tenants\Admin\SendAdminFeedback;
+// -- Auth Components --
+use App\Livewire\Tenants\Admin\Settings;
+use App\Livewire\Tenants\Admin\Shifts;
+// -- Admin Components --
+use App\Livewire\Tenants\Admin\UserActivities;
+use App\Livewire\Tenants\Admin\UserManagement;
+use App\Livewire\Tenants\Auth\TenantResetPassword;
+use App\Livewire\Tenants\Doctor\DoctorAppointment;
+use App\Livewire\Tenants\Doctor\DoctorLabRequest;
+use App\Livewire\Tenants\Doctor\Feedbacks as DoctorFeedbacks;
+use App\Livewire\Tenants\Doctor\Index as DoctorIndex;
+use App\Livewire\Tenants\Doctor\LabTestAndPrescription;
+use App\Livewire\Tenants\Doctor\MedicalExplainer;
+use App\Livewire\Tenants\Doctor\MedicalRecord;
+use App\Livewire\Tenants\Doctor\Patient;
+// -- Doctor Components --
+use App\Livewire\Tenants\Doctor\Profile as DoctorProfile;
+use App\Livewire\Tenants\Doctor\SendFeedback as DoctorSendFeedback;
+use App\Livewire\Tenants\Doctor\ViewPatientInfo;
+use App\Livewire\Tenants\LabTechnician\CreateLabTestDefinition;
+use App\Livewire\Tenants\LabTechnician\EnterResults;
+use App\Livewire\Tenants\LabTechnician\Feedbacks as LabTechnicianFeedbacks;
+use App\Livewire\Tenants\LabTechnician\Index as LabTechnicianIndex;
+use App\Livewire\Tenants\LabTechnician\LabResult;
+use App\Livewire\Tenants\LabTechnician\ManageLabTestDefinitions;
+use App\Livewire\Tenants\LabTechnician\Profile as LabTechnicianProfile;
+use App\Livewire\Tenants\LabTechnician\SendFeedback as LabTechnicianSendFeedback;
+// -- Receptionist Components --
+use App\Livewire\Tenants\LabTechnician\TestRequest;
+use App\Livewire\Tenants\Nurse\CreateCareReport;
+use App\Livewire\Tenants\Nurse\Dashboard as NurseDashboard;
+use App\Livewire\Tenants\Nurse\Feedbacks as NurseFeedbacks;
+use App\Livewire\Tenants\Nurse\Profile as NurseProfile;
+use App\Livewire\Tenants\Nurse\RecordVitals;
+use App\Livewire\Tenants\Nurse\SendFeedback as NurseSendFeedback;
+use App\Livewire\Tenants\Nurse\SupplyUsage;
+use App\Livewire\Tenants\Nurse\ViewCareReports;
+use App\Livewire\Tenants\Pharmacist\CreateDrugs;
+use App\Livewire\Tenants\Pharmacist\Dashboard as PharmacistDashboard;
+// -- Lab Technician Components --
+use App\Livewire\Tenants\Pharmacist\FeedBackRequestList;
+use App\Livewire\Tenants\Pharmacist\ManageDrugsInventory;
+use App\Livewire\Tenants\Pharmacist\Medications;
+use App\Livewire\Tenants\Pharmacist\Profile as PharmacistProfile;
+use App\Livewire\Tenants\Pharmacist\SalesReport;
+use App\Livewire\Tenants\Pharmacist\SubmitFeedBack;
+use App\Livewire\Tenants\Receptionist\AdmitPatient;
+use App\Livewire\Tenants\Receptionist\Appointments as ReceptionistAppointments;
+use App\Livewire\Tenants\Receptionist\BookAppointment;
+use App\Livewire\Tenants\Receptionist\Checkin;
+// -- Nurse Components --
+use App\Livewire\Tenants\Receptionist\Feedbacks as ReceptionistFeedbacksHistory;
+use App\Livewire\Tenants\Receptionist\Index as ReceptionistIndex;
+use App\Livewire\Tenants\Receptionist\Patients as ReceptionistPatients;
+use App\Livewire\Tenants\Receptionist\Profile as ReceptionistProfile;
+use App\Livewire\Tenants\Receptionist\ReceptionistFeedBack;
+use App\Livewire\Tenants\Receptionist\RegisterPatient;
+use App\Livewire\Tenants\Receptionist\ViewAdmissionDetails;
+// -- Pharmacist Components --
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Http\Request;
-use App\Models\User;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
-
-// -- Auth Components --
-use App\Livewire\Auth\Login;
-use App\Livewire\Tenants\Auth\TenantResetPassword;
-
-// -- Admin Components --
-use App\Livewire\Tenants\Admin\Index as AdminIndex;
-use App\Livewire\Tenants\Admin\UserManagement;
-use App\Livewire\Tenants\Admin\Settings;
-use App\Livewire\Tenants\Admin\AiAssistant;
-use App\Livewire\Tenants\Admin\CreateNewUser;
-use App\Livewire\Tenants\Admin\UserActivities;
-use App\Livewire\Tenants\Admin\SendAdminFeedback;
-use App\Livewire\Tenants\Admin\Profile as AdminProfile;
-use App\Livewire\Tenants\Admin\Shifts;
-use App\Livewire\Tenants\Admin\RevenueDashboard;
-use App\Livewire\Tenants\Admin\AdminFeedbackHistory;
-// -- Doctor Components --
-use App\Livewire\Tenants\Doctor\Index as DoctorIndex;
-use App\Livewire\Tenants\Doctor\Patient;
-use App\Livewire\Tenants\Doctor\DoctorAppointment;
-use App\Livewire\Tenants\Doctor\MedicalRecord;
-use App\Livewire\Tenants\Doctor\MedicalExplainer;
-use App\Livewire\Tenants\Doctor\ViewPatientInfo;
-use App\Livewire\Tenants\Doctor\LabTestAndPrescription;
-use App\Livewire\Tenants\Doctor\Feedbacks as DoctorFeedbacks;
-use App\Livewire\Tenants\Doctor\SendFeedback as DoctorSendFeedback;
-use App\Livewire\Tenants\Doctor\Profile as DoctorProfile;
-use App\Livewire\Tenants\Doctor\DoctorLabRequest;
-
-// -- Receptionist Components --
-use App\Livewire\Tenants\Receptionist\Index as ReceptionistIndex;
-use App\Livewire\Tenants\Receptionist\RegisterPatient;
-use App\Livewire\Tenants\Receptionist\BookAppointment;
-use App\Livewire\Tenants\Receptionist\Appointments as ReceptionistAppointments;
-use App\Livewire\Tenants\Receptionist\Patients as ReceptionistPatients;
-use App\Livewire\Tenants\Receptionist\Profile as ReceptionistProfile;
-use App\Livewire\Tenants\Receptionist\Checkin;
-use App\Livewire\Tenants\Receptionist\AdmitPatient;
-use App\Livewire\Tenants\Receptionist\ViewAdmissionDetails;
-use App\Livewire\Tenants\Receptionist\ReceptionistFeedBack;
-use App\Livewire\Tenants\Receptionist\Feedbacks as ReceptionistFeedbacksHistory;
-
-// -- Lab Technician Components --
-use App\Livewire\Tenants\LabTechnician\Index as LabTechnicianIndex;
-use App\Livewire\Tenants\LabTechnician\LabResult;
-use App\Livewire\Tenants\LabTechnician\EnterResults;
-use App\Livewire\Tenants\LabTechnician\TestRequest;
-use App\Livewire\Tenants\LabTechnician\ManageLabTestDefinitions;
-use App\Livewire\Tenants\LabTechnician\CreateLabTestDefinition;
-use App\Livewire\Tenants\LabTechnician\Feedbacks as LabTechnicianFeedbacks;
-use App\Livewire\Tenants\LabTechnician\SendFeedback as LabTechnicianSendFeedback;
-use App\Livewire\Tenants\LabTechnician\Profile as LabTechnicianProfile;
-use App\Livewire\Tenants\Nurse\CreateCareReport;
-// -- Nurse Components --
-use App\Livewire\Tenants\Nurse\Dashboard as NurseDashboard;
-use App\Livewire\Tenants\Nurse\SupplyUsage;
-use App\Livewire\Tenants\Nurse\RecordVitals;
-use App\Livewire\Tenants\Nurse\Profile as NurseProfile;
-use App\Livewire\Tenants\Nurse\Feedbacks as NurseFeedbacks;
-use App\Livewire\Tenants\Nurse\SendFeedback as NurseSendFeedback;
-use App\Livewire\Tenants\Nurse\ViewCareReports;
-// -- Pharmacist Components --
-use App\Livewire\Tenants\Pharmacist\Dashboard as PharmacistDashboard;
-use App\Livewire\Tenants\Pharmacist\FeedBackRequestList;
-use App\Livewire\Tenants\Pharmacist\SubmitFeedBack;
-use App\Livewire\Tenants\Pharmacist\ManageDrugsInventory;
-use App\Livewire\Tenants\Pharmacist\CreateDrugs;
-use App\Livewire\Tenants\Pharmacist\SalesReport;
-use App\Livewire\Tenants\Pharmacist\Medications;
-use App\Livewire\Tenants\Pharmacist\Profile as PharmacistProfile;
-use Illuminate\Support\Facades\Cache;
 
 /*
 |--------------------------------------------------------------------------
@@ -105,15 +101,16 @@ Route::middleware([
 
     // Landing Page
     Route::get('/', function () {
-        return 'This is your multi-tenant application. Tenant ID: ' . tenant('id') . ' | Users: ' . User::count();
+        return 'This is your multi-tenant application. Tenant ID: '.tenant('id').' | Users: '.User::count();
     })->name('tenant.root');
 
     // Language Switching (Accessible to guests and auth users)
     Route::get('/tenant/language/{locale}', function (string $locale) {
-        if (!in_array($locale, ['en', 'es', 'fr'])) {
+        if (! in_array($locale, ['en', 'es', 'fr'])) {
             abort(400);
         }
         Session::put('locale', $locale);
+
         return redirect()->back();
     })->name('tenant.language.switch');
 
@@ -132,7 +129,8 @@ Route::middleware([
         // 1. Heartbeat: Tells the server "I am online"
         Route::post('/user/heartbeat', function (Request $request) {
             // Store 'true' in cache for 40 seconds (we will ping every 30s)
-            Cache::put('user-online-' . $request->user()->id, true, 40);
+            Cache::put('user-online-'.$request->user()->id, true, 40);
+
             return response()->noContent();
         });
 
@@ -150,6 +148,7 @@ Route::middleware([
         // 3. Mark specific notification as read (if needed)
         Route::post('/user/notifications/{id}/read', function (Request $request, $id) {
             $request->user()->notifications()->where('id', $id)->first()?->markAsRead();
+
             return response()->noContent();
         });
         // Logout
@@ -157,6 +156,7 @@ Route::middleware([
             Auth::guard('web')->logout();
             Session::invalidate();
             Session::regenerateToken();
+
             return redirect()->route('tenant.login');
         })->name('auth.logout');
 
@@ -167,13 +167,13 @@ Route::middleware([
             Log::info('Accessing /dashboard route', ['user_id' => $user->id, 'user_role' => $user->role]);
 
             return match ($user->role) {
-                'admin'          => redirect()->route('admin.dashboard'),
-                'doctor'         => redirect()->route('doctor.dashboard'),
-                'nurse'          => redirect()->route('nurse.dashboard'),
+                'admin' => redirect()->route('admin.dashboard'),
+                'doctor' => redirect()->route('doctor.dashboard'),
+                'nurse' => redirect()->route('nurse.dashboard'),
                 'lab-technician' => redirect()->route('lab-technician.dashboard'),
-                'pharmacist'     => redirect()->route('pharmacist.dashboard'),
-                'receptionist'   => redirect()->route('receptionist.dashboard'),
-                default          => redirect('/'),
+                'pharmacist' => redirect()->route('pharmacist.dashboard'),
+                'receptionist' => redirect()->route('receptionist.dashboard'),
+                default => redirect('/'),
             };
         })->name('dashboard');
 

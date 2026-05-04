@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Password;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-
+#[Layout('components.layouts.login')]
 class ResetPassword extends Component
 {
     public $token;
@@ -45,7 +45,7 @@ class ResetPassword extends Component
                 $user->forceFill([
                     'password' => \Illuminate\Support\Facades\Hash::make($password),
                 ])->setRememberToken(\Illuminate\Support\Str::random(60));
-                if (!$user->hasVerifiedEmail()) {
+                if (! $user->hasVerifiedEmail()) {
                     $user->markEmailAsVerified();
                 }
                 $user->save();
