@@ -192,7 +192,7 @@ class MedicalRecordService
             throw new AuthorizationException('Unauthorized edit attempt.');
         }
 
-        return DB::connection('pgsql_transaction')->transaction(function () use ($record, $data, $doctor) {
+        return DB::transaction(function () use ($record, $data, $doctor) {
             $record->update($data);
 
             $this->logActivity('updated', "Doctor {$doctor->name} updated medical record #{$record->id} for Patient ID: {$record->patient_id}");
@@ -206,7 +206,7 @@ class MedicalRecordService
      */
     public function requestAdmission(Patient $patient, User $doctor): Admission
     {
-        $admission = DB::connection('pgsql_transaction')->transaction(function () use ($patient, $doctor) {
+        $admission = DB::transaction(function () use ($patient, $doctor) {
             $patient->update(['is_admitted_approve' => true]);
 
             $admission = Admission::create([
@@ -231,7 +231,7 @@ class MedicalRecordService
      */
     public function deleteAttachment(int $attachmentId): void
     {
-        DB::connection('pgsql_transaction')->transaction(function () use ($attachmentId) {
+        DB::transaction(function () use ($attachmentId) {
             $att = MedicalRecordAttachment::find($attachmentId);
 
             if ($att) {

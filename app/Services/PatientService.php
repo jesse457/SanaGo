@@ -32,7 +32,7 @@ class PatientService
 
     public function createPatient(array $data): Patient
     {
-        return DB::connection('pgsql_transaction')->transaction(function () use ($data) {
+        return DB::transaction(function () use ($data) {
 
             // EFFICIENT ID GENERATION
             // Format: PT-YYMMDD-RAND (e.g., PT-240123-X92Z)
@@ -55,7 +55,7 @@ class PatientService
      */
     public function updatePatient(Patient $patient, array $data): Patient
     {
-        return DB::connection('pgsql_transaction')->transaction(function () use ($patient, $data) {
+        return DB::transaction(function () use ($patient, $data) {
             $patient->update($data);
 
             $this->logActivity('updated', "Updated patient: {$patient->first_name} {$patient->last_name} (UID: {$patient->patient_uid})");
@@ -120,7 +120,7 @@ class PatientService
             ->orWhereBlind('last_name', 'last_name_index', $term)
             ->orWhereBlind('phone', 'phone_index', $term)
             ->orWhereBlind('email', 'email_index', $term)
-            ->orWhere('patient_uid', 'ilike', "%{$term}%");
+            ->orWhere('patient_uid', 'like', "%{$term}%");
     }
 
     /**

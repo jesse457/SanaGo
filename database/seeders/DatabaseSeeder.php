@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,13 +12,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-        $password = config('app.passwords.admin');
-        $landlordAdmin = User::factory()->create([
-            'email' => 'admin@healthnet.test', // Specific email for landlord admin
+        // 1. Create the Landlord Super Admin
+        $password = config('app.passwords.admin', 'password');
+        User::factory()->create([
+            'name' => 'System Admin',
+            'email' => 'admin@healthnet.test',
             'role' => 'landlord',
-            'password' => bcrypt($password), // Default password
+            'password' => bcrypt($password),
             'is_active' => true,
+        ]);
+
+        // 2. Call the Tenant Seeder
+        $this->call([
+            TenantSeeder::class,
         ]);
     }
 }

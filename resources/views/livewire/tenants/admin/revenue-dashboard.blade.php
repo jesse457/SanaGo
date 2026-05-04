@@ -1,297 +1,217 @@
-<div class="w-full min-h-screen bg-zinc-50/50 dark:bg-zinc-950/50 font-sans text-zinc-900 dark:text-zinc-100 p-4 sm:p-6 lg:p-8">
+<main class="w-full min-h-screen bg-slate-50 dark:bg-gray-950 font-sans text-slate-600 dark:text-slate-300">
+    <div class="max-w-7xl mx-auto">
 
-    {{-- Main Container --}}
-    <main class="max-w-[1600px] mx-auto space-y-8">
+        {{-- 1. HEADER SECTION (Sticky) --}}
+        <header class="sticky top-0 flex-shrink-0 bg-white/90 dark:bg-gray-800/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-sm z-30 transition-all duration-200">
+            <div class="px-4 sm:px-6 py-4 md:flex md:items-center md:justify-between space-y-3 md:space-y-0">
 
-        {{-- 1. HEADER SECTION --}}
-        <header class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-            <div>
-                {{-- Breadcrumbs --}}
-                <div class="flex items-center gap-2 text-xs font-medium text-zinc-500 mb-2">
-                    <span>Financials</span>
-                    <span class="text-zinc-300">/</span>
-                    <span class="text-zinc-900 dark:text-zinc-100">Revenue Analytics</span>
+                {{-- Title & Breadcrumbs --}}
+                <div class="flex-1 min-w-0">
+                    <nav class="flex text-xs font-medium text-gray-500 dark:text-gray-400 mb-1" aria-label="Breadcrumb">
+                        <ol class="inline-flex items-center space-x-1 md:space-x-2">
+                            <li class="inline-flex items-center">
+                                <a href="#" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center">
+                                    <x-heroicon-s-home class="w-3 h-3 mr-1.5" />
+                                    {{ __('Financials') }}
+                                </a>
+                            </li>
+                            <li>
+                                <div class="flex items-center">
+                                    <x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300 mx-1" />
+                                    <span class="text-gray-900 dark:text-white">Revenue Analytics</span>
+                                </div>
+                            </li>
+                        </ol>
+                    </nav>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-7">
+                        Revenue Overview
+                    </h2>
                 </div>
 
-                <div class="flex items-center gap-4">
-                    {{-- Icon Box --}}
-                    <div class="w-12 h-12 flex items-center justify-center bg-zinc-900 dark:bg-white rounded-2xl shadow-lg shadow-zinc-900/10">
-                        <x-heroicon-o-banknotes class="w-6 h-6 text-white dark:text-zinc-900" stroke-width="2" />
-                    </div>
-
-                    <div>
-                        <h1 class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white tracking-tight">
-                            {{ __('Revenue Overview') }}
-                        </h1>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wide border border-emerald-200 dark:border-emerald-500/20">
-                                Live Data
-                            </span>
-                            <p class="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
-                                {{ __('Financial Inflow Analytics') }}
-                            </p>
-                        </div>
+                {{-- Period Selector --}}
+                <div class="flex items-center gap-2">
+                    <div class="inline-flex p-1 bg-slate-100 dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-700">
+                        @foreach (['today' => 'Today', 'week' => 'Week', 'month' => 'Month', 'year' => 'Year'] as $key => $label)
+                            <button wire:click="$set('timePeriod', '{{ $key }}')"
+                                class="px-4 py-1.5 text-xs font-bold rounded-lg transition-all {{ $timePeriod === $key ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                                {{ $label }}
+                            </button>
+                        @endforeach
                     </div>
                 </div>
             </div>
 
-            {{-- Time Filter Tabs --}}
-            <div class="flex items-center gap-3">
-                <div class="flex items-center p-1.5 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                    @php
-                        $periods = [
-                            'today' => 'Today',
-                            'week'  => 'Week',
-                            'month' => 'Month',
-                            'year'  => 'Year',
-                        ];
-                    @endphp
-                    @foreach ($periods as $key => $label)
-                        <button
-                            wire:click="$set('timePeriod', '{{ $key }}')"
-                            class="px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all duration-200
-                            {{ $timePeriod === $key
-                                ? 'bg-white dark:bg-zinc-900 text-indigo-600 dark:text-white shadow-sm border border-zinc-200 dark:border-zinc-700'
-                                : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
-                            }}">
-                            {{ $label }}
-                        </button>
-                    @endforeach
+            {{-- Filter Bar --}}
+            <div class="px-4 sm:px-6 py-3 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 flex flex-col md:flex-row gap-3 items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="flex h-2 w-2 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Live Financial Inflow</span>
                 </div>
+
+                <button class="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition-colors">
+                    <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
+                    Export Ledger
+                </button>
             </div>
         </header>
 
-        {{-- Loading Overlay --}}
-        <div wire:loading.flex class="fixed inset-0 z-50 flex items-center justify-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm transition-opacity">
-            <div class="flex items-center gap-3 px-6 py-3 bg-white dark:bg-zinc-800 rounded-2xl shadow-xl border border-zinc-100 dark:border-zinc-700">
-                <x-heroicon-o-arrow-path class="w-5 h-5 text-indigo-600 animate-spin" />
-                <span class="text-sm font-bold text-zinc-900 dark:text-white">Syncing Financials...</span>
+        <div class="p-4 sm:p-6 space-y-6">
+            {{-- Loading Overlay --}}
+            <div wire:loading.flex class="fixed inset-0 bg-white/60 dark:bg-gray-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center">
+                <div class="flex items-center gap-3 px-6 py-3 bg-white dark:bg-gray-800 rounded-full shadow-xl border border-slate-100 dark:border-gray-700 animate-bounce">
+                    <x-heroicon-o-arrow-path class="animate-spin h-5 w-5 text-blue-600" />
+                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Syncing Financials...</span>
+                </div>
             </div>
-        </div>
 
-        {{-- 2. MAIN SUMMARY CARD (HERO) --}}
-        <div class="relative overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] p-8 sm:p-10 shadow-sm">
-            {{-- Decorative Blurs --}}
-            <div class="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+            {{-- 2. HERO SUMMARY CARD --}}
+            <div class="relative overflow-hidden bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-8 shadow-sm">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
 
-            <div class="relative z-10 flex flex-col lg:flex-row justify-between lg:items-end gap-10">
-                <div class="space-y-4">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-full text-[10px] font-bold uppercase tracking-widest border border-emerald-100 dark:border-emerald-500/20">
-                        <x-heroicon-s-arrow-trending-up class="w-3 h-3" />
-                        Financial Performance
-                    </div>
-
+                <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
                     <div>
-                        <p class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1">Gross Collection ({{ ucfirst($timePeriod) }})</p>
-                        <div class="flex items-baseline gap-3">
-                            <span class="text-base font-bold text-zinc-400">FCFA</span>
-                            {{-- $totalRevenue comes directly from the component property --}}
-                            <h2 class="text-6xl sm:text-7xl font-black text-zinc-900 dark:text-white tracking-tighter">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Gross Collection ({{ ucfirst($timePeriod) }})</p>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-xl font-bold text-slate-400">FCFA</span>
+                            <h2 class="text-5xl sm:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                                 {{ number_format($totalRevenue, 0) }}
                             </h2>
                         </div>
+                        <div class="mt-4 flex items-center gap-2">
+                            @if($revenueGrowth >= 0)
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-bold border border-emerald-100 dark:border-emerald-800">
+                                    <x-heroicon-s-arrow-trending-up class="w-3 h-3" />
+                                    +{{ number_format($revenueGrowth, 1) }}%
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-xs font-bold border border-red-100 dark:border-red-800">
+                                    <x-heroicon-s-arrow-trending-down class="w-3 h-3" />
+                                    {{ number_format($revenueGrowth, 1) }}%
+                                </span>
+                            @endif
+                            <span class="text-xs text-slate-500">vs previous period</span>
+                        </div>
                     </div>
 
-                    <p class="text-xs font-medium text-zinc-500 italic">
-                        {{-- $revenueGrowth comes directly from component property --}}
-                        Growth vs previous period:
-                        @if($revenueGrowth != 0)
-                            <span class="ml-2 {{ $revenueGrowth > 0 ? 'text-emerald-600' : 'text-rose-600' }} font-bold">
-                                {{ $revenueGrowth > 0 ? '+' : '' }}{{ number_format($revenueGrowth, 1) }}%
-                            </span>
-                        @else
-                            <span class="ml-2 text-zinc-400">0%</span>
-                        @endif
-                    </p>
+                    {{-- Mini Chart Visualization --}}
+                    <div class="flex items-end justify-end gap-1.5 h-20">
+                        @foreach([30, 45, 35, 60, 50, 80, 55] as $val)
+                            <div style="height: {{ $val }}%" class="w-2.5 bg-slate-100 dark:bg-gray-800 rounded-t-sm transition-all hover:bg-blue-400"></div>
+                        @endforeach
+                    </div>
                 </div>
+            </div>
 
-                {{-- Visual Bar Chart (Visual Only) --}}
-                <div class="flex gap-2 sm:gap-3 h-32 items-end">
-                    @foreach([35, 50, 45, 80, 60, 90, 75] as $index => $height)
-                        <div class="group relative flex flex-col items-center gap-2">
-                            <div style="height: {{ $height }}%"
-                                 class="w-3 sm:w-4 rounded-t-lg transition-all duration-500
-                                 {{ $index === 5
-                                    ? 'bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)]'
-                                    : 'bg-zinc-200 dark:bg-zinc-800 group-hover:bg-indigo-300'
-                                 }}">
+            {{-- 3. METRICS GRID --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                @php
+                    $metrics = [
+                        ['label' => 'Medications', 'val' => $breakdown['medication'] ?? 0, 'icon' => 'beaker', 'color' => 'emerald'],
+                        ['label' => 'Consultations', 'val' => $breakdown['appointment'] ?? 0, 'icon' => 'calendar-days', 'color' => 'blue'],
+                        ['label' => 'Lab Tests', 'val' => $breakdown['lab'] ?? 0, 'icon' => 'amber', 'color' => 'amber'],
+                        ['label' => 'Admissions', 'val' => $breakdown['admission'] ?? 0, 'icon' => 'building-office-2', 'color' => 'purple'],
+                    ];
+                @endphp
+
+                @foreach($metrics as $m)
+                    <div class="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 p-5 rounded-2xl shadow-sm hover:border-blue-300 dark:hover:border-blue-700 transition-all group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-gray-800 border border-slate-100 dark:border-gray-700 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
+                                @if($m['icon'] === 'beaker') <x-heroicon-o-beaker class="w-5 h-5 text-emerald-500" /> @endif
+                                @if($m['icon'] === 'calendar-days') <x-heroicon-o-calendar-days class="w-5 h-5 text-blue-500" /> @endif
+                                @if($m['icon'] === 'amber') <x-heroicon-o-clipboard-document-check class="w-5 h-5 text-amber-500" /> @endif
+                                @if($m['icon'] === 'building-office-2') <x-heroicon-o-building-office-2 class="w-5 h-5 text-purple-500" /> @endif
                             </div>
                         </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-
-        {{-- 3. METRICS GRID --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-
-            {{--
-                Accessing $breakdown array from the component.
-                Using null coalescence (?? 0) to prevent errors if keys are missing.
-            --}}
-            @php
-                $metrics = [
-                    [
-                        'title' => 'Medications',
-                        'amount' => $breakdown['medication'] ?? 0,
-                        'icon' => 'beaker', 'color' => 'text-emerald-600', 'bg' => 'bg-emerald-100 dark:bg-emerald-500/10'
-                    ],
-                    [
-                        'title' => 'Consultations',
-                        'amount' => $breakdown['appointment'] ?? 0,
-                        'icon' => 'calendar-days', 'color' => 'text-blue-600', 'bg' => 'bg-blue-100 dark:bg-blue-500/10'
-                    ],
-                    [
-                        'title' => 'Lab Tests',
-                        'amount' => $breakdown['lab'] ?? 0,
-                        'icon' => 'clipboard-document-check', 'color' => 'text-amber-600', 'bg' => 'bg-amber-100 dark:bg-amber-500/10'
-                    ],
-                    [
-                        'title' => 'Admissions',
-                        'amount' => $breakdown['admission'] ?? 0,
-                        'icon' => 'building-office-2', 'color' => 'text-purple-600', 'bg' => 'bg-purple-100 dark:bg-purple-500/10'
-                    ],
-                ];
-            @endphp
-
-            @foreach($metrics as $metric)
-                <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-[2rem] hover:shadow-md transition-all group">
-                    <div class="flex justify-between items-start mb-6">
-                        <div class="p-3 rounded-2xl {{ $metric['bg'] }} {{ $metric['color'] }} border border-current border-opacity-10">
-                            @if($metric['icon'] === 'beaker') <x-heroicon-o-beaker class="w-6 h-6" /> @endif
-                            @if($metric['icon'] === 'calendar-days') <x-heroicon-o-calendar-days class="w-6 h-6" /> @endif
-                            @if($metric['icon'] === 'clipboard-document-check') <x-heroicon-o-clipboard-document-check class="w-6 h-6" /> @endif
-                            @if($metric['icon'] === 'building-office-2') <x-heroicon-o-building-office-2 class="w-6 h-6" /> @endif
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ $m['label'] }}</p>
+                        <div class="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
+                            <span class="text-[10px] text-slate-400 font-medium">FCFA</span> {{ number_format($m['val'], 0) }}
+                        </div>
+                        <div class="mt-3 w-full bg-slate-100 dark:bg-gray-800 h-1 rounded-full overflow-hidden">
+                            <div class="bg-slate-900 dark:bg-blue-500 h-full" style="width: {{ $totalRevenue > 0 ? ($m['val'] / $totalRevenue) * 100 : 0 }}%"></div>
                         </div>
                     </div>
-
-                    <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">{{ $metric['title'] }}</p>
-                    <div class="flex items-baseline gap-1">
-                        <span class="text-[10px] font-bold text-zinc-400">FCFA</span>
-                        <span class="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
-                            {{ number_format($metric['amount'], 0) }}
-                        </span>
-                    </div>
-
-                    {{-- Visual Proportion Bar --}}
-                    <div class="w-full bg-zinc-100 dark:bg-zinc-800 h-1.5 rounded-full mt-4 overflow-hidden">
-                        <div style="width: {{ $totalRevenue > 0 ? ($metric['amount'] / $totalRevenue) * 100 : 0 }}%" class="h-full bg-zinc-900 dark:bg-zinc-100 rounded-full"></div>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-
-        {{-- 4. DETAILED DATA SECTION --}}
-        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] overflow-hidden flex flex-col shadow-sm">
-
-            {{-- Table Header --}}
-            <div class="px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-center gap-4 bg-zinc-50/50 dark:bg-zinc-900/50">
-                <div class="flex items-center gap-3">
-                    <div class="p-2 bg-zinc-900 dark:bg-white rounded-lg">
-                        <x-heroicon-m-funnel class="w-4 h-4 text-white dark:text-zinc-900" />
-                    </div>
-                    <h3 class="text-[11px] font-black text-zinc-900 dark:text-white uppercase tracking-[0.2em]">Transaction Ledger</h3>
-                </div>
-
-                <div class="flex items-center gap-2 w-full sm:w-auto">
-                    {{--
-                       NOTE: Search input is visual only because the component
-                       does not have a $search property.
-                    --}}
-                    <div class="relative flex-1 sm:flex-none opacity-50 cursor-not-allowed" title="Search disabled in this view">
-                        <x-heroicon-m-magnifying-glass class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
-                        <input
-                            type="text"
-                            disabled
-                            placeholder="Search..."
-                            class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 h-10 rounded-xl pl-9 pr-4 text-xs font-bold outline-none w-full sm:w-64 cursor-not-allowed"
-                        >
-                    </div>
-                    <button class="p-2.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-500 hover:text-indigo-600 transition-colors">
-                        <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
-                    </button>
-                </div>
+                @endforeach
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="bg-zinc-50/50 dark:bg-zinc-950 text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800">
-                            <th class="px-6 py-4">Patient Descriptor</th>
-                            <th class="px-6 py-4 text-right hidden sm:table-cell">Meds</th>
-                            <th class="px-6 py-4 text-right hidden md:table-cell">Consults</th>
-                            <th class="px-6 py-4 text-right hidden lg:table-cell">Labs</th>
-                            <th class="px-6 py-4 text-right hidden xl:table-cell">Adm.</th>
-                            <th class="px-6 py-4 text-right">Total</th>
-                            <th class="px-6 py-4 text-center">Actions</th>
+            {{-- 4. DESKTOP TABLE --}}
+            <div class="hidden md:block bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-slate-200 dark:border-gray-800 overflow-hidden">
+                <table class="min-w-full divide-y divide-slate-100 dark:divide-gray-800">
+                    <thead class="bg-slate-50 dark:bg-gray-950">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Patient Name</th>
+                            <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Meds</th>
+                            <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Consults</th>
+                            <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Labs</th>
+                            <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Admissions</th>
+                            <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Total</th>
+                            <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-zinc-50 dark:divide-zinc-800">
+                    <tbody class="divide-y divide-slate-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
                         @forelse ($patientRevenues as $revenue)
-                            <tr class="group hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors">
+                            <tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black text-zinc-500 border border-zinc-200 dark:border-zinc-700">
-                                            {{ strtoupper(substr($revenue->patient?->first_name ?? 'U', 0, 1)) }}{{ strtoupper(substr($revenue->patient?->last_name ?? 'U', 0, 1)) }}
+                                        <div class="w-9 h-9 rounded-lg bg-slate-100 dark:bg-gray-800 flex items-center justify-center text-xs font-bold text-slate-500 border border-slate-200 dark:border-gray-700">
+                                            {{ strtoupper(substr($revenue->patient?->first_name ?? 'U', 0, 1)) }}{{ strtoupper(substr($revenue->patient?->last_name ?? 'P', 0, 1)) }}
                                         </div>
                                         <div>
-                                            <div class="text-xs font-bold text-zinc-900 dark:text-zinc-100">
-                                                {{ $revenue->patient?->first_name ?? 'Unknown' }} {{ $revenue->patient?->last_name ?? 'Patient' }}
-                                            </div>
-                                            <div class="mt-1 px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded inline-block text-[9px] font-mono text-zinc-500 font-bold tracking-tighter">
-                                                #{{ $revenue->patient?->patient_uid ?? $revenue->patient_id }}
-                                            </div>
+                                            <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $revenue->patient?->first_name }} {{ $revenue->patient?->last_name }}</div>
+                                            <div class="text-[10px] font-medium text-slate-400">UID: #{{ $revenue->patient?->patient_uid ?? 'N/A' }}</div>
                                         </div>
                                     </div>
                                 </td>
-
-                                <td class="px-6 py-4 text-right text-xs font-bold text-zinc-500 hidden sm:table-cell">
-                                    {{ number_format($revenue->medications, 0) }}
-                                </td>
-                                <td class="px-6 py-4 text-right text-xs font-bold text-zinc-500 hidden md:table-cell">
-                                    {{ number_format($revenue->appointments, 0) }}
-                                </td>
-                                <td class="px-6 py-4 text-right text-xs font-bold text-zinc-500 hidden lg:table-cell">
-                                    {{ number_format($revenue->labs, 0) }}
-                                </td>
-                                <td class="px-6 py-4 text-right text-xs font-bold text-zinc-500 hidden xl:table-cell">
-                                    {{ number_format($revenue->admissions, 0) }}
-                                </td>
+                                <td class="px-6 py-4 text-right text-xs font-medium text-slate-500">{{ number_format($revenue->medications, 0) }}</td>
+                                <td class="px-6 py-4 text-right text-xs font-medium text-slate-500">{{ number_format($revenue->appointments, 0) }}</td>
+                                <td class="px-6 py-4 text-right text-xs font-medium text-slate-500">{{ number_format($revenue->labs, 0) }}</td>
+                                <td class="px-6 py-4 text-right text-xs font-medium text-slate-500">{{ number_format($revenue->admissions, 0) }}</td>
                                 <td class="px-6 py-4 text-right">
-                                    <span class="font-black text-emerald-600 dark:text-emerald-400 text-xs bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg">
-                                        FCFA {{ number_format($revenue->total_contribution ?? $revenue->total ?? 0, 0) }}
+                                    <span class="inline-flex items-center px-2 py-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 text-xs font-bold rounded-lg border border-emerald-100 dark:border-emerald-900">
+                                        {{ number_format($revenue->total_contribution ?? $revenue->total ?? 0, 0) }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex justify-center">
-                                        <button class="p-2 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-zinc-800 rounded-lg transition-colors">
-                                            <x-heroicon-m-ellipsis-horizontal class="w-4 h-4" />
-                                        </button>
-                                    </div>
+                                <td class="px-6 py-4 text-center">
+                                    <button class="p-2 text-slate-400 hover:text-blue-600 transition-colors"><x-heroicon-m-ellipsis-horizontal class="w-5 h-5" /></button>
                                 </td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="7" class="px-6 py-12 text-center">
-                                    <div class="flex flex-col items-center justify-center space-y-3">
-                                        <div class="w-12 h-12 bg-zinc-50 dark:bg-zinc-800 rounded-full flex items-center justify-center">
-                                            <x-heroicon-o-document-magnifying-glass class="w-6 h-6 text-zinc-400" />
-                                        </div>
-                                        <p class="text-sm font-medium text-zinc-500">No transactions found for this period.</p>
-                                    </div>
-                                </td>
-                            </tr>
+                            <tr><td colspan="7" class="px-6 py-10 text-center text-slate-400 text-sm italic">No records for this period.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
 
+            {{-- 5. MOBILE CARD VIEW --}}
+            <div class="md:hidden space-y-4">
+                @foreach ($patientRevenues as $revenue)
+                    <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-slate-200 dark:border-gray-800 p-4">
+                        <div class="flex items-center justify-between mb-3 pb-3 border-b border-slate-100 dark:border-gray-800">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-gray-800 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                                    {{ strtoupper(substr($revenue->patient?->first_name ?? 'U', 0, 1)) }}
+                                </div>
+                                <h3 class="text-sm font-bold text-slate-900 dark:text-white">{{ $revenue->patient?->first_name }}</h3>
+                            </div>
+                            <span class="text-xs font-bold text-emerald-600">{{ number_format($revenue->total_contribution ?? 0, 0) }} FCFA</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            <div class="flex justify-between"><span>Meds:</span> <span class="text-slate-600">{{ number_format($revenue->medications, 0) }}</span></div>
+                            <div class="flex justify-between"><span>Labs:</span> <span class="text-slate-600">{{ number_format($revenue->labs, 0) }}</span></div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
             {{-- Pagination --}}
             @if ($patientRevenues->hasPages())
-                <div class="px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/50">
+                <div class="mt-4">
                     {{ $patientRevenues->links() }}
                 </div>
             @endif
         </div>
-    </main>
-</div>
+    </div>
+</main>

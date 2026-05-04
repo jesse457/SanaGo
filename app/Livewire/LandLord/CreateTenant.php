@@ -73,7 +73,7 @@ class CreateTenant extends Component
         $logoPath = null;
 
         try {
-            DB::connection('pgsql_transaction')->transaction(function () use ($password) {
+            DB::transaction(function () use ($password) {
                 // Create Tenant
                 $tenant = Tenant::create([
                     'name' => $this->tenantName,

@@ -37,7 +37,7 @@ class UserService
     {
         $storedPath = null;
         try {
-            $user = DB::connection('pgsql_transaction')->transaction(function () use ($data, $profilePicture, $tenantId, &$storedPath) {
+            $user = DB::transaction(function () use ($data, $profilePicture, $tenantId, &$storedPath) {
                 if ($profilePicture) {
                     $storedPath = $profilePicture->store('profile_pictures', 's3');
                 }
@@ -84,7 +84,7 @@ class UserService
      */
     public function updateUser(int $userId, array $data): User
     {
-        return DB::connection('pgsql_transaction')->transaction(function () use ($userId, $data) {
+        return DB::transaction(function () use ($userId, $data) {
             $user = User::findOrFail($userId);
 
             // 1. Update basic user details

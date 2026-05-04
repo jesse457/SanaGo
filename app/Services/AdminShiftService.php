@@ -56,7 +56,7 @@ class AdminShiftService
      */
     public function saveShift(array $data, ?int $id = null): UserShift
     {
-        return DB::connection('pgsql_transaction')->transaction(function () use ($data, $id) {
+        return DB::transaction(function () use ($data, $id) {
             $isNew = $id === null;
 
             if ($isNew) {
@@ -90,7 +90,7 @@ class AdminShiftService
      */
     public function deleteShift(int $id): bool
     {
-        return DB::connection('pgsql_transaction')->transaction(function () use ($id) {
+        return DB::transaction(function () use ($id) {
             $shift = UserShift::findOrFail($id);
             $description = "Deleted shift schedule: {$shift->shift_type} for {$shift->shift_date}";
 

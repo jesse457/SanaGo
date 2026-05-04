@@ -58,7 +58,7 @@ class SettingsService
      */
     public function updateGeneralSettings(array $data, $logoFile = null): void
     {
-        DB::connection('pgsql_transaction')->transaction(function () use ($data, $logoFile) {
+        DB::transaction(function () use ($data, $logoFile) {
             $tenant = tenant();
             $tenant->update([
                 'name' => $data['name'],
@@ -83,7 +83,7 @@ class SettingsService
      */
     public function createItem(string $type, array $data)
     {
-        return DB::connection('pgsql_transaction')->transaction(function () use ($type, $data) {
+        return DB::transaction(function () use ($type, $data) {
             $data['tenant_id'] = tenant('id');
             if ($type === 'bed') {
                 $data['is_occupied'] = false;
@@ -109,7 +109,7 @@ class SettingsService
      */
     public function updateItem(string $type, int $id, array $data)
     {
-        return DB::connection('pgsql_transaction')->transaction(function () use ($type, $id, $data) {
+        return DB::transaction(function () use ($type, $id, $data) {
             $item = $this->getEntityQuery($type)->findOrFail($id);
             $item->update($data);
 
@@ -125,7 +125,7 @@ class SettingsService
      */
     public function deleteItem(string $type, int $id): void
     {
-        DB::connection('pgsql_transaction')->transaction(function () use ($type, $id) {
+        DB::transaction(function () use ($type, $id) {
             $item = $this->getEntityQuery($type)->findOrFail($id);
             $identifier = $item->name ?? $item->bed_number ?? $item->id;
 

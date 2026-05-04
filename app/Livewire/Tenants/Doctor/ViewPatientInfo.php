@@ -8,6 +8,7 @@ use App\Services\MedicalRecordService;
 use App\Traits\UserActivitiesTrait;
 use Illuminate\Support\Facades\Auth;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Jantinnerezo\LivewireAlert\LivewireAlert as JantinnerezoLivewireAlert;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -38,7 +39,10 @@ class ViewPatientInfo extends Component
                 ->show();
 
         } catch (\Exception $e) {
-            $this->alert('error', $e->getMessage());
+           LivewireAlert::title('Error')
+                ->error()
+                ->text("Server error contacct us if the problem persists.")
+                ->show();
         }
     }
 

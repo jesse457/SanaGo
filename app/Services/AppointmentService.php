@@ -187,7 +187,7 @@ class AppointmentService
             throw new Exception("Cannot start a {$appointment->status} appointment.");
         }
 
-        return DB::connection('pgsql_transaction')->transaction(function () use ($appointment) {
+        return DB::transaction(function () use ($appointment) {
             $appointment->update(['status' => 'In Consultation']);
 
             $this->logActivity('updated', "Consultation started for Appointment #{$appointment->id} (Patient ID: {$appointment->patient_id})");
@@ -209,7 +209,7 @@ class AppointmentService
             throw new Exception('Appointment is not currently in progress.');
         }
 
-        return DB::connection('pgsql_transaction')->transaction(function () use ($appointment) {
+        return DB::transaction(function () use ($appointment) {
             $appointment->update(['status' => 'Completed']);
 
             $this->logActivity('updated', "Consultation completed for Appointment #{$appointment->id}");
@@ -225,7 +225,7 @@ class AppointmentService
     {
         $appointmentDateTime = Carbon::createFromFormat('Y-m-d H:i', $date.' '.$time);
 
-        return DB::connection('pgsql_transaction')->transaction(function () use ($doctor, $patient, $date, $appointmentDateTime, $reason) {
+        return DB::transaction(function () use ($doctor, $patient, $date, $appointmentDateTime, $reason) {
 
             $exists = Appointment::where('patient_id', $patient->id)
                 ->where('doctor_id', $doctor->id)
@@ -266,7 +266,7 @@ class AppointmentService
      */
     public function reschedule(Appointment $appointment, string $newDate, string $newTime): Appointment
     {
-        return DB::connection('pgsql_transaction')->transaction(function () use ($appointment, $newDate, $newTime) {
+        return DB::transaction(function () use ($appointment, $newDate, $newTime) {
             $isSameDay = $appointment->appointment_date->format('Y-m-d') === $newDate;
             $nextPosition = $appointment->queue_position;
 
@@ -294,7 +294,7 @@ class AppointmentService
 
     public function cancel(Appointment $appointment): void
     {
-        DB::connection('pgsql_transaction')->transaction(function () use ($appointment) {
+        DB::transaction(function () use ($appointment) {
             $appointment->update(['status' => 'Canceled']);
             $this->logActivity('updated', "Appointment #{$appointment->id} was canceled");
         });
@@ -302,7 +302,7 @@ class AppointmentService
 
     public function reinstate(Appointment $appointment): void
     {
-        DB::connection('pgsql_transaction')->transaction(function () use ($appointment) {
+        DB::transaction(function () use ($appointment) {
             $appointment->update(['status' => 'Waiting']);
             $this->logActivity('updated', "Appointment #{$appointment->id} was reinstated to Waiting status");
         });

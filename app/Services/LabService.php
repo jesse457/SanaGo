@@ -32,7 +32,7 @@ class LabService
      */
     public function createLabRequest(array $data): LabRequest
     {
-        return DB::connection('pgsql_transaction')->transaction(function () use ($data) {
+        return DB::transaction(function () use ($data) {
             $request = LabRequest::create([
                 'patient_id' => $data['patient_id'],
                 'requested_by_doctor_id' => $data['doctor_id'],
@@ -41,7 +41,7 @@ class LabService
                 'request_date' => $data['request_date'] ?? now(),
                 'clinical_notes' => $data['clinical_notes'] ?? null,
                 'priority' => $data['priority'] ?? 'Standard',
-                
+
                 'status' => 'Pending',
             ]);
 
@@ -57,7 +57,7 @@ class LabService
      */
     public function createTestDefinition(array $data): LabTestDefinition
     {
-        return DB::connection('pgsql_transaction')->transaction(function () use ($data) {
+        return DB::transaction(function () use ($data) {
             $test = LabTestDefinition::create([
                 'test_name' => $data['test_name'],
                 'description' => $data['description'] ?? null,
@@ -136,7 +136,7 @@ class LabService
      */
     public function updateTestDefinition(LabTestDefinition $test, array $data): LabTestDefinition
     {
-        return DB::connection('pgsql_transaction')->transaction(function () use ($test, $data) {
+        return DB::transaction(function () use ($test, $data) {
             $test->update([
                 'test_name'   => $data['test_name'] ?? $test->test_name,
                 'description' => $data['description'] ?? $test->description,
@@ -155,7 +155,7 @@ class LabService
      */
     public function deleteTestDefinition(LabTestDefinition $test): void
     {
-        DB::connection('pgsql_transaction')->transaction(function () use ($test) {
+        DB::transaction(function () use ($test) {
             $testName = $test->test_name;
             $test->delete();
 
@@ -167,7 +167,7 @@ class LabService
      */
     public function startRequest(LabRequest $request): void
     {
-        DB::connection('pgsql_transaction')->transaction(function () use ($request) {
+        DB::transaction(function () use ($request) {
             $request->update(['status' => 'In_Progress']);
 
             $this->logActivity('updated', "Started processing lab request #{$request->id}");
@@ -179,7 +179,7 @@ class LabService
      */
     public function submitResults(LabRequest $request, array $data, array $attachments): void
     {
-        DB::connection('pgsql_transaction')->transaction(function () use ($request, $data, $attachments) {
+        DB::transaction(function () use ($request, $data, $attachments) {
 
             // 1. Update Request Status
             $request->update(['status' => 'Completed']);

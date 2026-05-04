@@ -92,7 +92,7 @@ class MedicalRecord extends Component
                     foreach ($terms as $term) {
                         $query->orWhereBlind('first_name', 'first_name_index', $term)
                             ->orWhereBlind('last_name', 'last_name_index', $term)
-                            ->orWhere('patient_uid', 'ilike', "%$term%");
+                            ->orWhere('patient_uid', 'like', "%$term%");
                     }
                 }
             })->limit(10)->get();
