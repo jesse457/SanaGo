@@ -1,6 +1,4 @@
 import {
-    HomeIcon,
-    ChevronRightIcon,
     UserCircleIcon,
     UserIcon,
     PhoneIcon,
@@ -14,9 +12,15 @@ import {
     MapPinIcon,
 } from '@heroicons/react/24/outline';
 import { Head, Link, useForm } from '@inertiajs/react';
-import React, { useState } from 'react';
-import AppLayout from '@/Layouts/AppLayout';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
+import FormInput from '@/Components/FormInput';
+import FormSelect from '@/Components/FormSelect';
+import FormTextarea from '@/Components/FormTextarea';
+import PageBreadcrumb from '@/Components/PageBreadcrumb';
+import PageSection from '@/Components/PageSection';
 import { useTranslation } from '@/hooks/useTranslation';
+import AppLayout from '@/Layouts/AppLayout';
 
 interface Department {
     id: number;
@@ -50,7 +54,9 @@ export default function CreateUser({ departments, roles }: Props) {
     const [isDragging, setIsDragging] = useState(false);
 
     const handleFile = (file: File) => {
-        if (!file) return;
+        if (!file) {
+            return;
+        }
 
         if (
             !['image/png', 'image/jpeg', 'image/jpg', 'image/gif'].includes(
@@ -58,11 +64,13 @@ export default function CreateUser({ departments, roles }: Props) {
             )
         ) {
             alert('Invalid file type. Please upload an image.');
+
             return;
         }
 
         if (file.size > 2 * 1024 * 1024) {
             alert('File too large. Max 2MB allowed.');
+
             return;
         }
 
@@ -70,7 +78,7 @@ export default function CreateUser({ departments, roles }: Props) {
         setImagePreview(URL.createObjectURL(file));
     };
 
-    const submit = (e: React.FormEvent) => {
+    const submit = (e: FormEvent) => {
         e.preventDefault();
         post(route('users.store'), {
             forceFormData: true,
@@ -88,31 +96,21 @@ export default function CreateUser({ departments, roles }: Props) {
         >
             <Head title={t('page.users_create.head_title')} />
 
-            <div className="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
-                <nav className="flex text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                    <ol className="inline-flex items-center space-x-2">
-                        <li className="flex cursor-pointer items-center transition-colors hover:text-blue-600">
-                            <HomeIcon className="mr-1 h-4 w-4" />{' '}
-                            {t('common.home')}
-                        </li>
-                        <li>
-                            <ChevronRightIcon className="h-3 w-3" />
-                        </li>
-                        <li className="cursor-pointer transition-colors hover:text-blue-600">
-                            <Link href={route('users.index')}>
-                                {t('page.users_create.user_management')}
-                            </Link>
-                        </li>
-                        <li>
-                            <ChevronRightIcon className="h-3 w-3" />
-                        </li>
-                        <li className="font-medium text-blue-600">
-                            {t('page.users_create.new_registration')}
-                        </li>
-                    </ol>
-                </nav>
+            <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
+                <PageBreadcrumb
+                    items={[
+                        { label: t('common.home') },
+                        {
+                            href: route('users.index'),
+                            label: t('page.users_create.user_management'),
+                        },
+                        {
+                            label: t('page.users_create.new_registration'),
+                        },
+                    ]}
+                />
 
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+                <PageSection>
                     <form onSubmit={submit} className="space-y-8 p-8">
                         {Object.keys(errors).length > 0 && (
                             <div className="flex items-start justify-between rounded-xl border border-red-100 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
@@ -141,160 +139,100 @@ export default function CreateUser({ departments, roles }: Props) {
                             </h3>
 
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                <div className="space-y-1.5 md:col-span-2">
-                                    <label className="ml-1 block text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                        {t('page.users_create.full_name')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <UserIcon className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                                        <input
-                                            type="text"
-                                            value={data.name}
-                                            onChange={(e) =>
-                                                setData('name', e.target.value)
-                                            }
-                                            placeholder={t(
-                                                'page.users_create.full_name_placeholder',
-                                            )}
-                                            className={`w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pr-4 pl-12 text-sm font-bold focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100 ${errors.name ? 'ring-2 ring-red-500' : ''}`}
-                                        />
-                                    </div>
-                                    {errors.name && (
-                                        <p className="mt-1 ml-1 text-xs font-bold text-red-500">
-                                            {errors.name}
-                                        </p>
+                                <FormInput
+                                    name="name"
+                                    label={t('page.users_create.full_name')}
+                                    icon={UserIcon}
+                                    value={data.name}
+                                    onChange={(val) => setData('name', val)}
+                                    placeholder={t(
+                                        'page.users_create.full_name_placeholder',
                                     )}
-                                </div>
+                                    errors={errors}
+                                    required
+                                    className="md:col-span-2"
+                                />
 
-                                <div className="space-y-1.5">
-                                    <label className="ml-1 block text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                        {t('page.users_create.phone_number')}
-                                    </label>
-                                    <div className="relative">
-                                        <PhoneIcon className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                                        <input
-                                            type="tel"
-                                            value={data.phone_number}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'phone_number',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder={t(
-                                                'page.users_create.phone_placeholder',
-                                            )}
-                                            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pr-4 pl-12 text-sm font-bold focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100"
-                                        />
-                                    </div>
-                                    {errors.phone_number && (
-                                        <p className="mt-1 ml-1 text-xs font-bold text-red-500">
-                                            {errors.phone_number}
-                                        </p>
+                                <FormInput
+                                    name="phone_number"
+                                    label={t('page.users_create.phone_number')}
+                                    icon={PhoneIcon}
+                                    type="tel"
+                                    value={data.phone_number}
+                                    onChange={(val) =>
+                                        setData('phone_number', val)
+                                    }
+                                    placeholder={t(
+                                        'page.users_create.phone_placeholder',
                                     )}
-                                </div>
+                                    errors={errors}
+                                />
 
-                                <div className="space-y-1.5">
-                                    <label className="ml-1 block text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                        {t('page.users_create.email_address')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <EnvelopeIcon className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                                        <input
-                                            type="email"
-                                            value={data.email}
-                                            onChange={(e) =>
-                                                setData('email', e.target.value)
-                                            }
-                                            placeholder={t(
-                                                'page.users_create.email_placeholder',
-                                            )}
-                                            className={`w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pr-4 pl-12 text-sm font-bold focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100 ${errors.email ? 'ring-2 ring-red-500' : ''}`}
-                                        />
-                                    </div>
-                                    {errors.email && (
-                                        <p className="mt-1 ml-1 text-xs font-bold text-red-500">
-                                            {errors.email}
-                                        </p>
+                                <FormInput
+                                    name="email"
+                                    label={t('page.users_create.email_address')}
+                                    icon={EnvelopeIcon}
+                                    type="email"
+                                    value={data.email}
+                                    onChange={(val) => setData('email', val)}
+                                    placeholder={t(
+                                        'page.users_create.email_placeholder',
                                     )}
-                                </div>
+                                    errors={errors}
+                                    required
+                                />
 
-                                <div className="space-y-1.5">
-                                    <label className="ml-1 block text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                        {t('page.users_create.gender')}
-                                    </label>
-                                    <select
-                                        value={data.gender}
-                                        onChange={(e) =>
-                                            setData('gender', e.target.value)
-                                        }
-                                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100"
-                                    >
-                                        <option value="">
-                                            {t(
-                                                'page.users_create.select_gender',
-                                            )}
-                                        </option>
-                                        <option value="Male">
-                                            {t('common.male')}
-                                        </option>
-                                        <option value="Female">
-                                            {t('common.female')}
-                                        </option>
-                                    </select>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="ml-1 block text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                        {t(
-                                            'page.users_create.temporary_password',
-                                        )}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="password"
-                                        value={data.password}
-                                        onChange={(e) =>
-                                            setData('password', e.target.value)
-                                        }
-                                        placeholder={t(
-                                            'page.users_create.password_placeholder',
-                                        )}
-                                        className={`w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100 ${errors.password ? 'ring-2 ring-red-500' : ''}`}
-                                    />
-                                    {errors.password && (
-                                        <p className="mt-1 ml-1 text-xs font-bold text-red-500">
-                                            {errors.password}
-                                        </p>
+                                <FormSelect
+                                    name="gender"
+                                    label={t('page.users_create.gender')}
+                                    value={data.gender}
+                                    onChange={(val) => setData('gender', val)}
+                                    errors={errors}
+                                    options={[
+                                        {
+                                            value: 'Male',
+                                            label: t('common.male'),
+                                        },
+                                        {
+                                            value: 'Female',
+                                            label: t('common.female'),
+                                        },
+                                    ]}
+                                    placeholder={t(
+                                        'page.users_create.select_gender',
                                     )}
-                                </div>
+                                />
 
-                                <div className="space-y-1.5 md:col-span-2">
-                                    <label className="ml-1 block text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                        {t(
-                                            'page.users_create.physical_address',
-                                        )}
-                                    </label>
-                                    <div className="relative">
-                                        <MapPinIcon className="absolute top-3.5 left-4 h-5 w-5 text-gray-400" />
-                                        <textarea
-                                            value={data.address}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'address',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder={t(
-                                                'page.users_create.address_placeholder',
-                                            )}
-                                            rows={2}
-                                            className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 py-3 pr-4 pl-12 text-sm font-bold focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100"
-                                        />
-                                    </div>
-                                </div>
+                                <FormInput
+                                    name="password"
+                                    label={t(
+                                        'page.users_create.temporary_password',
+                                    )}
+                                    type="password"
+                                    value={data.password}
+                                    onChange={(val) => setData('password', val)}
+                                    placeholder={t(
+                                        'page.users_create.password_placeholder',
+                                    )}
+                                    errors={errors}
+                                    required
+                                />
+
+                                <FormTextarea
+                                    name="address"
+                                    label={t(
+                                        'page.users_create.physical_address',
+                                    )}
+                                    icon={MapPinIcon}
+                                    value={data.address}
+                                    onChange={(val) => setData('address', val)}
+                                    placeholder={t(
+                                        'page.users_create.address_placeholder',
+                                    )}
+                                    errors={errors}
+                                    rows={2}
+                                    className="md:col-span-2"
+                                />
                             </div>
                         </div>
 
@@ -305,72 +243,39 @@ export default function CreateUser({ departments, roles }: Props) {
                             </h3>
 
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                <div className="space-y-1.5">
-                                    <label className="ml-1 block text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                        {t('page.users_create.department')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        value={data.department_id}
-                                        onChange={(e) =>
-                                            setData(
-                                                'department_id',
-                                                e.target.value,
-                                            )
-                                        }
-                                        className={`w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100 ${errors.department_id ? 'ring-2 ring-red-500' : ''}`}
-                                    >
-                                        <option value="">
-                                            {t(
-                                                'page.users_create.select_department',
-                                            )}
-                                        </option>
-                                        {departments.map((dept) => (
-                                            <option
-                                                key={dept.id}
-                                                value={dept.id}
-                                            >
-                                                {dept.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.department_id && (
-                                        <p className="mt-1 ml-1 text-xs font-bold text-red-500">
-                                            {errors.department_id}
-                                        </p>
+                                <FormSelect
+                                    name="department_id"
+                                    label={t('page.users_create.department')}
+                                    value={data.department_id}
+                                    onChange={(val) =>
+                                        setData('department_id', val)
+                                    }
+                                    errors={errors}
+                                    options={departments.map((dept) => ({
+                                        value: dept.id,
+                                        label: dept.name,
+                                    }))}
+                                    placeholder={t(
+                                        'page.users_create.select_department',
                                     )}
-                                </div>
+                                    required
+                                />
 
-                                <div className="space-y-1.5">
-                                    <label className="ml-1 block text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                        {t('page.users_create.system_role')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        value={data.role}
-                                        onChange={(e) =>
-                                            setData('role', e.target.value)
-                                        }
-                                        className={`w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100 ${errors.role ? 'ring-2 ring-red-500' : ''}`}
-                                    >
-                                        <option value="">
-                                            {t('page.users_create.select_role')}
-                                        </option>
-                                        {roles.map((role) => (
-                                            <option
-                                                key={role.id}
-                                                value={role.name}
-                                            >
-                                                {role.name.replace('_', ' ')}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.role && (
-                                        <p className="mt-1 ml-1 text-xs font-bold text-red-500">
-                                            {errors.role}
-                                        </p>
+                                <FormSelect
+                                    name="role"
+                                    label={t('page.users_create.system_role')}
+                                    value={data.role}
+                                    onChange={(val) => setData('role', val)}
+                                    errors={errors}
+                                    options={roles.map((role) => ({
+                                        value: role.name,
+                                        label: role.name.replace('_', ' '),
+                                    }))}
+                                    placeholder={t(
+                                        'page.users_create.select_role',
                                     )}
-                                </div>
+                                    required
+                                />
                             </div>
                         </div>
 
@@ -472,7 +377,7 @@ export default function CreateUser({ departments, roles }: Props) {
                             </button>
                         </div>
                     </form>
-                </div>
+                </PageSection>
             </div>
         </AppLayout>
     );

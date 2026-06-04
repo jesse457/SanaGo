@@ -41,8 +41,20 @@ Route::middleware([InitializeTenancyBySubdomainGraceful::class])->group(function
         ->middleware('throttle:login');
 
     Route::get('/forgot-password', fn () => Inertia::render('Auth/ForgotPassword'))->name('password.request');
+    Route::post('/forgot-password', [AuthenticatedSessionController::class, 'sendResetLink'])
+        ->middleware('throttle:6,1')
+        ->name('password.email');
+    Route::get('/reset-password/{token}', fn (string $token) => Inertia::render('Auth/ResetPassword', ['token' => $token]))
+        ->name('password.reset');
+    Route::post('/reset-password', [AuthenticatedSessionController::class, 'resetPassword'])
+        ->middleware('throttle:6,1')
+        ->name('password.update');
     Route::get('/confirm-password', fn () => Inertia::render('Auth/ConfirmPassword'))->name('password.confirm');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
+    // Auto-login transfer for cross-domain tenant login
+    Route::get('/login/transfer', [AuthenticatedSessionController::class, 'transfer'])
+        ->name('login.transfer');
 
     // Locale switcher (works for both guest and authenticated users)
     Route::post('/locale', function (Request $request) {
@@ -62,7 +74,7 @@ Route::middleware([InitializeTenancyBySubdomainGraceful::class])->group(function
     // Shared authenticated routes (work in both central and tenant contexts)
     Route::middleware(['auth'])->group(function () {
         Route::get('/profile', fn () => Inertia::render('Profile/Show'))->name('profile');
-        Route::get('/settings', fn () => Inertia::render('Settings/index'))->name('settings');
+        Route::get('/settings', fn () => Inertia::render('Settings/Index'))->name('settings');
     });
 });
 
@@ -73,7 +85,7 @@ Route::middleware([InitializeTenancyBySubdomainGraceful::class])->group(function
 | Protected by can:view-super-admin — only users with this permission
 | (from central DB) can access. Tenant users will get 403.
 */
-Route::middleware(['auth', 'can:view-super-admin', 'throttle:api'])->group(function () {
+Route::middleware(['auth', 'central.domain', 'can:view-super-admin', 'throttle:api'])->group(function () {
     // Super admin dashboard
     Route::get('/dashboard/super-admin', [TenantController::class, 'dashboard'])
         ->name('dashboard.super-admin');

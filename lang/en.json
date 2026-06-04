@@ -7,13 +7,18 @@
       "title": "Forgot Password"
     },
     "login": {
+      "contact_admin": "Contact your hospital administrator to get access credentials.",
       "email_label": "Email Address",
       "forgot_password": "Forgot your password?",
+      "landlord_tab": "Central Login",
       "password_label": "Password",
       "remember_me": "Remember me",
+      "subdomain_label": "Hospital Code",
+      "subdomain_placeholder": "e.g. city-hospital",
       "submit": "Sign In",
       "submitting": "Signing In...",
       "subtitle": "Sign in to your account to continue",
+      "tenant_tab": "Hospital Login",
       "title": "Login"
     }
   },

@@ -1,8 +1,21 @@
-import { PlusIcon, PencilSquareIcon, TrashIcon, HomeIcon, ChevronRightIcon, XMarkIcon, TagIcon, AdjustmentsHorizontalIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import {
+    PlusIcon,
+    PencilSquareIcon,
+    TrashIcon,
+    TagIcon,
+    AdjustmentsHorizontalIcon,
+    MagnifyingGlassIcon,
+} from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import React, { useState } from 'react';
-import AppLayout from '@/Layouts/AppLayout';
+import EmptyState from '@/Components/EmptyState';
+import FormInput from '@/Components/FormInput';
+import Modal from '@/Components/Modal';
+import PageBreadcrumb from '@/Components/PageBreadcrumb';
+import PageSection from '@/Components/PageSection';
+import StatusBadge from '@/Components/StatusBadge';
 import { useTranslation } from '@/hooks/useTranslation';
+import AppLayout from '@/Layouts/AppLayout';
 
 interface Props {
     bedTypes: any[];
@@ -14,7 +27,17 @@ export default function BedTypeIndex({ bedTypes }: Props) {
     const [modalOpen, setModalOpen] = useState(false);
     const [editingType, setEditingType] = useState<any>(null);
 
-    const { data, setData, post, put, delete: destroy, processing, errors, reset, clearErrors } = useForm({
+    const {
+        data,
+        setData,
+        post,
+        put,
+        delete: destroy,
+        processing,
+        errors,
+        reset,
+        clearErrors,
+    } = useForm({
         name: '',
         capacity: '',
     });
@@ -45,8 +68,11 @@ export default function BedTypeIndex({ bedTypes }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (editingType) {
-            put(route('bed-types.update', editingType.id), { onSuccess: closeModal });
+            put(route('bed-types.update', editingType.id), {
+                onSuccess: closeModal,
+            });
         } else {
             post(route('bed-types.store'), { onSuccess: closeModal });
         }
@@ -58,127 +84,177 @@ export default function BedTypeIndex({ bedTypes }: Props) {
         }
     };
 
-    const filteredTypes = bedTypes.filter(t =>
-        t.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredTypes = bedTypes.filter((t) =>
+        t.name?.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
-    const inputClasses = "mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm";
-    const labelClasses = "block text-xs font-bold text-gray-500 uppercase tracking-wide";
-
     return (
-        <AppLayout headerTitle={t('page.bed_type.title')} headerSubtitle={t('page.bed_type.subtitle')}>
+        <AppLayout
+            headerTitle={t('page.bed_type.title')}
+            headerSubtitle={t('page.bed_type.subtitle')}
+        >
             <Head title={t('page.bed_type.head_title')} />
-            <div className="max-w-7xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 py-6">
-                <nav className="flex text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    <ol className="inline-flex items-center space-x-2">
-                        <li className="flex items-center hover:text-blue-600 cursor-pointer"><HomeIcon className="w-4 h-4 mr-1" /> {t('common.home')}</li>
-                        <li><ChevronRightIcon className="w-4 h-4" /></li>
-                        <li className="text-blue-600 font-medium">{t('page.bed_type.head_title')}</li>
-                    </ol>
-                </nav>
+            <div className="mx-auto max-w-7xl space-y-6">
+                <PageBreadcrumb
+                    items={[
+                        { label: t('common.home') },
+                        { label: t('page.bed_type.head_title') },
+                    ]}
+                />
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <h2 className="text-2xl font-bold text-gray-900">{t('page.bed_type.heading')}</h2>
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-neutral-100">
+                        {t('page.bed_type.heading')}
+                    </h2>
                     <div className="flex items-center gap-3">
-                        <div className="relative">
-                            <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder={t('page.bed_type.search_placeholder')}
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9 pr-4 py-2 w-48 sm:w-64 bg-white border border-gray-200 shadow-sm rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                            />
-                        </div>
-                        <button className="p-2 border border-gray-200 bg-white rounded-lg text-gray-500 hover:text-gray-900">
-                            <AdjustmentsHorizontalIcon className="w-5 h-5" />
+                        <FormInput
+                            name="search"
+                            icon={MagnifyingGlassIcon}
+                            placeholder={t('page.bed_type.search_placeholder')}
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                            className="w-48 sm:w-64"
+                        />
+                        <button className="rounded-lg border border-gray-200 bg-white p-2 text-gray-500 hover:text-gray-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200">
+                            <AdjustmentsHorizontalIcon className="h-5 w-5" />
                         </button>
                         <button
                             onClick={openCreateModal}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
+                            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
                         >
-                            <PlusIcon className="w-4 h-4" /> {t('page.bed_type.add_type')}
+                            <PlusIcon className="h-4 w-4" />
+                            {t('page.bed_type.add_type')}
                         </button>
                     </div>
                 </div>
 
                 {filteredTypes.length === 0 ? (
-                    <div className="text-center py-16 bg-white rounded-xl border-2 border-dashed border-gray-200">
-                        <TagIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-900">{t('page.bed_type.no_bed_types')}</h3>
-                        <button onClick={openCreateModal} className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold">
-                            <PlusIcon className="w-4 h-4" /> {t('page.bed_type.add_first_type')}
-                        </button>
+                    <div className="space-y-6">
+                        <EmptyState
+                            icon={TagIcon}
+                            title={t('page.bed_type.no_bed_types')}
+                        />
+                        <div className="text-center">
+                            <button
+                                onClick={openCreateModal}
+                                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
+                            >
+                                <PlusIcon className="h-4 w-4" />
+                                {t('page.bed_type.add_first_type')}
+                            </button>
+                        </div>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                        <table className="w-full text-left">
-                            <thead className="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                <tr>
-                                    <th className="px-6 py-4">{t('page.bed_type.col_name')}</th>
-                                    <th className="px-6 py-4">{t('page.bed_type.col_capacity')}</th>
-                                    <th className="px-6 py-4 text-right">{t('common.actions')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 text-sm">
-                                {filteredTypes.map((type) => (
-                                    <tr key={type.id} className="hover:bg-gray-50 transition-colors group">
-                                        <td className="px-6 py-4 font-semibold text-gray-900">{type.name}</td>
-                                        <td className="px-6 py-4">
-                                            <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-md text-xs font-semibold">
-                                                {type.capacity} {t('page.bed_type.patients')}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button onClick={() => openEditModal(type)} className="p-2 text-gray-400 hover:text-blue-600">
-                                                <PencilSquareIcon className="w-4.5 h-4.5" />
-                                            </button>
-                                            <button onClick={() => handleDelete(type)} className="p-2 text-gray-400 hover:text-red-600">
-                                                <TrashIcon className="w-4.5 h-4.5" />
-                                            </button>
-                                        </td>
+                    <PageSection
+                        title={t('page.bed_type.head_title')}
+                        icon={TagIcon}
+                    >
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="border-b border-gray-100 bg-gray-50/50 text-xs font-bold tracking-wider text-gray-500 uppercase dark:border-neutral-700 dark:bg-neutral-700/30 dark:text-neutral-400">
+                                    <tr>
+                                        <th className="px-6 py-4">
+                                            {t('page.bed_type.col_name')}
+                                        </th>
+                                        <th className="px-6 py-4">
+                                            {t('page.bed_type.col_capacity')}
+                                        </th>
+                                        <th className="px-6 py-4 text-right">
+                                            {t('common.actions')}
+                                        </th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 text-sm dark:divide-neutral-700">
+                                    {filteredTypes.map((type) => (
+                                        <tr
+                                            key={type.id}
+                                            className="group transition-colors hover:bg-gray-50 dark:hover:bg-neutral-700/30"
+                                        >
+                                            <td className="px-6 py-4 font-semibold text-gray-900 dark:text-neutral-100">
+                                                {type.name}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <StatusBadge
+                                                    label={`${type.capacity} ${t('page.bed_type.patients')}`}
+                                                    color="blue"
+                                                />
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    onClick={() =>
+                                                        openEditModal(type)
+                                                    }
+                                                    className="rounded-md border border-gray-200 bg-white p-1.5 shadow-sm hover:text-blue-600 dark:border-neutral-600 dark:bg-neutral-700 dark:hover:text-blue-400"
+                                                >
+                                                    <PencilSquareIcon className="h-3.5 w-3.5" />
+                                                </button>
+                                                <button
+                                                    onClick={() =>
+                                                        handleDelete(type)
+                                                    }
+                                                    className="ml-1 rounded-md border border-gray-200 bg-white p-1.5 shadow-sm hover:text-red-600 dark:border-neutral-600 dark:bg-neutral-700 dark:hover:text-red-400"
+                                                >
+                                                    <TrashIcon className="h-3.5 w-3.5" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </PageSection>
                 )}
             </div>
 
-            {/* Modal */}
-            {modalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={closeModal}></div>
-                    <div className="relative bg-white rounded-xl w-full max-w-lg shadow-xl border border-gray-200 overflow-hidden">
-                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                            <h3 className="text-lg font-semibold text-gray-900">{editingType ? t('page.bed_type.edit_type') : t('page.bed_type.add_type')}</h3>
-                            <button onClick={closeModal} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-lg">
-                                <XMarkIcon className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                            <div>
-                                <label className={labelClasses}>{t('page.bed_type.bed_type_name')}</label>
-                                <input type="text" value={data.name} onChange={e => setData('name', e.target.value)} className={inputClasses} placeholder="e.g. ICU, General, Private" />
-                                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
-                            </div>
-                            <div>
-                                <label className={labelClasses}>{t('page.bed_type.patient_capacity')}</label>
-                                <input type="number" value={data.capacity} onChange={e => setData('capacity', e.target.value)} className={inputClasses} min="1" />
-                                {errors.capacity && <p className="text-red-500 text-xs mt-1">{errors.capacity}</p>}
-                            </div>
-                            <div className="flex justify-end gap-3 pt-4 border-t">
-                                <button type="button" onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                                    {t('common.cancel')}
-                                </button>
-                                <button type="submit" disabled={processing} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-75">
-                                    {processing ? t('page.bed_type.saving') : t('common.save_changes')}
-                                </button>
-                            </div>
-                        </form>
+            <Modal
+                isOpen={modalOpen}
+                onClose={closeModal}
+                title={
+                    editingType
+                        ? t('page.bed_type.edit_type')
+                        : t('page.bed_type.add_type')
+                }
+            >
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    <FormInput
+                        name="name"
+                        label={t('page.bed_type.bed_type_name')}
+                        value={data.name}
+                        onChange={(val) => setData('name', val)}
+                        errors={errors}
+                        placeholder="e.g. ICU, General, Private"
+                        required
+                    />
+                    <FormInput
+                        name="capacity"
+                        label={t('page.bed_type.patient_capacity')}
+                        type="number"
+                        value={data.capacity}
+                        onChange={(val) => setData('capacity', val)}
+                        errors={errors}
+                        min="1"
+                        required
+                    />
+                    <div className="flex gap-4 pt-2">
+                        <button
+                            type="button"
+                            onClick={closeModal}
+                            className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-bold text-gray-500 dark:border-neutral-700 dark:bg-neutral-800"
+                        >
+                            {t('common.cancel')}
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="flex-[2] rounded-xl bg-blue-600 py-3 font-bold text-white hover:bg-blue-700 disabled:opacity-50"
+                        >
+                            {processing
+                                ? t('page.bed_type.saving')
+                                : t('common.save_changes')}
+                        </button>
                     </div>
-                </div>
-            )}
+                </form>
+            </Modal>
         </AppLayout>
     );
 }

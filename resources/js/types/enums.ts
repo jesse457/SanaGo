@@ -5,7 +5,8 @@ export const AppointmentStatus = {
     COMPLETED: 'completed',
     CANCELLED: 'cancelled',
 } as const;
-export type AppointmentStatusEnum = (typeof AppointmentStatus)[keyof typeof AppointmentStatus];
+export type AppointmentStatusEnum =
+    (typeof AppointmentStatus)[keyof typeof AppointmentStatus];
 
 export const AdmissionStatus = {
     ADMITTED: 'admitted',
@@ -13,7 +14,8 @@ export const AdmissionStatus = {
     TRANSFERRED: 'transferred',
     PENDING: 'pending',
 } as const;
-export type AdmissionStatusEnum = (typeof AdmissionStatus)[keyof typeof AdmissionStatus];
+export type AdmissionStatusEnum =
+    (typeof AdmissionStatus)[keyof typeof AdmissionStatus];
 
 export const BatchStatus = {
     ACTIVE: 'active',
@@ -34,14 +36,16 @@ export const DepartmentType = {
     ADMINISTRATIVE: 'administrative',
     SUPPORT: 'support',
 } as const;
-export type DepartmentTypeEnum = (typeof DepartmentType)[keyof typeof DepartmentType];
+export type DepartmentTypeEnum =
+    (typeof DepartmentType)[keyof typeof DepartmentType];
 
 export const FeedbackStatus = {
     PENDING: 'pending',
     ADDRESSED: 'addressed',
     DISMISSED: 'dismissed',
 } as const;
-export type FeedbackStatusEnum = (typeof FeedbackStatus)[keyof typeof FeedbackStatus];
+export type FeedbackStatusEnum =
+    (typeof FeedbackStatus)[keyof typeof FeedbackStatus];
 
 export const Gender = {
     MALE: 'male',
@@ -55,21 +59,24 @@ export const InvoiceStatus = {
     PAID: 'paid',
     OVERDUE: 'overdue',
 } as const;
-export type InvoiceStatusEnum = (typeof InvoiceStatus)[keyof typeof InvoiceStatus];
+export type InvoiceStatusEnum =
+    (typeof InvoiceStatus)[keyof typeof InvoiceStatus];
 
 export const LabRequestStatus = {
     PENDING: 'pending',
     COMPLETED: 'completed',
     CANCELLED: 'cancelled',
 } as const;
-export type LabRequestStatusEnum = (typeof LabRequestStatus)[keyof typeof LabRequestStatus];
+export type LabRequestStatusEnum =
+    (typeof LabRequestStatus)[keyof typeof LabRequestStatus];
 
 export const LabResultStatus = {
     NORMAL: 'normal',
     ABNORMAL: 'abnormal',
     CRITICAL: 'critical',
 } as const;
-export type LabResultStatusEnum = (typeof LabResultStatus)[keyof typeof LabResultStatus];
+export type LabResultStatusEnum =
+    (typeof LabResultStatus)[keyof typeof LabResultStatus];
 
 export const PrescriptionStatus = {
     NEW: 'new',
@@ -77,7 +84,8 @@ export const PrescriptionStatus = {
     COMPLETED: 'completed',
     CANCELLED: 'cancelled',
 } as const;
-export type PrescriptionStatusEnum = (typeof PrescriptionStatus)[keyof typeof PrescriptionStatus];
+export type PrescriptionStatusEnum =
+    (typeof PrescriptionStatus)[keyof typeof PrescriptionStatus];
 
 export const ShiftType = {
     MORNING: 'morning',
@@ -99,7 +107,8 @@ export const SurgeryStatus = {
     COMPLETED: 'completed',
     CANCELLED: 'cancelled',
 } as const;
-export type SurgeryStatusEnum = (typeof SurgeryStatus)[keyof typeof SurgeryStatus];
+export type SurgeryStatusEnum =
+    (typeof SurgeryStatus)[keyof typeof SurgeryStatus];
 
 export const EmergencyStatus = {
     TRIAGE: 'triage',
@@ -109,7 +118,8 @@ export const EmergencyStatus = {
     DISCHARGED: 'discharged',
     DECEASED: 'deceased',
 } as const;
-export type EmergencyStatusEnum = (typeof EmergencyStatus)[keyof typeof EmergencyStatus];
+export type EmergencyStatusEnum =
+    (typeof EmergencyStatus)[keyof typeof EmergencyStatus];
 
 export const ExpenditureCategory = {
     SALARIES: 'salaries',
@@ -121,4 +131,5 @@ export const ExpenditureCategory = {
     ADMINISTRATIVE: 'administrative',
     OTHER: 'other',
 } as const;
-export type ExpenditureCategoryEnum = (typeof ExpenditureCategory)[keyof typeof ExpenditureCategory];
+export type ExpenditureCategoryEnum =
+    (typeof ExpenditureCategory)[keyof typeof ExpenditureCategory];

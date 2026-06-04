@@ -1,5 +1,11 @@
-import { createContext, useContext, useCallback, useMemo, createElement } from 'react';
 import { usePage, router } from '@inertiajs/react';
+import {
+    createContext,
+    useContext,
+    useCallback,
+    useMemo,
+    createElement,
+} from 'react';
 
 type Translations = Record<string, any>;
 
@@ -11,29 +17,45 @@ interface TranslationContextType {
 
 const TranslationContext = createContext<TranslationContextType | null>(null);
 
-function resolveNestedKey(key: string, translations: Translations): string | undefined {
+function resolveNestedKey(
+    key: string,
+    translations: Translations,
+): string | undefined {
     // Try exact path first
     const result = key.split('.').reduce((obj, segment) => {
         if (obj && typeof obj === 'object' && segment in obj) {
             return obj[segment];
         }
+
         return undefined;
     }, translations as any);
 
-    if (result !== undefined) return result;
+    if (result !== undefined) {
+        return result;
+    }
 
     // Fallback for flat keys: try general.* then common.*
     if (!key.includes('.')) {
         const g = (translations as any)?.general;
-        if (g && key in g) return g[key];
+
+        if (g && key in g) {
+            return g[key];
+        }
+
         const c = (translations as any)?.common;
-        if (c && key in c) return c[key];
+
+        if (c && key in c) {
+            return c[key];
+        }
     }
 
     return undefined;
 }
 
-function interpolate(value: string, replacements: Record<string, string | number>): string {
+function interpolate(
+    value: string,
+    replacements: Record<string, string | number>,
+): string {
     return Object.entries(replacements).reduce(
         (str, [k, v]) => str.replace(new RegExp(`:${k}`, 'g'), String(v)),
         value,
@@ -44,19 +66,26 @@ function interpolate(value: string, replacements: Record<string, string | number
  * Wrap layout children to provide cached translations via context.
  * Use inside layouts where usePage() is available.
  */
-export function TranslationProvider({ children }: { children: React.ReactNode }) {
+export function TranslationProvider({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
     const { props } = usePage();
     const { locale, translations } = props as any;
 
     const t = useCallback(
         (key: string, replacements?: Record<string, string | number>) => {
             const value = resolveNestedKey(key, translations ?? {});
+
             if (value === undefined) {
                 return key;
             }
+
             if (replacements) {
                 return interpolate(value, replacements);
             }
+
             return value;
         },
         [translations],
@@ -66,7 +95,10 @@ export function TranslationProvider({ children }: { children: React.ReactNode })
         router.post('/locale', { locale: newLocale }, { preserveScroll: true });
     }, []);
 
-    const value = useMemo(() => ({ locale, t, switchLocale }), [locale, t, switchLocale]);
+    const value = useMemo(
+        () => ({ locale, t, switchLocale }),
+        [locale, t, switchLocale],
+    );
 
     return createElement(TranslationContext.Provider, { value }, children);
 }
@@ -90,12 +122,15 @@ export function useTranslation(): TranslationContextType {
 
     const t = (key: string, replacements?: Record<string, string | number>) => {
         const value = resolveNestedKey(key, translations ?? {});
+
         if (value === undefined) {
             return key;
         }
+
         if (replacements) {
             return interpolate(value, replacements);
         }
+
         return value;
     };
 

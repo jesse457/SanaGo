@@ -48,8 +48,10 @@ class AppServiceProvider extends ServiceProvider
     protected function configureGates(): void
     {
         Gate::before(function ($user) {
-            // Grant full access to any landlord user
-            if ($user->can('view-super-admin')) {
+            // Grant full access to any landlord user.
+            // Use hasPermissionTo() instead of can() to avoid infinite recursion:
+            // can() triggers the gate, which calls before(), which calls can()...
+            if ($user->hasPermissionTo('view-super-admin')) {
                 return true;
             }
 

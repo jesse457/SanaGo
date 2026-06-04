@@ -1,9 +1,17 @@
-import { PlusIcon, TrashIcon, HomeIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
-import { Head, useForm } from '@inertiajs/react';
+import {
+    PlusIcon,
+    TrashIcon,
+    DocumentTextIcon,
+} from '@heroicons/react/24/outline';
+import { Head, useForm, Link } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import React, { useMemo, useState } from 'react';
-import AppLayout from '@/Layouts/AppLayout';
+import React, { useMemo } from 'react';
+import FormInput from '@/Components/FormInput';
+import FormSelect from '@/Components/FormSelect';
+import PageBreadcrumb from '@/Components/PageBreadcrumb';
+import PageSection from '@/Components/PageSection';
 import { useTranslation } from '@/hooks/useTranslation';
+import AppLayout from '@/Layouts/AppLayout';
 
 interface Patient {
     id: number;
@@ -35,34 +43,65 @@ const ITEM_TYPES = [
     'other',
 ];
 
+const ITEM_TYPE_OPTIONS = ITEM_TYPES.map((t) => ({
+    value: t,
+    label: t.replace('_', ' '),
+}));
+
 export default function InvoiceCreate({ patients }: Props) {
     const { t } = useTranslation();
     const { data, setData, post, processing, errors } = useForm({
-        patient_id: '' as string | number,
+        patient_id: '',
         invoice_date: new Date().toISOString().slice(0, 10),
         due_date: '',
         notes: '',
         items: [
-            { item_type: 'consultation', description: '', quantity: 1, unit_price: 0 },
+            {
+                item_type: 'consultation',
+                description: '',
+                quantity: 1,
+                unit_price: 0,
+            },
         ] as LineItem[],
     });
 
     const addItem = () => {
-        setData('items', [...data.items, { item_type: 'consultation', description: '', quantity: 1, unit_price: 0 }]);
+        setData('items', [
+            ...data.items,
+            {
+                item_type: 'consultation',
+                description: '',
+                quantity: 1,
+                unit_price: 0,
+            },
+        ]);
     };
 
     const removeItem = (idx: number) => {
-        setData('items', data.items.filter((_, i) => i !== idx));
+        setData(
+            'items',
+            data.items.filter((_, i) => i !== idx),
+        );
     };
 
-    const updateItem = (idx: number, field: keyof LineItem, value: string | number) => {
-        setData('items', data.items.map((item, i) =>
-            i === idx ? { ...item, [field]: value } : item
-        ));
+    const updateItem = (
+        idx: number,
+        field: keyof LineItem,
+        value: string | number,
+    ) => {
+        setData(
+            'items',
+            data.items.map((item, i) =>
+                i === idx ? { ...item, [field]: value } : item,
+            ),
+        );
     };
 
     const grandTotal = useMemo(() => {
-        return data.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+        return data.items.reduce(
+            (sum, item) => sum + item.quantity * item.unit_price,
+            0,
+        );
     }, [data.items]);
 
     const handleSubmit = (e: FormEvent) => {
@@ -71,156 +110,181 @@ export default function InvoiceCreate({ patients }: Props) {
     };
 
     return (
-        <AppLayout headerTitle={t('finance.invoices.create.title')} headerSubtitle={t('finance.invoices.create.subtitle')}>
+        <AppLayout
+            headerTitle={t('finance.invoices.create.title')}
+            headerSubtitle={t('finance.invoices.create.subtitle')}
+        >
             <Head title={t('finance.invoices.create.head_title')} />
 
-            <div className="max-w-5xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8">
-                <nav className="flex text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-neutral-400">
-                    <ol className="inline-flex items-center space-x-2">
-                        <li className="flex items-center hover:text-blue-600 cursor-pointer transition-colors">
-                            <HomeIcon className="w-4 h-4 mr-1" /> {t('common.home')}
-                        </li>
-                        <li><ChevronRightIcon className="w-3 h-3" /></li>
-                        <li className="hover:text-blue-600 cursor-pointer">{t('finance.invoices.create.finance')}</li>
-                        <li><ChevronRightIcon className="w-3 h-3" /></li>
-                        <li className="text-blue-600 font-medium">{t('finance.invoices.create.create_invoice')}</li>
-                    </ol>
-                </nav>
+            <div className="mx-auto max-w-6xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
+                <PageBreadcrumb
+                    items={[
+                        { label: t('common.home'), href: route('dashboard') },
+                        {
+                            label: t('finance.invoices.create.finance'),
+                            href: route('finance.invoices.index'),
+                        },
+                        { label: t('finance.invoices.create.create_invoice') },
+                    ]}
+                />
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="bg-white dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700 p-6 space-y-4">
-                        <h3 className="text-sm font-bold text-gray-900 dark:text-neutral-100 uppercase">{t('finance.invoices.create.invoice_details')}</h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-xs font-semibold text-gray-500 dark:text-neutral-400 uppercase ml-1">{t('finance.invoices.create.patient')} *</label>
-                                <select
-                                    value={data.patient_id}
-                                    onChange={e => setData('patient_id', e.target.value)}
-                                    className="w-full mt-1.5 px-4 py-3 bg-gray-50 dark:bg-neutral-700 border border-gray-200 dark:border-neutral-600 rounded-xl text-sm font-bold dark:text-neutral-100"
-                                    required
-                                >
-                                    <option value="">{t('finance.invoices.create.select_patient')}</option>
-                                    {patients.map(p => (
-                                        <option key={p.id} value={p.id}>
-                                            {p.first_name} {p.last_name} ({p.patient_uid})
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.patient_id && <p className="text-xs font-bold text-red-500 mt-1">{errors.patient_id}</p>}
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold text-gray-500 dark:text-neutral-400 uppercase ml-1">{t('finance.invoices.create.invoice_date')} *</label>
-                                <input
-                                    type="date"
-                                    value={data.invoice_date}
-                                    onChange={e => setData('invoice_date', e.target.value)}
-                                    className="w-full mt-1.5 px-4 py-3 bg-gray-50 dark:bg-neutral-700 border border-gray-200 dark:border-neutral-600 rounded-xl text-sm font-bold dark:text-neutral-100"
-                                    required
-                                />
-                                {errors.invoice_date && <p className="text-xs font-bold text-red-500 mt-1">{errors.invoice_date}</p>}
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold text-gray-500 dark:text-neutral-400 uppercase ml-1">{t('finance.invoices.create.due_date')}</label>
-                                <input
-                                    type="date"
-                                    value={data.due_date}
-                                    onChange={e => setData('due_date', e.target.value)}
-                                    className="w-full mt-1.5 px-4 py-3 bg-gray-50 dark:bg-neutral-700 border border-gray-200 dark:border-neutral-600 rounded-xl text-sm font-bold dark:text-neutral-100"
-                                />
-                                {errors.due_date && <p className="text-xs font-bold text-red-500 mt-1">{errors.due_date}</p>}
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold text-gray-500 dark:text-neutral-400 uppercase ml-1">{t('finance.invoices.create.notes')}</label>
-                                <input
-                                    type="text"
-                                    value={data.notes}
-                                    onChange={e => setData('notes', e.target.value)}
-                                    className="w-full mt-1.5 px-4 py-3 bg-gray-50 dark:bg-neutral-700 border border-gray-200 dark:border-neutral-600 rounded-xl text-sm dark:text-neutral-100"
-                                    placeholder={t('finance.invoices.create.notes_placeholder')}
-                                />
-                            </div>
+                    <PageSection
+                        icon={DocumentTextIcon}
+                        title={t('finance.invoices.create.invoice_details')}
+                    >
+                        <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">
+                            <FormSelect
+                                name="patient_id"
+                                label={t('finance.invoices.create.patient')}
+                                value={data.patient_id}
+                                onChange={(v) => setData('patient_id', v)}
+                                errors={errors}
+                                required
+                                options={patients.map((p) => ({
+                                    value: String(p.id),
+                                    label: `${p.first_name} ${p.last_name} (${p.patient_uid})`,
+                                }))}
+                                placeholder={t(
+                                    'finance.invoices.create.select_patient',
+                                )}
+                            />
+                            <FormInput
+                                name="invoice_date"
+                                label={t(
+                                    'finance.invoices.create.invoice_date',
+                                )}
+                                type="date"
+                                value={data.invoice_date}
+                                onChange={(v) => setData('invoice_date', v)}
+                                errors={errors}
+                                required
+                            />
+                            <FormInput
+                                name="due_date"
+                                label={t('finance.invoices.create.due_date')}
+                                type="date"
+                                value={data.due_date}
+                                onChange={(v) => setData('due_date', v)}
+                                errors={errors}
+                            />
+                            <FormInput
+                                name="notes"
+                                label={t('finance.invoices.create.notes')}
+                                type="text"
+                                value={data.notes}
+                                onChange={(v) => setData('notes', v)}
+                                placeholder={t(
+                                    'finance.invoices.create.notes_placeholder',
+                                )}
+                            />
                         </div>
-                    </div>
+                    </PageSection>
 
-<div className="bg-white dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700 p-6 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-gray-900 dark:text-neutral-100 uppercase">{t('finance.invoices.create.line_items')}</h3>
+                    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+                        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/50 p-6 dark:border-neutral-700 dark:bg-neutral-700/30">
+                            <h3 className="text-sm font-bold text-gray-900 uppercase dark:text-neutral-100">
+                                {t('finance.invoices.create.line_items')}
+                            </h3>
                             <button
                                 type="button"
                                 onClick={addItem}
                                 className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700"
                             >
-                                <PlusIcon className="w-3.5 h-3.5" /> {t('finance.invoices.create.add_blank_item')}
+                                <PlusIcon className="h-3.5 w-3.5" />{' '}
+                                {t('finance.invoices.create.add_blank_item')}
                             </button>
                         </div>
 
-                        {errors.items && <p className="text-xs font-bold text-red-500">{errors.items}</p>}
+                        {errors.items && (
+                            <p className="px-6 pt-4 text-xs font-bold text-red-500">
+                                {errors.items}
+                            </p>
+                        )}
 
-                        <div className="space-y-3">
+                        <div className="space-y-3 p-6">
                             {data.items.map((item, idx) => (
-                                <div key={idx} className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-neutral-700/50 rounded-xl">
-                                    <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-3">
-                                        <div>
-                                            <label className="text-[10px] font-semibold text-gray-400 uppercase">{t('finance.invoices.create.type')}</label>
-                                            <select
-                                                value={item.item_type}
-                                                onChange={e => updateItem(idx, 'item_type', e.target.value)}
-                                                className="w-full mt-0.5 px-2 py-2 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-600 rounded-lg text-xs font-bold dark:text-neutral-100"
-                                            >
-                                                {ITEM_TYPES.map(t => (
-                                                    <option key={t} value={t}>{t.replace('_', ' ')}</option>
-                                                ))}
-                                            </select>
-                                        </div>
+                                <div
+                                    key={idx}
+                                    className="flex items-start gap-3 rounded-xl bg-gray-50 p-4 dark:bg-neutral-700/50"
+                                >
+                                    <div className="grid flex-1 grid-cols-2 gap-3 md:grid-cols-5">
+                                        <FormSelect
+                                            name={`item_${idx}_type`}
+                                            value={item.item_type}
+                                            onChange={(v) =>
+                                                updateItem(idx, 'item_type', v)
+                                            }
+                                            options={ITEM_TYPE_OPTIONS}
+                                        />
                                         <div className="md:col-span-2">
-                                            <label className="text-[10px] font-semibold text-gray-400 uppercase">{t('finance.invoices.create.description')}</label>
-                                            <input
-                                                type="text"
+                                            <FormInput
+                                                name={`item_${idx}_description`}
                                                 value={item.description}
-                                                onChange={e => updateItem(idx, 'description', e.target.value)}
-                                                className="w-full mt-0.5 px-2 py-2 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-600 rounded-lg text-xs font-bold dark:text-neutral-100"
-                                                placeholder={t('finance.invoices.create.description_placeholder')}
+                                                onChange={(v) =>
+                                                    updateItem(
+                                                        idx,
+                                                        'description',
+                                                        v,
+                                                    )
+                                                }
+                                                placeholder={t(
+                                                    'finance.invoices.create.description_placeholder',
+                                                )}
                                             />
                                         </div>
-                                        <div>
-                                            <label className="text-[10px] font-semibold text-gray-400 uppercase">{t('finance.invoices.create.qty')}</label>
-                                            <input
-                                                type="number"
-                                                value={item.quantity}
-                                                onChange={e => updateItem(idx, 'quantity', parseInt(e.target.value) || 0)}
-                                                className="w-full mt-0.5 px-2 py-2 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-600 rounded-lg text-xs font-bold dark:text-neutral-100"
-                                                min="1"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-semibold text-gray-400 uppercase">{t('finance.invoices.create.unit_price')}</label>
-                                            <input
-                                                type="number"
-                                                value={item.unit_price}
-                                                onChange={e => updateItem(idx, 'unit_price', parseFloat(e.target.value) || 0)}
-                                                className="w-full mt-0.5 px-2 py-2 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-600 rounded-lg text-xs font-bold dark:text-neutral-100"
-                                                min="0"
-                                                step="1"
-                                            />
-                                        </div>
+                                        <FormInput
+                                            name={`item_${idx}_qty`}
+                                            type="number"
+                                            value={item.quantity}
+                                            onChange={(v) =>
+                                                updateItem(
+                                                    idx,
+                                                    'quantity',
+                                                    parseInt(v) || 0,
+                                                )
+                                            }
+                                            min="1"
+                                        />
+                                        <FormInput
+                                            name={`item_${idx}_price`}
+                                            type="number"
+                                            value={item.unit_price}
+                                            onChange={(v) =>
+                                                updateItem(
+                                                    idx,
+                                                    'unit_price',
+                                                    parseFloat(v) || 0,
+                                                )
+                                            }
+                                            min="0"
+                                            step="1"
+                                        />
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => removeItem(idx)}
                                         disabled={data.items.length === 1}
-                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-30 mt-5"
+                                        className="mt-6 rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-30 dark:hover:bg-red-900/20"
                                     >
-                                        <TrashIcon className="w-4 h-4" />
+                                        <TrashIcon className="h-4 w-4" />
                                     </button>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-neutral-700">
-                            <div className="text-right">
-                                <p className="text-xs text-gray-500 dark:text-neutral-400 font-semibold uppercase">{t('finance.invoices.create.grand_total')}</p>
-                                <p className="text-2xl font-black text-gray-900 dark:text-neutral-100">{grandTotal.toLocaleString()} FCFA</p>
+                        <div className="border-t border-gray-100 px-6 pt-2 pb-6 dark:border-neutral-700">
+                            <div className="flex justify-end">
+                                <div className="text-right">
+                                    <p className="text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
+                                        {t(
+                                            'finance.invoices.create.grand_total',
+                                        )}
+                                    </p>
+                                    <p className="text-2xl font-black text-gray-900 dark:text-neutral-100">
+                                        {grandTotal.toLocaleString()} FCFA
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -229,13 +293,20 @@ export default function InvoiceCreate({ patients }: Props) {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                            className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
                         >
-                            {processing ? t('common.creating') : t('finance.invoices.create.create_invoice_button')}
+                            {processing
+                                ? t('common.creating')
+                                : t(
+                                      'finance.invoices.create.create_invoice_button',
+                                  )}
                         </button>
-                        <a href={route('finance.invoices.index') as string} className="text-sm text-gray-500 hover:text-gray-700 dark:text-neutral-400 dark:hover:text-neutral-200">
+                        <Link
+                            href={route('finance.invoices.index')}
+                            className="text-sm text-gray-500 hover:text-gray-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+                        >
                             {t('common.cancel')}
-                        </a>
+                        </Link>
                     </div>
                 </form>
             </div>

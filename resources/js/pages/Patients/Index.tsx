@@ -1,34 +1,29 @@
 import {
-    PlusIcon,
     PencilSquareIcon,
-    TrashIcon,
-    ChevronRightIcon,
-    XMarkIcon,
     MagnifyingGlassIcon,
-    HomeIcon,
     UserPlusIcon,
     CalendarDaysIcon,
     ClipboardDocumentListIcon,
     ArrowPathIcon,
-    UserMinusIcon,
-    EnvelopeIcon,
-    PhoneIcon,
-    MapPinIcon,
-    IdentificationIcon,
     UserGroupIcon,
-    CheckBadgeIcon,
     ClockIcon,
-    Squares2X2Icon,
-    ListBulletIcon,
-    ExclamationTriangleIcon,
+    UserMinusIcon,
 } from '@heroicons/react/24/outline';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import React, { useState, useMemo, useEffect } from 'react';
-import AppLayout from '@/Layouts/AppLayout';
-import Modal from '@/Components/Modal';
 import { toast, Toaster } from 'sonner';
+import EmptyState from '@/Components/EmptyState';
+import FormInput from '@/Components/FormInput';
+import FormSelect from '@/Components/FormSelect';
+import FormTextarea from '@/Components/FormTextarea';
+import Modal from '@/Components/Modal';
+import PageBreadcrumb from '@/Components/PageBreadcrumb';
+import StatCard from '@/Components/StatCard';
+import StatusBadge from '@/Components/StatusBadge';
+import ViewToggle from '@/Components/ViewToggle';
 import { useTranslation } from '@/hooks/useTranslation';
+import AppLayout from '@/Layouts/AppLayout';
 
 interface Patient {
     id: number;
@@ -84,6 +79,7 @@ export default function PatientManagement({ patients, filters }: Props) {
                     },
                 );
             }, 400);
+
             return () => clearTimeout(timer);
         }
     }, [searchQuery]);
@@ -115,7 +111,10 @@ export default function PatientManagement({ patients, filters }: Props) {
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        if (!selectedPatient) return;
+
+        if (!selectedPatient) {
+            return;
+        }
 
         put(route('patients.update', selectedPatient.id), {
             onSuccess: () => {
@@ -130,11 +129,15 @@ export default function PatientManagement({ patients, filters }: Props) {
             total: patients.length,
             newPatients: patients.filter((p) => !p.last_visit_date).length,
             recentVisits: patients.filter((p) => {
-                if (!p.last_visit_date) return false;
+                if (!p.last_visit_date) {
+                    return false;
+                }
+
                 const daysDiff =
                     (new Date().getTime() -
                         new Date(p.last_visit_date).getTime()) /
                     (1000 * 3600 * 24);
+
                 return daysDiff <= 30;
             }).length,
             totalVisits: patients.reduce(
@@ -146,7 +149,10 @@ export default function PatientManagement({ patients, filters }: Props) {
     );
 
     const formatDate = (dateString: string | null) => {
-        if (!dateString) return t('common.never');
+        if (!dateString) {
+            return t('common.never');
+        }
+
         return new Date(dateString).toLocaleDateString('en-US', {
             month: 'short',
             day: '2-digit',
@@ -162,46 +168,39 @@ export default function PatientManagement({ patients, filters }: Props) {
             <Head title={t('page.patients_index.title')} />
             <Toaster position="top-right" richColors />
 
-            <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 {/* Breadcrumbs */}
-                <nav className="flex text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                    <ol className="inline-flex items-center space-x-2">
-                        <li className="flex cursor-pointer items-center transition-colors hover:text-blue-600">
-                            <HomeIcon className="mr-1 h-4 w-4" /> {t('common.home')}
-                        </li>
-                        <li>
-                            <ChevronRightIcon className="h-3 w-3" />
-                        </li>
-                        <li className="font-medium text-blue-600">
-                            {t('page.patients_index.title')}
-                        </li>
-                    </ol>
-                </nav>
+                <PageBreadcrumb
+                    items={[
+                        { label: t('common.home') },
+                        { label: t('page.patients_index.title') },
+                    ]}
+                />
 
                 {/* Stats Overview */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <StatCard
                         label={t('page.patients_index.total_patients')}
                         value={stats.total}
-                        icon={<UserGroupIcon className="h-5 w-5" />}
+                        icon={UserGroupIcon}
                         color="blue"
                     />
                     <StatCard
                         label={t('page.patients_index.new_patients')}
                         value={stats.newPatients}
-                        icon={<UserPlusIcon className="h-5 w-5" />}
+                        icon={UserPlusIcon}
                         color="emerald"
                     />
                     <StatCard
                         label={t('page.patients_index.recent_visits')}
                         value={stats.recentVisits}
-                        icon={<ClockIcon className="h-5 w-5" />}
+                        icon={ClockIcon}
                         color="purple"
                     />
                     <StatCard
                         label={t('page.patients_index.active_records')}
                         value={stats.totalVisits}
-                        icon={<ClipboardDocumentListIcon className="h-5 w-5" />}
+                        icon={ClipboardDocumentListIcon}
                         color="amber"
                     />
                 </div>
@@ -212,7 +211,9 @@ export default function PatientManagement({ patients, filters }: Props) {
                         <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
-                            placeholder={t('page.patients_index.search_placeholder')}
+                            placeholder={t(
+                                'page.patients_index.search_placeholder',
+                            )}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pr-10 pl-9 text-sm transition-all outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
@@ -223,25 +224,13 @@ export default function PatientManagement({ patients, filters }: Props) {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <div className="flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className={`rounded-md p-1.5 transition-all ${viewMode === 'grid' ? 'bg-blue-50 text-blue-600 shadow-sm dark:bg-blue-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-neutral-300'}`}
-                            >
-                                <Squares2X2Icon className="h-5 w-5" />
-                            </button>
-                            <button
-                                onClick={() => setViewMode('table')}
-                                className={`rounded-md p-1.5 transition-all ${viewMode === 'table' ? 'bg-blue-50 text-blue-600 shadow-sm dark:bg-blue-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-neutral-300'}`}
-                            >
-                                <ListBulletIcon className="h-5 w-5" />
-                            </button>
-                        </div>
+                        <ViewToggle view={viewMode} onChange={setViewMode} />
                         <Link
                             href={route('patients.create')}
                             className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold whitespace-nowrap text-white shadow-sm transition-all hover:bg-blue-700"
                         >
-                            <UserPlusIcon className="h-4 w-4" /> {t('page.patients_index.add_patient')}
+                            <UserPlusIcon className="h-4 w-4" />{' '}
+                            {t('page.patients_index.add_patient')}
                         </Link>
                     </div>
                 </div>
@@ -269,13 +258,18 @@ export default function PatientManagement({ patients, filters }: Props) {
                                             </div>
                                         )}
                                     </div>
-                                    <span
-                                        className={`rounded-full border px-3 py-1 text-[10px] font-bold tracking-wide uppercase ${patient.last_visit_date ? 'border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400' : 'border-amber-100 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400'}`}
-                                    >
-                                        {patient.last_visit_date
-                                            ? t('common.active')
-                                            : t('common.new')}
-                                    </span>
+                                    <StatusBadge
+                                        label={
+                                            patient.last_visit_date
+                                                ? t('common.active')
+                                                : t('common.new')
+                                        }
+                                        color={
+                                            patient.last_visit_date
+                                                ? 'emerald'
+                                                : 'amber'
+                                        }
+                                    />
                                 </div>
                                 <h3 className="truncate text-lg font-bold text-gray-900 dark:text-neutral-100">
                                     {patient.first_name} {patient.last_name}
@@ -338,16 +332,22 @@ export default function PatientManagement({ patients, filters }: Props) {
                             <thead className="bg-gray-50 dark:bg-neutral-800">
                                 <tr>
                                     <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                        {t('page.patients_index.table_patient_details')}
+                                        {t(
+                                            'page.patients_index.table_patient_details',
+                                        )}
                                     </th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
                                         {t('page.patients_index.table_contact')}
                                     </th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                        {t('page.patients_index.table_demographics')}
+                                        {t(
+                                            'page.patients_index.table_demographics',
+                                        )}
                                     </th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                        {t('page.patients_index.table_last_visit')}
+                                        {t(
+                                            'page.patients_index.table_last_visit',
+                                        )}
                                     </th>
                                     <th className="px-6 py-4"></th>
                                 </tr>
@@ -393,10 +393,10 @@ export default function PatientManagement({ patients, filters }: Props) {
                                             {patient.phone}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="rounded bg-gray-100 px-2 py-1 text-[10px] font-bold text-gray-600 uppercase dark:bg-neutral-700 dark:text-neutral-300">
-                                                {patient.age} {t('page.patients_index.yrs')} &bull;{' '}
-                                                {patient.gender}
-                                            </span>
+                                            <StatusBadge
+                                                label={`${patient.age} ${t('page.patients_index.yrs')} • ${patient.gender}`}
+                                                color="gray"
+                                            />
                                         </td>
                                         <td className="px-6 py-4 text-xs font-bold tracking-tight whitespace-nowrap text-gray-400 uppercase dark:text-neutral-500">
                                             {formatDate(
@@ -422,21 +422,15 @@ export default function PatientManagement({ patients, filters }: Props) {
 
                 {/* Empty State */}
                 {patients.length === 0 && (
-                    <div className="rounded-xl border-2 border-dashed border-gray-200 bg-white p-16 text-center dark:border-neutral-700 dark:bg-neutral-800">
-                        <UserMinusIcon className="mx-auto mb-4 h-16 w-16 text-gray-200 dark:text-neutral-600" />
-                        <h3 className="mb-2 text-xl font-bold text-gray-900 dark:text-neutral-100">
-                            {t('page.patients_index.empty_title')}
-                        </h3>
-                        <p className="mx-auto mb-8 max-w-xs text-sm font-medium text-gray-500 dark:text-neutral-400">
-                            {t('page.patients_index.empty_description')}
-                        </p>
-                        <Link
-                            href={route('patients.create')}
-                            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-3 text-xs font-bold tracking-wide text-white uppercase transition-all hover:bg-blue-700"
-                        >
-                            {t('page.patients_index.add_patient')}
-                        </Link>
-                    </div>
+                    <EmptyState
+                        icon={UserMinusIcon}
+                        title={t('page.patients_index.empty_title')}
+                        description={t('page.patients_index.empty_description')}
+                        action={{
+                            label: t('page.patients_index.add_patient'),
+                            href: route('patients.create'),
+                        }}
+                    />
                 )}
             </div>
 
@@ -459,97 +453,68 @@ export default function PatientManagement({ patients, filters }: Props) {
                                 className="mt-1.5 w-full rounded-xl border-none bg-gray-100 px-4 py-3 text-sm font-bold text-gray-500 dark:bg-neutral-700 dark:text-neutral-400"
                             />
                         </div>
-                        <div>
-                            <label className="ml-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                {t('page.patients_index.first_name')}
-                            </label>
-                            <input
-                                type="text"
-                                value={data.first_name}
-                                onChange={(e) =>
-                                    setData('first_name', e.target.value)
-                                }
-                                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100"
-                            />
-                            {errors.first_name && (
-                                <p className="mt-1 text-xs font-bold text-red-500">
-                                    {errors.first_name}
-                                </p>
-                            )}
-                        </div>
-                        <div>
-                            <label className="ml-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                {t('page.patients_index.last_name')}
-                            </label>
-                            <input
-                                type="text"
-                                value={data.last_name}
-                                onChange={(e) =>
-                                    setData('last_name', e.target.value)
-                                }
-                                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100"
-                            />
-                            {errors.last_name && (
-                                <p className="mt-1 text-xs font-bold text-red-500">
-                                    {errors.last_name}
-                                </p>
-                            )}
-                        </div>
-                        <div>
-                            <label className="ml-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                {t('page.patients_index.gender')}
-                            </label>
-                            <select
-                                value={data.gender}
-                                onChange={(e) =>
-                                    setData('gender', e.target.value as any)
-                                }
-                                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100"
-                            >
-                                <option value="male">{t('common.male')}</option>
-                                <option value="female">{t('common.female')}</option>
-                                <option value="other">{t('common.other')}</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="ml-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                {t('page.patients_index.age')}
-                            </label>
-                            <input
-                                type="number"
-                                value={data.age}
-                                onChange={(e) =>
-                                    setData('age', parseInt(e.target.value))
-                                }
-                                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100"
-                            />
-                        </div>
-                        <div className="col-span-2">
-                            <label className="ml-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                {t('page.patients_index.phone_number')}
-                            </label>
-                            <input
-                                type="text"
-                                value={data.phone}
-                                onChange={(e) =>
-                                    setData('phone', e.target.value)
-                                }
-                                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100"
-                            />
-                        </div>
-                        <div className="col-span-2">
-                            <label className="ml-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                {t('page.patients_index.address')}
-                            </label>
-                            <textarea
-                                rows={2}
-                                value={data.address}
-                                onChange={(e) =>
-                                    setData('address', e.target.value)
-                                }
-                                className="mt-1.5 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100"
-                            />
-                        </div>
+                        <FormInput
+                            name="first_name"
+                            label={t('page.patients_index.first_name')}
+                            value={data.first_name}
+                            onChange={(v) => setData('first_name', v)}
+                            errors={errors}
+                            required
+                            className="col-span-2 sm:col-span-1"
+                        />
+                        <FormInput
+                            name="last_name"
+                            label={t('page.patients_index.last_name')}
+                            value={data.last_name}
+                            onChange={(v) => setData('last_name', v)}
+                            errors={errors}
+                            required
+                            className="col-span-2 sm:col-span-1"
+                        />
+                        <FormSelect
+                            name="gender"
+                            label={t('page.patients_index.gender')}
+                            value={data.gender}
+                            onChange={(v) =>
+                                setData(
+                                    'gender',
+                                    v as 'male' | 'female' | 'other',
+                                )
+                            }
+                            errors={errors}
+                            options={[
+                                { value: 'male', label: t('common.male') },
+                                { value: 'female', label: t('common.female') },
+                                { value: 'other', label: t('common.other') },
+                            ]}
+                            className="col-span-2 sm:col-span-1"
+                        />
+                        <FormInput
+                            name="age"
+                            label={t('page.patients_index.age')}
+                            type="number"
+                            value={data.age}
+                            onChange={(v) => setData('age', parseInt(v) || 0)}
+                            errors={errors}
+                            className="col-span-2 sm:col-span-1"
+                        />
+                        <FormInput
+                            name="phone"
+                            label={t('page.patients_index.phone_number')}
+                            value={data.phone}
+                            onChange={(v) => setData('phone', v)}
+                            errors={errors}
+                            className="col-span-2"
+                        />
+                        <FormTextarea
+                            name="address"
+                            label={t('page.patients_index.address')}
+                            value={data.address}
+                            onChange={(v) => setData('address', v)}
+                            errors={errors}
+                            rows={2}
+                            className="col-span-2"
+                        />
                     </div>
                     <div className="flex gap-4 border-t border-gray-100 pt-4 dark:border-neutral-700">
                         <button
@@ -564,34 +529,13 @@ export default function PatientManagement({ patients, filters }: Props) {
                             disabled={processing}
                             className="flex-[2] rounded-xl bg-blue-600 py-4 font-bold text-white shadow-sm transition-all hover:bg-blue-700"
                         >
-                            {processing ? t('common.processing') : t('common.save_changes')}
+                            {processing
+                                ? t('common.processing')
+                                : t('common.save_changes')}
                         </button>
                     </div>
                 </form>
             </Modal>
         </AppLayout>
-    );
-}
-
-function StatCard({ label, value, icon, color }: any) {
-    const colors: any = {
-        blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
-        emerald:
-            'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400',
-        purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-        amber: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
-    };
-    return (
-        <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-            <div className={`rounded-lg p-3 ${colors[color]}`}>{icon}</div>
-            <div>
-                <p className="text-xl leading-none font-bold text-gray-900 dark:text-neutral-100">
-                    {value}
-                </p>
-                <p className="mt-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                    {label}
-                </p>
-            </div>
-        </div>
     );
 }

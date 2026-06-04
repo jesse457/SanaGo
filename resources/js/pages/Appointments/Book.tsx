@@ -1,6 +1,4 @@
 import {
-    HomeIcon,
-    ChevronRightIcon,
     ClipboardDocumentCheckIcon,
     CheckIcon,
     ArrowPathIcon,
@@ -12,12 +10,16 @@ import {
     CalendarDaysIcon,
     ClockIcon,
     ChatBubbleBottomCenterTextIcon,
-    XMarkIcon
+    XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { Head, Link, useForm } from '@inertiajs/react';
-import React, { FormEvent, useMemo, useState } from 'react';
-import AppLayout from '@/Layouts/AppLayout';
+import type { FormEvent } from 'react';
+import React, { useMemo, useState } from 'react';
+import FormInput from '@/Components/FormInput';
+import PageBreadcrumb from '@/Components/PageBreadcrumb';
+import PageSection from '@/Components/PageSection';
 import { useTranslation } from '@/hooks/useTranslation';
+import AppLayout from '@/Layouts/AppLayout';
 
 interface Department {
     id: number;
@@ -52,7 +54,9 @@ interface Props {
 export default function BookAppointment({ doctors, patients }: Props) {
     const { t } = useTranslation();
     const [patientSearch, setPatientSearch] = useState('');
-    const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+    const [selectedPatient, setSelectedPatient] = useState<Patient | null>(
+        null,
+    );
 
     const { data, setData, post, processing, errors, reset } = useForm({
         patient_id: '' as string | number,
@@ -64,12 +68,17 @@ export default function BookAppointment({ doctors, patients }: Props) {
     });
 
     const foundPatients = useMemo(() => {
-        if (patientSearch.length < 2) return [];
+        if (patientSearch.length < 2) {
+            return [];
+        }
+
         const term = patientSearch.toLowerCase();
-        return patients.filter(p =>
-            p.first_name.toLowerCase().includes(term) ||
-            p.last_name.toLowerCase().includes(term) ||
-            p.patient_uid.toLowerCase().includes(term)
+
+        return patients.filter(
+            (p) =>
+                p.first_name.toLowerCase().includes(term) ||
+                p.last_name.toLowerCase().includes(term) ||
+                p.patient_uid.toLowerCase().includes(term),
         );
     }, [patientSearch, patients]);
 
@@ -87,12 +96,6 @@ export default function BookAppointment({ doctors, patients }: Props) {
         });
     };
 
-    const inputStyle = (error: string | undefined) => `
-        w-full pl-12 pr-4 py-4 bg-white dark:bg-neutral-800 border-2 rounded-lg
-        font-bold text-sm transition-all outline-none
-        ${error ? 'border-red-500 focus:border-red-600' : 'border-gray-200 dark:border-neutral-700 focus:border-rose-600 focus:ring-0'}
-    `;
-
     return (
         <AppLayout
             headerTitle={t('queueManagement')}
@@ -100,127 +103,166 @@ export default function BookAppointment({ doctors, patients }: Props) {
         >
             <Head title={t('bookAppointment')} />
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 pb-20">
-
+            <div className="mx-auto max-w-6xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 {/* Breadcrumbs */}
-                <nav className="flex text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-neutral-500">
-                    <ol className="inline-flex items-center space-x-2">
-                        <li className="flex items-center hover:text-rose-600 cursor-pointer transition-colors">
-                            <HomeIcon className="w-3.5 h-3.5 mr-1" /> {t('home')}
-                        </li>
-                        <li><ChevronRightIcon className="w-3 h-3" /></li>
-                        <li className="hover:text-rose-600 cursor-pointer transition-colors">{t('appointments')}</li>
-                        <li><ChevronRightIcon className="w-3 h-3" /></li>
-                        <li className="text-rose-600">{t('newBooking')}</li>
-                    </ol>
-                </nav>
+                <PageBreadcrumb
+                    items={[
+                        { label: t('home') },
+                        {
+                            label: t('appointments'),
+                            href: route('appointments.index'),
+                        },
+                        { label: t('newBooking') },
+                    ]}
+                />
 
                 <form onSubmit={handleSubmit} className="space-y-8">
-                    <div className="bg-white dark:bg-neutral-800 rounded-lg border-2 border-gray-100 dark:border-neutral-700 shadow-md overflow-hidden">
-
+                    <PageSection>
                         {/* SECTION 1: Patient Selection */}
-                        <div className="p-8 border-b-2 border-gray-50 bg-gray-50/30 dark:bg-neutral-700/30 dark:bg-neutral-700/30">
+                        <div className="border-b border-gray-100 bg-gray-50/30 p-8 dark:bg-neutral-700/30">
                             <div className="flex items-center gap-5">
-                                <div className="h-14 w-14 rounded-xl bg-rose-600 flex items-center justify-center text-white shadow-xl shadow-rose-100 shrink-0">
-                                    <UserIcon className="w-7 h-7" />
+                                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xl shadow-blue-100">
+                                    <UserIcon className="h-7 w-7" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="text-2xl font-black text-gray-900 dark:text-neutral-100 tracking-tight">{t('patientAssignment')}</h3>
-                                    <p className="text-[10px] font-black text-gray-400 dark:text-neutral-500 uppercase tracking-widest">{t('step01IdentifyPatient')}</p>
+                                    <h3 className="text-2xl font-black tracking-tight text-gray-900 dark:text-neutral-100">
+                                        {t('patientAssignment')}
+                                    </h3>
+                                    <p className="text-[10px] font-black tracking-widest text-gray-400 uppercase dark:text-neutral-500">
+                                        {t('step01IdentifyPatient')}
+                                    </p>
                                 </div>
                             </div>
 
                             <div className="mt-8">
                                 {!selectedPatient ? (
                                     <div className="relative">
-                                        <label className="text-[10px] font-black uppercase text-gray-400 dark:text-neutral-500 ml-1">{t('searchDatabase')}</label>
-                                        <div className="relative mt-2">
-                                            <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-neutral-500" />
-                                            <input
-                                                type="text"
-                                                className={inputStyle(errors.patient_id)}
-                                                placeholder={t('enterNamePhoneOrPatientId')}
-                                                value={patientSearch}
-                                                onChange={(e) => setPatientSearch(e.target.value)}
-                                            />
-                                        </div>
+                                        <FormInput
+                                            name="patient_search"
+                                            label={t('searchDatabase')}
+                                            icon={MagnifyingGlassIcon}
+                                            placeholder={t(
+                                                'enterNamePhoneOrPatientId',
+                                            )}
+                                            value={patientSearch}
+                                            onChange={(value) =>
+                                                setPatientSearch(value)
+                                            }
+                                        />
 
                                         {foundPatients.length > 0 && (
-                                            <div className="absolute z-20 mt-2 w-full bg-white dark:bg-neutral-800 border-2 border-gray-100 dark:border-neutral-700 rounded-xl shadow-2xl overflow-hidden">
-                                                {foundPatients.map(p => (
+                                            <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border-2 border-gray-100 bg-white shadow-2xl dark:border-neutral-700 dark:bg-neutral-800">
+                                                {foundPatients.map((p) => (
                                                     <button
                                                         key={p.id}
                                                         type="button"
-                                                        onClick={() => handleSelectPatient(p)}
-                                                        className="w-full text-left px-6 py-4 hover:bg-rose-50 flex items-center justify-between border-b last:border-0 border-gray-50 group transition-colors"
+                                                        onClick={() =>
+                                                            handleSelectPatient(
+                                                                p,
+                                                            )
+                                                        }
+                                                        className="group flex w-full items-center justify-between border-b border-gray-50 px-6 py-4 text-left transition-colors last:border-0 hover:bg-blue-50 dark:border-neutral-700 dark:hover:bg-blue-900/20"
                                                     >
                                                         <div>
-                                                            <p className="font-black text-gray-900 dark:text-neutral-100 group-hover:text-rose-600">{p.first_name} {p.last_name}</p>
-                                                            <p className="text-[10px] font-bold text-gray-400 dark:text-neutral-500 uppercase">{p.patient_uid}</p>
+                                                            <p className="font-black text-gray-900 group-hover:text-blue-600 dark:text-neutral-100 dark:group-hover:text-blue-400">
+                                                                {p.first_name}{' '}
+                                                                {p.last_name}
+                                                            </p>
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase dark:text-neutral-500">
+                                                                {p.patient_uid}
+                                                            </p>
                                                         </div>
-                                                        <CheckIcon className="w-5 h-5 text-rose-600 opacity-0 group-hover:opacity-100" />
+                                                        <CheckIcon className="h-5 w-5 text-blue-600 opacity-0 group-hover:opacity-100" />
                                                     </button>
                                                 ))}
                                             </div>
                                         )}
+                                        {errors.patient_id && (
+                                            <p className="mt-1 ml-1 text-xs font-bold text-red-500">
+                                                {errors.patient_id}
+                                            </p>
+                                        )}
                                     </div>
                                 ) : (
-                                    <div className="flex items-center justify-between p-6 bg-rose-50 border-2 border-rose-100 rounded-xl">
+                                    <div className="flex items-center justify-between rounded-xl border-2 border-blue-100 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-900/20">
                                         <div className="flex items-center gap-4">
-                                            <div className="h-12 w-12 rounded-lg bg-white dark:bg-neutral-800 flex items-center justify-center text-rose-600 shadow-sm">
-                                                <UserIcon className="w-6 h-6" />
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white text-blue-600 shadow-sm dark:bg-neutral-800">
+                                                <UserIcon className="h-6 w-6" />
                                             </div>
                                             <div>
-                                                <p className="text-[9px] font-black uppercase text-rose-400">{t('targetPatient')}</p>
-                                                <h4 className="text-lg font-black text-gray-900 dark:text-neutral-100">{selectedPatient.first_name} {selectedPatient.last_name}</h4>
-                                                <p className="text-xs font-bold text-rose-600 tracking-widest">{selectedPatient.patient_uid}</p>
+                                                <p className="text-[9px] font-black text-blue-400 uppercase">
+                                                    {t('targetPatient')}
+                                                </p>
+                                                <h4 className="text-lg font-black text-gray-900 dark:text-neutral-100">
+                                                    {selectedPatient.first_name}{' '}
+                                                    {selectedPatient.last_name}
+                                                </h4>
+                                                <p className="text-xs font-bold tracking-widest text-blue-600">
+                                                    {
+                                                        selectedPatient.patient_uid
+                                                    }
+                                                </p>
                                             </div>
                                         </div>
                                         <button
                                             type="button"
-                                            onClick={() => {setSelectedPatient(null); setData('patient_id', '');}}
-                                            className="p-2 hover:bg-rose-100 rounded-full text-rose-400 transition-colors"
+                                            onClick={() => {
+                                                setSelectedPatient(null);
+                                                setData('patient_id', '');
+                                            }}
+                                            className="rounded-full p-2 text-blue-400 transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/30"
                                         >
-                                            <XMarkIcon className="w-6 h-6" />
+                                            <XMarkIcon className="h-6 w-6" />
                                         </button>
                                     </div>
                                 )}
-                                {errors.patient_id && <p className="text-[10px] font-bold text-red-500 mt-2 ml-1">{errors.patient_id}</p>}
                             </div>
                         </div>
 
                         {/* SECTION 2: Doctor Selection */}
-                        <div className="p-10 space-y-6">
+                        <div className="space-y-6 p-10">
                             <div className="flex items-center gap-3">
-                                <UserGroupIcon className="w-5 h-5 text-rose-500" />
-                                <h4 className="text-[10px] font-black text-rose-500 uppercase tracking-widest">{t('step02AssignClinician')}</h4>
+                                <UserGroupIcon className="h-5 w-5 text-blue-500" />
+                                <h4 className="text-[10px] font-black tracking-widest text-blue-500 uppercase">
+                                    {t('step02AssignClinician')}
+                                </h4>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {doctors.map(doc => {
-                                    const isSelected = data.doctor_id === doc.id;
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                {doctors.map((doc) => {
+                                    const isSelected =
+                                        data.doctor_id === doc.id;
+
                                     return (
                                         <button
                                             key={doc.id}
                                             type="button"
-                                            onClick={() => setData('doctor_id', doc.id)}
-                                            className={`
-                                                relative p-6 rounded-xl border-2 text-left transition-all
-                                                ${isSelected
-                                                    ? 'border-gray-900 bg-gray-900 dark:bg-neutral-800 text-white shadow-xl translate-y-[-4px]'
-                                                    : 'border-gray-100 dark:border-neutral-700 hover:border-rose-200 bg-white dark:bg-neutral-800 text-gray-900 dark:text-neutral-100'}
-                                            `}
+                                            onClick={() =>
+                                                setData('doctor_id', doc.id)
+                                            }
+                                            className={`relative rounded-xl border-2 p-6 text-left transition-all ${
+                                                isSelected
+                                                    ? 'translate-y-[-4px] border-gray-900 bg-gray-900 text-white shadow-xl dark:bg-neutral-800'
+                                                    : 'border-gray-100 bg-white text-gray-900 hover:border-blue-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:border-blue-700'
+                                            } `}
                                         >
-                                            <div className="flex flex-col h-full justify-between">
+                                            <div className="flex h-full flex-col justify-between">
                                                 <div>
-                                                    <p className={`text-[9px] font-black uppercase mb-1 ${isSelected ? 'text-rose-400' : 'text-gray-400 dark:text-neutral-500'}`}>
-                                                        {doc.department?.name || t('generalPractitioner')}
+                                                    <p
+                                                        className={`mb-1 text-[9px] font-black uppercase ${isSelected ? 'text-blue-400' : 'text-gray-400 dark:text-neutral-500'}`}
+                                                    >
+                                                        {doc.department?.name ||
+                                                            t(
+                                                                'generalPractitioner',
+                                                            )}
                                                     </p>
-                                                    <h5 className="font-black text-sm tracking-tight">Dr. {doc.name}</h5>
+                                                    <h5 className="text-sm font-black tracking-tight">
+                                                        Dr. {doc.name}
+                                                    </h5>
                                                 </div>
                                                 {isSelected && (
-                                                    <div className="absolute top-4 right-4 h-5 w-5 bg-rose-500 rounded-full flex items-center justify-center">
-                                                        <CheckIcon className="w-3 h-3 text-white stroke-[4px]" />
+                                                    <div className="absolute top-4 right-4 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500">
+                                                        <CheckIcon className="h-3 w-3 stroke-[4px] text-white" />
                                                     </div>
                                                 )}
                                             </div>
@@ -228,96 +270,101 @@ export default function BookAppointment({ doctors, patients }: Props) {
                                     );
                                 })}
                             </div>
-                            {errors.doctor_id && <p className="text-[10px] font-bold text-red-500 mt-1">{errors.doctor_id}</p>}
+                            {errors.doctor_id && (
+                                <p className="mt-1 ml-1 text-xs font-bold text-red-500">
+                                    {errors.doctor_id}
+                                </p>
+                            )}
                         </div>
 
                         {/* SECTION 3: Billing & Logistics */}
-                        <div className="p-10 bg-gray-50/50 dark:bg-neutral-700/50 dark:bg-neutral-700/50 border-t-2 border-gray-50 space-y-8">
+                        <div className="space-y-8 border-t border-gray-100 bg-gray-50/50 p-10 dark:bg-neutral-700/50">
                             <div className="flex items-center gap-3">
-                                <BanknotesIcon className="w-5 h-5 text-rose-500" />
-                                <h4 className="text-[10px] font-black text-rose-500 uppercase tracking-widest">{t('step03BillingLogistics')}</h4>
+                                <BanknotesIcon className="h-5 w-5 text-blue-500" />
+                                <h4 className="text-[10px] font-black tracking-widest text-blue-500 uppercase">
+                                    {t('step03BillingLogistics')}
+                                </h4>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
                                 {/* Consultation Fee */}
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-gray-400 dark:text-neutral-500 ml-1">{t('feeFcfa')}</label>
-                                    <div className="relative">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-gray-300 text-[10px] italic">{t('xaf')}</div>
-                                        <input
-                                            type="number"
-                                            value={data.consultation_fee}
-                                            onChange={(e) => setData('consultation_fee', parseInt(e.target.value))}
-                                            className={inputStyle(errors.consultation_fee)}
-                                            placeholder="2000"
-                                        />
-                                    </div>
-                                </div>
+                                <FormInput
+                                    name="consultation_fee"
+                                    label={t('feeFcfa')}
+                                    type="number"
+                                    icon={BanknotesIcon}
+                                    value={data.consultation_fee}
+                                    onChange={(value) =>
+                                        setData(
+                                            'consultation_fee',
+                                            value === '' ? 0 : parseInt(value),
+                                        )
+                                    }
+                                    errors={errors}
+                                    step="1"
+                                    min="0"
+                                />
 
                                 {/* Appointment Date */}
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-gray-400 dark:text-neutral-500 ml-1">{t('date')}</label>
-                                    <div className="relative">
-                                        <CalendarDaysIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-neutral-500" />
-                                        <input
-                                            type="date"
-                                            value={data.appointment_date}
-                                            onChange={(e) => setData('appointment_date', e.target.value)}
-                                            className={inputStyle(errors.appointment_date)}
-                                        />
-                                    </div>
-                                </div>
+                                <FormInput
+                                    name="appointment_date"
+                                    label={t('date')}
+                                    type="date"
+                                    icon={CalendarDaysIcon}
+                                    value={data.appointment_date}
+                                    onChange={(value) =>
+                                        setData('appointment_date', value)
+                                    }
+                                    errors={errors}
+                                />
 
                                 {/* Appointment Time */}
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-gray-400 dark:text-neutral-500 ml-1">{t('time')}</label>
-                                    <div className="relative">
-                                        <ClockIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-neutral-500" />
-                                        <input
-                                            type="time"
-                                            value={data.appointment_time}
-                                            onChange={(e) => setData('appointment_time', e.target.value)}
-                                            className={inputStyle(errors.appointment_time)}
-                                        />
-                                    </div>
-                                </div>
+                                <FormInput
+                                    name="appointment_time"
+                                    label={t('time')}
+                                    type="time"
+                                    icon={ClockIcon}
+                                    value={data.appointment_time}
+                                    onChange={(value) =>
+                                        setData('appointment_time', value)
+                                    }
+                                    errors={errors}
+                                />
 
                                 {/* Reason for Visit */}
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-gray-400 dark:text-neutral-500 ml-1">{t('reason')}</label>
-                                    <div className="relative">
-                                        <ChatBubbleBottomCenterTextIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-neutral-500" />
-                                        <input
-                                            type="text"
-                                            value={data.reason_for_visit}
-                                            onChange={(e) => setData('reason_for_visit', e.target.value)}
-                                            className={inputStyle(errors.reason_for_visit)}
-                                            placeholder={t('checkup')}
-                                        />
-                                    </div>
-                                </div>
+                                <FormInput
+                                    name="reason_for_visit"
+                                    label={t('reason')}
+                                    icon={ChatBubbleBottomCenterTextIcon}
+                                    placeholder={t('checkup')}
+                                    value={data.reason_for_visit}
+                                    onChange={(value) =>
+                                        setData('reason_for_visit', value)
+                                    }
+                                    errors={errors}
+                                />
                             </div>
                         </div>
-                    </div>
+                    </PageSection>
 
                     {/* Action Bar */}
-                    <div className="flex flex-col sm:flex-row items-center justify-end gap-6">
+                    <div className="flex flex-col items-center justify-end gap-6 sm:flex-row">
                         <Link
                             href={route('appointments.index')}
-                            className="w-full sm:w-auto px-10 py-5 bg-white dark:bg-neutral-800 border-2 border-gray-200 dark:border-neutral-700 rounded-lg font-black text-gray-500 dark:text-neutral-500 hover:bg-gray-50 dark:hover:bg-neutral-700 transition-all flex items-center justify-center gap-2"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-8 py-4 font-bold text-gray-500 transition-all hover:bg-gray-50 sm:w-auto dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
                         >
-                            <ArrowLeftIcon className="w-5 h-5" /> {t('cancel')}
+                            <ArrowLeftIcon className="h-5 w-5" /> {t('cancel')}
                         </Link>
 
                         <button
                             type="submit"
                             disabled={processing}
-                            className="w-full sm:w-auto px-12 py-5 bg-gray-900 dark:bg-neutral-800 text-white rounded-lg font-black hover:bg-black transition-all shadow-2xl flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-10 py-4 font-bold text-white shadow-lg transition-all hover:bg-blue-700 disabled:opacity-50 sm:w-auto"
                         >
                             {processing ? (
-                                <ArrowPathIcon className="animate-spin h-6 w-6" />
+                                <ArrowPathIcon className="h-6 w-6 animate-spin" />
                             ) : (
-                                <ClipboardDocumentCheckIcon className="w-6 h-6" />
+                                <ClipboardDocumentCheckIcon className="h-6 w-6" />
                             )}
                             {t('confirmAndQueuePatient')}
                         </button>

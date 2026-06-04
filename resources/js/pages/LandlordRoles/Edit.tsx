@@ -1,40 +1,144 @@
+import {
+    ShieldCheckIcon,
+    KeyIcon,
+    CheckIcon,
+    ArrowPathIcon,
+} from '@heroicons/react/24/outline';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
+import FormInput from '@/Components/FormInput';
+import PageBreadcrumb from '@/Components/PageBreadcrumb';
+import PageSection from '@/Components/PageSection';
+import { useTranslation } from '@/hooks/useTranslation';
 import SuperAdminLayout from '@/Layouts/SuperAdminLayout';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
-interface EditRole { id: number; name: string; current_permissions: string[]; }
+interface EditRole {
+    id: number;
+    name: string;
+    current_permissions: string[];
+}
 
-export default function LandlordRolesEdit({ role, permissions }: { role: EditRole; permissions: string[] }) {
-  const [form, setForm] = useState({ name: role.name, permissions: role.current_permissions || [] });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitting, setSubmitting] = useState(false);
+export default function LandlordRolesEdit({
+    role,
+    permissions,
+}: {
+    role: EditRole;
+    permissions: string[];
+}) {
+    const { t } = useTranslation();
+    const [form, setForm] = useState({
+        name: role.name,
+        permissions: role.current_permissions || [],
+    });
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [submitting, setSubmitting] = useState(false);
 
-  const togglePerm = (p: string) => setForm(f => ({ ...f, permissions: f.permissions.includes(p) ? f.permissions.filter(x => x !== p) : [...f.permissions, p] }));
+    const togglePerm = (p: string) =>
+        setForm((f) => ({
+            ...f,
+            permissions: f.permissions.includes(p)
+                ? f.permissions.filter((x) => x !== p)
+                : [...f.permissions, p],
+        }));
 
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); setSubmitting(true); router.put(`/landlord-roles/${role.id}`, form, { onError: (err) => { setErrors(err as any); setSubmitting(false); } }); };
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        router.put(`/landlord-roles/${role.id}`, form, {
+            onError: (err) => {
+                setErrors(err as any);
+                setSubmitting(false);
+            },
+        });
+    };
 
-  return (
-    <SuperAdminLayout headerTitle={`Edit ${role.name}`} headerSubtitle="Update role permissions">
-      <Head title={`Edit ${role.name}`} />
-      <Link href="/landlord-roles" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600 mb-6"><ArrowLeftIcon className="w-4 h-4" /> Back</Link>
-      <form onSubmit={handleSubmit} className="max-w-lg bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 shadow-sm p-6 space-y-5">
-        <div><label className="block text-xs font-bold text-gray-500 uppercase mb-1">Role Name</label><input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full rounded-lg border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-3 py-2 text-sm" required />{errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}</div>
-        <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase mb-3">Permissions</label>
-          <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
-            {permissions.map(p => (
-              <label key={p} className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer border text-sm ${form.permissions.includes(p) ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 text-blue-700' : 'border-gray-100 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800'}`}>
-                <input type="checkbox" checked={form.permissions.includes(p)} onChange={() => togglePerm(p)} className="rounded" />{p}
-              </label>
-            ))}
-          </div>
-        </div>
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-neutral-800">
-          <Link href="/landlord-roles" className="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300">Cancel</Link>
-          <button type="submit" disabled={submitting} className="px-6 py-2 text-sm font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">{submitting ? 'Saving...' : 'Update Role'}</button>
-        </div>
-      </form>
-    </SuperAdminLayout>
-  );
+    return (
+        <SuperAdminLayout
+            headerTitle={`Edit ${role.name}`}
+            headerSubtitle="Update role permissions"
+        >
+            <Head title={`Edit ${role.name}`} />
+            <div className="mx-auto max-w-6xl space-y-6 px-6">
+                <PageBreadcrumb
+                    items={[
+                        { label: t('common.home'), href: '/' },
+                        { label: 'Roles', href: '/landlord-roles' },
+                        { label: role.name },
+                    ]}
+                />
+
+                <form onSubmit={handleSubmit}>
+                    <PageSection title="Role Details" icon={ShieldCheckIcon}>
+                        <div className="space-y-6 p-6">
+                            <FormInput
+                                name="name"
+                                label="Role Name"
+                                required
+                                value={form.name}
+                                onChange={(v) => setForm({ ...form, name: v })}
+                                errors={errors}
+                            />
+                        </div>
+                    </PageSection>
+
+                    <div className="mt-6">
+                        <PageSection
+                            title="Permissions"
+                            description="Select the permissions for this role"
+                            icon={KeyIcon}
+                        >
+                            <div className="p-6">
+                                <div className="grid grid-cols-2 gap-3">
+                                    {permissions.map((p) => (
+                                        <label
+                                            key={p}
+                                            className={`flex cursor-pointer items-start rounded-lg border p-3 transition-all ${form.permissions.includes(p) ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400' : 'border-gray-200 bg-white hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700'}`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={form.permissions.includes(
+                                                    p,
+                                                )}
+                                                onChange={() => togglePerm(p)}
+                                                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600"
+                                            />
+                                            <span className="ml-3 text-sm font-medium text-gray-900 dark:text-neutral-100">
+                                                {p}
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        </PageSection>
+                    </div>
+
+                    <div className="mt-6 flex items-center justify-end gap-3">
+                        <Link
+                            href="/landlord-roles"
+                            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                        >
+                            {t('common.cancel')}
+                        </Link>
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
+                        >
+                            {submitting ? (
+                                <>
+                                    <ArrowPathIcon className="h-4 w-4 animate-spin" />{' '}
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <CheckIcon className="h-4 w-4" /> Update
+                                    Role
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </SuperAdminLayout>
+    );
 }

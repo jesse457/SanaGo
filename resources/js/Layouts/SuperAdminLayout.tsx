@@ -20,10 +20,17 @@ import {
 } from '@heroicons/react/24/outline';
 import { ChevronLeftIcon } from '@heroicons/react/24/solid';
 import { Link, usePage, router } from '@inertiajs/react';
-import React, { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react';
+import React, {
+    useState,
+    useEffect,
+    useMemo,
+    useCallback,
+    memo,
+    useRef,
+} from 'react';
+import { FlashHandler } from '@/Components/FlashHandler';
 import { LocaleSwitcher } from '@/Components/LocaleSwitcher';
 import { useTranslation, TranslationProvider } from '@/hooks/useTranslation';
-import { FlashHandler } from '@/Components/FlashHandler';
 
 interface User {
     id: number;
@@ -81,7 +88,12 @@ const NAV_CONFIG: NavGroup[] = [
         categoryKey: 'nav.category.overview',
         icon: <Squares2X2Icon className="h-5 w-5 shrink-0" />,
         items: [
-            { label: 'Dashboard', labelKey: 'nav.dashboard', href: '/dashboard/super-admin', icon: <Squares2X2Icon className="w-4 h-4" /> },
+            {
+                label: 'Dashboard',
+                labelKey: 'nav.dashboard',
+                href: '/dashboard/super-admin',
+                icon: <Squares2X2Icon className="h-4 w-4" />,
+            },
         ],
     },
     {
@@ -89,9 +101,24 @@ const NAV_CONFIG: NavGroup[] = [
         categoryKey: 'nav.category.tenant_management',
         icon: <BuildingOfficeIcon className="h-5 w-5 shrink-0" />,
         items: [
-            { label: 'Tenants', labelKey: 'nav.tenants', href: '/tenants', icon: <BuildingOfficeIcon className="w-4 h-4" /> },
-            { label: 'Plans', labelKey: 'nav.plans', href: '/plans', icon: <CreditCardIcon className="w-4 h-4" /> },
-            { label: 'Subscriptions', labelKey: 'nav.subscriptions', href: '/subscriptions', icon: <BanknotesIcon className="w-4 h-4" /> },
+            {
+                label: 'Tenants',
+                labelKey: 'nav.tenants',
+                href: '/tenants',
+                icon: <BuildingOfficeIcon className="h-4 w-4" />,
+            },
+            {
+                label: 'Plans',
+                labelKey: 'nav.plans',
+                href: '/plans',
+                icon: <CreditCardIcon className="h-4 w-4" />,
+            },
+            {
+                label: 'Subscriptions',
+                labelKey: 'nav.subscriptions',
+                href: '/subscriptions',
+                icon: <BanknotesIcon className="h-4 w-4" />,
+            },
         ],
     },
     {
@@ -99,7 +126,12 @@ const NAV_CONFIG: NavGroup[] = [
         categoryKey: 'nav.category.sales',
         icon: <UserGroupIcon className="h-5 w-5 shrink-0" />,
         items: [
-            { label: 'Demo Requests', labelKey: 'nav.demo_requests', href: '/demo-requests', icon: <UserGroupIcon className="w-4 h-4" /> },
+            {
+                label: 'Demo Requests',
+                labelKey: 'nav.demo_requests',
+                href: '/demo-requests',
+                icon: <UserGroupIcon className="h-4 w-4" />,
+            },
         ],
     },
     {
@@ -107,7 +139,12 @@ const NAV_CONFIG: NavGroup[] = [
         categoryKey: 'nav.category.support',
         icon: <TicketIcon className="h-5 w-5 shrink-0" />,
         items: [
-            { label: 'Support Tickets', labelKey: 'nav.support_tickets', href: '/support-tickets', icon: <TicketIcon className="w-4 h-4" /> },
+            {
+                label: 'Support Tickets',
+                labelKey: 'nav.support_tickets',
+                href: '/support-tickets',
+                icon: <TicketIcon className="h-4 w-4" />,
+            },
         ],
     },
     {
@@ -115,9 +152,24 @@ const NAV_CONFIG: NavGroup[] = [
         categoryKey: 'nav.category.administration',
         icon: <ShieldCheckIcon className="h-5 w-5 shrink-0" />,
         items: [
-            { label: 'Staff Users', labelKey: 'nav.landlord_users', href: '/landlord-users', icon: <UserCircleIcon className="w-4 h-4" /> },
-            { label: 'Roles & Permissions', labelKey: 'nav.landlord_roles', href: '/landlord-roles', icon: <ShieldCheckIcon className="w-4 h-4" /> },
-            { label: 'Announcements', labelKey: 'nav.announcements', href: '/announcements', icon: <MegaphoneIcon className="w-4 h-4" /> },
+            {
+                label: 'Staff Users',
+                labelKey: 'nav.landlord_users',
+                href: '/landlord-users',
+                icon: <UserCircleIcon className="h-4 w-4" />,
+            },
+            {
+                label: 'Roles & Permissions',
+                labelKey: 'nav.landlord_roles',
+                href: '/landlord-roles',
+                icon: <ShieldCheckIcon className="h-4 w-4" />,
+            },
+            {
+                label: 'Announcements',
+                labelKey: 'nav.announcements',
+                href: '/announcements',
+                icon: <MegaphoneIcon className="h-4 w-4" />,
+            },
         ],
     },
     {
@@ -125,7 +177,12 @@ const NAV_CONFIG: NavGroup[] = [
         categoryKey: 'nav.category.insights',
         icon: <ChartBarIcon className="h-5 w-5 shrink-0" />,
         items: [
-            { label: 'Analytics', labelKey: 'nav.analytics', href: '/analytics', icon: <ChartBarIcon className="w-4 h-4" /> },
+            {
+                label: 'Analytics',
+                labelKey: 'nav.analytics',
+                href: '/analytics',
+                icon: <ChartBarIcon className="h-4 w-4" />,
+            },
         ],
     },
 ];
@@ -149,39 +206,62 @@ const SidebarNav = memo(function SidebarNav({
     return (
         <>
             <div className="flex h-16 shrink-0 items-center border-b border-gray-100 px-4 dark:border-neutral-800">
-                <Link href="/dashboard/super-admin" className="flex items-center gap-3 overflow-hidden w-full">
-                    <div className="h-10 w-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200 dark:shadow-none shrink-0">
-                        <ShieldCheckIcon className="w-6 h-6" />
+                <Link
+                    href="/dashboard/super-admin"
+                    className="flex w-full items-center gap-3 overflow-hidden"
+                >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200 dark:shadow-none">
+                        <ShieldCheckIcon className="h-6 w-6" />
                     </div>
                     {isOpen && (
                         <div className="overflow-hidden">
-                            <span className="font-black text-lg text-gray-900 dark:text-neutral-100 tracking-tight whitespace-nowrap">Sana<span className="text-blue-600">Go</span></span>
-                            <span className="block text-[10px] text-gray-400 font-medium -mt-1">Super Admin</span>
+                            <span className="text-lg font-black tracking-tight whitespace-nowrap text-gray-900 dark:text-neutral-100">
+                                Sana<span className="text-blue-600">Go</span>
+                            </span>
+                            <span className="-mt-1 block text-[10px] font-medium text-gray-400">
+                                Super Admin
+                            </span>
                         </div>
                     )}
                 </Link>
             </div>
 
-            <nav className="flex-1 overflow-y-auto py-2 px-3 space-y-1 overscroll-contain">
-                {NAV_CONFIG.map(group => (
+            <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain px-3 py-2">
+                {NAV_CONFIG.map((group) => (
                     <div key={group.category} className="mb-1">
                         <button
                             onClick={() => onToggleCategory(group.category)}
-                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 group ${isCategoryOpen(group.category) ? 'text-blue-600 bg-blue-50/80 dark:bg-blue-900/20 shadow-sm' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-neutral-800 hover:text-gray-700 dark:hover:text-neutral-300'}`}
+                            className={`group flex w-full items-center justify-between rounded-lg px-3 py-2.5 transition-all duration-200 ${isCategoryOpen(group.category) ? 'bg-blue-50/80 text-blue-600 shadow-sm dark:bg-blue-900/20' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-300'}`}
                         >
                             <div className="flex items-center gap-3">
-                                <div className={`p-1 rounded-lg transition-colors ${isCategoryOpen(group.category) ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-neutral-400'}`}>{group.icon}</div>
-                                {isOpen && <span className="text-[12px] font-semibold tracking-wide">{t(group.categoryKey)}</span>}
+                                <div
+                                    className={`rounded-lg p-1 transition-colors ${isCategoryOpen(group.category) ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-neutral-400'}`}
+                                >
+                                    {group.icon}
+                                </div>
+                                {isOpen && (
+                                    <span className="text-[12px] font-semibold tracking-wide">
+                                        {t(group.categoryKey)}
+                                    </span>
+                                )}
                             </div>
-                            {isOpen && <ChevronDownIcon className={`w-4 h-4 transition-transform duration-300 ${isCategoryOpen(group.category) ? 'rotate-180' : ''}`} />}
+                            {isOpen && (
+                                <ChevronDownIcon
+                                    className={`h-4 w-4 transition-transform duration-300 ${isCategoryOpen(group.category) ? 'rotate-180' : ''}`}
+                                />
+                            )}
                         </button>
                         {isOpen && isCategoryOpen(group.category) && (
-                            <div className="mt-1 ml-7 border-l-2 border-gray-100 dark:border-neutral-800 space-y-1 animate-slideDown">
-                                {group.items.map(item => (
-                                    <Link key={item.href} href={item.href}
-                                        className={`group/item flex items-center justify-between pl-4 pr-3 py-2 text-sm rounded-r-lg transition-all duration-200 ${isActive(item.href) ? 'text-blue-600 font-semibold bg-blue-50/60 dark:bg-blue-900/20 border-l-2 border-blue-600 -ml-[2px]' : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-gray-50 dark:hover:bg-neutral-800'}`}
+                            <div className="animate-slideDown mt-1 ml-7 space-y-1 border-l-2 border-gray-100 dark:border-neutral-800">
+                                {group.items.map((item) => (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        className={`group/item flex items-center justify-between rounded-r-lg py-2 pr-3 pl-4 text-sm transition-all duration-200 ${isActive(item.href) ? '-ml-[2px] border-l-2 border-blue-600 bg-blue-50/60 font-semibold text-blue-600 dark:bg-blue-900/20' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200'}`}
                                     >
-                                        <span className="truncate">{t(item.labelKey)}</span>
+                                        <span className="truncate">
+                                            {t(item.labelKey)}
+                                        </span>
                                     </Link>
                                 ))}
                             </div>
@@ -190,10 +270,19 @@ const SidebarNav = memo(function SidebarNav({
                 ))}
             </nav>
 
-            <div className="p-3 border-t border-gray-100 dark:border-neutral-800 space-y-1">
-                <Link href="/settings" className="flex items-center gap-3 px-3 py-2.5 text-gray-500 hover:text-blue-600 transition-all duration-200 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800 group">
-                    <div className="p-1 rounded-lg bg-gray-100 dark:bg-neutral-800 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors"><Cog6ToothIcon className="w-4 h-4" /></div>
-                    {isOpen && <span className="text-sm font-medium">{t('nav.settings')}</span>}
+            <div className="space-y-1 border-t border-gray-100 p-3 dark:border-neutral-800">
+                <Link
+                    href="/settings"
+                    className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-blue-600 dark:hover:bg-neutral-800"
+                >
+                    <div className="rounded-lg bg-gray-100 p-1 transition-colors group-hover:bg-blue-100 dark:bg-neutral-800 dark:group-hover:bg-blue-900/30">
+                        <Cog6ToothIcon className="h-4 w-4" />
+                    </div>
+                    {isOpen && (
+                        <span className="text-sm font-medium">
+                            {t('nav.settings')}
+                        </span>
+                    )}
                 </Link>
             </div>
         </>
@@ -339,7 +428,9 @@ export default function SuperAdminLayout({
     const notifRef = useRef<HTMLDivElement>(null);
 
     // Track manually toggled navigation groups
-    const [manuallyToggled, setManuallyToggled] = useState<Record<string, boolean>>({});
+    const [manuallyToggled, setManuallyToggled] = useState<
+        Record<string, boolean>
+    >({});
 
     const [isDark, setIsDark] = useState(() => {
         if (typeof window === 'undefined') {
@@ -367,16 +458,25 @@ export default function SuperAdminLayout({
     // Click outside listener logic
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+            if (
+                userMenuRef.current &&
+                !userMenuRef.current.contains(event.target as Node)
+            ) {
                 setUserMenuOpen(false);
             }
-            if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+
+            if (
+                notifRef.current &&
+                !notifRef.current.contains(event.target as Node)
+            ) {
                 setNotifOpen(false);
             }
         };
 
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+
+        return () =>
+            document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     // Escape listener logic
@@ -389,16 +489,26 @@ export default function SuperAdminLayout({
         };
 
         document.addEventListener('keydown', handleKeyPress);
+
         return () => document.removeEventListener('keydown', handleKeyPress);
     }, []);
 
     // Sanitized parameter matching to prevent routes with query strings from breaking active styles
     const isActiveLink = useCallback(
         (href: string) => {
-            const currentPath = url.split('?')[0].split('#')[0].replace(/\/$/, '');
-            const targetPath = href.split('?')[0].split('#')[0].replace(/\/$/, '');
+            const currentPath = url
+                .split('?')[0]
+                .split('#')[0]
+                .replace(/\/$/, '');
+            const targetPath = href
+                .split('?')[0]
+                .split('#')[0]
+                .replace(/\/$/, '');
 
-            return currentPath === targetPath || currentPath.startsWith(targetPath + '/');
+            return (
+                currentPath === targetPath ||
+                currentPath.startsWith(targetPath + '/')
+            );
         },
         [url],
     );
@@ -406,17 +516,27 @@ export default function SuperAdminLayout({
     // Calculates which category groups should actually be open (only the active child gets opened by default)
     const openCategories = useMemo(() => {
         const result: Record<string, boolean> = {};
-        NAV_CONFIG.forEach(group => {
-            const hasActiveChild = group.items.some(item => isActiveLink(item.href));
+        NAV_CONFIG.forEach((group) => {
+            const hasActiveChild = group.items.some((item) =>
+                isActiveLink(item.href),
+            );
             const manual = manuallyToggled[group.category];
-            result[group.category] = manual !== undefined ? manual : hasActiveChild;
+            result[group.category] =
+                manual !== undefined ? manual : hasActiveChild;
         });
+
         return result;
     }, [manuallyToggled, isActiveLink]);
 
-    const toggleCategory = useCallback((category: string) => {
-        setManuallyToggled(prev => ({ ...prev, [category]: !openCategories[category] }));
-    }, [openCategories]);
+    const toggleCategory = useCallback(
+        (category: string) => {
+            setManuallyToggled((prev) => ({
+                ...prev,
+                [category]: !openCategories[category],
+            }));
+        },
+        [openCategories],
+    );
 
     const toggleTheme = useCallback(() => {
         setIsDark((prev) => !prev);
@@ -438,184 +558,188 @@ export default function SuperAdminLayout({
         <TranslationProvider>
             <FlashHandler />
             <div className="flex h-screen overflow-hidden bg-gray-50 font-sans dark:bg-neutral-950">
-            {/* ─── Mobile backdrop ─── */}
-            {mobileMenuOpen && (
-                <div
-                    className="fixed inset-0 z-[60] bg-gray-900/50 backdrop-blur-sm lg:hidden"
-                    onClick={() => setMobileMenuOpen(false)}
-                />
-            )}
-
-            {/* ─── Mobile sidebar ─── */}
-            <aside
-                className={`fixed inset-y-0 left-0 z-[70] flex w-72 transform flex-col border-r bg-white transition-transform duration-300 ease-out lg:hidden dark:border-neutral-800 dark:bg-neutral-900 ${
-                    mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-                }`}
-            >
-                <div className="absolute top-4 right-4">
-                    <button
+                {/* ─── Mobile backdrop ─── */}
+                {mobileMenuOpen && (
+                    <div
+                        className="fixed inset-0 z-[60] bg-gray-900/50 backdrop-blur-sm lg:hidden"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="p-2 text-gray-500"
-                    >
-                        <XMarkIcon className="h-6 w-6" />
-                    </button>
-                </div>
-                <SidebarNav
-                    isOpen={true}
-                    isActive={isActiveLink}
-                    openCategories={openCategories}
-                    onToggleCategory={toggleCategory}
-                />
-            </aside>
-
-            {/* ─── Desktop sidebar ─── */}
-            <aside
-                className={`fixed inset-y-0 left-0 z-50 hidden flex-col border-r border-gray-200 bg-white transition-[width] duration-300 ease-out lg:flex dark:border-neutral-800 dark:bg-neutral-900 ${
-                    sidebarOpen ? 'w-64' : 'w-20'
-                }`}
-            >
-                <SidebarNav
-                    isOpen={sidebarOpen}
-                    isActive={isActiveLink}
-                    openCategories={openCategories}
-                    onToggleCategory={toggleCategory}
-                />
-                <button
-                    onClick={() => setSidebarOpen((prev) => !prev)}
-                    className="absolute top-20 -right-3 z-50 rounded-full border border-gray-200 bg-white p-1 text-gray-400 shadow-sm transition-colors duration-150 hover:text-blue-600 dark:border-neutral-800 dark:bg-neutral-900"
-                    title={
-                        sidebarOpen
-                            ? t('common.collapse_sidebar')
-                            : t('common.expand_sidebar')
-                    }
-                >
-                    <ChevronLeftIcon
-                        className={`h-4 w-4 transition-transform duration-300 ${!sidebarOpen && 'rotate-180'}`}
                     />
-                </button>
-            </aside>
+                )}
 
-            {/* ─── Main content area ─── */}
-            <div
-                className={`flex min-w-0 flex-1 flex-col transition-[margin] duration-300 ease-out ${
-                    sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
-                }`}
-            >
-                {/* ─── Top header ─── */}
-                <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-gray-200 bg-white/80 px-4 backdrop-blur-md lg:px-8 dark:border-neutral-800 dark:bg-neutral-900/80">
-                    <div className="flex items-center gap-4">
+                {/* ─── Mobile sidebar ─── */}
+                <aside
+                    className={`fixed inset-y-0 left-0 z-[70] flex w-72 transform flex-col border-r bg-white transition-transform duration-300 ease-out lg:hidden dark:border-neutral-800 dark:bg-neutral-900 ${
+                        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+                    }`}
+                >
+                    <div className="absolute top-4 right-4">
                         <button
-                            onClick={() => setMobileMenuOpen(true)}
-                            className="-ml-2 rounded-lg p-2 text-gray-500 transition-colors duration-150 hover:bg-gray-100 lg:hidden dark:hover:bg-neutral-800"
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="p-2 text-gray-500"
                         >
-                            <Bars3Icon className="h-6 w-6" />
+                            <XMarkIcon className="h-6 w-6" />
                         </button>
-                        <div>
-                            <h1 className="max-w-[200px] truncate text-lg font-black tracking-tight text-gray-900 lg:max-w-none lg:text-xl dark:text-neutral-100">
-                                {resolvedTitle}
-                            </h1>
-                            <p className="hidden truncate text-[10px] font-bold tracking-widest text-gray-400 uppercase sm:block">
-                                {resolvedSubtitle}
-                            </p>
-                        </div>
                     </div>
+                    <SidebarNav
+                        isOpen={true}
+                        isActive={isActiveLink}
+                        openCategories={openCategories}
+                        onToggleCategory={toggleCategory}
+                    />
+                </aside>
 
-                    <div className="flex items-center gap-2 lg:gap-4">
-                        {/* Locale Switcher */}
-                        <LocaleSwitcher variant="full" />
+                {/* ─── Desktop sidebar ─── */}
+                <aside
+                    className={`fixed inset-y-0 left-0 z-50 hidden flex-col border-r border-gray-200 bg-white transition-[width] duration-300 ease-out lg:flex dark:border-neutral-800 dark:bg-neutral-900 ${
+                        sidebarOpen ? 'w-64' : 'w-20'
+                    }`}
+                >
+                    <SidebarNav
+                        isOpen={sidebarOpen}
+                        isActive={isActiveLink}
+                        openCategories={openCategories}
+                        onToggleCategory={toggleCategory}
+                    />
+                    <button
+                        onClick={() => setSidebarOpen((prev) => !prev)}
+                        className="absolute top-20 -right-3 z-50 rounded-full border border-gray-200 bg-white p-1 text-gray-400 shadow-sm transition-colors duration-150 hover:text-blue-600 dark:border-neutral-800 dark:bg-neutral-900"
+                        title={
+                            sidebarOpen
+                                ? t('common.collapse_sidebar')
+                                : t('common.expand_sidebar')
+                        }
+                    >
+                        <ChevronLeftIcon
+                            className={`h-4 w-4 transition-transform duration-300 ${!sidebarOpen && 'rotate-180'}`}
+                        />
+                    </button>
+                </aside>
 
-                        {/* Theme toggle */}
-                        <button
-                            onClick={toggleTheme}
-                            role="switch"
-                            aria-checked={isDark}
-                            aria-label={t('common.toggle_dark_mode')}
-                            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-300 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-neutral-900 ${
-                                isDark
-                                    ? 'bg-blue-600'
-                                    : 'bg-gray-200 dark:bg-neutral-700'
-                            }`}
-                        >
-                            <span
-                                className={`flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-md transition-transform duration-300 ${
-                                    isDark ? 'translate-x-6' : 'translate-x-0.5'
+                {/* ─── Main content area ─── */}
+                <div
+                    className={`flex min-w-0 flex-1 flex-col transition-[margin] duration-300 ease-out ${
+                        sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
+                    }`}
+                >
+                    {/* ─── Top header ─── */}
+                    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-gray-200 bg-white/80 px-4 backdrop-blur-md lg:px-8 dark:border-neutral-800 dark:bg-neutral-900/80">
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => setMobileMenuOpen(true)}
+                                className="-ml-2 rounded-lg p-2 text-gray-500 transition-colors duration-150 hover:bg-gray-100 lg:hidden dark:hover:bg-neutral-800"
+                            >
+                                <Bars3Icon className="h-6 w-6" />
+                            </button>
+                            <div>
+                                <h1 className="max-w-[200px] truncate text-lg font-black tracking-tight text-gray-900 lg:max-w-none lg:text-xl dark:text-neutral-100">
+                                    {resolvedTitle}
+                                </h1>
+                                <p className="hidden truncate text-[10px] font-bold tracking-widest text-gray-400 uppercase sm:block">
+                                    {resolvedSubtitle}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 lg:gap-4">
+                            {/* Locale Switcher */}
+                            <LocaleSwitcher variant="full" />
+
+                            {/* Theme toggle */}
+                            <button
+                                onClick={toggleTheme}
+                                role="switch"
+                                aria-checked={isDark}
+                                aria-label={t('common.toggle_dark_mode')}
+                                className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-300 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-neutral-900 ${
+                                    isDark
+                                        ? 'bg-blue-600'
+                                        : 'bg-gray-200 dark:bg-neutral-700'
                                 }`}
                             >
-                                {isDark ? (
-                                    <MoonIcon className="h-3.5 w-3.5 text-blue-600" />
-                                ) : (
-                                    <SunIcon className="h-3.5 w-3.5 text-yellow-500" />
-                                )}
-                            </span>
-                        </button>
-
-                        {/* Notifications */}
-                        <div className="relative" ref={notifRef}>
-                            <button
-                                onClick={() => {
-                                    setNotifOpen((prev) => !prev);
-                                    setUserMenuOpen(false);
-                                }}
-                                className="relative rounded-lg p-2 text-gray-400 transition-colors duration-150 hover:bg-gray-100 hover:text-blue-600 dark:hover:bg-neutral-800"
-                                aria-label={t('common.notifications')}
-                            >
-                                <BellIcon className="h-5 w-5" />
-                                {unreadCount > 0 && (
-                                    <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full border-2 border-white bg-red-500 dark:border-neutral-900" />
-                                )}
+                                <span
+                                    className={`flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-md transition-transform duration-300 ${
+                                        isDark
+                                            ? 'translate-x-6'
+                                            : 'translate-x-0.5'
+                                    }`}
+                                >
+                                    {isDark ? (
+                                        <MoonIcon className="h-3.5 w-3.5 text-blue-600" />
+                                    ) : (
+                                        <SunIcon className="h-3.5 w-3.5 text-yellow-500" />
+                                    )}
+                                </span>
                             </button>
 
-                            {notifOpen && (
-                                <NotificationsDropdown
-                                    onClose={closeAllDropdowns}
-                                />
-                            )}
-                        </div>
+                            {/* Notifications */}
+                            <div className="relative" ref={notifRef}>
+                                <button
+                                    onClick={() => {
+                                        setNotifOpen((prev) => !prev);
+                                        setUserMenuOpen(false);
+                                    }}
+                                    className="relative rounded-lg p-2 text-gray-400 transition-colors duration-150 hover:bg-gray-100 hover:text-blue-600 dark:hover:bg-neutral-800"
+                                    aria-label={t('common.notifications')}
+                                >
+                                    <BellIcon className="h-5 w-5" />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full border-2 border-white bg-red-500 dark:border-neutral-900" />
+                                    )}
+                                </button>
 
-                        {/* User menu */}
-                        <div className="relative flex items-center gap-3 border-l border-gray-100 pl-2 dark:border-neutral-800" ref={userMenuRef}>
-                            <button
-                                onClick={() => {
-                                    setUserMenuOpen((prev) => !prev);
-                                    setNotifOpen(false);
-                                }}
-                                className="flex cursor-pointer items-center gap-3"
-                                aria-label={t('common.user_menu')}
+                                {notifOpen && (
+                                    <NotificationsDropdown
+                                        onClose={closeAllDropdowns}
+                                    />
+                                )}
+                            </div>
+
+                            {/* User menu */}
+                            <div
+                                className="relative flex items-center gap-3 border-l border-gray-100 pl-2 dark:border-neutral-800"
+                                ref={userMenuRef}
                             >
-                                <div className="hidden text-right md:block">
-                                    <p className="text-xs font-bold text-gray-900 dark:text-neutral-100">
-                                        {user?.name || t('common.staff_user')}
-                                    </p>
-                                    <span
-                                        className={`rounded border px-2 py-0.5 text-[9px] font-bold uppercase ${getRoleBadge('super-admin')}`}
-                                    >
-                                        {t('nav.super_admin')}
-                                    </span>
-                                </div>
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow-md">
-                                    {userInitials}
-                                </div>
-                            </button>
+                                <button
+                                    onClick={() => {
+                                        setUserMenuOpen((prev) => !prev);
+                                        setNotifOpen(false);
+                                    }}
+                                    className="flex cursor-pointer items-center gap-3"
+                                    aria-label={t('common.user_menu')}
+                                >
+                                    <div className="hidden text-right md:block">
+                                        <p className="text-xs font-bold text-gray-900 dark:text-neutral-100">
+                                            {user?.name ||
+                                                t('common.staff_user')}
+                                        </p>
+                                        <span
+                                            className={`rounded border px-2 py-0.5 text-[9px] font-bold uppercase ${getRoleBadge('super-admin')}`}
+                                        >
+                                            {t('nav.super_admin')}
+                                        </span>
+                                    </div>
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow-md">
+                                        {userInitials}
+                                    </div>
+                                </button>
 
-                            {userMenuOpen && (
-                                <UserMenuDropdown
-                                    user={user}
-                                    userRole="super-admin"
-                                    onClose={closeAllDropdowns}
-                                />
-                            )}
+                                {userMenuOpen && (
+                                    <UserMenuDropdown
+                                        user={user}
+                                        userRole="super-admin"
+                                        onClose={closeAllDropdowns}
+                                    />
+                                )}
+                            </div>
                         </div>
-                    </div>
-                </header>
+                    </header>
 
-                {/* ─── Page content ─── */}
-                <main className="flex-1 overflow-y-auto bg-gray-50/50 p-4 lg:p-8 dark:bg-neutral-950">
-                    <div className="mx-auto max-w-7xl">
-                        {children}
-                    </div>
-                </main>
+                    {/* ─── Page content ─── */}
+                    <main className="flex-1 overflow-y-auto bg-gray-50/50 p-4 lg:p-8 dark:bg-neutral-950">
+                        <div className="mx-auto max-w-7xl">{children}</div>
+                    </main>
+                </div>
             </div>
-        </div>
         </TranslationProvider>
     );
 }

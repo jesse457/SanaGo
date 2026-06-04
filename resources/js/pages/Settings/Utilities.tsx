@@ -1,14 +1,23 @@
 import {
-    PlusIcon, PencilSquareIcon, TrashIcon,
-    HomeIcon, ChevronRightIcon, XMarkIcon,
-    MagnifyingGlassIcon, InboxStackIcon,
-    TagIcon, BuildingOfficeIcon, ExclamationTriangleIcon,
-    AdjustmentsHorizontalIcon
+    PlusIcon,
+    PencilSquareIcon,
+    TrashIcon,
+    MagnifyingGlassIcon,
+    InboxStackIcon,
+    TagIcon,
+    BuildingOfficeIcon,
+    ExclamationTriangleIcon,
+    AdjustmentsHorizontalIcon,
 } from '@heroicons/react/24/outline';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import React, { useState } from 'react';
-import AppLayout from '@/Layouts/AppLayout';
+import FormInput from '@/Components/FormInput';
+import FormSelect from '@/Components/FormSelect';
+import FormTextarea from '@/Components/FormTextarea';
+import Modal from '@/Components/Modal';
+import PageBreadcrumb from '@/Components/PageBreadcrumb';
 import { useTranslation } from '@/hooks/useTranslation';
+import AppLayout from '@/Layouts/AppLayout';
 
 interface Props {
     wards: any[];
@@ -21,7 +30,9 @@ type EntityType = 'ward' | 'bed' | 'type';
 
 export default function WardManagement({ wards, beds, bedTypes }: Props) {
     const { t } = useTranslation();
-    const [activeTab, setActiveTab] = useState<'wards' | 'beds' | 'types'>('wards');
+    const [activeTab, setActiveTab] = useState<'wards' | 'beds' | 'types'>(
+        'wards',
+    );
     const [searchQuery, setSearchQuery] = useState('');
 
     // Modal state
@@ -31,10 +42,26 @@ export default function WardManagement({ wards, beds, bedTypes }: Props) {
     const [selectedItem, setSelectedItem] = useState<any>(null);
 
     // Inertia Form
-    const { data, setData, post, put, delete: destroy, processing, errors, reset, clearErrors } = useForm({
+    const {
+        data,
+        setData,
+        post,
+        put,
+        delete: destroy,
+        processing,
+        errors,
+        reset,
+        clearErrors,
+    } = useForm({
         entity_type: '' as EntityType,
-        name: '', code: '', floor: '', capacity: '' as number | string, description: '', // Shared/Ward/Type
-        ward_id: '', bed_type_id: '', status: 'Available', // Bed specific
+        name: '',
+        code: '',
+        floor: '',
+        capacity: '' as number | string,
+        description: '', // Shared/Ward/Type
+        ward_id: '',
+        bed_type_id: '',
+        status: 'Available', // Bed specific
     });
 
     const openModal = (entity: EntityType, mode: ModalMode, item?: any) => {
@@ -60,6 +87,7 @@ export default function WardManagement({ wards, beds, bedTypes }: Props) {
             reset();
             setData('entity_type', entity);
         }
+
         setModalOpen(true);
     };
 
@@ -75,7 +103,7 @@ export default function WardManagement({ wards, beds, bedTypes }: Props) {
         e.preventDefault();
 
         if (modalMode === 'delete') {
-            destroy(route('infrastructure.destroy', selectedItem.id), {
+            router.delete(route('infrastructure.destroy', selectedItem.id), {
                 data: { entity_type: modalEntity },
                 onSuccess: closeModal,
             });
@@ -91,13 +119,17 @@ export default function WardManagement({ wards, beds, bedTypes }: Props) {
     };
 
     // --- Filters ---
-    const filteredWards = wards.filter(w => w.name?.toLowerCase().includes(searchQuery.toLowerCase()) || w.code?.toLowerCase().includes(searchQuery.toLowerCase()));
-    const filteredBeds = beds.filter(b => b.code?.toLowerCase().includes(searchQuery.toLowerCase()));
-    const filteredTypes = bedTypes.filter(t => t.name?.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    // Shared CSS Classes
-    const inputClasses = "mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm";
-    const labelClasses = "block text-xs font-bold text-gray-500 dark:text-neutral-500 uppercase tracking-wide";
+    const filteredWards = wards.filter(
+        (w: any) =>
+            w.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            w.code?.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+    const filteredBeds = beds.filter((b: any) =>
+        b.code?.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+    const filteredTypes = bedTypes.filter((t: any) =>
+        t.name?.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
 
     return (
         <AppLayout
@@ -106,66 +138,135 @@ export default function WardManagement({ wards, beds, bedTypes }: Props) {
         >
             <Head title={t('page.utilities.head_title')} />
 
-            <div className="max-w-7xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 py-6">
-                <nav className="flex text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-neutral-500">
-                    <ol className="inline-flex items-center space-x-2">
-                        <li className="flex items-center hover:text-blue-600 cursor-pointer"><HomeIcon className="w-4 h-4 mr-1" /> {t('common.home')}</li>
-                        <li><ChevronRightIcon className="w-4 h-4" /></li>
-                        <li className="text-blue-600 font-medium">{t('page.utilities.head_title')}</li>
-                    </ol>
-                </nav>
+            <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+                <PageBreadcrumb
+                    items={[
+                        { label: t('common.home'), href: '/' },
+                        { label: t('page.utilities.head_title') },
+                    ]}
+                />
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex p-1 bg-gray-100 rounded-lg w-fit">
-                        <TabButton active={activeTab === 'wards'} onClick={() => setActiveTab('wards')} label={t('page.utilities.wards_tab')} icon={<BuildingOfficeIcon className="w-4 h-4"/>} />
-                        <TabButton active={activeTab === 'beds'} onClick={() => setActiveTab('beds')} label={t('page.utilities.beds_tab')} icon={<InboxStackIcon className="w-4 h-4"/>} />
-                        <TabButton active={activeTab === 'types'} onClick={() => setActiveTab('types')} label={t('page.utilities.bed_types_tab')} icon={<TagIcon className="w-4 h-4"/>} />
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                    <div className="flex w-fit rounded-lg bg-gray-100 p-1">
+                        <TabButton
+                            active={activeTab === 'wards'}
+                            onClick={() => setActiveTab('wards')}
+                            label={t('page.utilities.wards_tab')}
+                            icon={<BuildingOfficeIcon className="h-4 w-4" />}
+                        />
+                        <TabButton
+                            active={activeTab === 'beds'}
+                            onClick={() => setActiveTab('beds')}
+                            label={t('page.utilities.beds_tab')}
+                            icon={<InboxStackIcon className="h-4 w-4" />}
+                        />
+                        <TabButton
+                            active={activeTab === 'types'}
+                            onClick={() => setActiveTab('types')}
+                            label={t('page.utilities.bed_types_tab')}
+                            icon={<TagIcon className="h-4 w-4" />}
+                        />
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <div className="relative">
-                            <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-neutral-500" />
-                            <input
-                                type="text"
-                                placeholder={t('page.utilities.search_placeholder', { tab: activeTab })}
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9 pr-4 py-2 w-48 sm:w-64 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-sm rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                            />
-                        </div>
-                        <button className="p-2 border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 rounded-lg text-gray-500 dark:text-neutral-500 hover:text-gray-900 dark:text-neutral-100 dark:hover:text-neutral-100 shadow-sm">
-                            <AdjustmentsHorizontalIcon className="w-5 h-5" />
+                        <FormInput
+                            name="search"
+                            icon={MagnifyingGlassIcon}
+                            placeholder={t(
+                                'page.utilities.search_placeholder',
+                                { tab: activeTab },
+                            )}
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                            className="w-48 sm:w-64"
+                        />
+                        <button className="rounded-lg border border-gray-200 bg-white p-2 text-gray-500 shadow-sm hover:text-gray-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-500 dark:hover:text-neutral-100">
+                            <AdjustmentsHorizontalIcon className="h-5 w-5" />
                         </button>
                         <button
-                            onClick={() => openModal(activeTab === 'types' ? 'type' : activeTab === 'beds' ? 'bed' : 'ward', 'add')}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-sm transition-all"
+                            onClick={() =>
+                                openModal(
+                                    activeTab === 'types'
+                                        ? 'type'
+                                        : activeTab === 'beds'
+                                          ? 'bed'
+                                          : 'ward',
+                                    'add',
+                                )
+                            }
+                            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700"
                         >
-                            <PlusIcon className="w-4 h-4" /> {t('page.utilities.add')} <span className="hidden sm:inline capitalize">{activeTab.slice(0, -1)}</span>
+                            <PlusIcon className="h-4 w-4" />{' '}
+                            {t('page.utilities.add')}{' '}
+                            <span className="hidden capitalize sm:inline">
+                                {activeTab.slice(0, -1)}
+                            </span>
                         </button>
                     </div>
                 </div>
 
                 <div className="mt-2">
                     {activeTab === 'wards' && (
-                        <WardList wards={filteredWards} onEdit={(w) => openModal('ward', 'edit', w)} onDelete={(w) => openModal('ward', 'delete', w)} />
+                        <WardList
+                            wards={filteredWards}
+                            onEdit={(w: any) => openModal('ward', 'edit', w)}
+                            onDelete={(w: any) =>
+                                openModal('ward', 'delete', w)
+                            }
+                        />
                     )}
                     {activeTab === 'beds' && (
-                        <BedGrid beds={filteredBeds} onEdit={(b) => openModal('bed', 'edit', b)} onDelete={(b) => openModal('bed', 'delete', b)} />
+                        <BedGrid
+                            beds={filteredBeds}
+                            onEdit={(b: any) => openModal('bed', 'edit', b)}
+                            onDelete={(b: any) => openModal('bed', 'delete', b)}
+                        />
                     )}
                     {activeTab === 'types' && (
-                        <BedTypeList types={filteredTypes} onEdit={(t) => openModal('type', 'edit', t)} onDelete={(t) => openModal('type', 'delete', t)} />
+                        <BedTypeList
+                            types={filteredTypes}
+                            onEdit={(t: any) => openModal('type', 'edit', t)}
+                            onDelete={(t: any) =>
+                                openModal('type', 'delete', t)
+                            }
+                        />
                     )}
 
                     {/* Empty State */}
                     {((activeTab === 'wards' && filteredWards.length === 0) ||
-                      (activeTab === 'beds' && filteredBeds.length === 0) ||
-                      (activeTab === 'types' && filteredTypes.length === 0)) && (
-                        <div className="text-center py-16 bg-white dark:bg-neutral-800 rounded-xl border-2 border-dashed border-gray-200 dark:border-neutral-700">
-                            <InboxStackIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-neutral-100 capitalize">{t('page.utilities.no_records', { tab: activeTab })}</h3>
-                            <p className="text-gray-500 dark:text-neutral-500 text-sm mt-1 mb-4">{t('page.utilities.get_started')}</p>
-                            <button onClick={() => openModal(activeTab === 'types' ? 'type' : activeTab === 'beds' ? 'bed' : 'ward', 'add')} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold shadow-sm">
-                                <PlusIcon className="w-4 h-4" /> {t('page.utilities.add_first')} <span className="capitalize">{activeTab.slice(0, -1)}</span>
+                        (activeTab === 'beds' && filteredBeds.length === 0) ||
+                        (activeTab === 'types' &&
+                            filteredTypes.length === 0)) && (
+                        <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-16 text-center dark:border-neutral-700 dark:bg-neutral-800">
+                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-700">
+                                <InboxStackIcon className="h-8 w-8 text-gray-400 dark:text-neutral-500" />
+                            </div>
+                            <h3 className="mt-4 text-lg font-bold text-gray-900 capitalize dark:text-neutral-100">
+                                {t('page.utilities.no_records', {
+                                    tab: activeTab,
+                                })}
+                            </h3>
+                            <p className="mt-2 text-sm text-gray-500 dark:text-neutral-500">
+                                {t('page.utilities.get_started')}
+                            </p>
+                            <button
+                                onClick={() =>
+                                    openModal(
+                                        activeTab === 'types'
+                                            ? 'type'
+                                            : activeTab === 'beds'
+                                              ? 'bed'
+                                              : 'ward',
+                                        'add',
+                                    )
+                                }
+                                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
+                            >
+                                <PlusIcon className="h-4 w-4" />{' '}
+                                {t('page.utilities.add_first')}{' '}
+                                <span className="capitalize">
+                                    {activeTab.slice(0, -1)}
+                                </span>
                             </button>
                         </div>
                     )}
@@ -173,124 +274,245 @@ export default function WardManagement({ wards, beds, bedTypes }: Props) {
             </div>
 
             {/* Modal */}
-            {modalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={closeModal}></div>
-                    <div className="relative bg-white dark:bg-neutral-800 rounded-xl w-full max-w-lg shadow-xl border border-gray-200 dark:border-neutral-700 overflow-hidden">
-                        <div className="px-6 py-4 border-b border-gray-100 dark:border-neutral-700 flex justify-between items-center bg-gray-50 dark:bg-neutral-700">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-neutral-100 capitalize">{modalMode} {modalEntity}</h3>
-                            <button onClick={closeModal} className="p-1.5 text-gray-400 dark:text-neutral-500 hover:text-gray-600 dark:text-neutral-400 dark:hover:text-neutral-400 hover:bg-gray-200 rounded-lg transition-colors"><XMarkIcon className="w-5 h-5"/></button>
+            <Modal
+                isOpen={modalOpen}
+                onClose={closeModal}
+                title={
+                    modalMode
+                        ? `${modalMode.charAt(0).toUpperCase() + modalMode.slice(1)} ${modalEntity}`
+                        : ''
+                }
+                maxWidth="max-w-lg"
+            >
+                <form
+                    onSubmit={handleSubmit}
+                    className="max-h-[75vh] space-y-5 overflow-y-auto"
+                >
+                    {modalMode === 'delete' ? (
+                        <div className="py-4 text-center">
+                            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+                            </div>
+                            <h3 className="mb-2 text-lg font-medium text-gray-900 dark:text-neutral-100">
+                                {t('page.utilities.confirm_deletion')}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-neutral-400">
+                                {t('page.utilities.confirm_delete_message', {
+                                    name:
+                                        selectedItem?.name ||
+                                        selectedItem?.code,
+                                })}
+                            </p>
                         </div>
-
-                        <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
-                            {modalMode === 'delete' ? (
-                                <div className="text-center py-4">
-                                    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-                                        <ExclamationTriangleIcon className="w-6 h-6 text-red-600" />
+                    ) : (
+                        <>
+                            {modalEntity === 'ward' && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="col-span-2">
+                                        <FormInput
+                                            name="name"
+                                            label={t(
+                                                'page.utilities.ward_name',
+                                            )}
+                                            value={data.name}
+                                            onChange={(v) => setData('name', v)}
+                                            placeholder="e.g. Maternity Ward"
+                                            errors={errors}
+                                        />
                                     </div>
-                                    <h3 className="text-lg font-medium text-gray-900 dark:text-neutral-100 mb-2">{t('page.utilities.confirm_deletion')}</h3>
-                                    <p className="text-gray-600 dark:text-neutral-400 text-sm">
-                                        {t('page.utilities.confirm_delete_message', { name: selectedItem?.name || selectedItem?.code })}
-                                    </p>
+                                    <FormInput
+                                        name="code"
+                                        label={t('page.utilities.ward_code')}
+                                        value={data.code}
+                                        onChange={(v) => setData('code', v)}
+                                        placeholder="e.g. W-MAT-01"
+                                        errors={errors}
+                                    />
+                                    <FormInput
+                                        name="capacity"
+                                        label={t(
+                                            'page.utilities.capacity_beds',
+                                        )}
+                                        type="number"
+                                        value={data.capacity}
+                                        onChange={(v) =>
+                                            setData(
+                                                'capacity',
+                                                v ? Number(v) : '',
+                                            )
+                                        }
+                                        min={1}
+                                        errors={errors}
+                                    />
+                                    <div className="col-span-2">
+                                        <FormInput
+                                            name="floor"
+                                            label={t(
+                                                'page.utilities.floor_location',
+                                            )}
+                                            value={data.floor}
+                                            onChange={(v) =>
+                                                setData('floor', v)
+                                            }
+                                            placeholder="e.g. 2nd Floor, West Wing"
+                                            errors={errors}
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <FormTextarea
+                                            name="description"
+                                            label={t('common.description')}
+                                            value={data.description as string}
+                                            onChange={(v) =>
+                                                setData('description', v)
+                                            }
+                                            rows={3}
+                                            placeholder="Brief description of the ward..."
+                                            errors={errors}
+                                        />
+                                    </div>
                                 </div>
-                            ) : (
-                                <>
-                                    {modalEntity === 'ward' && (
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="col-span-2">
-                                                <label className={labelClasses}>{t('page.utilities.ward_name')}</label>
-                                                <input type="text" value={data.name} onChange={e => setData('name', e.target.value)} className={inputClasses} placeholder="e.g. Maternity Ward" />
-                                                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
-                                            </div>
-                                            <div>
-                                                <label className={labelClasses}>{t('page.utilities.ward_code')}</label>
-                                                <input type="text" value={data.code} onChange={e => setData('code', e.target.value)} className={inputClasses} placeholder="e.g. W-MAT-01" />
-                                                {errors.code && <p className="text-red-500 text-xs mt-1">{errors.code}</p>}
-                                            </div>
-                                            <div>
-                                                <label className={labelClasses}>{t('page.utilities.capacity_beds')}</label>
-                                                <input type="number" value={data.capacity} onChange={e => setData('capacity', e.target.value ? Number(e.target.value) : '')} className={inputClasses} min="1" />
-                                                {errors.capacity && <p className="text-red-500 text-xs mt-1">{errors.capacity}</p>}
-                                            </div>
-                                            <div className="col-span-2">
-                                                <label className={labelClasses}>{t('page.utilities.floor_location')}</label>
-                                                <input type="text" value={data.floor} onChange={e => setData('floor', e.target.value)} className={inputClasses} placeholder="e.g. 2nd Floor, West Wing" />
-                                                {errors.floor && <p className="text-red-500 text-xs mt-1">{errors.floor}</p>}
-                                            </div>
-                                            <div className="col-span-2">
-                                                <label className={labelClasses}>{t('common.description')}</label>
-                                                <textarea value={data.description} onChange={e => setData('description', e.target.value)} rows={3} className={inputClasses} placeholder="Brief description of the ward..." />
-                                                {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {modalEntity === 'bed' && (
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className={labelClasses}>{t('page.utilities.bed_code')}</label>
-                                                <input type="text" value={data.code} onChange={e => setData('code', e.target.value)} className={inputClasses} placeholder="e.g. BED-101" />
-                                                {errors.code && <p className="text-red-500 text-xs mt-1">{errors.code}</p>}
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className={labelClasses}>{t('page.utilities.assign_ward')}</label>
-                                                    <select value={data.ward_id} onChange={e => setData('ward_id', e.target.value)} className={inputClasses}>
-                                                        <option value="">{t('page.utilities.select_ward')}</option>
-                                                        {wards.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                                                    </select>
-                                                    {errors.ward_id && <p className="text-red-500 text-xs mt-1">{errors.ward_id}</p>}
-                                                </div>
-                                                <div>
-                                                    <label className={labelClasses}>{t('page.utilities.bed_type')}</label>
-                                                    <select value={data.bed_type_id} onChange={e => setData('bed_type_id', e.target.value)} className={inputClasses}>
-                                                        <option value="">{t('page.utilities.select_type')}</option>
-                                                        {bedTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                                                    </select>
-                                                    {errors.bed_type_id && <p className="text-red-500 text-xs mt-1">{errors.bed_type_id}</p>}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className={labelClasses}>{t('page.utilities.current_status')}</label>
-                                                <select value={data.status} onChange={e => setData('status', e.target.value)} className={inputClasses}>
-                                                    <option value="Available">{t('page.utilities.available')}</option>
-                                                    <option value="Occupied">{t('page.utilities.occupied')}</option>
-                                                    <option value="Maintenance">{t('page.utilities.maintenance')}</option>
-                                                </select>
-                                                {errors.status && <p className="text-red-500 text-xs mt-1">{errors.status}</p>}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {modalEntity === 'type' && (
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className={labelClasses}>{t('page.utilities.bed_type_name')}</label>
-                                                <input type="text" value={data.name} onChange={e => setData('name', e.target.value)} className={inputClasses} placeholder="e.g. ICU Bed, Standard" />
-                                                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
-                                            </div>
-                                            <div>
-                                                <label className={labelClasses}>{t('page.utilities.patient_capacity')}</label>
-                                                <input type="number" value={data.capacity} onChange={e => setData('capacity', e.target.value ? Number(e.target.value) : '')} className={inputClasses} min="1" />
-                                                {errors.capacity && <p className="text-red-500 text-xs mt-1">{errors.capacity}</p>}
-                                            </div>
-                                        </div>
-                                    )}
-                                </>
                             )}
 
-                            <div className="flex justify-end gap-3 pt-4 border-t mt-6">
-                                <button type="button" onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 bg-white dark:bg-neutral-800 border border-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-700 shadow-sm">
-                                    {t('common.cancel')}
-                                </button>
-                                <button type="submit" disabled={processing} className={`px-4 py-2 text-sm font-medium text-white rounded-lg shadow-sm transition-all disabled:opacity-75 ${modalMode === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
-                                    {processing ? t('common.processing') : modalMode === 'delete' ? t('page.utilities.delete_permanently') : t('common.save_changes')}
-                                </button>
-                            </div>
-                        </form>
+                            {modalEntity === 'bed' && (
+                                <div className="space-y-4">
+                                    <FormInput
+                                        name="code"
+                                        label={t('page.utilities.bed_code')}
+                                        value={data.code}
+                                        onChange={(v) => setData('code', v)}
+                                        placeholder="e.g. BED-101"
+                                        errors={errors}
+                                    />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormSelect
+                                            name="ward_id"
+                                            label={t(
+                                                'page.utilities.assign_ward',
+                                            )}
+                                            value={data.ward_id}
+                                            onChange={(v) =>
+                                                setData('ward_id', v)
+                                            }
+                                            placeholder={t(
+                                                'page.utilities.select_ward',
+                                            )}
+                                            options={wards.map((w: any) => ({
+                                                value: w.id.toString(),
+                                                label: w.name,
+                                            }))}
+                                            errors={errors}
+                                        />
+                                        <FormSelect
+                                            name="bed_type_id"
+                                            label={t('page.utilities.bed_type')}
+                                            value={data.bed_type_id}
+                                            onChange={(v) =>
+                                                setData('bed_type_id', v)
+                                            }
+                                            placeholder={t(
+                                                'page.utilities.select_type',
+                                            )}
+                                            options={bedTypes.map(
+                                                (bt: any) => ({
+                                                    value: bt.id.toString(),
+                                                    label: bt.name,
+                                                }),
+                                            )}
+                                            errors={errors}
+                                        />
+                                    </div>
+                                    <FormSelect
+                                        name="status"
+                                        label={t(
+                                            'page.utilities.current_status',
+                                        )}
+                                        value={data.status}
+                                        onChange={(v) => setData('status', v)}
+                                        options={[
+                                            {
+                                                value: 'Available',
+                                                label: t(
+                                                    'page.utilities.available',
+                                                ),
+                                            },
+                                            {
+                                                value: 'Occupied',
+                                                label: t(
+                                                    'page.utilities.occupied',
+                                                ),
+                                            },
+                                            {
+                                                value: 'Maintenance',
+                                                label: t(
+                                                    'page.utilities.maintenance',
+                                                ),
+                                            },
+                                        ]}
+                                        errors={errors}
+                                    />
+                                </div>
+                            )}
+
+                            {modalEntity === 'type' && (
+                                <div className="space-y-4">
+                                    <FormInput
+                                        name="name"
+                                        label={t(
+                                            'page.utilities.bed_type_name',
+                                        )}
+                                        value={data.name}
+                                        onChange={(v) => setData('name', v)}
+                                        placeholder="e.g. ICU Bed, Standard"
+                                        errors={errors}
+                                    />
+                                    <FormInput
+                                        name="capacity"
+                                        label={t(
+                                            'page.utilities.patient_capacity',
+                                        )}
+                                        type="number"
+                                        value={data.capacity}
+                                        onChange={(v) =>
+                                            setData(
+                                                'capacity',
+                                                v ? Number(v) : '',
+                                            )
+                                        }
+                                        min={1}
+                                        errors={errors}
+                                    />
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    <div className="flex justify-end gap-3 border-t border-gray-100 pt-4 dark:border-neutral-700">
+                        <button
+                            type="button"
+                            onClick={closeModal}
+                            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                        >
+                            {t('common.cancel')}
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className={`rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-all disabled:opacity-75 ${
+                                modalMode === 'delete'
+                                    ? 'bg-red-600 hover:bg-red-700'
+                                    : 'bg-blue-600 hover:bg-blue-700'
+                            }`}
+                        >
+                            {processing
+                                ? t('common.processing')
+                                : modalMode === 'delete'
+                                  ? t('page.utilities.delete_permanently')
+                                  : t('common.save_changes')}
+                        </button>
                     </div>
-                </div>
-            )}
+                </form>
+            </Modal>
         </AppLayout>
     );
 }
@@ -298,31 +520,60 @@ export default function WardManagement({ wards, beds, bedTypes }: Props) {
 // --- Sub-Components ---
 function TabButton({ active, onClick, label, icon }: any) {
     return (
-        <button onClick={onClick} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${active ? 'bg-white text-blue-700 shadow-sm ring-1 ring-gray-200' : 'text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:text-neutral-100 dark:hover:text-neutral-100'}`}>
+        <button
+            onClick={onClick}
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${active ? 'bg-white text-blue-700 shadow-sm ring-1 ring-gray-200' : 'text-gray-600 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100'}`}
+        >
             {icon} {label}
         </button>
     );
 }
 
 function WardList({ wards, onEdit, onDelete }: any) {
+    const { t } = useTranslation();
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {wards.map((ward: any) => (
-                <div key={ward.id} className="bg-white dark:bg-neutral-800 p-5 rounded-xl border border-gray-200 dark:border-neutral-700 shadow-sm group hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start">
+                <div
+                    key={ward.id}
+                    className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                >
+                    <div className="flex items-start justify-between">
                         <div>
-                            <span className="text-[10px] font-bold tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md uppercase">{ward.code}</span>
-                            <h4 className="text-base font-bold text-gray-900 dark:text-neutral-100 mt-3">{ward.name}</h4>
-                            {ward.floor && <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">{ward.floor}</p>}
+                            <span className="rounded-md bg-blue-50 px-2.5 py-1 text-[10px] font-bold tracking-wider text-blue-700 uppercase dark:bg-blue-900/20 dark:text-blue-400">
+                                {ward.code}
+                            </span>
+                            <h4 className="mt-3 text-base font-bold text-gray-900 dark:text-neutral-100">
+                                {ward.name}
+                            </h4>
+                            {ward.floor && (
+                                <p className="mt-1 text-xs text-gray-500 dark:text-neutral-500">
+                                    {ward.floor}
+                                </p>
+                            )}
                         </div>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => onEdit(ward)} className="p-1.5 text-gray-400 dark:text-neutral-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"><PencilSquareIcon className="w-4 h-4"/></button>
-                            <button onClick={() => onDelete(ward)} className="p-1.5 text-gray-400 dark:text-neutral-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"><TrashIcon className="w-4 h-4"/></button>
+                        <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                            <button
+                                onClick={() => onEdit(ward)}
+                                className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:text-neutral-500 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+                            >
+                                <PencilSquareIcon className="h-4 w-4" />
+                            </button>
+                            <button
+                                onClick={() => onDelete(ward)}
+                                className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:text-neutral-500 dark:hover:bg-red-900/20"
+                            >
+                                <TrashIcon className="h-4 w-4" />
+                            </button>
                         </div>
                     </div>
-                    <div className="mt-5 flex justify-between text-xs font-bold text-gray-500 dark:text-neutral-500 uppercase bg-gray-50 dark:bg-neutral-700 p-3 rounded-lg border border-gray-100 dark:border-neutral-700">
+                    <div className="mt-5 flex justify-between rounded-lg border border-gray-100 bg-gray-50 p-3 text-xs font-bold text-gray-500 uppercase dark:border-neutral-700 dark:bg-neutral-700 dark:text-neutral-500">
                         <span>{t('page.utilities.current_capacity')}</span>
-                        <span className="text-blue-600">{ward.beds_count || 0} / {ward.capacity || 0} {t('page.utilities.beds')}</span>
+                        <span className="text-blue-600">
+                            {ward.beds_count || 0} / {ward.capacity || 0}{' '}
+                            {t('page.utilities.beds')}
+                        </span>
                     </div>
                 </div>
             ))}
@@ -331,32 +582,79 @@ function WardList({ wards, onEdit, onDelete }: any) {
 }
 
 function BedGrid({ beds, onEdit, onDelete }: any) {
-    const getStatusColor = (status: string) => {
-        switch(status) {
-            case 'Available': return 'bg-emerald-100 text-emerald-600 border-emerald-200';
-            case 'Occupied': return 'bg-red-100 text-red-600 border-red-200';
-            case 'Maintenance': return 'bg-amber-100 text-amber-600 border-amber-200';
-            default: return 'bg-gray-100 text-gray-600 dark:text-neutral-400 border-gray-200 dark:border-neutral-700';
-        }
-    };
+    const { t } = useTranslation();
 
     return (
-        <div className="bg-white dark:bg-neutral-800 p-6 rounded-xl border border-gray-200 dark:border-neutral-700 shadow-sm grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:grid-cols-4 lg:grid-cols-6 dark:border-neutral-700 dark:bg-neutral-800">
             {beds.map((bed: any) => (
-                <div key={bed.id} className={`relative group p-4 rounded-xl border ${getStatusColor(bed.status).replace(/text-.*|bg-.*/g, '')} bg-gray-50 dark:bg-neutral-700 text-center hover:shadow-md transition-all`}>
-                    <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-3 ${getStatusColor(bed.status).split(' ').slice(0,2).join(' ')}`}>
-                        <InboxStackIcon className="w-6 h-6" />
+                <div
+                    key={bed.id}
+                    className={`group relative rounded-xl border p-4 text-center transition-all hover:shadow-md ${
+                        bed.status === 'Available'
+                            ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20'
+                            : bed.status === 'Occupied'
+                              ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
+                              : bed.status === 'Maintenance'
+                                ? 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'
+                                : 'border-gray-200 bg-gray-50 dark:border-neutral-700 dark:bg-neutral-700'
+                    }`}
+                >
+                    <div
+                        className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full ${
+                            bed.status === 'Available'
+                                ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                : bed.status === 'Occupied'
+                                  ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                                  : bed.status === 'Maintenance'
+                                    ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
+                                    : 'bg-gray-100 text-gray-600 dark:bg-neutral-700 dark:text-neutral-400'
+                        }`}
+                    >
+                        <InboxStackIcon className="h-6 w-6" />
                     </div>
-                    <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">{bed.code}</p>
-                    <p className="text-[10px] font-bold text-gray-500 dark:text-neutral-500 uppercase tracking-wide mt-0.5 truncate px-1" title={bed.ward?.name}>{bed.ward?.name || t('page.utilities.no_ward')}</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
+                        {bed.code}
+                    </p>
+                    <p
+                        className="mt-0.5 truncate px-1 text-[10px] font-bold tracking-wide text-gray-500 uppercase dark:text-neutral-500"
+                        title={bed.ward?.name}
+                    >
+                        {bed.ward?.name || t('page.utilities.no_ward')}
+                    </p>
 
-                    <span className={`inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${getStatusColor(bed.status).split(' ').slice(0,2).join(' ')}`}>
-                        {bed.status || t('page.utilities.unknown')}
+                    <span
+                        className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            bed.status === 'Available'
+                                ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                : bed.status === 'Occupied'
+                                  ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                                  : bed.status === 'Maintenance'
+                                    ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
+                                    : 'bg-gray-100 text-gray-600 dark:bg-neutral-700 dark:text-neutral-400'
+                        }`}
+                    >
+                        {bed.status === 'Available'
+                            ? t('page.utilities.available')
+                            : bed.status === 'Occupied'
+                              ? t('page.utilities.occupied')
+                              : bed.status === 'Maintenance'
+                                ? t('page.utilities.maintenance')
+                                : t('page.utilities.unknown')}
                     </span>
 
-                    <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => onEdit(bed)} className="p-1.5 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-md shadow-sm hover:text-blue-600"><PencilSquareIcon className="w-3.5 h-3.5"/></button>
-                        <button onClick={() => onDelete(bed)} className="p-1.5 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-md shadow-sm hover:text-red-600"><TrashIcon className="w-3.5 h-3.5"/></button>
+                    <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                        <button
+                            onClick={() => onEdit(bed)}
+                            className="rounded-md border border-gray-200 bg-white p-1.5 shadow-sm hover:text-blue-600 dark:border-neutral-700 dark:bg-neutral-800"
+                        >
+                            <PencilSquareIcon className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                            onClick={() => onDelete(bed)}
+                            className="rounded-md border border-gray-200 bg-white p-1.5 shadow-sm hover:text-red-600 dark:border-neutral-700 dark:bg-neutral-800"
+                        >
+                            <TrashIcon className="h-3.5 w-3.5" />
+                        </button>
                     </div>
                 </div>
             ))}
@@ -365,28 +663,52 @@ function BedGrid({ beds, onEdit, onDelete }: any) {
 }
 
 function BedTypeList({ types, onEdit, onDelete }: any) {
+    const { t } = useTranslation();
+
     return (
-        <div className="bg-white dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700 shadow-sm overflow-hidden">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
             <table className="w-full text-left">
-                <thead className="bg-gray-50 dark:bg-neutral-700 border-b border-gray-200 dark:border-neutral-700 text-xs font-bold text-gray-500 dark:text-neutral-500 uppercase tracking-wider">
+                <thead className="border-b border-gray-200 bg-gray-50 text-xs font-bold tracking-wider text-gray-500 uppercase dark:border-neutral-700 dark:bg-neutral-700 dark:text-neutral-500">
                     <tr>
-                        <th className="px-6 py-4">{t('page.utilities.type_name')}</th>
-                        <th className="px-6 py-4">{t('page.utilities.capacity')}</th>
-                        <th className="px-6 py-4 text-right">{t('common.actions')}</th>
+                        <th className="px-6 py-4">
+                            {t('page.utilities.type_name')}
+                        </th>
+                        <th className="px-6 py-4">
+                            {t('page.utilities.capacity')}
+                        </th>
+                        <th className="px-6 py-4 text-right">
+                            {t('common.actions')}
+                        </th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-neutral-700 text-sm">
+                <tbody className="divide-y divide-gray-100 text-sm dark:divide-neutral-700">
                     {types.map((type: any) => (
-                        <tr key={type.id} className="hover:bg-gray-50 dark:hover:bg-neutral-700/80 transition-colors group">
-                            <td className="px-6 py-4 font-semibold text-gray-900 dark:text-neutral-100">{type.name}</td>
+                        <tr
+                            key={type.id}
+                            className="group transition-colors hover:bg-gray-50 dark:hover:bg-neutral-700/80"
+                        >
+                            <td className="px-6 py-4 font-semibold text-gray-900 dark:text-neutral-100">
+                                {type.name}
+                            </td>
                             <td className="px-6 py-4 text-gray-600 dark:text-neutral-400">
-                                <span className="bg-gray-100 text-gray-700 dark:text-neutral-300 px-2.5 py-1 rounded-md text-xs font-semibold">
-                                    {type.capacity} {t('page.utilities.patients')}
+                                <span className="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-neutral-700 dark:text-neutral-300">
+                                    {type.capacity}{' '}
+                                    {t('page.utilities.patients')}
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-right">
-                                <button onClick={() => onEdit(type)} className="p-2 text-gray-400 dark:text-neutral-500 hover:text-blue-600 transition-colors"><PencilSquareIcon className="w-4.5 h-4.5"/></button>
-                                <button onClick={() => onDelete(type)} className="p-2 text-gray-400 dark:text-neutral-500 hover:text-red-600 transition-colors"><TrashIcon className="w-4.5 h-4.5"/></button>
+                                <button
+                                    onClick={() => onEdit(type)}
+                                    className="p-2 text-gray-400 transition-colors hover:text-blue-600 dark:text-neutral-500 dark:hover:text-blue-400"
+                                >
+                                    <PencilSquareIcon className="h-4.5 w-4.5" />
+                                </button>
+                                <button
+                                    onClick={() => onDelete(type)}
+                                    className="p-2 text-gray-400 transition-colors hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+                                >
+                                    <TrashIcon className="h-4.5 w-4.5" />
+                                </button>
                             </td>
                         </tr>
                     ))}

@@ -1,4 +1,5 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import { format, isToday, isYesterday, parseISO, isValid } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Home,
@@ -17,9 +18,8 @@ import {
     Loader2,
 } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
-import AppLayout from '@/Layouts/AppLayout';
 import { useTranslation } from '@/hooks/useTranslation';
-import { format, isToday, isYesterday, parseISO, isValid } from 'date-fns';
+import AppLayout from '@/Layouts/AppLayout';
 
 interface Patient {
     id: number;
@@ -33,6 +33,8 @@ interface Patient {
     gender: 'male' | 'female' | 'other';
     address: string | null;
     last_visit_date: string | null;
+    medical_records?: any[];
+    vitals?: any[];
 }
 // --- Types ---
 interface Props {
@@ -47,26 +49,41 @@ const PatientProfilePage = ({ patient }: Props) => {
 
     // --- Dynamic Grouping Helper ---
     const groupDataByDate = (items: any[], dateField: string) => {
-        const groups = { today: [], yesterday: [], older: [] };
-        if (!items) return groups;
+        const groups: { today: any[]; yesterday: any[]; older: any[] } = { today: [], yesterday: [], older: [] };
+
+        if (!items) {
+            return groups;
+        }
 
         items.forEach((item) => {
             const dateValue = item[dateField];
-            if (!dateValue) return;
-            const date = parseISO(dateValue);
-            if (!isValid(date)) return;
 
-            if (isToday(date)) groups.today.push(item);
-            else if (isYesterday(date)) groups.yesterday.push(item);
-            else groups.older.push(item);
+            if (!dateValue) {
+                return;
+            }
+
+            const date = parseISO(dateValue);
+
+            if (!isValid(date)) {
+                return;
+            }
+
+            if (isToday(date)) {
+                groups.today.push(item);
+            } else if (isYesterday(date)) {
+                groups.yesterday.push(item);
+            } else {
+                groups.older.push(item);
+            }
         });
+
         return groups;
     };
 
     const requestAdmission = () => {
-         post(route('request-admission', patient.id), {
-                onSuccess: () => setConfirmAdmission(false)
-            });
+        post(route('request-admission', patient.id), {
+            onSuccess: () => setConfirmAdmission(false),
+        });
     };
     // Memoize the buckets to prevent re-sorting on every render
     const historyBuckets = useMemo(
@@ -200,23 +217,23 @@ const PatientProfilePage = ({ patient }: Props) => {
 
                 {/* Tabs Navigation - Exact same styles */}
                 <div className="mb-8 flex space-x-10 border-b border-gray-200 dark:border-neutral-700">
-                    {['history', 'vitals'].map((t) => (
+                    {['history', 'vitals'].map((tabKey) => (
                         <button
-                            key={t}
-                            onClick={() => setActiveTab(t)}
-                            className={`relative pb-4 text-[10px] font-black tracking-[0.2em] uppercase transition-colors outline-none ${activeTab === t ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                            key={tabKey}
+                            onClick={() => setActiveTab(tabKey)}
+                            className={`relative pb-4 text-[10px] font-black tracking-[0.2em] uppercase transition-colors outline-none ${activeTab === tabKey ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
                         >
                             <div className="flex items-center gap-2">
-                                {t === 'history' ? (
+                                {tabKey === 'history' ? (
                                     <ClipboardList className="h-4 w-4" />
                                 ) : (
                                     <Heart className="h-4 w-4" />
                                 )}
-                                {t === 'history'
+                                {tabKey === 'history'
                                     ? t('consultationHistory')
                                     : t('vitalSigns')}
                             </div>
-                            {activeTab === t && (
+                            {activeTab === tabKey && (
                                 <motion.div
                                     layoutId="tabLine"
                                     className="absolute right-0 bottom-0 left-0 h-1 rounded-t-full bg-blue-600"
@@ -262,7 +279,9 @@ const PatientProfilePage = ({ patient }: Props) => {
                                                                 <div className="mb-6 flex items-start justify-between">
                                                                     <div>
                                                                         <h4 className="text-lg font-black tracking-tight text-gray-900 uppercase dark:text-neutral-100">
-                                                                            {t('clinicalRecord')}
+                                                                            {t(
+                                                                                'clinicalRecord',
+                                                                            )}
                                                                         </h4>
                                                                         <p className="mt-1 text-[10px] font-bold text-gray-400 uppercase">
                                                                             {format(
@@ -274,25 +293,35 @@ const PatientProfilePage = ({ patient }: Props) => {
                                                                         </p>
                                                                     </div>
                                                                     <span className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1 text-[10px] font-black tracking-widest text-gray-500 uppercase dark:border-neutral-700 dark:bg-neutral-900">
-                                                                        {t('dr')}{' '}
+                                                                        {t(
+                                                                            'dr',
+                                                                        )}{' '}
                                                                         {record
                                                                             .doctor
                                                                             ?.name ||
-                                                                            t('unknown')}
+                                                                            t(
+                                                                                'unknown',
+                                                                            )}
                                                                     </span>
                                                                 </div>
 
                                                                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                                                                     <div>
                                                                         <h5 className="mb-2 text-[10px] font-black tracking-widest text-gray-400 uppercase">
-                                                                            {t('diagnosis')}
+                                                                            {t(
+                                                                                'diagnosis',
+                                                                            )}
                                                                         </h5>
                                                                         <p className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm font-bold tracking-tight text-blue-700 uppercase dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                                                                             {record.diagnosis ||
-                                                                                t('noDiagnosisRecorded')}
+                                                                                t(
+                                                                                    'noDiagnosisRecorded',
+                                                                                )}
                                                                         </p>
                                                                         <h5 className="mt-4 mb-2 text-[10px] font-black tracking-widest text-gray-400 uppercase">
-                                                                            {t('chiefComplaint')}
+                                                                            {t(
+                                                                                'chiefComplaint',
+                                                                            )}
                                                                         </h5>
                                                                         <p className="text-sm font-medium text-gray-700 italic dark:text-neutral-300">
                                                                             "
@@ -304,14 +333,20 @@ const PatientProfilePage = ({ patient }: Props) => {
                                                                     </div>
                                                                     <div>
                                                                         <h5 className="mb-2 text-[10px] font-black tracking-widest text-gray-400 uppercase">
-                                                                            {t('treatmentPlan')}
+                                                                            {t(
+                                                                                'treatmentPlan',
+                                                                            )}
                                                                         </h5>
                                                                         <p className="mb-4 text-sm font-bold tracking-tight text-gray-700 uppercase dark:text-neutral-300">
                                                                             {record.treatment_plan ||
-                                                                                t('na')}
+                                                                                t(
+                                                                                    'na',
+                                                                                )}
                                                                         </p>
                                                                         <h5 className="mb-2 text-[10px] font-black tracking-widest text-gray-400 uppercase">
-                                                                            {t('attachments')}
+                                                                            {t(
+                                                                                'attachments',
+                                                                            )}
                                                                         </h5>
                                                                         <div className="flex gap-4">
                                                                             {record
@@ -330,7 +365,9 @@ const PatientProfilePage = ({ patient }: Props) => {
                                                                                             className="flex items-center text-[10px] font-black tracking-widest text-gray-400 uppercase transition-colors hover:text-blue-600"
                                                                                         >
                                                                                             <Paperclip className="mr-1.5 h-3 w-3" />{' '}
-                                                                                            {t('file')}{' '}
+                                                                                            {t(
+                                                                                                'file',
+                                                                                            )}{' '}
                                                                                             {idx +
                                                                                                 1}
                                                                                         </button>
@@ -338,7 +375,9 @@ const PatientProfilePage = ({ patient }: Props) => {
                                                                                 )
                                                                             ) : (
                                                                                 <span className="text-[10px] font-bold text-gray-400 uppercase italic">
-                                                                                    {t('noFiles')}
+                                                                                    {t(
+                                                                                        'noFiles',
+                                                                                    )}
                                                                                 </span>
                                                                             )}
                                                                         </div>
@@ -393,7 +432,9 @@ const PatientProfilePage = ({ patient }: Props) => {
                                                                 </div>
                                                                 {v.is_abnormal && (
                                                                     <span className="rounded-lg border border-red-200 bg-red-100 px-2 py-0.5 text-[9px] font-black tracking-widest text-red-600 uppercase dark:border-red-800 dark:bg-red-900/40 dark:text-red-400">
-                                                                        {t('abnormal')}
+                                                                        {t(
+                                                                            'abnormal',
+                                                                        )}
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -401,7 +442,9 @@ const PatientProfilePage = ({ patient }: Props) => {
                                                             <div className="grid grid-cols-2 gap-x-2 gap-y-4">
                                                                 <div className="flex flex-col">
                                                                     <span className="text-[9px] font-black tracking-tighter text-gray-400 uppercase">
-                                                                        {t('temperature')}
+                                                                        {t(
+                                                                            'temperature',
+                                                                        )}
                                                                     </span>
                                                                     <span
                                                                         className={`text-lg font-black ${v.is_abnormal && Number(v.temperature) > 38 ? 'text-red-500' : 'text-gray-900 dark:text-neutral-100'}`}
@@ -414,7 +457,9 @@ const PatientProfilePage = ({ patient }: Props) => {
                                                                 </div>
                                                                 <div className="flex flex-col">
                                                                     <span className="text-[9px] font-black tracking-tighter text-gray-400 uppercase">
-                                                                        {t('bloodPressure')}
+                                                                        {t(
+                                                                            'bloodPressure',
+                                                                        )}
                                                                     </span>
                                                                     <span className="text-lg font-black text-gray-900 dark:text-neutral-100">
                                                                         {
@@ -428,20 +473,26 @@ const PatientProfilePage = ({ patient }: Props) => {
                                                                 </div>
                                                                 <div className="flex flex-col">
                                                                     <span className="text-[9px] font-black tracking-tighter text-gray-400 uppercase">
-                                                                        {t('heartRate')}
+                                                                        {t(
+                                                                            'heartRate',
+                                                                        )}
                                                                     </span>
                                                                     <span className="text-lg font-black text-gray-900 dark:text-neutral-100">
                                                                         {
                                                                             v.heart_rate
                                                                         }{' '}
                                                                         <span className="text-[10px] font-medium text-gray-400 uppercase">
-                                                                            {t('bpm')}
+                                                                            {t(
+                                                                                'bpm',
+                                                                            )}
                                                                         </span>
                                                                     </span>
                                                                 </div>
                                                                 <div className="flex flex-col">
                                                                     <span className="text-[9px] font-black tracking-tighter text-gray-400 uppercase">
-                                                                        {t('oxygenSpo2')}
+                                                                        {t(
+                                                                            'oxygenSpo2',
+                                                                        )}
                                                                     </span>
                                                                     <span className="text-lg font-black text-gray-900 dark:text-neutral-100">
                                                                         {
@@ -454,11 +505,14 @@ const PatientProfilePage = ({ patient }: Props) => {
 
                                                             <div className="mt-6 flex items-center justify-between border-t border-gray-50 pt-4 dark:border-neutral-700">
                                                                 <span className="text-[9px] font-bold tracking-widest text-gray-400 uppercase">
-                                                                    {t('nurse')}:{' '}
+                                                                    {t('nurse')}
+                                                                    :{' '}
                                                                     {v
                                                                         .recorded_by
                                                                         ?.name ||
-                                                                        t('staff')}
+                                                                        t(
+                                                                            'staff',
+                                                                        )}
                                                                 </span>
                                                                 <Activity
                                                                     className={`h-4 w-4 ${v.is_abnormal ? 'animate-pulse text-red-500' : 'text-blue-500'}`}
@@ -483,8 +537,8 @@ const PatientProfilePage = ({ patient }: Props) => {
 PatientProfilePage.layout = (page: React.ReactNode) => (
     <AppLayout
         children={page}
-        headerTitle={t('patientProfile')}
-        headerSubtitle={t('patientMedicalHistoryVitals')}
+        headerTitle="Patient Profile"
+        headerSubtitle="Medical History & Vitals"
     />
 );
 

@@ -1,15 +1,28 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import {
+    MagnifyingGlassIcon,
+    PlusIcon,
+    BeakerIcon,
+    PencilSquareIcon,
+    TrashIcon,
+    CurrencyDollarIcon,
+    CheckBadgeIcon,
+    XMarkIcon,
+    ArrowPathIcon,
+} from '@heroicons/react/24/outline';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import debounce from 'lodash/debounce';
-import {
-    HomeIcon, ChevronRightIcon, MagnifyingGlassIcon, PlusIcon,
-    BeakerIcon, Squares2X2Icon, ListBulletIcon, ArrowRightIcon,
-    PencilSquareIcon, TrashIcon, CurrencyDollarIcon, CheckBadgeIcon,
-    InboxIcon, XMarkIcon, ArrowPathIcon
-} from '@heroicons/react/24/outline';
-import AppLayout from '@/Layouts/AppLayout';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import EmptyState from '@/Components/EmptyState';
+import FormInput from '@/Components/FormInput';
+import FormTextarea from '@/Components/FormTextarea';
+import PageBreadcrumb from '@/Components/PageBreadcrumb';
+import { Pagination } from '@/Components/Pagination';
+import StatCard from '@/Components/StatCard';
+import StatusBadge from '@/Components/StatusBadge';
+import ViewToggle from '@/Components/ViewToggle';
 import { useTranslation } from '@/hooks/useTranslation';
+import AppLayout from '@/Layouts/AppLayout';
 
 interface LabTest {
     id: number;
@@ -40,20 +53,26 @@ export default function LabTestManagement({ tests, filters }: Props) {
     const [selectedId, setSelectedId] = useState<number | null>(null);
 
     // Form logic for EDIT MODAL
-    const { data, setData, put, processing, errors, reset, clearErrors } = useForm({
-        test_name: '',
-        code: '',
-        price: 0,
-        units: '',
-        description: '',
-        is_active: true,
-    });
+    const { data, setData, put, processing, errors, reset, clearErrors } =
+        useForm({
+            test_name: '',
+            code: '',
+            price: 0,
+            units: '',
+            description: '',
+            is_active: true,
+        });
 
     // Handle Search
     useEffect(() => {
         const timeout = setTimeout(() => {
-            router.get(route('tests.index'), { search: searchQuery }, { preserveState: true, replace: true });
+            router.get(
+                route('tests.index'),
+                { search: searchQuery },
+                { preserveState: true, replace: true },
+            );
         }, 300);
+
         return () => clearTimeout(timeout);
     }, [searchQuery]);
 
@@ -78,7 +97,7 @@ export default function LabTestManagement({ tests, filters }: Props) {
                 setIsEditModalOpen(false);
                 reset();
             },
-            preserveScroll: true
+            preserveScroll: true,
         });
     };
 
@@ -88,135 +107,246 @@ export default function LabTestManagement({ tests, filters }: Props) {
         }
     };
 
-    const stats = useMemo(() => ({
-        total: tests.total,
-        active: tests.data.filter(t => t.is_active).length,
-        avgPrice: tests.data.reduce((acc, t) => acc + Number(t.price), 0) / (tests.data.length || 1),
-    }), [tests]);
+    const stats = useMemo(
+        () => ({
+            total: tests.total,
+            active: tests.data.filter((t) => t.is_active).length,
+            avgPrice:
+                tests.data.reduce((acc, t) => acc + Number(t.price), 0) /
+                (tests.data.length || 1),
+        }),
+        [tests],
+    );
 
     return (
-        <AppLayout headerTitle={t('lab_tests.index.title')} headerSubtitle={t('lab_tests.index.subtitle')}>
+        <AppLayout
+            headerTitle={t('lab_tests.index.title')}
+            headerSubtitle={t('lab_tests.index.subtitle')}
+        >
             <Head title={t('lab_tests.index.head_title')} />
 
-            <div className="max-w-7xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 pb-12">
+            <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 {/* Breadcrumbs */}
-                <nav className="flex text-xs font-semibold uppercase text-gray-500 dark:text-neutral-500">
-                    <ol className="inline-flex items-center space-x-2">
-                        <li className="flex items-center hover:text-blue-600 cursor-pointer"><HomeIcon className="w-4 h-4 mr-1" /> {t('common.home')}</li>
-                        <li><ChevronRightIcon className="w-4 h-4" /></li>
-                        <li className="text-blue-600">{t('lab_tests.index.test_definitions')}</li>
-                    </ol>
-                </nav>
+                <PageBreadcrumb
+                    items={[
+                        { label: t('common.home'), href: route('dashboard') },
+                        { label: t('lab_tests.index.test_definitions') },
+                    ]}
+                />
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <StatCard label={t('lab_tests.index.total_tests')} value={stats.total} icon={<BeakerIcon />} color="blue" />
-                    <StatCard label={t('lab_tests.index.active')} value={stats.active} icon={<CheckBadgeIcon />} color="emerald" />
-                    <StatCard label={t('lab_tests.index.avg_price')} value={`$${stats.avgPrice.toFixed(2)}`} icon={<CurrencyDollarIcon />} color="amber" />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <StatCard
+                        label={t('lab_tests.index.total_tests')}
+                        value={stats.total}
+                        icon={BeakerIcon}
+                        color="blue"
+                    />
+                    <StatCard
+                        label={t('lab_tests.index.active')}
+                        value={stats.active}
+                        icon={CheckBadgeIcon}
+                        color="emerald"
+                    />
+                    <StatCard
+                        label={t('lab_tests.index.avg_price')}
+                        value={`$${stats.avgPrice.toFixed(2)}`}
+                        icon={CurrencyDollarIcon}
+                        color="amber"
+                    />
                 </div>
 
                 {/* Controls */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                     <div className="relative flex-grow lg:max-w-md">
-                        <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-neutral-500" />
+                        <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-neutral-500" />
                         <input
                             type="text"
-                            placeholder={t('lab_tests.index.search_placeholder')}
+                            placeholder={t(
+                                'lab_tests.index.search_placeholder',
+                            )}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9 pr-4 py-2 w-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full rounded-lg border border-gray-200 bg-white py-2 pr-4 pl-9 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800"
                         />
                     </div>
 
                     <div className="flex items-center gap-3">
                         <Link
                             href={route('tests.create')}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-blue-700 transition-all"
+                            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700"
                         >
-                            <PlusIcon className="w-4 h-4" /> {t('lab_tests.index.new_test')}
+                            <PlusIcon className="h-4 w-4" />{' '}
+                            {t('lab_tests.index.new_test')}
                         </Link>
-                        <div className="flex bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg p-1">
-                            <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-blue-50 text-blue-600' : 'text-gray-400 dark:text-neutral-500'}`}><Squares2X2Icon className="w-5 h-5" /></button>
-                            <button onClick={() => setViewMode('table')} className={`p-1.5 rounded-md ${viewMode === 'table' ? 'bg-blue-50 text-blue-600' : 'text-gray-400 dark:text-neutral-500'}`}><ListBulletIcon className="w-5 h-5" /></button>
-                        </div>
+                        <ViewToggle view={viewMode} onChange={setViewMode} />
                     </div>
                 </div>
 
                 {/* Main Content Area */}
                 <AnimatePresence mode="wait">
                     {tests.data.length === 0 ? (
-                        /* --- EMPTY CARD --- */
                         <motion.div
                             key="empty"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="flex flex-col items-center justify-center py-24 bg-white dark:bg-neutral-800 rounded-2xl border-2 border-dashed border-gray-200 dark:border-neutral-700 text-center"
                         >
-                            <div className="h-20 w-20 bg-gray-50 dark:bg-neutral-700 rounded-full flex items-center justify-center mb-4">
-                                <InboxIcon className="w-10 h-10 text-gray-300" />
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-neutral-100">{t('lab_tests.index.no_tests')}</h3>
-                            <p className="text-sm text-gray-500 dark:text-neutral-500 max-w-sm mt-2 mb-8">
-                                {t('lab_tests.index.no_tests_description')}
-                            </p>
-                            <Link href={route('tests.create')} className="px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg hover:bg-blue-700 transition-all">
-                                {t('lab_tests.index.create_first_test')}
-                            </Link>
+                            <EmptyState
+                                icon={BeakerIcon}
+                                title={t('lab_tests.index.no_tests')}
+                                description={t(
+                                    'lab_tests.index.no_tests_description',
+                                )}
+                                action={{
+                                    label: t(
+                                        'lab_tests.index.create_first_test',
+                                    ),
+                                    href: route('tests.create'),
+                                }}
+                            />
                         </motion.div>
                     ) : viewMode === 'grid' ? (
-                        <motion.div key="grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <motion.div
+                            key="grid"
+                            className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+                        >
                             {tests.data.map((test) => (
-                                <div key={test.id} className="bg-white dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700 p-6 hover:border-blue-400 hover:shadow-md transition-all flex flex-col h-full relative group">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className={`h-12 w-12 rounded-lg flex items-center justify-center ${test.is_active ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-400 dark:text-neutral-500'}`}>
-                                            <BeakerIcon className="w-6 h-6" />
+                                <div
+                                    key={test.id}
+                                    className="group relative flex h-full flex-col rounded-xl border border-gray-200 bg-white p-6 transition-all hover:border-blue-400 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                                >
+                                    <div className="mb-4 flex items-start justify-between">
+                                        <div
+                                            className={`flex h-12 w-12 items-center justify-center rounded-lg ${test.is_active ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'bg-gray-50 text-gray-400 dark:bg-neutral-700 dark:text-neutral-500'}`}
+                                        >
+                                            <BeakerIcon className="h-6 w-6" />
                                         </div>
-                                        <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase border ${test.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-gray-50 text-gray-500 dark:text-neutral-500 border-gray-100 dark:border-neutral-700'}`}>
-                                            {test.is_active ? t('lab_tests.index.active_status') : t('lab_tests.index.inactive_status')}
-                                        </span>
+                                        <StatusBadge
+                                            label={
+                                                test.is_active
+                                                    ? t(
+                                                          'lab_tests.index.active_status',
+                                                      )
+                                                    : t(
+                                                          'lab_tests.index.inactive_status',
+                                                      )
+                                            }
+                                            color={
+                                                test.is_active
+                                                    ? 'emerald'
+                                                    : 'gray'
+                                            }
+                                        />
                                     </div>
                                     <div className="mb-4 flex-grow">
-                                        <h3 className="text-lg font-bold text-gray-900 dark:text-neutral-100 truncate">{test.test_name}</h3>
-                                        <p className="text-xs font-mono text-blue-500 font-bold mb-3">{test.code}</p>
-                                        <p className="text-sm text-gray-500 dark:text-neutral-500 line-clamp-2 h-10">{test.description || t('lab_tests.index.no_description')}</p>
+                                        <h3 className="truncate text-lg font-bold text-gray-900 dark:text-neutral-100">
+                                            {test.test_name}
+                                        </h3>
+                                        <p className="mb-3 font-mono text-xs font-bold text-blue-500">
+                                            {test.code}
+                                        </p>
+                                        <p className="line-clamp-2 h-10 text-sm text-gray-500 dark:text-neutral-500">
+                                            {test.description ||
+                                                t(
+                                                    'lab_tests.index.no_description',
+                                                )}
+                                        </p>
                                     </div>
-                                    <div className="pt-4 border-t border-gray-100 dark:border-neutral-700 flex items-center justify-between">
-                                        <div className="text-lg font-bold text-gray-900 dark:text-neutral-100">${Number(test.price).toFixed(2)}</div>
+                                    <div className="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-neutral-700">
+                                        <div className="text-lg font-bold text-gray-900 dark:text-neutral-100">
+                                            ${Number(test.price).toFixed(2)}
+                                        </div>
                                         <div className="flex gap-2">
-                                            <button onClick={() => openEditModal(test)} className="p-1.5 text-gray-400 dark:text-neutral-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all"><PencilSquareIcon className="w-4 h-4" /></button>
-                                            <button onClick={() => handleDelete(test.id)} className="p-1.5 text-gray-400 dark:text-neutral-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-all"><TrashIcon className="w-4 h-4" /></button>
+                                            <button
+                                                onClick={() =>
+                                                    openEditModal(test)
+                                                }
+                                                className="rounded-md p-1.5 text-gray-400 transition-all hover:bg-blue-50 hover:text-blue-600 dark:text-neutral-500 dark:hover:bg-blue-900/20"
+                                            >
+                                                <PencilSquareIcon className="h-4 w-4" />
+                                            </button>
+                                            <button
+                                                onClick={() =>
+                                                    handleDelete(test.id)
+                                                }
+                                                className="rounded-md p-1.5 text-gray-400 transition-all hover:bg-blue-50 hover:text-blue-600 dark:text-neutral-500 dark:hover:bg-blue-900/20"
+                                            >
+                                                <TrashIcon className="h-4 w-4" />
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </motion.div>
                     ) : (
-                        <div className="bg-white dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700 overflow-hidden shadow-sm">
+                        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
-                                <thead className="bg-gray-50 dark:bg-neutral-700 text-xs font-bold text-gray-500 dark:text-neutral-500 uppercase">
+                                <thead className="bg-gray-50 text-xs font-bold text-gray-500 uppercase dark:bg-neutral-700 dark:text-neutral-500">
                                     <tr>
-                                        <th className="px-6 py-4 text-left">{t('lab_tests.index.test_name')}</th>
-                                        <th className="px-6 py-4 text-left">{t('lab_tests.index.price')}</th>
-                                        <th className="px-6 py-4 text-center">{t('lab_tests.index.status')}</th>
+                                        <th className="px-6 py-4 text-left">
+                                            {t('lab_tests.index.test_name')}
+                                        </th>
+                                        <th className="px-6 py-4 text-left">
+                                            {t('lab_tests.index.price')}
+                                        </th>
+                                        <th className="px-6 py-4 text-center">
+                                            {t('lab_tests.index.status')}
+                                        </th>
                                         <th className="px-6 py-4"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 dark:divide-neutral-700">
                                     {tests.data.map((test) => (
-                                        <tr key={test.id} className="hover:bg-gray-50 dark:hover:bg-neutral-700">
+                                        <tr
+                                            key={test.id}
+                                            className="hover:bg-gray-50 dark:hover:bg-neutral-700"
+                                        >
                                             <td className="px-6 py-4">
-                                                <div className="font-bold text-sm text-gray-900 dark:text-neutral-100">{test.test_name}</div>
-                                                <div className="text-[10px] font-mono text-gray-400 dark:text-neutral-500">{test.code}</div>
+                                                <div className="text-sm font-bold text-gray-900 dark:text-neutral-100">
+                                                    {test.test_name}
+                                                </div>
+                                                <div className="font-mono text-[10px] text-gray-400 dark:text-neutral-500">
+                                                    {test.code}
+                                                </div>
                                             </td>
-                                            <td className="px-6 py-4 text-sm font-bold text-gray-900 dark:text-neutral-100">${Number(test.price).toFixed(2)}</td>
+                                            <td className="px-6 py-4 text-sm font-bold text-gray-900 dark:text-neutral-100">
+                                                ${Number(test.price).toFixed(2)}
+                                            </td>
                                             <td className="px-6 py-4 text-center">
-                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${test.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-gray-50 text-gray-500 dark:text-neutral-500 border-gray-100 dark:border-neutral-700'}`}>
-                                                    {test.is_active ? t('lab_tests.index.active_status') : t('lab_tests.index.inactive_status')}
-                                                </span>
+                                                <StatusBadge
+                                                    label={
+                                                        test.is_active
+                                                            ? t(
+                                                                  'lab_tests.index.active_status',
+                                                              )
+                                                            : t(
+                                                                  'lab_tests.index.inactive_status',
+                                                              )
+                                                    }
+                                                    color={
+                                                        test.is_active
+                                                            ? 'emerald'
+                                                            : 'gray'
+                                                    }
+                                                />
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button onClick={() => openEditModal(test)} className="p-1 text-gray-400 dark:text-neutral-500 hover:text-blue-600 mr-2"><PencilSquareIcon className="w-5 h-5" /></button>
-                                                <button onClick={() => handleDelete(test.id)} className="p-1 text-gray-400 dark:text-neutral-500 hover:text-red-600"><TrashIcon className="w-5 h-5" /></button>
+                                                <button
+                                                    onClick={() =>
+                                                        openEditModal(test)
+                                                    }
+                                                    className="mr-2 p-1 text-gray-400 hover:text-blue-600 dark:text-neutral-500"
+                                                >
+                                                    <PencilSquareIcon className="h-5 w-5" />
+                                                </button>
+                                                <button
+                                                    onClick={() =>
+                                                        handleDelete(test.id)
+                                                    }
+                                                    className="p-1 text-gray-400 hover:text-blue-600 dark:text-neutral-500"
+                                                >
+                                                    <TrashIcon className="h-5 w-5" />
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
@@ -227,55 +357,88 @@ export default function LabTestManagement({ tests, filters }: Props) {
                 </AnimatePresence>
 
                 {/* Pagination */}
-                <div className="mt-6 flex items-center justify-between text-xs text-gray-500 dark:text-neutral-500">
-                    <p>{t('lab_tests.index.showing_entries', { from: tests.from || 0, to: tests.to || 0, total: tests.total })}</p>
-                    <div className="flex gap-1">
-                        {tests.links.map((link, i) => (
-                            <button
-                                key={i}
-                                disabled={!link.url}
-                                onClick={() => router.get(link.url!, { search: searchQuery }, { preserveState: true })}
-                                className={`px-3 py-1.5 border rounded-lg transition-all ${link.active ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 dark:text-neutral-400'} ${!link.url ? 'opacity-30' : ''}`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
-                    </div>
-                </div>
+                <Pagination
+                    links={tests.links}
+                    meta={{
+                        from: tests.from || 0,
+                        to: tests.to || 0,
+                        total: tests.total,
+                    }}
+                />
             </div>
 
             {/* --- EDIT MODAL --- */}
             {isEditModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm" onClick={() => setIsEditModalOpen(false)}></div>
-                    <div className="relative bg-white dark:bg-neutral-800 rounded-xl w-full max-w-2xl shadow-xl overflow-hidden flex flex-col">
-                        <div className="px-6 py-4 border-b border-gray-100 dark:border-neutral-700 flex justify-between items-center bg-gray-50 dark:bg-neutral-700">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-neutral-100">{t('lab_tests.index.edit_test')}</h3>
-                            <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 dark:text-neutral-500 hover:text-gray-600 dark:text-neutral-400 dark:hover:text-neutral-400"><XMarkIcon className="w-5 h-5"/></button>
+                    <div
+                        className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm"
+                        onClick={() => setIsEditModalOpen(false)}
+                    ></div>
+                    <div className="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-xl dark:bg-neutral-800">
+                        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-6 py-4 dark:border-neutral-700 dark:bg-neutral-700">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-neutral-100">
+                                {t('lab_tests.index.edit_test')}
+                            </h3>
+                            <button
+                                onClick={() => setIsEditModalOpen(false)}
+                                className="text-gray-400 hover:text-gray-600 dark:text-neutral-500 dark:hover:text-neutral-400"
+                            >
+                                <XMarkIcon className="h-5 w-5" />
+                            </button>
                         </div>
-                        <form onSubmit={handleUpdate}>
-                            <div className="p-6 grid grid-cols-2 gap-4">
-                                <div className="col-span-2">
-                                    <label className="block text-xs font-bold text-gray-500 dark:text-neutral-500 uppercase mb-1">{t('lab_tests.index.test_name')}</label>
-                                    <input type="text" value={data.test_name} onChange={e => setData('test_name', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" />
-                                    {errors.test_name && <p className="text-red-500 text-[10px] mt-1">{errors.test_name}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 dark:text-neutral-500 uppercase mb-1">{t('lab_tests.index.code')}</label>
-                                    <input type="text" value={data.code} onChange={e => setData('code', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 dark:text-neutral-500 uppercase mb-1">{t('lab_tests.index.price')}</label>
-                                    <input type="number" step="0.01" value={data.price} onChange={e => setData('price', Number(e.target.value))} className="w-full px-3 py-2 border rounded-lg text-sm" />
-                                </div>
-                                <div className="col-span-2">
-                                    <label className="block text-xs font-bold text-gray-500 dark:text-neutral-500 uppercase mb-1">{t('lab_tests.index.description')}</label>
-                                    <textarea value={data.description} onChange={e => setData('description', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" rows={3} />
-                                </div>
+                        <form onSubmit={handleUpdate} className="space-y-4 p-6">
+                            <FormInput
+                                name="test_name"
+                                label={t('lab_tests.index.test_name')}
+                                value={data.test_name}
+                                onChange={(v) => setData('test_name', v)}
+                                errors={errors}
+                                required
+                            />
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormInput
+                                    name="code"
+                                    label={t('lab_tests.index.code')}
+                                    value={data.code}
+                                    onChange={(v) => setData('code', v)}
+                                    errors={errors}
+                                />
+                                <FormInput
+                                    name="price"
+                                    label={t('lab_tests.index.price')}
+                                    type="number"
+                                    step="0.01"
+                                    value={data.price}
+                                    onChange={(v) =>
+                                        setData('price', Number(v))
+                                    }
+                                    errors={errors}
+                                />
                             </div>
-                            <div className="px-6 py-4 border-t bg-gray-50 dark:bg-neutral-700 flex justify-end gap-3">
-                                <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-neutral-300 bg-white dark:bg-neutral-800 border rounded-lg">{t('common.cancel')}</button>
-                                <button type="submit" disabled={processing} className="px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-lg flex items-center gap-2">
-                                    {processing && <ArrowPathIcon className="w-4 h-4 animate-spin" />} {t('common.save_changes')}
+                            <FormTextarea
+                                name="description"
+                                label={t('lab_tests.index.description')}
+                                value={data.description}
+                                onChange={(v) => setData('description', v)}
+                                rows={3}
+                            />
+                            <div className="flex justify-end gap-3 border-t border-gray-100 pt-4 dark:border-neutral-700">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="rounded-xl border border-gray-200 px-4 py-2 font-bold text-gray-500 transition-all hover:bg-gray-50 dark:border-neutral-600 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                                >
+                                    {t('common.cancel')}
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-blue-700 disabled:opacity-50"
+                                >
+                                    {processing && (
+                                        <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                                    )}{' '}
+                                    {t('common.save_changes')}
                                 </button>
                             </div>
                         </form>
@@ -283,18 +446,5 @@ export default function LabTestManagement({ tests, filters }: Props) {
                 </div>
             )}
         </AppLayout>
-    );
-}
-
-function StatCard({ label, value, icon, color }: any) {
-    const colorClasses: any = { blue: 'bg-blue-50 text-blue-600', emerald: 'bg-emerald-50 text-emerald-700', amber: 'bg-amber-50 text-amber-700' };
-    return (
-        <div className="bg-white dark:bg-neutral-800 p-5 rounded-xl border border-gray-200 dark:border-neutral-700 shadow-sm flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${colorClasses[color]}`}>{React.cloneElement(icon as React.ReactElement, { className: "w-5 h-5" })}</div>
-            <div>
-                <p className="text-xl font-bold text-gray-900 dark:text-neutral-100 leading-none">{value}</p>
-                <p className="text-xs font-semibold text-gray-500 dark:text-neutral-500 mt-1">{label}</p>
-            </div>
-        </div>
     );
 }

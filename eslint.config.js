@@ -117,6 +117,8 @@ export default [
             'resources/js/components/ui/*',
             'resources/js/routes/**',
             'resources/js/wayfinder/**',
+            'resources/js/ziggy.js',
+            'resources/js/ziggy.d.ts',
         ],
     },
     prettier, // Turn off all rules that might conflict with Prettier

@@ -68,8 +68,6 @@ export interface PaginatedResults<T> {
     meta: PaginationMeta;
 }
 
-
-
 export interface LabTest {
     id: number;
     test_name: string;

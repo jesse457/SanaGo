@@ -1,41 +1,41 @@
 import { cn } from '@/lib/utils';
 
 interface FeatureCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  color: string;
-  className?: string;
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+    color: string;
+    className?: string;
 }
 
 export default function FeatureCard({
-  icon,
-  title,
-  description,
-  color,
-  className,
+    icon,
+    title,
+    description,
+    color,
+    className,
 }: FeatureCardProps) {
-  return (
-    <div
-      className={cn(
-        'bg-white dark:bg-neutral-900 p-8 rounded-xl border border-slate-100 dark:border-neutral-700 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group',
-        className,
-      )}
-    >
-      <div
-        className={cn(
-          'w-12 h-12 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition duration-300',
-          color,
-        )}
-      >
-        {icon}
-      </div>
-      <h3 className="text-lg font-bold mb-3 text-slate-900 dark:text-neutral-100 group-hover:text-blue-600 transition">
-        {title}
-      </h3>
-      <p className="text-sm text-slate-500 dark:text-neutral-400 leading-relaxed">
-        {description}
-      </p>
-    </div>
-  );
+    return (
+        <div
+            className={cn(
+                'group rounded-xl border border-slate-100 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl dark:border-neutral-700 dark:bg-neutral-900',
+                className,
+            )}
+        >
+            <div
+                className={cn(
+                    'mb-6 flex h-12 w-12 items-center justify-center rounded-2xl transition duration-300 group-hover:scale-110',
+                    color,
+                )}
+            >
+                {icon}
+            </div>
+            <h3 className="mb-3 text-lg font-bold text-slate-900 transition group-hover:text-blue-600 dark:text-neutral-100">
+                {title}
+            </h3>
+            <p className="text-sm leading-relaxed text-slate-500 dark:text-neutral-400">
+                {description}
+            </p>
+        </div>
+    );
 }

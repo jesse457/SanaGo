@@ -1,4 +1,3 @@
-import { Head, usePage } from '@inertiajs/react';
 import {
     EnvelopeIcon,
     PhoneIcon,
@@ -6,9 +5,15 @@ import {
     ShieldCheckIcon,
     CheckCircleIcon,
     XCircleIcon,
+    UserCircleIcon,
 } from '@heroicons/react/24/outline';
-import AppLayout from '@/Layouts/AppLayout';
+import { Head, usePage } from '@inertiajs/react';
+import DetailItem from '@/Components/DetailItem';
+import PageBreadcrumb from '@/Components/PageBreadcrumb';
+import PageSection from '@/Components/PageSection';
+import StatusBadge from '@/Components/StatusBadge';
 import { useTranslation } from '@/hooks/useTranslation';
+import AppLayout from '@/Layouts/AppLayout';
 
 interface User {
     id: number;
@@ -44,98 +49,71 @@ export default function ProfileShow() {
             <Head title={t('page.profile_show.head_title')} />
 
             <div className="mx-auto max-w-3xl space-y-6">
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-neutral-700 dark:bg-neutral-800">
-                    <div className="h-24 bg-gradient-to-r from-blue-600 to-indigo-600" />
-                    <div className="px-6 pb-6">
-                        <div className="-mt-8 flex items-end gap-4">
-                            <div className="flex h-20 w-20 items-center justify-center rounded-xl border-4 border-white bg-gradient-to-br from-blue-500 to-indigo-600 text-2xl font-black text-white shadow-lg dark:border-neutral-800">
+                <PageBreadcrumb
+                    items={[
+                        { label: t('common.home'), href: '/' },
+                        { label: t('page.profile_show.title') },
+                    ]}
+                />
+
+                <PageSection
+                    title={t('page.profile_show.title')}
+                    icon={UserCircleIcon}
+                >
+                    <div className="p-6 pb-0">
+                        <div className="flex items-end gap-4">
+                            <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-2xl font-black text-white shadow-lg">
                                 {initials}
                             </div>
                             <div className="flex-1 pb-1">
                                 <h2 className="text-xl font-black text-gray-900 dark:text-neutral-100">
                                     {user?.name}
                                 </h2>
-                                <span className="inline-block rounded border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 uppercase dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                                    {role}
-                                </span>
+                                <StatusBadge label={role} color="blue" />
                             </div>
                         </div>
                     </div>
 
-                    <div className="border-t border-gray-100 px-6 pb-6 dark:border-neutral-700">
-                        <dl className="grid grid-cols-1 gap-4 pt-6 sm:grid-cols-2">
-                            <div className="flex items-center gap-3 rounded-xl bg-gray-50 p-3 dark:bg-neutral-700/50">
-                                <EnvelopeIcon className="h-5 w-5 shrink-0 text-gray-400" />
-                                <div>
-                                    <p className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">
-                                        {t('page.profile_show.email')}
-                                    </p>
-                                    <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                        {user?.email}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-3 rounded-xl bg-gray-50 p-3 dark:bg-neutral-700/50">
-                                <PhoneIcon className="h-5 w-5 shrink-0 text-gray-400" />
-                                <div>
-                                    <p className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">
-                                        {t('page.profile_show.phone')}
-                                    </p>
-                                    <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                        {user?.phone_number ||
-                                            t('page.profile_show.not_set')}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-3 rounded-xl bg-gray-50 p-3 dark:bg-neutral-700/50">
-                                <ShieldCheckIcon className="h-5 w-5 shrink-0 text-gray-400" />
-                                <div>
-                                    <p className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">
-                                        {t('page.profile_show.role')}
-                                    </p>
-                                    <p className="text-sm font-bold text-gray-900 capitalize dark:text-neutral-100">
-                                        {role}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-3 rounded-xl bg-gray-50 p-3 dark:bg-neutral-700/50">
-                                <BuildingOfficeIcon className="h-5 w-5 shrink-0 text-gray-400" />
-                                <div>
-                                    <p className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">
-                                        {t('page.profile_show.department')}
-                                    </p>
-                                    <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                        {user?.department?.name ||
-                                            t('page.profile_show.general')}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-3 rounded-xl bg-gray-50 p-3 dark:bg-neutral-700/50">
-                                {user?.is_active ? (
-                                    <CheckCircleIcon className="h-5 w-5 shrink-0 text-emerald-500" />
-                                ) : (
-                                    <XCircleIcon className="h-5 w-5 shrink-0 text-red-400" />
-                                )}
-                                <div>
-                                    <p className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">
-                                        {t('page.profile_show.status')}
-                                    </p>
-                                    <span
-                                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-bold uppercase ${user?.is_active ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'}`}
-                                    >
-                                        {user?.is_active
-                                            ? t('page.profile_show.active')
-                                            : t('page.profile_show.disabled')}
-                                    </span>
-                                </div>
-                            </div>
-                        </dl>
+                    <div className="grid grid-cols-1 gap-4 p-6 pt-4 sm:grid-cols-2">
+                        <DetailItem
+                            label={t('page.profile_show.email')}
+                            value={user?.email}
+                            icon={EnvelopeIcon}
+                        />
+                        <DetailItem
+                            label={t('page.profile_show.phone')}
+                            value={
+                                user?.phone_number ||
+                                t('page.profile_show.not_set')
+                            }
+                            icon={PhoneIcon}
+                        />
+                        <DetailItem
+                            label={t('page.profile_show.role')}
+                            value={role}
+                            icon={ShieldCheckIcon}
+                        />
+                        <DetailItem
+                            label={t('page.profile_show.department')}
+                            value={
+                                user?.department?.name ||
+                                t('page.profile_show.general')
+                            }
+                            icon={BuildingOfficeIcon}
+                        />
+                        <DetailItem
+                            label={t('page.profile_show.status')}
+                            value={
+                                user?.is_active
+                                    ? t('page.profile_show.active')
+                                    : t('page.profile_show.disabled')
+                            }
+                            icon={
+                                user?.is_active ? CheckCircleIcon : XCircleIcon
+                            }
+                        />
                     </div>
-                </div>
+                </PageSection>
             </div>
         </AppLayout>
     );
