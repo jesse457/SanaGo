@@ -1,0 +1,45 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@theme {
+    --font-sans:
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+
+    /* VS Code dark theme colors */
+    --color-vscode-bg: #1e1e1e;
+    --color-vscode-sidebar: #252526;
+    --color-vscode-border: #3c3c3c;
+    --color-vscode-hover: #2a2d2e;
+    --color-vscode-active: #37373d;
+    --color-vscode-accent: #007acc;
+    --color-vscode-text: #cccccc;
+    --color-vscode-text-muted: #8b949e;
+}
+
+/* Base dark mode overrides for VS Code look */
+.dark body {
+    background-color: #1e1e1e;
+    color: #cccccc;
+}
+
+/* Scrollbar styling for VS Code look */
+.dark ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+.dark ::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+.dark ::-webkit-scrollbar-thumb {
+    background: #424242;
+    border-radius: 5px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #4f4f4f;
+}
