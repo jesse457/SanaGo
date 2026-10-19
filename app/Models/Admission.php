@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -45,5 +47,22 @@ class Admission extends Model
     public function attendingDoctor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'attending_doctor_id');
+    }
+
+    public function admissionServices(): HasMany
+    {
+        return $this->hasMany(AdmissionService::class);
+    }
+
+    public function services(): BelongsToMany
+    {
+        return $this->belongsToMany(Service::class, 'admission_services')
+            ->withPivot(['quantity', 'unit_price', 'total_price', 'notes', 'performed_by', 'performed_at', 'id'])
+            ->withTimestamps();
+    }
+
+    public function invoice(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
     }
 }

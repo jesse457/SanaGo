@@ -15,6 +15,7 @@ class ShiftService
     public function update(UserShift $shift, array $data): UserShift
     {
         $shift->update($data);
+
         return $shift->fresh();
     }
 
@@ -22,7 +23,6 @@ class ShiftService
     {
         $shift->delete();
     }
-
 
     public function getShiftsByDate(string $date)
     {

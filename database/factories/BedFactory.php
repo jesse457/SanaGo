@@ -27,7 +27,7 @@ class BedFactory extends Factory
             'code' => function (array $attributes) {
                 $wardModel = Ward::find($attributes['ward_id']);
 
-                return ($wardModel ? strtoupper(substr($wardModel->code, 0, 4)) : 'BED') . '-' . str_pad((string) self::$counter, 3, '0', STR_PAD_LEFT);
+                return ($wardModel ? strtoupper(substr($wardModel->code, 0, 4)) : 'BED').'-'.str_pad((string) self::$counter, 3, '0', STR_PAD_LEFT);
             },
             'bed_type_id' => BedType::factory(),
             'status' => fake()->randomElement(BedStatus::cases()),

@@ -73,7 +73,6 @@ export function useNotifications() {
     };
 
     useEffect(() => {
-        // @ts-ignore - Echo might not be typed globally depending on your setup
         if (typeof window.Echo !== 'undefined') {
             const channel = window.Echo.private('lab.requests').listen(
                 '.new.request',

@@ -1,16 +1,33 @@
 import {
-    HomeIcon,
-    ChevronRightIcon,
     CalendarDaysIcon,
-    UserIcon,
     ClipboardDocumentListIcon,
-    DocumentTextIcon,
     BeakerIcon,
+    DocumentTextIcon,
     PaperClipIcon,
+    UserIcon,
     ArrowLeftIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { useState } from 'react';
+import {
+    Alert,
+    Avatar,
+    Badge,
+    Button,
+    Card,
+    EmptyState,
+    KeyValue,
+    KeyValueGrid,
+    PageHeader,
+    SectionCard,
+    Tabs,
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 
@@ -55,275 +72,289 @@ interface Props {
     consultation: Consultation;
 }
 
+/**
+ * Consultations/Detail — the read-only consultation record: who was seen, the
+ * clinical narrative, then the prescription and laboratory tabs.
+ */
 export default function ConsultationDetail({ consultation }: Props) {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<'prescriptions' | 'lab'>(
         'prescriptions',
     );
     const c = consultation;
+    const patientName = c.patient
+        ? `${c.patient.first_name} ${c.patient.last_name}`
+        : t('patient');
+    const labStatusTone = (status: string) =>
+        status === 'Completed' ? 'positive' : 'warning';
 
     return (
         <AppLayout
             headerTitle={`${t('consultation')} #${c.id}`}
-            headerSubtitle={
-                c.patient
-                    ? `${c.patient.first_name} ${c.patient.last_name}`
-                    : t('patient')
-            }
+            headerSubtitle={patientName}
         >
             <Head title={`${t('consultation')} #${c.id}`} />
 
-            <div className="mx-auto max-w-5xl space-y-6 px-4 sm:px-6 lg:px-8">
-                {/* Breadcrumbs */}
-                <nav className="flex text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-500">
-                    <ol className="inline-flex items-center space-x-2">
-                        <li className="flex cursor-pointer items-center transition-colors hover:text-blue-600">
-                            <HomeIcon className="mr-1 h-4 w-4" /> {t('home')}
-                        </li>
-                        <li>
-                            <ChevronRightIcon className="h-4 w-4" />
-                        </li>
-                        <li>
-                            <Link
-                                href="/consultations/create"
-                                className="hover:text-blue-600"
-                            >
-                                {t('consultations')}
-                            </Link>
-                        </li>
-                        <li>
-                            <ChevronRightIcon className="h-4 w-4" />
-                        </li>
-                        <li className="font-medium text-blue-600">#{c.id}</li>
-                    </ol>
-                </nav>
+            <div className="mx-auto max-w-5xl space-y-5">
+                <PageHeader
+                    title={`${t('consultation')} #${c.id}`}
+                    description={patientName}
+                    breadcrumbs={[
+                        { label: t('home'), href: '/' },
+                        {
+                            label: t('consultations'),
+                            href: '/consultations/create',
+                        },
+                        { label: `#${c.id}` },
+                    ]}
+                    meta={
+                        <>
+                            <span className="flex items-center gap-1.5">
+                                <CalendarDaysIcon className="h-3.5 w-3.5" />
+                                {c.created_at}
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                <UserIcon className="h-3.5 w-3.5" />
+                                {c.doctor?.name ?? t('unknown')}
+                            </span>
+                        </>
+                    }
+                    actions={
+                        <Button
+                            href="/patients"
+                            variant="secondary"
+                            icon={ArrowLeftIcon}
+                        >
+                            {t('backToPatientList')}
+                        </Button>
+                    }
+                />
 
-                {/* Back Link */}
-                <Link
-                    href="/patients"
-                    className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-blue-600"
-                >
-                    <ArrowLeftIcon className="mr-1 h-4 w-4" />{' '}
-                    {t('backToPatientList')}
-                </Link>
-
-                {/* Patient & Doctor Info */}
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
-                        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold tracking-wide text-gray-500 uppercase">
-                            <UserIcon className="h-4 w-4" /> {t('patientInfo')}
-                        </h3>
-                        {c.patient && (
-                            <div className="space-y-2">
-                                <p className="text-lg font-bold text-gray-900 dark:text-neutral-100">
-                                    <Link
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <SectionCard icon={UserIcon} title={t('patientInfo')}>
+                        {c.patient ? (
+                            <div className="flex items-center gap-3">
+                                <Avatar size="md" name={patientName} />
+                                <div className="min-w-0">
+                                    <Button
                                         href={`/patients/${c.patient.id}`}
-                                        className="transition-colors hover:text-blue-600"
+                                        variant="ghost"
+                                        className="h-auto px-0 text-[14px] font-semibold text-ink hover:bg-transparent hover:text-accent-ink"
                                     >
-                                        {c.patient.first_name}{' '}
-                                        {c.patient.last_name}
-                                    </Link>
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                    {t('id')}: #{c.patient.id}
-                                </p>
+                                        {patientName}
+                                    </Button>
+                                    <p className="text-[12px] text-ink-subtle">
+                                        {t('id')}: #{c.patient.id}
+                                    </p>
+                                </div>
                             </div>
+                        ) : (
+                            <p className="text-[13px] text-ink-subtle">
+                                {t('na')}
+                            </p>
                         )}
-                    </div>
-                    <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
-                        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold tracking-wide text-gray-500 uppercase">
-                            <CalendarDaysIcon className="h-4 w-4" />{' '}
-                            {t('visitDetails')}
-                        </h3>
-                        <div className="space-y-2">
-                            <p className="text-sm text-gray-500">
-                                {t('date')}:{' '}
-                                <span className="font-semibold text-gray-900 dark:text-neutral-100">
-                                    {c.created_at}
-                                </span>
-                            </p>
-                            <p className="text-sm text-gray-500">
-                                {t('doctor')}:{' '}
-                                <span className="font-semibold text-gray-900 dark:text-neutral-100">
-                                    {c.doctor?.name ?? t('unknown')}
-                                </span>
-                            </p>
-                        </div>
-                    </div>
+                    </SectionCard>
+
+                    <SectionCard
+                        icon={CalendarDaysIcon}
+                        title={t('visitDetails')}
+                    >
+                        <KeyValueGrid columns={2}>
+                            <KeyValue label={t('date')} value={c.created_at} />
+                            <KeyValue
+                                label={t('doctor')}
+                                value={c.doctor?.name ?? t('unknown')}
+                            />
+                        </KeyValueGrid>
+                    </SectionCard>
                 </div>
 
-                {/* Clinical Details */}
-                <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
-                    <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold tracking-wide text-gray-500 uppercase">
-                        <DocumentTextIcon className="h-4 w-4" />{' '}
-                        {t('clinicalNotes')}
-                    </h3>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700">
-                            <p className="mb-1 text-xs font-semibold text-gray-400 uppercase">
-                                {t('chiefComplaint')}
-                            </p>
-                            <p className="text-sm text-gray-900 dark:text-neutral-100">
-                                {c.chief_complaint || t('na')}
-                            </p>
-                        </div>
-                        <div className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700">
-                            <p className="mb-1 text-xs font-semibold text-gray-400 uppercase">
-                                {t('diagnosis')}
-                            </p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                {c.diagnosis || t('na')}
-                            </p>
-                        </div>
-                        <div className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700">
-                            <p className="mb-1 text-xs font-semibold text-gray-400 uppercase">
-                                {t('physicalExam')}
-                            </p>
-                            <p className="text-sm text-gray-900 dark:text-neutral-100">
-                                {c.physical_exam || t('na')}
-                            </p>
-                        </div>
-                        <div className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700">
-                            <p className="mb-1 text-xs font-semibold text-gray-400 uppercase">
-                                {t('treatmentPlan')}
-                            </p>
-                            <p className="text-sm text-gray-900 dark:text-neutral-100">
-                                {c.treatment_plan || t('na')}
-                            </p>
-                        </div>
-                    </div>
+                <SectionCard icon={DocumentTextIcon} title={t('clinicalNotes')}>
+                    <KeyValueGrid columns={2} tile>
+                        <KeyValue
+                            label={t('chiefComplaint')}
+                            value={c.chief_complaint || t('na')}
+                        />
+                        <KeyValue
+                            label={t('diagnosis')}
+                            value={c.diagnosis || t('na')}
+                        />
+                        <KeyValue
+                            label={t('physicalExam')}
+                            value={c.physical_exam || t('na')}
+                        />
+                        <KeyValue
+                            label={t('treatmentPlan')}
+                            value={c.treatment_plan || t('na')}
+                        />
+                    </KeyValueGrid>
+
                     {c.notes && (
-                        <div className="mt-4 rounded-xl border border-yellow-100 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
-                            <p className="mb-1 text-xs font-semibold text-yellow-600 uppercase">
-                                {t('notes')}
-                            </p>
-                            <p className="text-sm text-gray-900 dark:text-neutral-100">
-                                {c.notes}
-                            </p>
-                        </div>
+                        <Alert
+                            tone="warning"
+                            title={t('notes')}
+                            className="mt-4"
+                        >
+                            {c.notes}
+                        </Alert>
                     )}
-                </div>
+                </SectionCard>
 
-                {/* Tabs: Prescriptions / Lab Results */}
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-neutral-700 dark:bg-neutral-800">
-                    <div className="flex border-b border-gray-100 dark:border-neutral-700">
-                        <button
-                            onClick={() => setActiveTab('prescriptions')}
-                            className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === 'prescriptions' ? 'border-b-2 border-blue-600 bg-blue-50/50 text-blue-600 dark:bg-blue-900/10' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            <ClipboardDocumentListIcon className="mr-2 inline h-4 w-4" />{' '}
-                            {t('prescriptions')}
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('lab')}
-                            className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === 'lab' ? 'border-b-2 border-blue-600 bg-blue-50/50 text-blue-600 dark:bg-blue-900/10' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            <BeakerIcon className="mr-2 inline h-4 w-4" />{' '}
-                            {t('labResults')}
-                        </button>
+                <Card>
+                    <div className="border-b border-line px-4 pt-3">
+                        <Tabs
+                            value={activeTab}
+                            onChange={(value) =>
+                                setActiveTab(value as 'prescriptions' | 'lab')
+                            }
+                            items={[
+                                {
+                                    value: 'prescriptions',
+                                    label: t('prescriptions'),
+                                    icon: ClipboardDocumentListIcon,
+                                    count: c.prescriptions?.length,
+                                },
+                                {
+                                    value: 'lab',
+                                    label: t('labResults'),
+                                    icon: BeakerIcon,
+                                    count: c.lab_results?.length,
+                                },
+                            ]}
+                        />
                     </div>
 
-                    <div className="p-6">
-                        {activeTab === 'prescriptions' && (
-                            <div className="space-y-4">
-                                {c.prescriptions?.length ? (
-                                    c.prescriptions.map((rx) => (
-                                        <div
-                                            key={rx.id}
-                                            className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700"
-                                        >
-                                            <p className="mb-2 text-xs text-gray-400">
+                    <div className="p-4 sm:p-5">
+                        {activeTab === 'prescriptions' &&
+                            (c.prescriptions?.length ? (
+                                <div className="space-y-4">
+                                    {c.prescriptions.map((rx) => (
+                                        <div key={rx.id}>
+                                            <p className="mb-2 text-[11px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">
                                                 {t('prescribed')}:{' '}
                                                 {rx.prescription_date}
                                             </p>
-                                            {rx.items?.map((item) => (
-                                                <div
-                                                    key={item.id}
-                                                    className="flex items-center justify-between border-b border-gray-100 py-2 last:border-0 dark:border-neutral-600"
-                                                >
-                                                    <div>
-                                                        <p className="text-sm font-semibold text-gray-900 dark:text-neutral-100">
-                                                            {
-                                                                item.medication
-                                                                    ?.name
-                                                            }
-                                                        </p>
-                                                        <p className="text-xs text-gray-500">
-                                                            {item.dosage}{' '}
-                                                            &middot;{' '}
-                                                            {item.frequency}{' '}
-                                                            &middot;{' '}
-                                                            {item.duration}
-                                                        </p>
-                                                    </div>
-                                                    <span className="text-xs font-bold text-blue-600">
-                                                        {t('qty')}:{' '}
-                                                        {
-                                                            item.quantity_prescribed
-                                                        }
-                                                    </span>
-                                                </div>
-                                            ))}
+                                            <Table bare>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHeaderCell>
+                                                            {t('medication')}
+                                                        </TableHeaderCell>
+                                                        <TableHeaderCell>
+                                                            {t('dosage')}
+                                                        </TableHeaderCell>
+                                                        <TableHeaderCell>
+                                                            {t('frequency')}
+                                                        </TableHeaderCell>
+                                                        <TableHeaderCell>
+                                                            {t('duration')}
+                                                        </TableHeaderCell>
+                                                        <TableHeaderCell
+                                                            numeric
+                                                        >
+                                                            {t('qty')}
+                                                        </TableHeaderCell>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {rx.items?.map((item) => (
+                                                        <TableRow key={item.id}>
+                                                            <TableCell className="font-medium">
+                                                                {
+                                                                    item
+                                                                        .medication
+                                                                        ?.name
+                                                                }
+                                                            </TableCell>
+                                                            <TableCell muted>
+                                                                {item.dosage}
+                                                            </TableCell>
+                                                            <TableCell muted>
+                                                                {item.frequency}
+                                                            </TableCell>
+                                                            <TableCell muted>
+                                                                {item.duration}
+                                                            </TableCell>
+                                                            <TableCell numeric>
+                                                                {
+                                                                    item.quantity_prescribed
+                                                                }
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
                                         </div>
-                                    ))
-                                ) : (
-                                    <p className="text-sm text-gray-400">
-                                        {t('noPrescriptionsRecorded')}
-                                    </p>
-                                )}
-                            </div>
-                        )}
+                                    ))}
+                                </div>
+                            ) : (
+                                <EmptyState
+                                    panel={false}
+                                    icon={ClipboardDocumentListIcon}
+                                    title={t('noPrescriptionsRecorded')}
+                                />
+                            ))}
 
-                        {activeTab === 'lab' && (
-                            <div className="space-y-4">
-                                {c.lab_results?.length ? (
-                                    c.lab_results.map((lab) => (
+                        {activeTab === 'lab' &&
+                            (c.lab_results?.length ? (
+                                <div className="space-y-4">
+                                    {c.lab_results.map((lab) => (
                                         <div
                                             key={lab.id}
-                                            className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700"
+                                            className="rounded-lg border border-line p-4"
                                         >
                                             <div className="mb-2 flex items-center justify-between">
-                                                <p className="text-sm font-semibold text-gray-900 dark:text-neutral-100">
+                                                <p className="text-[13px] font-semibold text-ink">
                                                     {t('result')} #{lab.id}
                                                 </p>
-                                                <span
-                                                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${lab.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}
+                                                <Badge
+                                                    tone={labStatusTone(
+                                                        lab.status,
+                                                    )}
+                                                    dot
                                                 >
                                                     {lab.status}
-                                                </span>
+                                                </Badge>
                                             </div>
-                                            <p className="mb-1 text-xs text-gray-400">
+                                            <p className="mb-1 text-[11px] text-ink-subtle">
                                                 {lab.result_date}
                                             </p>
-                                            <p className="text-sm text-gray-900 dark:text-neutral-100">
+                                            <p className="text-[13px] leading-relaxed text-ink-muted">
                                                 {lab.results_text}
                                             </p>
-                                            {lab.attachments && lab.attachments.length > 0 && (
-                                                <div className="mt-2 flex gap-2">
-                                                    {lab.attachments.map(
-                                                        (att: any) => (
-                                                            <span
-                                                                key={att.id}
-                                                                className="inline-flex items-center text-xs text-blue-600"
-                                                            >
-                                                                <PaperClipIcon className="mr-1 h-3 w-3" />{' '}
-                                                                {att.file_name}
-                                                            </span>
-                                                        ),
-                                                    )}
-                                                </div>
-                                            )}
+                                            {lab.attachments &&
+                                                lab.attachments.length > 0 && (
+                                                    <div className="mt-3 flex flex-wrap gap-2">
+                                                        {lab.attachments.map(
+                                                            (attachment) => (
+                                                                <Badge
+                                                                    key={
+                                                                        attachment.id
+                                                                    }
+                                                                    tone="accent"
+                                                                    variant="outline"
+                                                                >
+                                                                    <PaperClipIcon className="h-3 w-3" />
+                                                                    {
+                                                                        attachment.file_name
+                                                                    }
+                                                                </Badge>
+                                                            ),
+                                                        )}
+                                                    </div>
+                                                )}
                                         </div>
-                                    ))
-                                ) : (
-                                    <p className="text-sm text-gray-400">
-                                        {t('noLabResultsRecorded')}
-                                    </p>
-                                )}
-                            </div>
-                        )}
+                                    ))}
+                                </div>
+                            ) : (
+                                <EmptyState
+                                    panel={false}
+                                    icon={BeakerIcon}
+                                    title={t('noLabResultsRecorded')}
+                                />
+                            ))}
                     </div>
-                </div>
+                </Card>
             </div>
         </AppLayout>
     );

@@ -68,14 +68,14 @@ export default function DemoRequestsIndex({
                         return (
                             <div
                                 key={stage}
-                                className="rounded-xl bg-gray-50 p-3 dark:bg-neutral-800/50"
+                                className="rounded-xl bg-surface-muted p-3"
                             >
                                 <div className="mb-3 flex items-center justify-between">
                                     <StatusBadge
                                         label={STAGE_LABELS[stage]}
                                         color={STAGE_COLORS[stage]}
                                     />
-                                    <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-gray-400 dark:bg-neutral-800">
+                                    <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-bold text-ink-subtle">
                                         {items.length}
                                     </span>
                                 </div>
@@ -84,23 +84,23 @@ export default function DemoRequestsIndex({
                                         <Link
                                             key={req.id}
                                             href={`/demo-requests/${req.id}`}
-                                            className="block rounded-lg border border-gray-100 bg-white p-3 transition-all hover:border-blue-300 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-900"
+                                            className="block rounded-lg border border-line bg-surface p-3 transition-all hover:border-accent/40 hover:shadow-surface"
                                         >
-                                            <p className="truncate text-sm font-semibold text-gray-900 dark:text-neutral-100">
+                                            <p className="truncate text-sm font-semibold text-ink">
                                                 {req.name}
                                             </p>
-                                            <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-gray-500">
+                                            <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-ink-subtle">
                                                 <EnvelopeIcon className="h-3 w-3" />
                                                 {req.email}
                                             </p>
                                             {req.company && (
-                                                <p className="mt-0.5 flex items-center gap-1 text-xs text-gray-400">
+                                                <p className="mt-0.5 flex items-center gap-1 text-xs text-ink-subtle">
                                                     <BuildingOfficeIcon className="h-3 w-3" />
                                                     {req.company}
                                                 </p>
                                             )}
                                             {req.assigned_to && (
-                                                <p className="mt-1 text-xs font-medium text-gray-400">
+                                                <p className="mt-1 text-xs font-medium text-ink-subtle">
                                                     {req.assigned_to}
                                                 </p>
                                             )}

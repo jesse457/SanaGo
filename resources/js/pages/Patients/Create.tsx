@@ -1,49 +1,158 @@
 import {
-    UserPlusIcon,
-    UserIcon,
-    EnvelopeIcon,
-    PhoneIcon,
-    MapPinIcon,
-    CalendarIcon,
-    ArrowLeftIcon,
-    CheckCircleIcon,
-    ArrowPathIcon,
     BeakerIcon,
-    ExclamationTriangleIcon,
+    CheckCircleIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    UserGroupIcon,
+    UserIcon,
+    UserPlusIcon,
 } from '@heroicons/react/24/outline';
-import { Head, useForm, Link } from '@inertiajs/react';
-import React from 'react';
-import FormInput from '@/Components/FormInput';
-import FormSelect from '@/Components/FormSelect';
-import FormTextarea from '@/Components/FormTextarea';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
-import PageSection from '@/Components/PageSection';
+import { Head, useForm } from '@inertiajs/react';
+import React, { useMemo, useState } from 'react';
+import { Alert, Button, PageHeader, SectionCard } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
+import { ContactStep } from '@/pages/Patients/components/ContactStep';
+import type { ContactFields } from '@/pages/Patients/components/ContactStep';
+import { FormActionBar } from '@/pages/Patients/components/FormActionBar';
+import { IdentityStep } from '@/pages/Patients/components/IdentityStep';
+import type { PatientIdentityFields } from '@/pages/Patients/components/IdentityStep';
+import { PatientPhotoField } from '@/pages/Patients/components/PatientPhotoField';
+import { StepProgress } from '@/pages/Patients/components/StepProgress';
+
+interface PatientForm {
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string;
+    date_of_birth: string;
+    gender: string;
+    address: string;
+    blood_type: string;
+    allergies: string;
+    emergency_contact_name: string;
+    emergency_contact_phone: string;
+    photo: File | null;
+}
+
+/** Field names owned by each intake step, used to gate navigation. */
+const STEP_FIELDS: (keyof PatientForm)[][] = [
+    [
+        'first_name',
+        'last_name',
+        'date_of_birth',
+        'gender',
+        'blood_type',
+        'allergies',
+    ],
+    ['photo'],
+    [
+        'phone',
+        'email',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'address',
+    ],
+];
 
 export default function CreatePatient() {
     const { t } = useTranslation();
-    const { data, setData, post, processing, errors } = useForm({
-        first_name: '',
-        last_name: '',
-        email: '',
-        phone: '',
-        date_of_birth: '',
-        gender: '',
-        address: '',
-        blood_type: '',
-        allergies: '',
-        emergency_contact_name: '',
-        emergency_contact_phone: '',
-        photo: null as File | null,
-    });
+    const { data, setData, post, processing, errors, reset } =
+        useForm<PatientForm>({
+            first_name: '',
+            last_name: '',
+            email: '',
+            phone: '',
+            date_of_birth: '',
+            gender: '',
+            address: '',
+            blood_type: '',
+            allergies: '',
+            emergency_contact_name: '',
+            emergency_contact_phone: '',
+            photo: null as File | null,
+        });
 
-    const [imagePreview, setImagePreview] = React.useState<string | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [step, setStep] = useState(0);
+    const [touchedSteps, setTouchedSteps] = useState<number[]>([]);
 
-    const submit = (e: React.FormEvent) => {
-        e.preventDefault();
-        post(route('patients.store'), { forceFormData: true });
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // Tracks which submit action is actively being processed ('save' or 'vitals')
+    const [submitType, setSubmitType] = useState<'save' | 'vitals' | null>(
+        null,
+    );
+
+    const stepMeta = useMemo(
+        () => [
+            {
+                label: t('page.patients_create.basic_information'),
+                description: t('page.patients_create.identity_details'),
+                icon: UserPlusIcon,
+            },
+            {
+                label: t('page.patients_create.patient_photo'),
+                description: t('page.patients_create.max_photo_size'),
+                icon: UserIcon,
+            },
+            {
+                label: t('page.patients_create.contact_emergency'),
+                description: t('page.patients_create.identity_details'),
+                icon: UserGroupIcon,
+            },
+        ],
+        [t],
+    );
+
+    const stepErrors = errors as Partial<Record<keyof PatientForm, string>>;
+
+    const hasErrorsInStep = (index: number) =>
+        STEP_FIELDS[index].some((field) => Boolean(stepErrors[field]));
+
+    const goNext = () => {
+        setTouchedSteps((previous) =>
+            previous.includes(step) ? previous : [...previous, step],
+        );
+        setStep((current) => Math.min(current + 1, stepMeta.length - 1));
     };
+
+    const goBack = () => setStep((current) => Math.max(current - 1, 0));
+
+    const submit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setErrorMessage(null);
+
+        // Fallback to 'save' if the form was submitted via keyboard 'Enter'
+        const action = submitType || 'save';
+        setSubmitType(action);
+
+        post(route('patients.store', { redirect_to: action }), {
+            forceFormData: true,
+            onSuccess: () => {
+                setSuccessMessage(
+                    t('patientCreatedSuccessfully') ||
+                        'Patient registered successfully.',
+                );
+                reset();
+                setImagePreview(null);
+            },
+            onError: () => {
+                setErrorMessage(
+                    t('pleaseCheckForm') ||
+                        'Please review the fields and try again.',
+                );
+            },
+            onFinish: () => {
+                setSubmitType(null);
+            },
+        });
+    };
+
+    const currentStep = stepMeta[step];
+    const isLastStep = step === stepMeta.length - 1;
+    const StepIcon = currentStep?.icon ?? UserPlusIcon;
 
     return (
         <AppLayout
@@ -52,11 +161,14 @@ export default function CreatePatient() {
         >
             <Head title={t('page.patients_create.head_title')} />
 
-            <div className="mx-auto max-w-6xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
-                {/* Breadcrumbs */}
-                <PageBreadcrumb
-                    items={[
-                        { label: t('common.home') },
+            <div className="space-y-6 pb-12">
+                <PageHeader
+                    eyebrow={t('page.patients_create.new_registration')}
+                    title={t('page.patients_create.title')}
+                    description={t('page.patients_create.subtitle')}
+                    icon={UserPlusIcon}
+                    breadcrumbs={[
+                        { label: t('common.home'), href: '/dashboard' },
                         {
                             label: t('page.patients_create.patient_management'),
                             href: route('patients.index'),
@@ -65,263 +177,145 @@ export default function CreatePatient() {
                     ]}
                 />
 
-                <form onSubmit={submit} className="space-y-6">
-                    {/* Main Card */}
-                    <PageSection
-                        icon={UserPlusIcon}
-                        title={t('page.patients_create.basic_information')}
-                        description={t('page.patients_create.identity_details')}
-                    >
-                        <div className="grid grid-cols-1 gap-6 p-6 sm:grid-cols-2 lg:grid-cols-3">
-                            <FormInput
-                                name="first_name"
-                                label={t('page.patients_create.first_name')}
-                                icon={UserIcon}
-                                value={data.first_name}
-                                onChange={(v) => setData('first_name', v)}
-                                placeholder={t(
-                                    'page.patients_create.first_name_placeholder',
-                                )}
-                                errors={errors}
-                                required
-                            />
+                {successMessage && (
+                    <Alert tone="positive" title={t('success')}>
+                        {successMessage}
+                    </Alert>
+                )}
 
-                            <FormInput
-                                name="last_name"
-                                label={t('page.patients_create.last_name')}
-                                icon={UserIcon}
-                                value={data.last_name}
-                                onChange={(v) => setData('last_name', v)}
-                                placeholder={t(
-                                    'page.patients_create.last_name_placeholder',
-                                )}
-                                errors={errors}
-                                required
-                            />
+                {(errorMessage || Object.keys(errors).length > 0) && (
+                    <Alert tone="critical" title={t('error')}>
+                        {errorMessage || t('someFieldsRequireAttention')}
+                    </Alert>
+                )}
 
-                            <FormInput
-                                name="date_of_birth"
-                                label={t('page.patients_create.date_of_birth')}
-                                icon={CalendarIcon}
-                                type="date"
-                                value={data.date_of_birth}
-                                onChange={(v) => setData('date_of_birth', v)}
-                                errors={errors}
-                                required
-                            />
-
-                            <FormSelect
-                                name="gender"
-                                label={t('page.patients_create.gender')}
-                                value={data.gender}
-                                onChange={(v) => setData('gender', v)}
-                                errors={errors}
-                                required
-                                placeholder={t(
-                                    'page.patients_create.select_gender',
-                                )}
-                                options={[
-                                    { value: 'male', label: t('common.male') },
-                                    {
-                                        value: 'female',
-                                        label: t('common.female'),
-                                    },
-                                    {
-                                        value: 'other',
-                                        label: t('common.other'),
-                                    },
-                                ]}
-                            />
-
-                            <FormSelect
-                                name="blood_type"
-                                label={t('page.patients_create.blood_type')}
-                                icon={BeakerIcon}
-                                value={data.blood_type}
-                                onChange={(v) => setData('blood_type', v)}
-                                errors={errors}
-                                placeholder={t('page.patients_create.unknown')}
-                                options={[
-                                    { value: 'A+', label: 'A+' },
-                                    { value: 'A-', label: 'A-' },
-                                    { value: 'B+', label: 'B+' },
-                                    { value: 'B-', label: 'B-' },
-                                    { value: 'O+', label: 'O+' },
-                                    { value: 'O-', label: 'O-' },
-                                    { value: 'AB+', label: 'AB+' },
-                                    { value: 'AB-', label: 'AB-' },
-                                ]}
-                            />
-
-                            <FormInput
-                                name="allergies"
-                                label={t('page.patients_create.allergies')}
-                                icon={ExclamationTriangleIcon}
-                                value={data.allergies}
-                                onChange={(v) => setData('allergies', v)}
-                                placeholder={t(
-                                    'page.patients_create.allergies_placeholder',
-                                )}
-                                errors={errors}
-                            />
-                        </div>
-
-                        {/* Photo Upload */}
-                        <div className="border-t border-gray-100 bg-gray-50/30 p-6 dark:border-neutral-700 dark:bg-neutral-800/30">
-                            <h3 className="mb-6 flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                <PhoneIcon className="h-5 w-5 text-blue-500" />
-                                {t('page.patients_create.patient_photo')}
-                            </h3>
-                            <div className="flex items-center gap-6">
-                                <div
-                                    onDragOver={(e) => {
-                                        e.preventDefault();
-                                    }}
-                                    onDrop={(e) => {
-                                        e.preventDefault();
-                                        const file = e.dataTransfer.files[0];
-
-                                        if (
-                                            file &&
-                                            file.type.startsWith('image/')
-                                        ) {
-                                            setData('photo', file);
-                                            setImagePreview(
-                                                URL.createObjectURL(file),
-                                            );
-                                        }
-                                    }}
-                                    className="relative"
-                                >
-                                    {imagePreview ? (
-                                        <div className="relative">
-                                            <img
-                                                src={imagePreview}
-                                                alt="Preview"
-                                                className="h-24 w-24 rounded-xl object-cover shadow-lg"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setImagePreview(null);
-                                                    setData('photo', null);
-                                                }}
-                                                className="absolute -top-2 -right-2 rounded-full border border-gray-100 bg-white p-1 text-red-500 shadow-md hover:bg-red-50 dark:border-neutral-600 dark:bg-neutral-700 dark:hover:bg-red-900/20"
-                                            >
-                                                <ExclamationTriangleIcon className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className="flex h-24 w-24 items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-100 dark:border-neutral-600 dark:bg-neutral-700">
-                                            <UserPlusIcon className="h-8 w-8 text-gray-400" />
-                                        </div>
-                                    )}
-                                </div>
-                                <label className="cursor-pointer text-sm font-bold text-blue-600 hover:text-blue-700">
-                                    <span>
-                                        {t('page.patients_create.upload_photo')}
-                                    </span>
-                                    <input
-                                        type="file"
-                                        className="sr-only"
-                                        accept="image/*"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-
-                                            if (file) {
-                                                setData('photo', file);
-                                                setImagePreview(
-                                                    URL.createObjectURL(file),
-                                                );
-                                            }
-                                        }}
-                                    />
-                                </label>
-                                <p className="text-xs font-bold text-gray-400 uppercase dark:text-neutral-500">
-                                    {t('page.patients_create.max_photo_size')}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Contact Section */}
-                        <div className="border-t border-gray-100 bg-gray-50/30 p-6 dark:border-neutral-700 dark:bg-neutral-800/30">
-                            <h3 className="mb-6 flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                <PhoneIcon className="h-5 w-5 text-blue-500" />
-                                {t('page.patients_create.contact_emergency')}
-                            </h3>
-
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                <FormInput
-                                    name="phone"
-                                    label={t(
-                                        'page.patients_create.phone_number',
-                                    )}
-                                    icon={PhoneIcon}
-                                    value={data.phone}
-                                    onChange={(v) => setData('phone', v)}
-                                    placeholder={t(
-                                        'page.patients_create.phone_placeholder',
-                                    )}
-                                    errors={errors}
-                                />
-
-                                <FormInput
-                                    name="email"
-                                    label={t(
-                                        'page.patients_create.email_address',
-                                    )}
-                                    icon={EnvelopeIcon}
-                                    type="email"
-                                    value={data.email}
-                                    onChange={(v) => setData('email', v)}
-                                    placeholder={t(
-                                        'page.patients_create.email_placeholder',
-                                    )}
-                                    errors={errors}
-                                />
-
-                                <FormTextarea
-                                    name="address"
-                                    label={t(
-                                        'page.patients_create.residential_address',
-                                    )}
-                                    icon={MapPinIcon}
-                                    value={data.address}
-                                    onChange={(v) => setData('address', v)}
-                                    placeholder={t(
-                                        'page.patients_create.address_placeholder',
-                                    )}
-                                    errors={errors}
-                                    rows={2}
-                                    className="sm:col-span-2"
-                                />
-                            </div>
-                        </div>
-                    </PageSection>
-
-                    {/* Action Bar */}
-                    <div className="flex flex-col items-center justify-end gap-4 sm:flex-row">
-                        <Link
-                            href={route('patients.index')}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-8 py-4 font-bold text-gray-500 transition-all hover:bg-gray-50 sm:w-auto dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                        >
-                            <ArrowLeftIcon className="h-5 w-5" />{' '}
-                            {t('common.cancel')}
-                        </Link>
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-10 py-4 font-bold text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-50 sm:w-auto"
-                        >
-                            {processing ? (
-                                <ArrowPathIcon className="h-5 w-5 animate-spin" />
-                            ) : (
-                                <CheckCircleIcon className="h-5 w-5" />
-                            )}
-                            {t('page.patients_create.save_registration')}
-                        </button>
+                <SectionCard
+                    title={currentStep?.label}
+                    description={currentStep?.description}
+                    icon={StepIcon}
+                    contentClassName="px-0 pb-0 sm:px-0"
+                >
+                    <div className="px-5 sm:px-6">
+                        <StepProgress steps={stepMeta} current={step} />
                     </div>
-                </form>
+
+                    <form onSubmit={submit} className="mt-6">
+                        <div className="px-5 pb-6 sm:px-6">
+                            {step === 0 && (
+                                <IdentityStep
+                                    data={data as PatientIdentityFields}
+                                    errors={stepErrors}
+                                    setData={setData as never}
+                                />
+                            )}
+
+                            {step === 1 && (
+                                <PatientPhotoField
+                                    previewUrl={imagePreview}
+                                    error={errors.photo}
+                                    onSelect={(file) => {
+                                        setData('photo', file);
+                                        setImagePreview(
+                                            URL.createObjectURL(file),
+                                        );
+                                    }}
+                                    onClear={() => {
+                                        setImagePreview(null);
+                                        setData('photo', null);
+                                    }}
+                                />
+                            )}
+
+                            {step === 2 && (
+                                <ContactStep
+                                    data={data as ContactFields}
+                                    errors={stepErrors}
+                                    setData={setData as never}
+                                />
+                            )}
+
+                            {touchedSteps.includes(step) &&
+                                hasErrorsInStep(step) && (
+                                    <Alert
+                                        tone="critical"
+                                        title={t('error')}
+                                        className="mt-5"
+                                    >
+                                        {t('someFieldsRequireAttention')}
+                                    </Alert>
+                                )}
+                        </div>
+
+                        <FormActionBar>
+                            {step > 0 ? (
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    icon={ChevronLeftIcon}
+                                    onClick={goBack}
+                                    className="w-full sm:w-auto"
+                                >
+                                    {t('common.back')}
+                                </Button>
+                            ) : (
+                                <Button
+                                    href={route('patients.index')}
+                                    variant="ghost"
+                                    className="w-full sm:w-auto"
+                                >
+                                    {t('common.cancel')}
+                                </Button>
+                            )}
+
+                            {!isLastStep && (
+                                <Button
+                                    type="button"
+                                    variant="primary"
+                                    trailingIcon={ChevronRightIcon}
+                                    onClick={goNext}
+                                    className="w-full sm:w-auto"
+                                >
+                                    {t('common.continue') || 'Continue'}
+                                </Button>
+                            )}
+
+                            {isLastStep && (
+                                <>
+                                    <Button
+                                        type="submit"
+                                        variant="secondary"
+                                        icon={CheckCircleIcon}
+                                        loading={
+                                            processing &&
+                                            submitType !== 'vitals'
+                                        }
+                                        onClick={() => setSubmitType('save')}
+                                        className="w-full sm:w-auto"
+                                    >
+                                        {t(
+                                            'page.patients_create.save_registration',
+                                        )}
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        icon={BeakerIcon}
+                                        loading={
+                                            processing &&
+                                            submitType === 'vitals'
+                                        }
+                                        onClick={() => setSubmitType('vitals')}
+                                        className="w-full sm:w-auto"
+                                    >
+                                        {t(
+                                            'page.patients_create.save_and_take_vitals',
+                                        ) || 'Save & Record Vitals'}
+                                    </Button>
+                                </>
+                            )}
+                        </FormActionBar>
+                    </form>
+                </SectionCard>
             </div>
         </AppLayout>
     );

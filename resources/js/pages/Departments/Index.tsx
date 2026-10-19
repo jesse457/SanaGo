@@ -1,41 +1,37 @@
 import {
     PlusIcon,
-    PencilSquareIcon,
-    TrashIcon,
     BuildingOffice2Icon,
-    PhoneIcon,
-    MagnifyingGlassIcon,
     UserGroupIcon,
     CheckBadgeIcon,
     BeakerIcon,
     ExclamationTriangleIcon,
-    UserIcon,
 } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import React, { useState, useMemo } from 'react';
-import EmptyState from '@/Components/EmptyState';
-import FormInput from '@/Components/FormInput';
-import FormSelect from '@/Components/FormSelect';
-import FormTextarea from '@/Components/FormTextarea';
-import Modal from '@/Components/Modal';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
-import StatCard from '@/Components/StatCard';
-import StatusBadge from '@/Components/StatusBadge';
+import { useState, useMemo } from 'react';
+import {
+    Alert,
+    Button,
+    Checkbox,
+    Dialog,
+    EmptyState,
+    Field,
+    FieldSet,
+    Input,
+    PageHeader,
+    Select,
+    StatCard,
+    StatGrid,
+    Textarea,
+    Toolbar,
+    ToolbarSearch,
+    ToolbarSpacer,
+} from '@/Components/ui';
 import AppLayout from '@/Layouts/AppLayout';
+import { DepartmentCard } from '@/pages/Departments/components';
+import type { DepartmentCardData } from '@/pages/Departments/components';
 
-interface Department {
-    id: number;
-    name: string;
-    code: string;
-    description: string;
-    phone_extension: string;
-    is_active: boolean;
-    type: 'clinical' | 'administrative' | 'support';
-    staff_count: number;
-    ward_count: number;
-    head_of_department?: { id: number; name: string } | null;
-}
+type Department = DepartmentCardData;
 
 interface Props {
     departments: Department[];
@@ -142,6 +138,14 @@ export default function Departments({ departments, users }: Props) {
         [departments],
     );
 
+    const modalTitle = `${
+        modalMode === 'add'
+            ? 'Add'
+            : modalMode === 'edit'
+              ? 'Edit'
+              : 'Confirm Delete'
+    } Department`;
+
     return (
         <AppLayout
             headerTitle="Hospital Departments"
@@ -149,357 +153,314 @@ export default function Departments({ departments, users }: Props) {
         >
             <Head title="Departments" />
 
-            <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                {/* Breadcrumbs */}
-                <PageBreadcrumb
-                    items={[
+            <div className="mx-auto flex max-w-7xl flex-col gap-6">
+                <PageHeader
+                    title="Hospital departments"
+                    description="Configure hospital units and service categories."
+                    breadcrumbs={[
                         { label: 'Home', href: '/' },
                         { label: 'Infrastructure' },
                         { label: 'Departments' },
                     ]}
+                    actions={
+                        <Button
+                            icon={PlusIcon}
+                            onClick={() => openModal('add')}
+                        >
+                            Add department
+                        </Button>
+                    }
                 />
 
-                {/* Stats Overview */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <StatGrid columns={4}>
                     <StatCard
                         label="Total Units"
                         value={stats.total}
                         icon={BuildingOffice2Icon}
-                        color="blue"
+                        tone="accent"
                     />
                     <StatCard
                         label="Operational"
                         value={stats.active}
                         icon={CheckBadgeIcon}
-                        color="emerald"
+                        tone="positive"
                     />
                     <StatCard
                         label="Clinical Depts"
                         value={stats.clinical}
                         icon={BeakerIcon}
-                        color="purple"
+                        tone="warning"
                     />
                     <StatCard
                         label="Total Staff"
                         value={stats.staff}
                         icon={UserGroupIcon}
-                        color="amber"
+                        tone="neutral"
                     />
-                </div>
+                </StatGrid>
 
-                {/* Header Controls */}
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                    <div className="relative w-full sm:w-96">
-                        <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-neutral-500" />
-                        <input
-                            type="text"
-                            placeholder="Search departments..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full rounded-lg border border-gray-200 bg-white py-2 pr-4 pl-9 text-sm transition-all focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500"
-                        />
-                    </div>
+                <Toolbar>
+                    <ToolbarSearch
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder="Search departments..."
+                    />
+                    <ToolbarSpacer />
+                </Toolbar>
 
-                    <button
-                        onClick={() => openModal('add')}
-                        className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold whitespace-nowrap text-white shadow-sm transition-colors hover:bg-blue-700"
-                    >
-                        <PlusIcon className="h-4 w-4" /> Add Department
-                    </button>
-                </div>
-
-                {/* Grid */}
                 {filteredDepartments.length === 0 ? (
                     <EmptyState
                         icon={BuildingOffice2Icon}
                         title="No departments found"
                         description="Try adjusting your search or add a new department."
+                        action={
+                            <Button
+                                icon={PlusIcon}
+                                onClick={() => openModal('add')}
+                            >
+                                Add department
+                            </Button>
+                        }
                     />
                 ) : (
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {filteredDepartments.map((dept) => (
-                            <div
+                            <DepartmentCard
                                 key={dept.id}
-                                className="group relative rounded-xl border border-gray-200 bg-white p-6 transition-all duration-200 hover:border-blue-400 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
-                            >
-                                <div className="mb-4 flex items-start justify-between">
-                                    <div
-                                        className={`rounded-lg p-3 ${dept.is_active ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-400 dark:text-neutral-500'}`}
-                                    >
-                                        <BuildingOffice2Icon className="h-6 w-6" />
-                                    </div>
-                                    <StatusBadge
-                                        label={
-                                            dept.is_active
-                                                ? 'Active'
-                                                : 'Inactive'
-                                        }
-                                        color={
-                                            dept.is_active ? 'emerald' : 'gray'
-                                        }
-                                    />
-                                </div>
-
-                                <div className="mb-4">
-                                    <h3 className="truncate text-lg font-bold text-gray-900 dark:text-neutral-100">
-                                        {dept.name}
-                                    </h3>
-                                    <div className="mt-1 flex items-center gap-2">
-                                        <span className="rounded bg-blue-50 px-1.5 py-0.5 font-mono text-xs font-semibold text-blue-600">
-                                            {dept.code}
-                                        </span>
-                                        <span className="text-xs text-gray-400 dark:text-neutral-500">
-                                            •
-                                        </span>
-                                        <span className="text-xs font-medium text-gray-500 dark:text-neutral-500">
-                                            {dept.type}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <p className="mb-6 line-clamp-2 h-10 text-sm text-gray-500 dark:text-neutral-500">
-                                    {dept.description}
-                                </p>
-
-                                <div className="mb-3 flex items-center justify-between border-t border-gray-100 py-4 dark:border-neutral-700">
-                                    <div className="flex gap-4">
-                                        <div className="text-center">
-                                            <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                                {dept.staff_count}
-                                            </p>
-                                            <p className="text-[10px] font-semibold text-gray-400 uppercase dark:text-neutral-500">
-                                                Staff
-                                            </p>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                                {dept.ward_count}
-                                            </p>
-                                            <p className="text-[10px] font-semibold text-gray-400 uppercase dark:text-neutral-500">
-                                                Wards
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 rounded-lg bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-500 dark:bg-neutral-700 dark:text-neutral-500">
-                                        <PhoneIcon className="h-3.5 w-3.5" />{' '}
-                                        {dept.phone_extension}
-                                    </div>
-                                </div>
-
-                                <div className="mb-4 flex items-center gap-2 text-xs text-gray-500 dark:text-neutral-400">
-                                    <UserIcon className="h-3.5 w-3.5 shrink-0" />
-                                    <span className="truncate">
-                                        {dept.head_of_department ? (
-                                            <span className="font-medium text-gray-700 dark:text-neutral-300">
-                                                {dept.head_of_department.name}
-                                            </span>
-                                        ) : (
-                                            <span className="italic">
-                                                No HOD assigned
-                                            </span>
-                                        )}
-                                    </span>
-                                </div>
-
-                                <div className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                                    <button
-                                        onClick={() => openModal('edit', dept)}
-                                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gray-50 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:bg-neutral-700 dark:text-neutral-400"
-                                    >
-                                        <PencilSquareIcon className="h-4 w-4" />{' '}
-                                        Edit
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            openModal('delete', dept)
-                                        }
-                                        className="rounded-lg bg-gray-50 px-3 py-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:bg-neutral-700 dark:text-neutral-500 dark:hover:bg-red-900/20"
-                                    >
-                                        <TrashIcon className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            </div>
+                                department={dept}
+                                onEdit={(d) => openModal('edit', d)}
+                                onDelete={(d) => openModal('delete', d)}
+                                labels={{
+                                    staff: 'Staff',
+                                    wards: 'Wards',
+                                    noHead: 'No HOD assigned',
+                                    active: 'Active',
+                                    inactive: 'Inactive',
+                                    edit: 'Edit',
+                                    delete: 'Delete department',
+                                }}
+                            />
                         ))}
                     </div>
                 )}
             </div>
 
-            {/* --- MODAL --- */}
-            <Modal
-                isOpen={modalOpen}
+            <Dialog
+                open={modalOpen}
                 onClose={closeModal}
-                title={`${modalMode === 'add' ? 'Add' : modalMode === 'edit' ? 'Edit' : 'Confirm Delete'} Department`}
+                title={modalTitle}
+                size="lg"
             >
                 {modalMode === 'delete' ? (
-                    <div>
-                        <div className="py-4 text-center">
-                            <ExclamationTriangleIcon className="mx-auto mb-4 h-12 w-12 text-red-600" />
-                            <p className="mb-2 text-gray-700 dark:text-neutral-300">
-                                Are you sure you want to delete{' '}
-                                <span className="font-semibold">
-                                    "{selectedItem?.name}"
-                                </span>
-                                ?
+                    <div className="space-y-4">
+                        <Alert
+                            tone="critical"
+                            title="Delete department"
+                            action={
+                                <ExclamationTriangleIcon className="h-[18px] w-[18px]" />
+                            }
+                        >
+                            Are you sure you want to delete{' '}
+                            <span className="font-semibold text-ink">
+                                "{selectedItem?.name}"
+                            </span>
+                            ? This action cannot be undone.
+                        </Alert>
+
+                        {(errors as Record<string, string>).error && (
+                            <p className="text-[13px] font-medium text-critical-ink">
+                                {(errors as Record<string, string>).error}
                             </p>
-                            <p className="text-sm text-gray-500 dark:text-neutral-500">
-                                This action cannot be undone.
-                            </p>
-                            {(errors as Record<string, string>).error && (
-                                <p className="mt-4 text-sm font-bold text-red-600">
-                                    {(errors as Record<string, string>).error}
-                                </p>
-                            )}
-                        </div>
-                        <div className="flex justify-end gap-3 border-t border-gray-100 pt-6 dark:border-neutral-700">
-                            <button
+                        )}
+
+                        <div className="flex justify-end gap-2 border-t border-line pt-4">
+                            <Button
                                 type="button"
+                                variant="secondary"
                                 onClick={closeModal}
                                 disabled={processing}
-                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
                             >
                                 Cancel
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 type="button"
+                                variant="danger"
                                 onClick={handleSubmit}
-                                disabled={processing}
-                                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-700 disabled:opacity-50"
+                                loading={processing}
                             >
-                                {processing && (
-                                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                )}
-                                Delete Department
-                            </button>
+                                Delete department
+                            </Button>
                         </div>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormInput
-                                name="name"
-                                label="Department Name"
+                        <FieldSet columns={2}>
+                            <Field
+                                label="Department name"
+                                htmlFor="name"
                                 required
-                                value={data.name}
-                                onChange={(v) => setData('name', v)}
-                                errors={errors}
-                                placeholder="e.g. Cardiology"
-                                className="col-span-2"
-                            />
+                                error={errors.name}
+                                className="sm:col-span-2"
+                            >
+                                <Input
+                                    id="name"
+                                    type="text"
+                                    value={data.name}
+                                    onChange={(e) =>
+                                        setData('name', e.target.value)
+                                    }
+                                    placeholder="e.g. Cardiology"
+                                    invalid={Boolean(errors.name)}
+                                />
+                            </Field>
 
-                            <FormInput
-                                name="code"
+                            <Field
                                 label="Code"
+                                htmlFor="code"
                                 required
-                                value={data.code}
-                                onChange={(v) => setData('code', v)}
-                                errors={errors}
-                                placeholder="e.g. CARD-01"
-                            />
+                                error={errors.code}
+                            >
+                                <Input
+                                    id="code"
+                                    type="text"
+                                    value={data.code}
+                                    onChange={(e) =>
+                                        setData('code', e.target.value)
+                                    }
+                                    placeholder="e.g. CARD-01"
+                                    invalid={Boolean(errors.code)}
+                                />
+                            </Field>
 
-                            <FormInput
-                                name="phone_extension"
-                                label="Phone Ext."
+                            <Field
+                                label="Phone ext."
+                                htmlFor="phone_extension"
                                 required
-                                value={data.phone_extension}
-                                onChange={(v) => setData('phone_extension', v)}
-                                errors={errors}
-                                placeholder="e.g. 101"
-                            />
+                                error={errors.phone_extension}
+                            >
+                                <Input
+                                    id="phone_extension"
+                                    type="text"
+                                    value={data.phone_extension}
+                                    onChange={(e) =>
+                                        setData(
+                                            'phone_extension',
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder="e.g. 101"
+                                    invalid={Boolean(errors.phone_extension)}
+                                />
+                            </Field>
 
-                            <FormSelect
-                                name="type"
+                            <Field
                                 label="Classification"
-                                value={data.type}
-                                onChange={(v) => setData('type', v as any)}
-                                errors={errors}
-                                options={[
-                                    {
-                                        value: 'clinical',
-                                        label: 'Clinical',
-                                    },
-                                    {
-                                        value: 'administrative',
-                                        label: 'Administrative',
-                                    },
-                                    {
-                                        value: 'support',
-                                        label: 'Support Services',
-                                    },
-                                ]}
-                                className="col-span-2"
-                            />
+                                htmlFor="type"
+                                error={errors.type}
+                                className="sm:col-span-2"
+                            >
+                                <Select
+                                    id="type"
+                                    value={data.type}
+                                    onChange={(e) =>
+                                        setData(
+                                            'type',
+                                            e.target
+                                                .value as Department['type'],
+                                        )
+                                    }
+                                    invalid={Boolean(errors.type)}
+                                >
+                                    <option value="clinical">Clinical</option>
+                                    <option value="administrative">
+                                        Administrative
+                                    </option>
+                                    <option value="support">
+                                        Support Services
+                                    </option>
+                                </Select>
+                            </Field>
 
-                            <FormSelect
-                                name="head_of_department_id"
-                                label="Head of Department"
-                                value={data.head_of_department_id}
-                                onChange={(v) =>
-                                    setData('head_of_department_id', v)
-                                }
-                                errors={errors}
-                                options={users.map((u) => ({
-                                    value: u.id,
-                                    label: u.name,
-                                }))}
-                                placeholder="None"
-                                className="col-span-2"
-                            />
+                            <Field
+                                label="Head of department"
+                                htmlFor="head_of_department_id"
+                                error={errors.head_of_department_id}
+                                className="sm:col-span-2"
+                            >
+                                <Select
+                                    id="head_of_department_id"
+                                    value={data.head_of_department_id}
+                                    onChange={(e) =>
+                                        setData(
+                                            'head_of_department_id',
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder="None"
+                                    invalid={Boolean(
+                                        errors.head_of_department_id,
+                                    )}
+                                >
+                                    {users.map((u) => (
+                                        <option key={u.id} value={u.id}>
+                                            {u.name}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </Field>
 
-                            <FormTextarea
-                                name="description"
+                            <Field
                                 label="Description"
-                                rows={3}
-                                value={data.description}
-                                onChange={(v) => setData('description', v)}
-                                errors={errors}
-                                placeholder="Brief description..."
-                                className="col-span-2"
-                            />
+                                htmlFor="description"
+                                error={errors.description}
+                                className="sm:col-span-2"
+                            >
+                                <Textarea
+                                    id="description"
+                                    rows={3}
+                                    value={data.description}
+                                    onChange={(e) =>
+                                        setData('description', e.target.value)
+                                    }
+                                    placeholder="Brief description..."
+                                    invalid={Boolean(errors.description)}
+                                />
+                            </Field>
 
-                            <div className="col-span-2 flex items-center pt-2">
-                                <input
-                                    type="checkbox"
+                            <div className="sm:col-span-2">
+                                <Checkbox
                                     id="is_active"
                                     checked={data.is_active}
                                     onChange={(e) =>
                                         setData('is_active', e.target.checked)
                                     }
-                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    label="Active"
                                 />
-                                <label
-                                    htmlFor="is_active"
-                                    className="ml-2 text-sm font-medium text-gray-700 dark:text-neutral-300"
-                                >
-                                    Active
-                                </label>
                             </div>
-                        </div>
+                        </FieldSet>
 
-                        <div className="flex justify-end gap-3 border-t border-gray-100 pt-6 dark:border-neutral-700">
-                            <button
+                        <div className="flex justify-end gap-2 border-t border-line pt-4">
+                            <Button
                                 type="button"
+                                variant="secondary"
                                 onClick={closeModal}
                                 disabled={processing}
-                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
                             >
                                 Cancel
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 type="submit"
+                                loading={processing}
                                 disabled={processing}
-                                className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 disabled:opacity-50"
                             >
-                                {processing && (
-                                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                )}
                                 {modalMode === 'add'
-                                    ? 'Create Department'
-                                    : 'Save Changes'}
-                            </button>
+                                    ? 'Create department'
+                                    : 'Save changes'}
+                            </Button>
                         </div>
                     </form>
                 )}
-            </Modal>
+            </Dialog>
         </AppLayout>
     );
 }

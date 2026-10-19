@@ -90,25 +90,25 @@ export default function FinanceAnalytics({
                     <div className="space-y-3 p-6">
                         {monthlyData.map((m) => (
                             <div key={m.month} className="space-y-1">
-                                <div className="flex justify-between text-xs font-bold text-gray-500 dark:text-neutral-400">
+                                <div className="flex justify-between text-xs font-bold text-ink-subtle">
                                     <span>{m.month}</span>
                                     <span
                                         className={
                                             m.profit >= 0
-                                                ? 'text-emerald-600'
-                                                : 'text-red-600'
+                                                ? 'text-positive-ink'
+                                                : 'text-critical-ink'
                                         }
                                     >
                                         {m.profit >= 0 ? '+' : ''}
                                         {m.profit.toLocaleString()} FCFA
                                     </span>
                                 </div>
-                                <div className="flex h-3 overflow-hidden rounded-full bg-gray-100 dark:bg-neutral-700">
+                                <div className="flex h-3 overflow-hidden rounded-full bg-surface-inset">
                                     <div
                                         style={{
                                             width: `${(m.revenue / maxRevenue) * 100}%`,
                                         }}
-                                        className="bg-emerald-500 transition-all"
+                                        className="bg-positive transition-all"
                                     />
                                     <div
                                         style={{
@@ -117,7 +117,7 @@ export default function FinanceAnalytics({
                                         className="ml-0.5 bg-red-400 transition-all"
                                     />
                                 </div>
-                                <div className="flex justify-between text-[10px] text-gray-400 dark:text-neutral-500">
+                                <div className="flex justify-between text-[10px] text-ink-subtle">
                                     <span>
                                         {t('finance.analytics.rev')}{' '}
                                         {m.revenue.toLocaleString()}
@@ -144,12 +144,12 @@ export default function FinanceAnalytics({
                                 {expenditureBreakdown.map((e) => (
                                     <div
                                         key={e.category}
-                                        className="flex items-center justify-between border-b border-gray-100 py-2 last:border-0 dark:border-neutral-700"
+                                        className="flex items-center justify-between border-b border-line py-2 last:border-0"
                                     >
-                                        <span className="text-sm font-bold text-gray-700 capitalize dark:text-neutral-300">
+                                        <span className="text-sm font-bold text-ink-muted capitalize">
                                             {e.category}
                                         </span>
-                                        <span className="text-sm font-bold text-red-600">
+                                        <span className="text-sm font-bold text-critical-ink">
                                             {Number(e.total).toLocaleString()}{' '}
                                             FCFA
                                         </span>
@@ -167,12 +167,12 @@ export default function FinanceAnalytics({
                                 {departmentRevenue.map((d) => (
                                     <div
                                         key={d.item_type}
-                                        className="flex items-center justify-between border-b border-gray-100 py-2 last:border-0 dark:border-neutral-700"
+                                        className="flex items-center justify-between border-b border-line py-2 last:border-0"
                                     >
-                                        <span className="text-sm font-bold text-gray-700 capitalize dark:text-neutral-300">
+                                        <span className="text-sm font-bold text-ink-muted capitalize">
                                             {d.item_type}
                                         </span>
-                                        <span className="text-sm font-bold text-emerald-600">
+                                        <span className="text-sm font-bold text-positive-ink">
                                             {Number(d.total).toLocaleString()}{' '}
                                             FCFA
                                         </span>

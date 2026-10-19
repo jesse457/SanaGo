@@ -1,5 +1,6 @@
-import { Check } from 'lucide-react';
+import { CheckIcon, MinusIcon } from '@heroicons/react/24/outline';
 import Button from '@/Components/marketing/Button';
+import { Badge, Card } from '@/Components/ui';
 import { cn } from '@/lib/utils';
 
 interface PricingFeature {
@@ -19,6 +20,13 @@ interface PricingCardProps {
     className?: string;
 }
 
+/**
+ * PricingCard — one plan.
+ *
+ * The recommended plan is marked with a tinted hairline panel and an accent
+ * badge instead of a scale bump or a drop shadow, so the three plans still sit
+ * on one clean baseline. Included/absent features are stated, not shouted.
+ */
 export default function PricingCard({
     name,
     price,
@@ -26,78 +34,96 @@ export default function PricingCard({
     description,
     features,
     highlighted = false,
-    ctaLabel = 'Get Started',
+    ctaLabel = 'Get started',
     ctaHref = '/contact',
     className,
 }: PricingCardProps) {
     return (
-        <div
+        <Card
             className={cn(
-                'relative rounded-3xl border bg-white p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl dark:bg-neutral-900',
+                'flex h-full flex-col p-6 sm:p-7',
                 highlighted
-                    ? 'scale-105 border-blue-600 shadow-2xl shadow-blue-100 dark:border-blue-500 dark:shadow-blue-900/20'
-                    : 'border-slate-100 shadow-sm dark:border-neutral-700',
+                    ? 'border-accent/35 bg-accent-soft/40'
+                    : 'bg-surface',
                 className,
             )}
         >
-            {highlighted && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-4 py-1.5 text-xs font-bold tracking-wider text-white uppercase">
-                    Most Popular
-                </div>
-            )}
-
-            <div className="mb-6">
-                <h3 className="mb-2 text-xl font-bold text-slate-900 dark:text-neutral-100">
+            <div className="flex items-center justify-between gap-3">
+                <h3 className="text-[15px] font-semibold tracking-tight text-ink">
                     {name}
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-neutral-400">
-                    {description}
-                </p>
+                {highlighted && (
+                    <Badge tone="accent" variant="soft" dot>
+                        Recommended
+                    </Badge>
+                )}
             </div>
 
-            <div className="mb-8">
-                <span className="text-5xl font-black text-slate-900 dark:text-neutral-100">
+            <p className="mt-2 min-h-[40px] text-[13.5px] leading-relaxed text-ink-muted">
+                {description}
+            </p>
+
+            <div className="mt-6 flex items-baseline gap-1.5 border-t border-line pt-6">
+                <span
+                    data-numeric
+                    className="text-[38px] leading-none font-semibold tracking-[-0.035em] text-ink tabular-nums"
+                >
                     {price}
                 </span>
-                <span className="ml-2 text-sm text-slate-400 dark:text-neutral-500">
-                    {period}
-                </span>
+                {period && (
+                    <span className="text-[12.5px] font-medium text-ink-subtle">
+                        {period}
+                    </span>
+                )}
             </div>
 
-            <Button
-                href={ctaHref}
-                variant={highlighted ? 'primary' : 'secondary'}
-                size="lg"
-                className="mb-8 w-full"
-            >
-                {ctaLabel}
-            </Button>
+            <div className="mt-6">
+                <Button
+                    href={ctaHref}
+                    variant={highlighted ? 'primary' : 'secondary'}
+                    size="md"
+                    className="w-full justify-center"
+                >
+                    {ctaLabel}
+                </Button>
+            </div>
 
-            <ul className="space-y-3">
-                {features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-3 text-sm">
+            <ul className="mt-7 flex-1 space-y-0 border-t border-line pt-5">
+                {features.map((feature) => (
+                    <li
+                        key={feature.text}
+                        className="flex items-start gap-2.5 py-1.5 text-[13px] leading-snug"
+                    >
                         <span
+                            aria-hidden="true"
                             className={cn(
-                                'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
+                                'mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-sm',
                                 feature.included
-                                    ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30'
-                                    : 'bg-slate-100 text-slate-300 dark:bg-neutral-800 dark:text-neutral-600',
+                                    ? 'text-accent-ink'
+                                    : 'text-ink-subtle/60',
                             )}
                         >
-                            <Check size={12} />
+                            {feature.included ? (
+                                <CheckIcon className="h-3.5 w-3.5" />
+                            ) : (
+                                <MinusIcon className="h-3.5 w-3.5" />
+                            )}
                         </span>
                         <span
                             className={cn(
                                 feature.included
-                                    ? 'text-slate-700 dark:text-neutral-300'
-                                    : 'text-slate-300 line-through dark:text-neutral-600',
+                                    ? 'text-ink-muted'
+                                    : 'text-ink-subtle line-through decoration-line-strong',
                             )}
                         >
+                            {!feature.included && (
+                                <span className="sr-only">Not included: </span>
+                            )}
                             {feature.text}
                         </span>
                     </li>
                 ))}
             </ul>
-        </div>
+        </Card>
     );
 }

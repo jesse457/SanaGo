@@ -12,6 +12,10 @@ use Inertia\Inertia;
 
 class ConsultationController extends Controller
 {
+    public function __construct(
+        private MedicalRecordService $medicalRecordService
+    ) {}
+
     public function patientProfile(Patient $patient)
     {
         return Inertia::render('Consultations/Index', [
@@ -28,24 +32,52 @@ class ConsultationController extends Controller
 
     public function create()
     {
-        // In a real large-scale app, you might want to fetch patients via an API route during search,
-        // but passing them here matches your current UI structure.
         return Inertia::render('Consultations/Create', [
-            'patients' => Patient::select('id', 'first_name', 'last_name', 'patient_uid', 'date_of_birth', 'gender', 'phone_number', 'allergies')->get(),
-            'medications' => Medication::select('id', 'name', 'unit_price')->get(),
-            'labTests' => LabTestDefinition::select('id', 'test_name', 'code')->get(),
+            'patients' => Patient::select([
+                'id', 'first_name', 'last_name', 'patient_uid',
+                'date_of_birth', 'gender', 'phone', 'allergies',
+            ])->get(),
+
+            'medications' => Medication::select([
+                'id', 'name', 'unit_cost',
+            ])
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(),
+
+            'labTests' => LabTestDefinition::select([
+                'id', 'test_name', 'code',
+            ])
+                ->where('is_active', true)
+                ->orderBy('test_name')
+                ->get(),
         ]);
     }
 
-    public function store(StoreConsultationRequest $request, MedicalRecordService $service)
+    public function store(StoreConsultationRequest $request)
     {
         try {
-            $attachments = $request->hasFile('attachments') ? $request->file('attachments') : null;
-            $service->createConsultation($request->validated(), $attachments);
+            $attachments = $request->hasFile('attachments')
+                ? $request->file('attachments')
+                : null;
 
-            return redirect()->route('consultations.create')->with('success', 'Consultation saved successfully.');
+            $this->medicalRecordService->createConsultation(
+                $request->validated(),
+                $attachments
+            );
+
+            return redirect()
+                ->route('consultations.create')
+                ->with('success', 'Consultation saved successfully.');
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'An error occurred: '.$e->getMessage()]);
+            logger()->error('Consultation save failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->withErrors([
+                'error' => 'An error occurred while saving. Please try again.',
+            ])->withInput();
         }
     }
 

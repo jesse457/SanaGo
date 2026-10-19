@@ -1,46 +1,44 @@
 import {
-    HomeIcon,
-    ChevronRightIcon,
-    HeartIcon,
-    UserIcon,
-    ExclamationTriangleIcon,
-    MapPinIcon,
     CalendarDaysIcon,
-    DocumentTextIcon,
-    ClipboardDocumentListIcon,
-    CurrencyDollarIcon,
-    MagnifyingGlassIcon,
-    UserCircleIcon,
-    CheckCircleIcon,
-    XMarkIcon,
-    ArrowPathIcon,
     CheckIcon,
+    CurrencyDollarIcon,
+    DocumentTextIcon,
+    HeartIcon,
+    MapPinIcon,
+    UserIcon,
 } from '@heroicons/react/24/outline';
-import { Head, useForm, Link } from '@inertiajs/react';
-import React, { useState, useMemo } from 'react';
+import { Head, useForm } from '@inertiajs/react';
+import React, { useState } from 'react';
+import {
+    Alert,
+    Button,
+    Field,
+    FieldSet,
+    Input,
+    PageHeader,
+    SectionCard,
+    Textarea,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
-
-interface Patient {
-    id: number;
-    first_name: string;
-    last_name: string;
-    patient_uid: string;
-    date_of_birth: string | null;
-    gender: string | null;
-}
+import {
+    emergencyPatientName,
+    PatientSearchField,
+    TriageLevelField,
+} from '@/pages/Emergencies/components/PatientSearchField';
+import type { EmergencyPatient } from '@/pages/Emergencies/components/PatientSearchField';
+import { TriageBadge } from '@/pages/Emergencies/components/TriageBadges';
 
 interface Props {
-    patients: Patient[];
+    patients: EmergencyPatient[];
 }
 
 export default function EmergencyCreate({ patients }: Props) {
     const { t } = useTranslation();
     const [patientQuery, setPatientQuery] = useState('');
     const [showPatientDropdown, setShowPatientDropdown] = useState(false);
-    const [selectedPatient, setSelectedPatient] = useState<Patient | null>(
-        null,
-    );
+    const [selectedPatient, setSelectedPatient] =
+        useState<EmergencyPatient | null>(null);
 
     const { data, setData, post, processing, errors } = useForm({
         patient_id: '',
@@ -58,28 +56,12 @@ export default function EmergencyCreate({ patients }: Props) {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    const filteredPatients = useMemo(() => {
-        if (!patientQuery.trim()) {
-            return patients.slice(0, 10);
-        }
-
-        const q = patientQuery.toLowerCase();
-
-        return patients
-            .filter(
-                (p) =>
-                    `${p.first_name} ${p.last_name}`
-                        .toLowerCase()
-                        .includes(q) ||
-                    p.patient_uid.toLowerCase().includes(q),
-            )
-            .slice(0, 10);
-    }, [patients, patientQuery]);
-
-    const selectPatient = (p: Patient) => {
-        setSelectedPatient(p);
-        setData('patient_id', String(p.id));
-        setPatientQuery(`${p.first_name} ${p.last_name} (${p.patient_uid})`);
+    const selectPatient = (patient: EmergencyPatient) => {
+        setSelectedPatient(patient);
+        setData('patient_id', String(patient.id));
+        setPatientQuery(
+            `${emergencyPatientName(patient)} (${patient.patient_uid})`,
+        );
         setShowPatientDropdown(false);
     };
 
@@ -96,474 +78,330 @@ export default function EmergencyCreate({ patients }: Props) {
         });
     };
 
+    const hasErrors = Boolean(errorMessage) || Object.keys(errors).length > 0;
+
     return (
         <AppLayout
             headerTitle={t('newEmergency')}
             headerSubtitle={t('registerEmergencyCase')}
         >
             <Head title={t('newEmergency')} />
-            <div className="mx-auto max-w-8xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
-                {/* Breadcrumbs */}
-                <nav className="flex text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                    <ol className="inline-flex items-center space-x-2">
-                        <li className="flex cursor-pointer items-center transition-colors hover:text-blue-600">
-                            <HomeIcon className="mr-1 h-4 w-4" /> {t('home')}
-                        </li>
-                        <li>
-                            <ChevronRightIcon className="h-4 w-4" />
-                        </li>
-                        <li className="cursor-pointer transition-colors hover:text-blue-600">
-                            {t('emergencies')}
-                        </li>
-                        <li>
-                            <ChevronRightIcon className="h-4 w-4" />
-                        </li>
-                        <li className="font-medium text-blue-600">
-                            {t('newEmergency')}
-                        </li>
-                    </ol>
-                </nav>
+            <div className="max-w-8xl mx-auto space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
+                <PageHeader
+                    icon={HeartIcon}
+                    eyebrow={t('emergencies')}
+                    title={t('newEmergency')}
+                    description={t('registerEmergencyCase')}
+                    breadcrumbs={[
+                        { label: t('common.home'), href: route('dashboard') },
+                        {
+                            label: t('emergencies'),
+                            href: route('emergencies.index'),
+                        },
+                        { label: t('newEmergency') },
+                    ]}
+                    meta={
+                        selectedPatient ? (
+                            <>
+                                <span className="font-medium text-ink-muted">
+                                    {emergencyPatientName(selectedPatient)}
+                                </span>
+                                <span
+                                    aria-hidden="true"
+                                    className="text-line-strong"
+                                >
+                                    /
+                                </span>
+                                <span className="font-mono tabular-nums">
+                                    {selectedPatient.patient_uid}
+                                </span>
+                                <TriageBadge
+                                    level={data.triage_level}
+                                    label={t(data.triage_level)}
+                                />
+                            </>
+                        ) : (
+                            <TriageBadge
+                                level={data.triage_level}
+                                label={t(data.triage_level)}
+                            />
+                        )
+                    }
+                />
 
-                {/* Alerts */}
                 {successMessage && (
-                    <div className="flex items-start justify-between rounded-lg border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-900/20">
-                        <div className="flex items-center gap-3">
-                            <CheckCircleIcon className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                            <div>
-                                <h3 className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
-                                    {t('success')}
-                                </h3>
-                                <div className="mt-1 text-sm text-emerald-700 dark:text-emerald-400">
-                                    {successMessage}
-                                </div>
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setSuccessMessage(null)}
-                            className="rounded-lg p-1.5 text-emerald-500 transition hover:text-emerald-700 dark:hover:text-emerald-300"
-                        >
-                            <XMarkIcon className="h-5 w-5" />
-                        </button>
-                    </div>
+                    <Alert tone="positive" title={t('success')}>
+                        {successMessage}
+                    </Alert>
                 )}
 
-                {(errorMessage || Object.keys(errors).length > 0) && (
-                    <div className="flex items-start justify-between rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-                        <div className="flex items-center gap-3">
-                            <ExclamationTriangleIcon className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
-                            <div>
-                                <h3 className="text-sm font-bold text-red-800 dark:text-red-300">
-                                    {t('error')}
-                                </h3>
-                                <div className="mt-1 text-sm text-red-700 dark:text-red-400">
-                                    {errorMessage ||
-                                        t('someFieldsRequireAttention')}
-                                </div>
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setErrorMessage(null)}
-                            className="rounded-lg p-1.5 text-red-500 transition hover:text-red-700 dark:hover:text-red-300"
-                        >
-                            <XMarkIcon className="h-5 w-5" />
-                        </button>
-                    </div>
+                {hasErrors && (
+                    <Alert tone="critical" title={t('error')}>
+                        {errorMessage || t('someFieldsRequireAttention')}
+                    </Alert>
                 )}
 
-                {/* Main Form Card */}
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-                    <form onSubmit={handleSubmit} className="space-y-8 p-6">
-                        {/* Section: Emergency Case */}
-                        <div className="space-y-4">
-                            <h3 className="flex items-center gap-2 border-b border-gray-100 pb-2 text-sm font-bold tracking-wide text-blue-600 uppercase dark:border-neutral-700">
-                                <HeartIcon className="h-5 w-5" />
-                                {t('registerEmergencyCase')}
-                            </h3>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <SectionCard
+                        icon={HeartIcon}
+                        title={t('registerEmergencyCase')}
+                    >
+                        <div className="space-y-6">
+                            <FieldSet columns={2}>
+                                <PatientSearchField
+                                    patients={patients}
+                                    query={patientQuery}
+                                    onQueryChange={setPatientQuery}
+                                    open={showPatientDropdown}
+                                    onOpenChange={setShowPatientDropdown}
+                                    selected={selectedPatient}
+                                    onSelect={selectPatient}
+                                    patientId={data.patient_id}
+                                    label={t('patient')}
+                                    placeholder={t('searchPatientNameOrUid')}
+                                    viewProfileLabel={t('viewProfile')}
+                                    error={errors.patient_id}
+                                />
 
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                {/* Patient Search */}
-                                <div className="md:col-span-2 space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('patient')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            value={patientQuery}
-                                            onChange={(e) => {
-                                                setPatientQuery(e.target.value);
-                                                setShowPatientDropdown(true);
-                                            }}
-                                            onFocus={() =>
-                                                setShowPatientDropdown(true)
-                                            }
-                                            onBlur={() =>
-                                                setTimeout(
-                                                    () =>
-                                                        setShowPatientDropdown(
-                                                            false,
-                                                        ),
-                                                    200,
-                                                )
-                                            }
-                                            placeholder={t(
-                                                'searchPatientNameOrUid',
-                                            )}
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.patient_id ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        />
-                                        {showPatientDropdown &&
-                                            filteredPatients.length > 0 && (
-                                                <div className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-800">
-                                                    {filteredPatients.map(
-                                                        (p) => (
-                                                            <button
-                                                                key={p.id}
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    selectPatient(
-                                                                        p,
-                                                                    )
-                                                                }
-                                                                className="flex w-full items-center gap-3 border-b border-gray-50 px-4 py-3 text-left transition-colors last:border-0 hover:bg-blue-50 dark:border-neutral-700 dark:hover:bg-blue-900/20"
-                                                            >
-                                                                <UserCircleIcon className="h-5 w-5 shrink-0 text-gray-400 dark:text-neutral-500" />
-                                                                <div>
-                                                                    <p className="text-sm font-semibold text-gray-900 dark:text-neutral-100">
-                                                                        {
-                                                                            p.first_name
-                                                                        }{' '}
-                                                                        {
-                                                                            p.last_name
-                                                                        }
-                                                                    </p>
-                                                                    <p className="text-xs text-gray-500 dark:text-neutral-400">
-                                                                        {
-                                                                            p.patient_uid
-                                                                        }{' '}
-                                                                        &middot;{' '}
-                                                                        {
-                                                                            p.gender
-                                                                        }{' '}
-                                                                        &middot;{' '}
-                                                                        {
-                                                                            p.date_of_birth
-                                                                        }
-                                                                    </p>
-                                                                </div>
-                                                            </button>
-                                                        ),
-                                                    )}
-                                                </div>
-                                            )}
-                                    </div>
-                                    {selectedPatient && (
-                                        <p className="mt-2 text-xs text-blue-600">
-                                            <Link
-                                                href={`/patients/${selectedPatient.id}`}
-                                                className="hover:underline"
-                                            >
-                                                {t('viewProfile')}{' '}
-                                                {selectedPatient.first_name}
-                                                {t('sProfile')}
-                                            </Link>
-                                        </p>
-                                    )}
-                                    <input
-                                        type="hidden"
-                                        value={data.patient_id}
+                                <TriageLevelField
+                                    label={t('triageLevel')}
+                                    value={data.triage_level}
+                                    onChange={(value) =>
+                                        setData('triage_level', value)
+                                    }
+                                    error={errors.triage_level}
+                                    options={[
+                                        {
+                                            value: 'normal',
+                                            label: t('normal'),
+                                        },
+                                        {
+                                            value: 'urgent',
+                                            label: t('urgent'),
+                                        },
+                                        {
+                                            value: 'emergency',
+                                            label: t('emergency'),
+                                        },
+                                    ]}
+                                />
+
+                                <Field
+                                    label={t('arrivalMode')}
+                                    htmlFor="arrival_mode"
+                                    error={errors.arrival_mode}
+                                >
+                                    <Input
+                                        id="arrival_mode"
+                                        name="arrival_mode"
+                                        icon={MapPinIcon}
+                                        value={data.arrival_mode}
+                                        onChange={(e) =>
+                                            setData(
+                                                'arrival_mode',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder={t('ambulanceWalkIn')}
+                                        invalid={Boolean(errors.arrival_mode)}
                                     />
-                                    {errors.patient_id && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.patient_id}
-                                        </p>
-                                    )}
-                                </div>
+                                </Field>
 
-                                {/* Triage Level */}
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('triageLevel')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <ExclamationTriangleIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <select
-                                            value={data.triage_level}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'triage_level',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.triage_level ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        >
-                                            <option value="normal">
-                                                {t('normal')}
-                                            </option>
-                                            <option value="urgent">
-                                                {t('urgent')}
-                                            </option>
-                                            <option value="emergency">
-                                                {t('emergency')}
-                                            </option>
-                                        </select>
-                                    </div>
-                                    {errors.triage_level && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.triage_level}
-                                        </p>
-                                    )}
-                                </div>
+                                <Field
+                                    label={t('arrivalDateTime')}
+                                    htmlFor="arrived_at"
+                                    error={errors.arrived_at}
+                                >
+                                    <Input
+                                        id="arrived_at"
+                                        name="arrived_at"
+                                        type="datetime-local"
+                                        icon={CalendarDaysIcon}
+                                        value={data.arrived_at}
+                                        onChange={(e) =>
+                                            setData(
+                                                'arrived_at',
+                                                e.target.value,
+                                            )
+                                        }
+                                        invalid={Boolean(errors.arrived_at)}
+                                    />
+                                </Field>
 
-                                {/* Doctor ID */}
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('doctorId')}
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <UserIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <input
-                                            type="number"
-                                            value={data.attending_doctor_id}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'attending_doctor_id',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder={t('doctorId')}
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.attending_doctor_id ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        />
-                                    </div>
-                                    {errors.attending_doctor_id && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {
-                                                errors.attending_doctor_id
-                                            }
-                                        </p>
-                                    )}
-                                </div>
+                                <Field
+                                    label={t('doctorId')}
+                                    htmlFor="attending_doctor_id"
+                                    optional
+                                    error={errors.attending_doctor_id}
+                                >
+                                    <Input
+                                        id="attending_doctor_id"
+                                        name="attending_doctor_id"
+                                        type="number"
+                                        inputMode="numeric"
+                                        icon={UserIcon}
+                                        value={data.attending_doctor_id}
+                                        onChange={(e) =>
+                                            setData(
+                                                'attending_doctor_id',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder={t('doctorId')}
+                                        invalid={Boolean(
+                                            errors.attending_doctor_id,
+                                        )}
+                                    />
+                                </Field>
 
-                                {/* Triage Nurse ID */}
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('triageNurseId')}
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <UserIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <input
-                                            type="number"
-                                            value={data.triage_nurse_id}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'triage_nurse_id',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder={t('triageNurseId')}
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.triage_nurse_id ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        />
-                                    </div>
-                                    {errors.triage_nurse_id && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.triage_nurse_id}
-                                        </p>
-                                    )}
-                                </div>
+                                <Field
+                                    label={t('triageNurseId')}
+                                    htmlFor="triage_nurse_id"
+                                    optional
+                                    error={errors.triage_nurse_id}
+                                >
+                                    <Input
+                                        id="triage_nurse_id"
+                                        name="triage_nurse_id"
+                                        type="number"
+                                        inputMode="numeric"
+                                        icon={UserIcon}
+                                        value={data.triage_nurse_id}
+                                        onChange={(e) =>
+                                            setData(
+                                                'triage_nurse_id',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder={t('triageNurseId')}
+                                        invalid={Boolean(
+                                            errors.triage_nurse_id,
+                                        )}
+                                    />
+                                </Field>
 
-                                {/* Arrival Mode */}
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('arrivalMode')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <MapPinIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            value={data.arrival_mode}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'arrival_mode',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder={t('ambulanceWalkIn')}
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.arrival_mode ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        />
-                                    </div>
-                                    {errors.arrival_mode && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.arrival_mode}
-                                        </p>
-                                    )}
-                                </div>
+                                <Field
+                                    label={`${t('feeFcfa')} (FCFA)`}
+                                    htmlFor="emergency_fee"
+                                    optional
+                                    error={errors.emergency_fee}
+                                >
+                                    <Input
+                                        id="emergency_fee"
+                                        name="emergency_fee"
+                                        type="number"
+                                        inputMode="decimal"
+                                        step="0.01"
+                                        min="0"
+                                        icon={CurrencyDollarIcon}
+                                        value={data.emergency_fee}
+                                        onChange={(e) =>
+                                            setData(
+                                                'emergency_fee',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder={t('feeFcfa')}
+                                        className="tabular-nums"
+                                        invalid={Boolean(errors.emergency_fee)}
+                                    />
+                                </Field>
+                            </FieldSet>
 
-                                {/* Arrival Date/Time */}
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('arrivalDateTime')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <CalendarDaysIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <input
-                                            type="datetime-local"
-                                            value={data.arrived_at}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'arrived_at',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.arrived_at ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        />
-                                    </div>
-                                    {errors.arrived_at && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.arrived_at}
-                                        </p>
-                                    )}
-                                </div>
+                            <FieldSet columns={1}>
+                                <Field
+                                    label={t('chiefComplaint')}
+                                    htmlFor="chief_complaint"
+                                    required
+                                    error={errors.chief_complaint}
+                                >
+                                    <Input
+                                        id="chief_complaint"
+                                        name="chief_complaint"
+                                        icon={DocumentTextIcon}
+                                        value={data.chief_complaint}
+                                        onChange={(e) =>
+                                            setData(
+                                                'chief_complaint',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder={t('chiefComplaint')}
+                                        invalid={Boolean(
+                                            errors.chief_complaint,
+                                        )}
+                                    />
+                                </Field>
 
-                                {/* Chief Complaint */}
-                                <div className="md:col-span-2 space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('chiefComplaint')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            value={data.chief_complaint}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'chief_complaint',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder={t('chiefComplaint')}
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.chief_complaint ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        />
-                                    </div>
-                                    {errors.chief_complaint && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.chief_complaint}
-                                        </p>
-                                    )}
-                                </div>
+                                <Field
+                                    label={t('primaryAssessment')}
+                                    htmlFor="primary_assessment"
+                                    optional
+                                    error={errors.primary_assessment}
+                                >
+                                    <Textarea
+                                        id="primary_assessment"
+                                        name="primary_assessment"
+                                        rows={3}
+                                        value={data.primary_assessment}
+                                        onChange={(e) =>
+                                            setData(
+                                                'primary_assessment',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder={t('primaryAssessment')}
+                                        invalid={Boolean(
+                                            errors.primary_assessment,
+                                        )}
+                                    />
+                                </Field>
 
-                                {/* Primary Assessment */}
-                                <div className="md:col-span-2 space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('primaryAssessment')}
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute top-3 left-0 flex items-start pl-3">
-                                            <ClipboardDocumentListIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <textarea
-                                            value={data.primary_assessment}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'primary_assessment',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder={t(
-                                                'primaryAssessment',
-                                            )}
-                                            rows={3}
-                                            className={`w-full resize-none rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.primary_assessment ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        />
-                                    </div>
-                                    {errors.primary_assessment && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.primary_assessment}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Emergency Fee */}
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('feeFcfa')}
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <CurrencyDollarIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            value={data.emergency_fee}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'emergency_fee',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder={t('feeFcfa')}
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.emergency_fee ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        />
-                                    </div>
-                                    {errors.emergency_fee && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.emergency_fee}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
+                                <Field
+                                    label={t('treatmentNotes')}
+                                    htmlFor="treatment_notes"
+                                    optional
+                                    error={errors.treatment_notes}
+                                >
+                                    <Textarea
+                                        id="treatment_notes"
+                                        name="treatment_notes"
+                                        rows={2}
+                                        value={data.treatment_notes}
+                                        onChange={(e) =>
+                                            setData(
+                                                'treatment_notes',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder={t('treatmentNotes')}
+                                        invalid={Boolean(
+                                            errors.treatment_notes,
+                                        )}
+                                    />
+                                </Field>
+                            </FieldSet>
                         </div>
+                    </SectionCard>
 
-                        {/* Form Actions */}
-                        <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4 dark:border-neutral-700">
-                            <Link
-                                href={route('emergencies.index')}
-                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                            >
-                                {t('cancel')}
-                            </Link>
-
-                            <button
-                                type="submit"
-                                disabled={processing}
-                                className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {processing ? (
-                                    <span className="flex items-center gap-2">
-                                        <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                                        {t('registering')}...
-                                    </span>
-                                ) : (
-                                    <span className="flex items-center gap-2">
-                                        <CheckIcon className="h-4 w-4" />
-                                        {t('registerEmergency')}
-                                    </span>
-                                )}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <div className="flex flex-wrap items-center justify-end gap-2 border-t border-line pt-4">
+                        <Button
+                            variant="secondary"
+                            href={route('emergencies.index')}
+                        >
+                            {t('cancel')}
+                        </Button>
+                        <Button
+                            type="submit"
+                            icon={CheckIcon}
+                            loading={processing}
+                        >
+                            {processing
+                                ? t('registering')
+                                : t('registerEmergency')}
+                        </Button>
+                    </div>
+                </form>
             </div>
         </AppLayout>
     );

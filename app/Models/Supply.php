@@ -19,6 +19,13 @@ class Supply extends Model implements HasMedia
 
     protected $appends = ['image_url'];
 
+    /**
+     * The relationships that should always be loaded.
+     *
+     * @var array
+     */
+    protected $with = ['media'];
+
     protected function casts(): array
     {
         return [

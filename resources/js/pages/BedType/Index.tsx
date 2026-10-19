@@ -1,92 +1,80 @@
 import {
-    PlusIcon,
     PencilSquareIcon,
-    TrashIcon,
+    PlusIcon,
     TagIcon,
-    AdjustmentsHorizontalIcon,
-    MagnifyingGlassIcon,
+    TrashIcon,
 } from '@heroicons/react/24/outline';
-import { Head, useForm } from '@inertiajs/react';
-import React, { useState } from 'react';
-import EmptyState from '@/Components/EmptyState';
-import FormInput from '@/Components/FormInput';
-import Modal from '@/Components/Modal';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
-import PageSection from '@/Components/PageSection';
-import StatusBadge from '@/Components/StatusBadge';
+import { Head, router } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
+import {
+    Button,
+    EmptyState,
+    PageHeader,
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+    Toolbar,
+    ToolbarSearch,
+    ToolbarSpacer,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
+import { BedTypeFormDialog } from './components/BedTypeFormDialog';
+import type { BedType } from './components/BedTypeFormDialog';
 
 interface Props {
-    bedTypes: any[];
+    bedTypes: BedType[];
 }
 
 export default function BedTypeIndex({ bedTypes }: Props) {
     const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState('');
-    const [modalOpen, setModalOpen] = useState(false);
-    const [editingType, setEditingType] = useState<any>(null);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [editingType, setEditingType] = useState<BedType | null>(null);
 
-    const {
-        data,
-        setData,
-        post,
-        put,
-        delete: destroy,
-        processing,
-        errors,
-        reset,
-        clearErrors,
-    } = useForm({
-        name: '',
-        capacity: '',
-    });
+    const filteredTypes = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase();
 
-    const openCreateModal = () => {
+        if (!query) {
+            return bedTypes;
+        }
+
+        return bedTypes.filter((bedType) =>
+            bedType.name?.toLowerCase().includes(query),
+        );
+    }, [bedTypes, searchQuery]);
+
+    const openCreateDialog = () => {
         setEditingType(null);
-        reset();
-        clearErrors();
-        setModalOpen(true);
+        setDialogOpen(true);
     };
 
-    const openEditModal = (type: any) => {
-        setEditingType(type);
-        setData({
-            name: type.name || '',
-            capacity: type.capacity || '',
-        });
-        clearErrors();
-        setModalOpen(true);
+    const openEditDialog = (bedType: BedType) => {
+        setEditingType(bedType);
+        setDialogOpen(true);
     };
 
-    const closeModal = () => {
-        setModalOpen(false);
+    const closeDialog = () => {
+        setDialogOpen(false);
         setEditingType(null);
-        reset();
-        clearErrors();
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (editingType) {
-            put(route('bed-types.update', editingType.id), {
-                onSuccess: closeModal,
+    const handleDelete = (bedType: BedType) => {
+        if (
+            confirm(
+                t('page.bed_type.delete_confirm', {
+                    name: bedType.name ?? '',
+                }),
+            )
+        ) {
+            router.delete(route('bed-types.destroy', bedType.id), {
+                preserveScroll: true,
             });
-        } else {
-            post(route('bed-types.store'), { onSuccess: closeModal });
         }
     };
-
-    const handleDelete = (type: any) => {
-        if (confirm(t('page.bed_type.delete_confirm', { name: type.name }))) {
-            destroy(route('bed-types.destroy', type.id));
-        }
-    };
-
-    const filteredTypes = bedTypes.filter((t) =>
-        t.name?.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
 
     return (
         <AppLayout
@@ -94,167 +82,118 @@ export default function BedTypeIndex({ bedTypes }: Props) {
             headerSubtitle={t('page.bed_type.subtitle')}
         >
             <Head title={t('page.bed_type.head_title')} />
-            <div className="mx-auto max-w-7xl space-y-6">
-                <PageBreadcrumb
-                    items={[
-                        { label: t('common.home') },
+
+            <div className="mx-auto max-w-7xl space-y-5 px-4 pb-12 sm:px-6 lg:px-8">
+                <PageHeader
+                    eyebrow={t('page.bed_type.title')}
+                    title={t('page.bed_type.heading')}
+                    description={t('page.bed_type.subtitle')}
+                    breadcrumbs={[
+                        { label: t('common.home'), href: '/' },
                         { label: t('page.bed_type.head_title') },
                     ]}
+                    meta={
+                        <span className="tabular-nums">
+                            {bedTypes.length} definitions
+                        </span>
+                    }
+                    actions={
+                        <Button
+                            variant="primary"
+                            icon={PlusIcon}
+                            onClick={openCreateDialog}
+                        >
+                            {t('page.bed_type.add_type')}
+                        </Button>
+                    }
                 />
 
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-neutral-100">
-                        {t('page.bed_type.heading')}
-                    </h2>
-                    <div className="flex items-center gap-3">
-                        <FormInput
-                            name="search"
-                            icon={MagnifyingGlassIcon}
-                            placeholder={t('page.bed_type.search_placeholder')}
-                            value={searchQuery}
-                            onChange={setSearchQuery}
-                            className="w-48 sm:w-64"
-                        />
-                        <button className="rounded-lg border border-gray-200 bg-white p-2 text-gray-500 hover:text-gray-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200">
-                            <AdjustmentsHorizontalIcon className="h-5 w-5" />
-                        </button>
-                        <button
-                            onClick={openCreateModal}
-                            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
-                        >
-                            <PlusIcon className="h-4 w-4" />
-                            {t('page.bed_type.add_type')}
-                        </button>
-                    </div>
-                </div>
+                <Toolbar>
+                    <ToolbarSearch
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder={t('page.bed_type.search_placeholder')}
+                    />
+                    <ToolbarSpacer />
+                    <span className="text-[12px] text-ink-subtle tabular-nums">
+                        {filteredTypes.length} of {bedTypes.length} shown
+                    </span>
+                </Toolbar>
 
                 {filteredTypes.length === 0 ? (
-                    <div className="space-y-6">
-                        <EmptyState
-                            icon={TagIcon}
-                            title={t('page.bed_type.no_bed_types')}
-                        />
-                        <div className="text-center">
-                            <button
-                                onClick={openCreateModal}
-                                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
-                            >
-                                <PlusIcon className="h-4 w-4" />
-                                {t('page.bed_type.add_first_type')}
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <PageSection
-                        title={t('page.bed_type.head_title')}
+                    <EmptyState
                         icon={TagIcon}
-                    >
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead className="border-b border-gray-100 bg-gray-50/50 text-xs font-bold tracking-wider text-gray-500 uppercase dark:border-neutral-700 dark:bg-neutral-700/30 dark:text-neutral-400">
-                                    <tr>
-                                        <th className="px-6 py-4">
-                                            {t('page.bed_type.col_name')}
-                                        </th>
-                                        <th className="px-6 py-4">
-                                            {t('page.bed_type.col_capacity')}
-                                        </th>
-                                        <th className="px-6 py-4 text-right">
-                                            {t('common.actions')}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 text-sm dark:divide-neutral-700">
-                                    {filteredTypes.map((type) => (
-                                        <tr
-                                            key={type.id}
-                                            className="group transition-colors hover:bg-gray-50 dark:hover:bg-neutral-700/30"
-                                        >
-                                            <td className="px-6 py-4 font-semibold text-gray-900 dark:text-neutral-100">
-                                                {type.name}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <StatusBadge
-                                                    label={`${type.capacity} ${t('page.bed_type.patients')}`}
-                                                    color="blue"
-                                                />
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button
-                                                    onClick={() =>
-                                                        openEditModal(type)
-                                                    }
-                                                    className="rounded-md border border-gray-200 bg-white p-1.5 shadow-sm hover:text-blue-600 dark:border-neutral-600 dark:bg-neutral-700 dark:hover:text-blue-400"
-                                                >
-                                                    <PencilSquareIcon className="h-3.5 w-3.5" />
-                                                </button>
-                                                <button
-                                                    onClick={() =>
-                                                        handleDelete(type)
-                                                    }
-                                                    className="ml-1 rounded-md border border-gray-200 bg-white p-1.5 shadow-sm hover:text-red-600 dark:border-neutral-600 dark:bg-neutral-700 dark:hover:text-red-400"
-                                                >
-                                                    <TrashIcon className="h-3.5 w-3.5" />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </PageSection>
+                        title={t('page.bed_type.no_bed_types')}
+                        action={
+                            <Button icon={PlusIcon} onClick={openCreateDialog}>
+                                {t('page.bed_type.add_first_type')}
+                            </Button>
+                        }
+                    />
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHeaderCell>
+                                    {t('page.bed_type.col_name')}
+                                </TableHeaderCell>
+                                <TableHeaderCell numeric>
+                                    {t('page.bed_type.col_capacity')}
+                                </TableHeaderCell>
+                                <TableHeaderCell numeric>
+                                    {t('common.actions')}
+                                </TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredTypes.map((bedType) => (
+                                <TableRow key={bedType.id}>
+                                    <TableCell className="font-medium">
+                                        {bedType.name}
+                                    </TableCell>
+                                    <TableCell numeric>
+                                        {bedType.capacity}
+                                        <span className="ml-1 text-[11px] font-medium text-ink-subtle">
+                                            {t('page.bed_type.patients')}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell numeric>
+                                        <div className="flex items-center justify-end gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                icon={PencilSquareIcon}
+                                                aria-label={`${t('common.edit')} ${bedType.name ?? ''}`}
+                                                onClick={() =>
+                                                    openEditDialog(bedType)
+                                                }
+                                                className="h-8 w-8"
+                                            />
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                icon={TrashIcon}
+                                                aria-label={`${t('common.delete')} ${bedType.name ?? ''}`}
+                                                onClick={() =>
+                                                    handleDelete(bedType)
+                                                }
+                                                className="h-8 w-8 text-critical-ink hover:bg-critical-soft hover:text-critical-ink"
+                                            />
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 )}
             </div>
 
-            <Modal
-                isOpen={modalOpen}
-                onClose={closeModal}
-                title={
-                    editingType
-                        ? t('page.bed_type.edit_type')
-                        : t('page.bed_type.add_type')
-                }
-            >
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    <FormInput
-                        name="name"
-                        label={t('page.bed_type.bed_type_name')}
-                        value={data.name}
-                        onChange={(val) => setData('name', val)}
-                        errors={errors}
-                        placeholder="e.g. ICU, General, Private"
-                        required
-                    />
-                    <FormInput
-                        name="capacity"
-                        label={t('page.bed_type.patient_capacity')}
-                        type="number"
-                        value={data.capacity}
-                        onChange={(val) => setData('capacity', val)}
-                        errors={errors}
-                        min="1"
-                        required
-                    />
-                    <div className="flex gap-4 pt-2">
-                        <button
-                            type="button"
-                            onClick={closeModal}
-                            className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-bold text-gray-500 dark:border-neutral-700 dark:bg-neutral-800"
-                        >
-                            {t('common.cancel')}
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className="flex-[2] rounded-xl bg-blue-600 py-3 font-bold text-white hover:bg-blue-700 disabled:opacity-50"
-                        >
-                            {processing
-                                ? t('page.bed_type.saving')
-                                : t('common.save_changes')}
-                        </button>
-                    </div>
-                </form>
-            </Modal>
+            <BedTypeFormDialog
+                key={editingType?.id ?? 'new'}
+                open={dialogOpen}
+                bedType={editingType}
+                onClose={closeDialog}
+            />
         </AppLayout>
     );
 }

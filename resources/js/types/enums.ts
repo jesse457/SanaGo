@@ -121,6 +121,71 @@ export const EmergencyStatus = {
 export type EmergencyStatusEnum =
     (typeof EmergencyStatus)[keyof typeof EmergencyStatus];
 
+export const CertificateType = {
+    SICK_LEAVE: 'sick_leave',
+    MEDICAL_FITNESS: 'medical_fitness',
+    DEATH: 'death',
+} as const;
+export type CertificateTypeEnum =
+    (typeof CertificateType)[keyof typeof CertificateType];
+
+export const CertificateStatus = {
+    ISSUED: 'issued',
+    CANCELLED: 'cancelled',
+    VOIDED: 'voided',
+} as const;
+export type CertificateStatusEnum =
+    (typeof CertificateStatus)[keyof typeof CertificateStatus];
+
+export const PayerType = {
+    GOVERNMENT: 'government',
+    INSURANCE: 'insurance',
+    MUTUAL: 'mutual',
+    EMPLOYER: 'employer',
+} as const;
+export type PayerTypeEnum = (typeof PayerType)[keyof typeof PayerType];
+
+export const ClaimStatus = {
+    DRAFT: 'draft',
+    SUBMITTED: 'submitted',
+    APPROVED: 'approved',
+    REJECTED: 'rejected',
+    PAID: 'paid',
+} as const;
+export type ClaimStatusEnum = (typeof ClaimStatus)[keyof typeof ClaimStatus];
+
+export const CashShiftStatus = {
+    OPEN: 'open',
+    CLOSED: 'closed',
+} as const;
+export type CashShiftStatusEnum =
+    (typeof CashShiftStatus)[keyof typeof CashShiftStatus];
+
+export const PaymentMethod = {
+    CASH: 'cash',
+    MOBILE_MONEY: 'mobile_money',
+    BANK_TRANSFER: 'bank_transfer',
+} as const;
+export type PaymentMethodEnum =
+    (typeof PaymentMethod)[keyof typeof PaymentMethod];
+
+export const RadiologyStatus = {
+    PENDING: 'pending',
+    IN_PROGRESS: 'in_progress',
+    COMPLETED: 'completed',
+    VALIDATED: 'validated',
+} as const;
+export type RadiologyStatusEnum =
+    (typeof RadiologyStatus)[keyof typeof RadiologyStatus];
+
+export const BeneficiaryType = {
+    TITULAIRE: 'titulaire',
+    CONJOINT: 'conjoint',
+    ENFANT: 'enfant',
+} as const;
+export type BeneficiaryTypeEnum =
+    (typeof BeneficiaryType)[keyof typeof BeneficiaryType];
+
 export const ExpenditureCategory = {
     SALARIES: 'salaries',
     SUPPLIES: 'supplies',

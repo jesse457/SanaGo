@@ -1,21 +1,28 @@
 import {
-    ArrowLeftIcon,
-    PencilSquareIcon,
-    UserIcon,
-    MapPinIcon,
-    DocumentTextIcon,
+    ArrowPathIcon,
     ClipboardDocumentListIcon,
     CurrencyDollarIcon,
-    ArrowPathIcon,
+    DocumentTextIcon,
+    HeartIcon,
+    MapPinIcon,
+    PencilSquareIcon,
+    UserIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link } from '@inertiajs/react';
-import React from 'react';
-import DetailItem from '@/Components/DetailItem';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
-import PageSection from '@/Components/PageSection';
-import StatusBadge from '@/Components/StatusBadge';
+import { Head } from '@inertiajs/react';
+import {
+    Alert,
+    Button,
+    KeyValue,
+    KeyValueGrid,
+    PageHeader,
+    SectionCard,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
+import {
+    CaseStatusBadge,
+    TriageBadge,
+} from '@/pages/Emergencies/components/TriageBadges';
 
 interface Emergency {
     id: number;
@@ -42,179 +49,142 @@ interface Props {
     emergency: Emergency;
 }
 
-const getTriageColor = (
-    level: string,
-): 'red' | 'amber' | 'emerald' | 'blue' => {
-    const colors = {
-        emergency: 'red' as const,
-        urgent: 'amber' as const,
-        non_urgent: 'emerald' as const,
-    };
-
-    return colors[level.toLowerCase() as keyof typeof colors] || 'blue';
-};
-
-const getStatusColor = (
-    status: string,
-): 'red' | 'amber' | 'emerald' | 'blue' => {
-    const colors = {
-        active: 'red' as const,
-        stabilized: 'amber' as const,
-        discharged: 'emerald' as const,
-        triage: 'blue' as const,
-    };
-
-    return colors[status.toLowerCase() as keyof typeof colors] || 'blue';
-};
-
 export default function EmergencyShow({ emergency }: Props) {
     const { t } = useTranslation();
 
+    const patientName = `${emergency.patient?.first_name || ''} ${
+        emergency.patient?.last_name || ''
+    }`.trim();
+
+    const title = `${t('emergency')} #${emergency.id}`;
+
     return (
-        <AppLayout
-            headerTitle={`${t('emergency')} #${emergency.id}`}
-            headerSubtitle={t('caseDetails')}
-        >
-            <Head title={`${t('emergency')} #${emergency.id}`} />
+        <AppLayout headerTitle={title} headerSubtitle={t('caseDetails')}>
+            <Head title={title} />
             <div className="mx-auto max-w-6xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
-                <PageBreadcrumb
-                    items={[
-                        { label: t('home'), href: route('dashboard') },
+                <PageHeader
+                    icon={HeartIcon}
+                    eyebrow={t('emergencies')}
+                    title={title}
+                    description={t('caseDetails')}
+                    breadcrumbs={[
+                        { label: t('common.home'), href: route('dashboard') },
                         {
                             label: t('emergencies'),
                             href: route('emergencies.index'),
                         },
-                        { label: `${t('emergency')} #${emergency.id}` },
+                        { label: title },
                     ]}
+                    meta={
+                        <>
+                            <TriageBadge
+                                level={emergency.triage_level}
+                                label={t(emergency.triage_level)}
+                            />
+                            <CaseStatusBadge
+                                status={emergency.status}
+                                label={t(emergency.status)}
+                            />
+                            {patientName && (
+                                <span className="font-medium text-ink-muted">
+                                    {patientName}
+                                </span>
+                            )}
+                        </>
+                    }
+                    actions={
+                        <>
+                            <Button
+                                variant="secondary"
+                                icon={ArrowPathIcon}
+                                href={route('emergencies.index')}
+                            >
+                                {t('back')}
+                            </Button>
+                            <Button
+                                icon={PencilSquareIcon}
+                                href={route('emergencies.edit', emergency.id)}
+                            >
+                                {t('edit')}
+                            </Button>
+                        </>
+                    }
                 />
 
-                <div className="flex items-center gap-4">
-                    <Link
-                        href={route('emergencies.index')}
-                        className="flex items-center gap-2 text-sm text-gray-500 transition-colors hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
-                    >
-                        <ArrowLeftIcon className="h-4 w-4" />
-                        {t('back')}
-                    </Link>
-                    <Link
-                        href={route('emergencies.edit', emergency.id)}
-                        className="ml-auto flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-blue-700"
-                    >
-                        <PencilSquareIcon className="h-4 w-4" />
-                        {t('edit')}
-                    </Link>
-                </div>
+                <SectionCard
+                    icon={ClipboardDocumentListIcon}
+                    title={t('caseDetails')}
+                >
+                    <KeyValueGrid columns={2}>
+                        <KeyValue
+                            icon={UserIcon}
+                            label={t('patient')}
+                            value={patientName}
+                        />
+                        <KeyValue
+                            icon={MapPinIcon}
+                            label={t('arrivalMode')}
+                            value={emergency.arrival_mode || t('na')}
+                        />
+                        <KeyValue
+                            icon={UserIcon}
+                            label={t('doctor')}
+                            value={
+                                emergency.attending_doctor?.name ||
+                                t('unassigned')
+                            }
+                        />
+                        <KeyValue
+                            icon={UserIcon}
+                            label={t('triageNurse')}
+                            value={
+                                emergency.triage_nurse?.name || t('unassigned')
+                            }
+                        />
+                    </KeyValueGrid>
 
-                <PageSection>
-                    <div className="space-y-6 p-6">
-                        {/* Badges */}
-                        <div className="flex items-center gap-3">
-                            <StatusBadge
-                                label={emergency.triage_level}
-                                color={getTriageColor(emergency.triage_level)}
-                            />
-                            <StatusBadge
-                                label={emergency.status}
-                                color={getStatusColor(emergency.status)}
-                            />
-                        </div>
-
-                        {/* Core Details */}
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <DetailItem
-                                icon={UserIcon}
-                                label={t('patient')}
-                                value={`${emergency.patient?.first_name || ''} ${emergency.patient?.last_name || ''}`}
-                            />
-                            <DetailItem
-                                icon={MapPinIcon}
-                                label={t('arrivalMode')}
-                                value={emergency.arrival_mode || t('na')}
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4">
-                            <DetailItem
-                                icon={DocumentTextIcon}
-                                label={t('chiefComplaint')}
-                                value={emergency.chief_complaint}
-                            />
-                        </div>
-
+                    <div className="mt-4 space-y-3">
+                        <KeyValue
+                            icon={DocumentTextIcon}
+                            label={t('chiefComplaint')}
+                            value={emergency.chief_complaint}
+                        />
                         {emergency.primary_assessment && (
-                            <div className="grid grid-cols-1 gap-4">
-                                <DetailItem
-                                    icon={ClipboardDocumentListIcon}
-                                    label={t('assessment')}
-                                    value={emergency.primary_assessment}
-                                />
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <DetailItem
-                                icon={UserIcon}
-                                label={t('doctor')}
-                                value={
-                                    emergency.attending_doctor?.name ||
-                                    t('unassigned')
-                                }
+                            <KeyValue
+                                icon={ClipboardDocumentListIcon}
+                                label={t('assessment')}
+                                value={emergency.primary_assessment}
                             />
-                            <DetailItem
-                                icon={UserIcon}
-                                label={t('triageNurse')}
-                                value={
-                                    emergency.triage_nurse?.name ||
-                                    t('unassigned')
-                                }
-                            />
-                        </div>
-
-                        {/* Treatment Notes - clinically significant, blue accent */}
-                        {emergency.treatment_notes && (
-                            <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/10">
-                                <div className="flex items-center gap-2">
-                                    <DocumentTextIcon className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-                                    <span className="text-[10px] font-bold text-blue-500 uppercase dark:text-blue-400">
-                                        {t('treatmentNotes')}
-                                    </span>
-                                </div>
-                                <p className="mt-1 ml-6 text-sm font-bold text-blue-700 dark:text-blue-400">
-                                    {emergency.treatment_notes}
-                                </p>
-                            </div>
                         )}
+                    </div>
 
-                        {/* Discharge Instructions - clinically significant, green accent */}
-                        {emergency.discharge_instructions && (
-                            <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-900/10">
-                                <div className="flex items-center gap-2">
-                                    <DocumentTextIcon className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
-                                    <span className="text-[10px] font-bold text-emerald-500 uppercase dark:text-emerald-400">
-                                        {t('dischargeInstructions')}
-                                    </span>
-                                </div>
-                                <p className="mt-1 ml-6 text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                                    {emergency.discharge_instructions}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Financial & Disposition */}
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <DetailItem
+                    <div className="mt-4">
+                        <KeyValueGrid columns={2}>
+                            <KeyValue
                                 icon={CurrencyDollarIcon}
                                 label={t('fee')}
                                 value={`${emergency.emergency_fee.toLocaleString()} FCFA`}
                             />
-                            <DetailItem
+                            <KeyValue
                                 icon={ArrowPathIcon}
                                 label={t('disposition')}
                                 value={emergency.disposition || t('pending')}
                             />
-                        </div>
+                        </KeyValueGrid>
                     </div>
-                </PageSection>
+                </SectionCard>
+
+                {emergency.treatment_notes && (
+                    <Alert tone="info" title={t('treatmentNotes')}>
+                        {emergency.treatment_notes}
+                    </Alert>
+                )}
+
+                {emergency.discharge_instructions && (
+                    <Alert tone="positive" title={t('dischargeInstructions')}>
+                        {emergency.discharge_instructions}
+                    </Alert>
+                )}
             </div>
         </AppLayout>
     );

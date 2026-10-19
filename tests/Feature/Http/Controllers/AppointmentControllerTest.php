@@ -2,10 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain;
+use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 use function Tests\Helpers\migrateTenantTables;
 
@@ -13,11 +17,11 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     migrateTenantTables();
-    $this->seed(\Database\Seeders\RoleSeeder::class);
+    $this->seed(RoleSeeder::class);
     $this->admin = tap(User::factory()->create())->assignRole('admin');
     $this->withoutMiddleware([
-        \Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain::class,
-        \Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains::class,
+        InitializeTenancyBySubdomain::class,
+        PreventAccessFromCentralDomains::class,
     ]);
 });
 
@@ -59,7 +63,7 @@ it('updates an appointment', function () {
         'status' => 'completed',
         'reason_for_visit' => 'Follow-up',
     ])->assertRedirect();
-    expect(Appointment::find($appointment->id)->status)->toBe(\App\Enums\AppointmentStatus::COMPLETED);
+    expect(Appointment::find($appointment->id)->status)->toBe(AppointmentStatus::COMPLETED);
 });
 
 // Note: AppointmentController has no destroy method — deletions may be handled via status changes

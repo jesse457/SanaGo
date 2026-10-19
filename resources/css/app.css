@@ -5,41 +5,494 @@
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
+/*
+|--------------------------------------------------------------------------
+| SanaGo design tokens
+|--------------------------------------------------------------------------
+|
+| Premium utilitarian minimalism for a dense clinical workspace:
+| a warm monochrome canvas, hairline structure, one desaturated accent,
+| crisp radii and motion that is felt rather than seen.
+|
+| Two layers live here:
+|
+| 1. `@theme` — remaps the stock Tailwind ramps. The neutral families
+|    (gray / neutral / slate / zinc / stone) collapse into a single warm
+|    ramp and `blue` becomes the one accented color family. Pages written
+|    before this token layer instantly inherit the new palette.
+|
+| 2. `@theme inline` — semantic tokens (canvas, surface, ink, line, accent…)
+|    that resolve to runtime CSS variables so a single class works in both
+|    light and dark mode, removing the need for `dark:` literals.
+|
+*/
+
 @theme {
+    /* ---- Typography ---- */
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        'Instrument Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+        sans-serif;
+    --font-display:
+        'Instrument Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+        sans-serif;
+    --font-mono:
+        'Geist Mono', 'JetBrains Mono', 'SF Mono', ui-monospace, SFMono-Regular,
+        Menlo, monospace;
 
-    /* VS Code dark theme colors */
-    --color-vscode-bg: #1e1e1e;
-    --color-vscode-sidebar: #252526;
-    --color-vscode-border: #3c3c3c;
-    --color-vscode-hover: #2a2d2e;
-    --color-vscode-active: #37373d;
-    --color-vscode-accent: #007acc;
-    --color-vscode-text: #cccccc;
-    --color-vscode-text-muted: #8b949e;
+    /* ---- Radii: crisp, never pill-shaped for panels ---- */
+    --radius-xs: 3px;
+    --radius-sm: 5px;
+    --radius-md: 7px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+    --radius-2xl: 16px;
+    --radius-3xl: 20px;
+
+    /* ---- Motion: mass and spring, never linear ---- */
+    --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+    --ease-swift: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+    /* ---- Neutral ramp: one warm family, shared by every "gray" ---- */
+    --color-gray-50: #fafaf8;
+    --color-gray-100: #f4f4f1;
+    --color-gray-200: #e8e7e2;
+    --color-gray-300: #d6d4cd;
+    --color-gray-400: #a8a69e;
+    --color-gray-500: #7f7d75;
+    --color-gray-600: #62615a;
+    --color-gray-700: #4b4a45;
+    --color-gray-800: #333230;
+    --color-gray-900: #23221f;
+    --color-gray-950: #14140f;
+
+    --color-neutral-50: #fafaf8;
+    --color-neutral-100: #f4f4f1;
+    --color-neutral-200: #e8e7e2;
+    --color-neutral-300: #d6d4cd;
+    --color-neutral-400: #a8a69e;
+    --color-neutral-500: #7f7d75;
+    --color-neutral-600: #62615a;
+    --color-neutral-700: #4b4a45;
+    --color-neutral-800: #333230;
+    --color-neutral-900: #23221f;
+    --color-neutral-950: #14140f;
+
+    --color-slate-50: #fafaf8;
+    --color-slate-100: #f4f4f1;
+    --color-slate-200: #e8e7e2;
+    --color-slate-300: #d6d4cd;
+    --color-slate-400: #a8a69e;
+    --color-slate-500: #7f7d75;
+    --color-slate-600: #62615a;
+    --color-slate-700: #4b4a45;
+    --color-slate-800: #333230;
+    --color-slate-900: #23221f;
+    --color-slate-950: #14140f;
+
+    --color-zinc-50: #fafaf8;
+    --color-zinc-100: #f4f4f1;
+    --color-zinc-200: #e8e7e2;
+    --color-zinc-300: #d6d4cd;
+    --color-zinc-400: #a8a69e;
+    --color-zinc-500: #7f7d75;
+    --color-zinc-600: #62615a;
+    --color-zinc-700: #4b4a45;
+    --color-zinc-800: #333230;
+    --color-zinc-900: #23221f;
+    --color-zinc-950: #14140f;
+
+    --color-stone-50: #fafaf8;
+    --color-stone-100: #f4f4f1;
+    --color-stone-200: #e8e7e2;
+    --color-stone-300: #d6d4cd;
+    --color-stone-400: #a8a69e;
+    --color-stone-500: #7f7d75;
+    --color-stone-600: #62615a;
+    --color-stone-700: #4b4a45;
+    --color-stone-800: #333230;
+    --color-stone-900: #23221f;
+    --color-stone-950: #14140f;
+
+    /* ---- Accent: desaturated clinical blue, the only accent ---- */
+    --color-blue-50: #eef4f8;
+    --color-blue-100: #dde9f1;
+    --color-blue-200: #c2d7e5;
+    --color-blue-300: #9bbbd0;
+    --color-blue-400: #6e9ab5;
+    --color-blue-500: #4a7c99;
+    --color-blue-600: #2e6280;
+    --color-blue-700: #27546d;
+    --color-blue-800: #22475c;
+    --color-blue-900: #1f3c4d;
+    --color-blue-950: #14262f;
+
+    /* ---- Status hues: kept semantic, pulled back from neon ---- */
+    --color-emerald-50: #edf3ec;
+    --color-emerald-100: #ddeade;
+    --color-emerald-200: #c3dbc7;
+    --color-emerald-300: #9dc3a5;
+    --color-emerald-400: #6fa47c;
+    --color-emerald-500: #4c8759;
+    --color-emerald-600: #3a6b45;
+    --color-emerald-700: #2f5639;
+    --color-emerald-800: #294630;
+    --color-emerald-900: #223a28;
+    --color-emerald-950: #101f15;
+
+    --color-amber-50: #fbf3db;
+    --color-amber-100: #f7ebc6;
+    --color-amber-200: #ecd79b;
+    --color-amber-300: #ddbc6b;
+    --color-amber-400: #c99f42;
+    --color-amber-500: #ab8127;
+    --color-amber-600: #8a6414;
+    --color-amber-700: #6f4f14;
+    --color-amber-800: #5b4118;
+    --color-amber-900: #4a3616;
+    --color-amber-950: #2a1e0a;
+
+    --color-red-50: #fdebec;
+    --color-red-100: #fad9db;
+    --color-red-200: #f3babc;
+    --color-red-300: #e58f93;
+    --color-red-400: #d16a6f;
+    --color-red-500: #b34e53;
+    --color-red-600: #9f2f2d;
+    --color-red-700: #84292a;
+    --color-red-800: #6e2627;
+    --color-red-900: #5c2424;
+    --color-red-950: #330f0f;
+
+    --color-rose-50: #fdf0f1;
+    --color-rose-100: #fadfe2;
+    --color-rose-200: #f3c4c9;
+    --color-rose-300: #e59ba4;
+    --color-rose-400: #d1717d;
+    --color-rose-500: #b25460;
+    --color-rose-600: #9a3c49;
+    --color-rose-700: #81323d;
+    --color-rose-800: #6b2c35;
+    --color-rose-900: #5a282f;
+    --color-rose-950: #311015;
+
+    /* ---- Elevation: diffused, tinted with the canvas hue ---- */
+    --shadow-surface: var(--sg-shadow-surface);
+    --shadow-raised: var(--sg-shadow-raised);
+    --shadow-float: var(--sg-shadow-float);
+    --shadow-accent: 0 1px 2px rgb(46 98 128 / 0.16);
+
+    /* ---- z-index scale: systemic layers only ---- */
+    --z-index-base: 0;
+    --z-index-sticky: 20;
+    --z-index-nav: 30;
+    --z-index-overlay: 40;
+    --z-index-modal: 50;
+    --z-index-toast: 60;
 }
 
-/* Base dark mode overrides for VS Code look */
-.dark body {
-    background-color: #1e1e1e;
-    color: #cccccc;
+/*
+|--------------------------------------------------------------------------
+| Semantic tokens (runtime)
+|--------------------------------------------------------------------------
+| `@theme inline` keeps the utilities pointing at the CSS variable instead of
+| baking a literal color, so `bg-surface` / `text-ink` flip with `.dark`.
+|
+*/
+@theme inline {
+    --color-canvas: var(--sg-canvas);
+    --color-canvas-sunken: var(--sg-canvas-sunken);
+    --color-surface: var(--sg-surface);
+    --color-surface-muted: var(--sg-surface-muted);
+    --color-surface-inset: var(--sg-surface-inset);
+    --color-surface-hover: var(--sg-surface-hover);
+    --color-line: var(--sg-line);
+    --color-line-strong: var(--sg-line-strong);
+    --color-ink: var(--sg-ink);
+    --color-ink-muted: var(--sg-ink-muted);
+    --color-ink-subtle: var(--sg-ink-subtle);
+    --color-ink-inverse: var(--sg-ink-inverse);
+    --color-accent: var(--sg-accent);
+    --color-accent-hover: var(--sg-accent-hover);
+    --color-accent-soft: var(--sg-accent-soft);
+    --color-accent-ink: var(--sg-accent-ink);
+    --color-positive: var(--sg-positive);
+    --color-positive-soft: var(--sg-positive-soft);
+    --color-positive-ink: var(--sg-positive-ink);
+    --color-warning: var(--sg-warning);
+    --color-warning-soft: var(--sg-warning-soft);
+    --color-warning-ink: var(--sg-warning-ink);
+    --color-critical: var(--sg-critical);
+    --color-critical-soft: var(--sg-critical-soft);
+    --color-critical-ink: var(--sg-critical-ink);
+    --color-info-soft: var(--sg-info-soft);
+    --color-info-ink: var(--sg-info-ink);
 }
 
-/* Scrollbar styling for VS Code look */
-.dark ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+:root {
+    --sg-canvas: #fbfbfa;
+    --sg-canvas-sunken: #f2f2ef;
+    --sg-surface: #ffffff;
+    --sg-surface-muted: #f7f7f4;
+    --sg-surface-inset: #efeeea;
+    --sg-surface-hover: #f4f4f1;
+    --sg-line: #e7e6e1;
+    --sg-line-strong: #d8d6d0;
+    --sg-ink: #191a18;
+    --sg-ink-muted: #6b6c67;
+    --sg-ink-subtle: #8b8c85;
+    --sg-ink-inverse: #fbfbfa;
+    --sg-accent: #2e6280;
+    --sg-accent-hover: #27546d;
+    --sg-accent-soft: #eef4f8;
+    --sg-accent-ink: #2e6280;
+    --sg-positive: #3a6b45;
+    --sg-positive-soft: #edf3ec;
+    --sg-positive-ink: #346538;
+    --sg-warning: #8a6414;
+    --sg-warning-soft: #fbf3db;
+    --sg-warning-ink: #8a5c00;
+    --sg-critical: #9f2f2d;
+    --sg-critical-soft: #fdebec;
+    --sg-critical-ink: #9f2f2d;
+    --sg-info-soft: #eef4f8;
+    --sg-info-ink: #2e6280;
+    --sg-shadow-surface:
+        0 1px 2px rgb(25 26 24 / 0.04), 0 10px 24px -18px rgb(25 26 24 / 0.16);
+    --sg-shadow-raised:
+        0 1px 2px rgb(25 26 24 / 0.05), 0 16px 36px -22px rgb(25 26 24 / 0.2);
+    --sg-shadow-float:
+        0 2px 6px rgb(25 26 24 / 0.05), 0 32px 64px -28px rgb(25 26 24 / 0.24);
 }
-.dark ::-webkit-scrollbar-track {
-    background: #1e1e1e;
+
+.dark {
+    --sg-canvas: #121211;
+    --sg-canvas-sunken: #0c0c0b;
+    --sg-surface: #191918;
+    --sg-surface-muted: #1e1e1c;
+    --sg-surface-inset: #242422;
+    --sg-surface-hover: #222220;
+    --sg-line: #2e2e2b;
+    --sg-line-strong: #3d3d39;
+    --sg-ink: #edece7;
+    --sg-ink-muted: #a3a199;
+    --sg-ink-subtle: #7c7d75;
+    --sg-ink-inverse: #14140f;
+    --sg-accent: #7fa8c2;
+    --sg-accent-hover: #9bbfd6;
+    --sg-accent-soft: #16262f;
+    --sg-accent-ink: #9dbfd4;
+    --sg-positive: #8fc49b;
+    --sg-positive-soft: #17251b;
+    --sg-positive-ink: #8fc49b;
+    --sg-warning: #e0be72;
+    --sg-warning-soft: #2b2617;
+    --sg-warning-ink: #e0be72;
+    --sg-critical: #e79b98;
+    --sg-critical-soft: #2e1b1c;
+    --sg-critical-ink: #e79b98;
+    --sg-info-soft: #16262f;
+    --sg-info-ink: #9dbfd4;
+    --sg-shadow-surface: 0 1px 0 rgb(255 255 255 / 0.03);
+    --sg-shadow-raised: 0 1px 0 rgb(255 255 255 / 0.04);
+    --sg-shadow-float: 0 24px 64px -32px rgb(0 0 0 / 0.8);
 }
-.dark ::-webkit-scrollbar-thumb {
-    background: #424242;
-    border-radius: 5px;
+
+@layer base {
+    *,
+    ::before,
+    ::after {
+        border-color: var(--sg-line);
+    }
+
+    html {
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        background-color: var(--sg-canvas);
+        color: var(--sg-ink);
+        font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss01';
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Film grain: fixed, non-interactive, one layer for the whole app. */
+    body::after {
+        position: fixed;
+        inset: 0;
+        z-index: 70;
+        pointer-events: none;
+        content: '';
+        opacity: 0.022;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .dark body::after {
+        opacity: 0.03;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+        font-family: var(--font-display);
+        color: var(--sg-ink);
+        text-wrap: balance;
+        letter-spacing: -0.021em;
+    }
+
+    p {
+        text-wrap: pretty;
+    }
+
+    /* Numbers in dense clinical tables must line up. */
+    table,
+    [data-numeric] {
+        font-variant-numeric: tabular-nums;
+    }
+
+    ::selection {
+        background-color: var(--sg-accent-soft);
+        color: var(--sg-accent-ink);
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--sg-accent);
+        outline-offset: 2px;
+    }
+
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--sg-line-strong) transparent;
+    }
+
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background-color: var(--sg-line-strong);
+        border: 3px solid transparent;
+        border-radius: 9999px;
+        background-clip: content-box;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background-color: var(--sg-ink-subtle);
+    }
 }
-.dark ::-webkit-scrollbar-thumb:hover {
-    background: #4f4f4f;
+
+@layer utilities {
+    /* Scroll-entry reveal: transform + opacity only. */
+    @keyframes sg-fade-up {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes sg-fade-in {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes sg-sheen {
+        from {
+            transform: translateX(-100%);
+        }
+        to {
+            transform: translateX(100%);
+        }
+    }
+
+    .animate-fade-up {
+        animation: sg-fade-up 620ms var(--ease-premium) both;
+    }
+
+    .animate-fade-in {
+        animation: sg-fade-in 480ms var(--ease-premium) both;
+    }
+
+    /* Staggered lists: set `--i` on children. */
+    .stagger > * {
+        animation: sg-fade-up 560ms var(--ease-premium) both;
+        animation-delay: calc(var(--i, 0) * 55ms);
+    }
+
+    .skeleton {
+        position: relative;
+        overflow: hidden;
+        background-color: var(--sg-surface-inset);
+    }
+
+    .skeleton::after {
+        position: absolute;
+        inset: 0;
+        content: '';
+        background-image: linear-gradient(
+            90deg,
+            transparent,
+            rgb(255 255 255 / 0.45),
+            transparent
+        );
+        animation: sg-sheen 1.6s var(--ease-swift) infinite;
+    }
+
+    .dark .skeleton::after {
+        background-image: linear-gradient(
+            90deg,
+            transparent,
+            rgb(255 255 255 / 0.06),
+            transparent
+        );
+    }
+
+    /* Sticky chrome is the only place blur is allowed. */
+    .chrome-blur {
+        background-color: color-mix(in srgb, var(--sg-canvas) 82%, transparent);
+        backdrop-filter: blur(14px) saturate(140%);
+    }
+
+    .no-scrollbar {
+        scrollbar-width: none;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .text-balance {
+        text-wrap: balance;
+    }
+
+    .text-pretty {
+        text-wrap: pretty;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }

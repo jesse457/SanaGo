@@ -8,17 +8,26 @@ import {
     CheckBadgeIcon,
     ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useState, useMemo } from 'react';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 import EmptyState from '@/Components/EmptyState';
 import FormInput from '@/Components/FormInput';
 import FormSelect from '@/Components/FormSelect';
 import Modal from '@/Components/Modal';
 import PageBreadcrumb from '@/Components/PageBreadcrumb';
+import { Pagination } from '@/Components/Pagination'; // Make sure path matches your file structure
 import StatCard from '@/Components/StatCard';
 import StatusBadge from '@/Components/StatusBadge';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 
@@ -48,10 +57,30 @@ interface Role {
     name: string;
 }
 
+interface PaginatedUsers {
+    data: User[];
+    links: {
+        url: string | null;
+        label: string;
+        active: boolean;
+    }[];
+    from: number;
+    to: number;
+    total: number;
+}
+
 interface Props {
-    users: User[];
+    users: PaginatedUsers;
     departments: { id: number; name: string }[];
     roles: Role[];
+    stats: {
+        total: number;
+        active: number;
+    };
+    filters?: {
+        search?: string;
+        role?: string;
+    };
 }
 
 const roleBadgeColor = (roleName?: string): string => {
@@ -78,13 +107,22 @@ const roleBadgeColor = (roleName?: string): string => {
     return 'gray';
 };
 
-export default function UserManagement({ users, departments, roles }: Props) {
+export default function UserManagement({
+    users,
+    departments,
+    roles,
+    stats,
+    filters,
+}: Props) {
     const { t } = useTranslation();
-    const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState('all');
+    const [searchQuery, setSearchQuery] = useState(filters?.search || '');
+    const [activeTab, setActiveTab] = useState(filters?.role || 'all');
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'edit' | 'delete'>('edit');
     const [selectedItem, setSelectedItem] = useState<User | null>(null);
+    const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
+        null,
+    );
 
     const {
         data,
@@ -169,34 +207,43 @@ export default function UserManagement({ users, departments, roles }: Props) {
         });
     };
 
-    const filteredUsers = useMemo(() => {
-        let result = users;
+    // Handle debounced search changes via Inertia visits
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setSearchQuery(val);
 
-        if (activeTab !== 'all') {
-            result = result.filter((u) =>
-                u.roles?.some((r) => r.name === activeTab),
-            );
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
         }
 
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            result = result.filter(
-                (u) =>
-                    u.name.toLowerCase().includes(q) ||
-                    u.email.toLowerCase().includes(q),
+        const timeout = setTimeout(() => {
+            router.get(
+                route('users.index'),
+                { search: val, role: activeTab },
+                { preserveState: true, replace: true },
             );
-        }
+        }, 300);
 
-        return result;
-    }, [users, activeTab, searchQuery]);
+        setSearchTimeout(timeout);
+    };
 
-    const stats = useMemo(
+    // Handle tab switching via direct Inertia visits
+    const handleTabChange = (roleName: string) => {
+        setActiveTab(roleName);
+        router.get(
+            route('users.index'),
+            { search: searchQuery, role: roleName },
+            { preserveState: true, replace: true },
+        );
+    };
+
+    const statsInfo = useMemo(
         () => ({
-            total: users.length,
-            active: users.filter((u) => u.is_active).length,
+            total: stats.total,
+            active: stats.active,
             rolesCount: roles.length,
         }),
-        [users, roles],
+        [stats, roles],
     );
 
     return (
@@ -205,7 +252,6 @@ export default function UserManagement({ users, departments, roles }: Props) {
             headerSubtitle={t('page.users_index.subtitle')}
         >
             <Head title={t('page.users_index.head_title')} />
-            <Toaster position="top-right" richColors />
 
             <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
                 <PageBreadcrumb
@@ -219,36 +265,36 @@ export default function UserManagement({ users, departments, roles }: Props) {
                     <StatCard
                         icon={UserGroupIcon}
                         label={t('page.users_index.total_users')}
-                        value={stats.total}
+                        value={statsInfo.total}
                         color="blue"
                     />
                     <StatCard
                         icon={CheckBadgeIcon}
                         label={t('page.users_index.active_users')}
-                        value={stats.active}
+                        value={statsInfo.active}
                         color="emerald"
                     />
                     <StatCard
                         icon={ShieldCheckIcon}
                         label={t('page.users_index.roles')}
-                        value={stats.rolesCount}
+                        value={statsInfo.rolesCount}
                         color="purple"
                     />
                 </div>
 
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                    <div className="flex w-fit rounded-lg bg-gray-100 p-1 dark:bg-neutral-800">
+                    <div className="flex w-fit rounded-lg bg-surface-inset p-1">
                         <button
-                            onClick={() => setActiveTab('all')}
-                            className={`rounded-lg px-4 py-2 text-xs font-bold tracking-wide uppercase transition-all ${activeTab === 'all' ? 'bg-white text-blue-600 shadow-sm dark:bg-neutral-700' : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100'}`}
+                            onClick={() => handleTabChange('all')}
+                            className={`rounded-lg px-4 py-2 text-xs font-bold tracking-wide uppercase transition-all ${activeTab === 'all' ? 'bg-surface text-accent-ink shadow-surface' : 'text-ink-subtle hover:text-ink'}`}
                         >
                             {t('page.users_index.all')}
                         </button>
                         {roles.map((role) => (
                             <button
                                 key={role.id}
-                                onClick={() => setActiveTab(role.name)}
-                                className={`rounded-lg px-4 py-2 text-xs font-bold tracking-wide uppercase transition-all ${activeTab === role.name ? 'bg-white text-blue-600 shadow-sm dark:bg-neutral-700' : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100'}`}
+                                onClick={() => handleTabChange(role.name)}
+                                className={`rounded-lg px-4 py-2 text-xs font-bold tracking-wide uppercase transition-all ${activeTab === role.name ? 'bg-surface text-accent-ink shadow-surface' : 'text-ink-subtle hover:text-ink'}`}
                             >
                                 {role.name.replace('_', ' ')}
                             </button>
@@ -257,19 +303,20 @@ export default function UserManagement({ users, departments, roles }: Props) {
 
                     <div className="flex items-center gap-3">
                         <div className="relative">
-                            <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                            <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-ink-subtle" />
                             <input
                                 type="text"
+                                value={searchQuery}
                                 placeholder={t(
                                     'page.users_index.search_placeholder',
                                 )}
-                                className="rounded-lg border border-gray-200 bg-white py-2 pr-4 pl-9 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="rounded-lg border border-line bg-surface py-2 pr-4 pl-9 text-ink outline-none focus:ring-2 focus:ring-blue-500"
+                                onChange={handleSearchChange}
                             />
                         </div>
                         <Link
                             href={route('users.create')}
-                            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700"
+                            className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-bold text-ink-inverse shadow-surface transition-all hover:bg-accent-hover"
                         >
                             <PlusIcon className="h-4 w-4" />{' '}
                             {t('page.users_index.add_user')}
@@ -277,35 +324,34 @@ export default function UserManagement({ users, departments, roles }: Props) {
                     </div>
                 </div>
 
-                {filteredUsers.length > 0 ? (
-                    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-                        <table className="w-full text-left">
-                            <thead className="border-b border-gray-200 bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800">
-                                <tr>
-                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
+                {users.data.length > 0 ? (
+                    <div className="space-y-4">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHeaderCell>
                                         {t('page.users_index.table_user')}
-                                    </th>
-                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
+                                    </TableHeaderCell>
+                                    <TableHeaderCell>
                                         {t('page.users_index.table_role')}
-                                    </th>
-                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
+                                    </TableHeaderCell>
+                                    <TableHeaderCell>
                                         {t('page.users_index.table_dept')}
-                                    </th>
-                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
+                                    </TableHeaderCell>
+                                    <TableHeaderCell>
                                         {t('page.users_index.table_status')}
-                                    </th>
-                                    <th className="px-6 py-4"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-neutral-700">
-                                {filteredUsers.map((user) => (
-                                    <tr
-                                        key={user.id}
-                                        className="group transition-colors hover:bg-gray-50 dark:hover:bg-neutral-700/30"
-                                    >
-                                        <td className="px-6 py-4">
+                                    </TableHeaderCell>
+                                    <TableHeaderCell numeric>
+                                        <span className="sr-only">Actions</span>
+                                    </TableHeaderCell>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {users.data.map((user) => (
+                                    <TableRow key={user.id} className="group">
+                                        <TableCell>
                                             <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 overflow-hidden rounded-lg">
+                                                <div className="h-9 w-9 overflow-hidden rounded-md">
                                                     {user.avatar_url ? (
                                                         <img
                                                             src={
@@ -315,24 +361,24 @@ export default function UserManagement({ users, departments, roles }: Props) {
                                                             className="h-full w-full object-cover"
                                                         />
                                                     ) : (
-                                                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-bold text-white">
+                                                        <div className="flex h-full w-full items-center justify-center bg-accent text-xs font-semibold text-ink-inverse">
                                                             {user.name.charAt(
                                                                 0,
                                                             )}
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div>
-                                                    <div className="text-sm font-bold text-gray-900 dark:text-neutral-100">
+                                                <div className="min-w-0">
+                                                    <div className="text-[13px] font-semibold text-ink">
                                                         {user.name}
                                                     </div>
-                                                    <div className="text-xs font-medium text-gray-400 dark:text-neutral-500">
+                                                    <div className="text-xs text-ink-subtle">
                                                         {user.email}
                                                     </div>
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">
+                                        </TableCell>
+                                        <TableCell>
                                             <StatusBadge
                                                 label={
                                                     user.roles?.[0]?.name?.replace(
@@ -347,11 +393,11 @@ export default function UserManagement({ users, departments, roles }: Props) {
                                                     ) as any
                                                 }
                                             />
-                                        </td>
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-500 dark:text-neutral-400">
+                                        </TableCell>
+                                        <TableCell muted>
                                             {user.department?.name || '—'}
-                                        </td>
-                                        <td className="px-6 py-4">
+                                        </TableCell>
+                                        <TableCell>
                                             <StatusBadge
                                                 label={
                                                     user.is_active
@@ -368,14 +414,14 @@ export default function UserManagement({ users, departments, roles }: Props) {
                                                         : 'gray'
                                                 }
                                             />
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                                        </TableCell>
+                                        <TableCell numeric>
+                                            <div className="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                                                 <button
                                                     onClick={() =>
                                                         openEdit(user)
                                                     }
-                                                    className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20"
+                                                    className="rounded-lg p-2 text-ink-subtle transition-colors hover:bg-accent-soft hover:text-accent"
                                                 >
                                                     <PencilSquareIcon className="h-4 w-4" />
                                                 </button>
@@ -383,16 +429,26 @@ export default function UserManagement({ users, departments, roles }: Props) {
                                                     onClick={() =>
                                                         openDelete(user)
                                                     }
-                                                    className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                                                    className="rounded-lg p-2 text-ink-subtle transition-colors hover:bg-critical-soft hover:text-red-600"
                                                 >
                                                     <TrashIcon className="h-4 w-4" />
                                                 </button>
                                             </div>
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
+
+                        {/* Pagination Component render */}
+                        <Pagination
+                            links={users.links}
+                            meta={{
+                                from: users.from,
+                                to: users.to,
+                                total: users.total,
+                            }}
+                        />
                     </div>
                 ) : (
                     <EmptyState
@@ -415,35 +471,35 @@ export default function UserManagement({ users, departments, roles }: Props) {
                     <form onSubmit={handleDelete} className="space-y-5">
                         <div className="text-center">
                             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+                                <ExclamationTriangleIcon className="h-6 w-6 text-critical-ink" />
                             </div>
-                            <p className="mb-2 text-gray-700 dark:text-neutral-300">
+                            <p className="mb-2 text-ink-muted">
                                 {t('page.users_index.confirm_delete', {
                                     name: selectedItem.name,
                                 })}
                             </p>
-                            <p className="text-sm text-gray-500 dark:text-neutral-400">
+                            <p className="text-sm text-ink-subtle">
                                 {t('page.users_index.cannot_undo')}
                             </p>
                             {(errors as any).error && (
-                                <p className="mt-4 text-sm font-bold text-red-600">
+                                <p className="mt-4 text-sm font-bold text-critical-ink">
                                     {(errors as any).error}
                                 </p>
                             )}
                         </div>
-                        <div className="flex justify-end gap-3 border-t border-gray-100 pt-4 dark:border-neutral-700">
+                        <div className="flex justify-end gap-3 border-t border-line pt-4">
                             <button
                                 type="button"
                                 onClick={closeModal}
                                 disabled={processing}
-                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                                className="rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-ink-muted transition-colors hover:bg-surface-hover disabled:opacity-50"
                             >
                                 {t('common.cancel')}
                             </button>
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                                className="rounded-lg bg-critical px-4 py-2 text-sm font-medium text-ink-inverse transition-colors hover:bg-red-700 disabled:opacity-50"
                             >
                                 {processing
                                     ? t('page.users_index.deleting')
@@ -515,7 +571,7 @@ export default function UserManagement({ users, departments, roles }: Props) {
                             />
                         </div>
 
-                        <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+                        <div className="flex items-center gap-3 rounded-xl border border-accent/30 bg-accent-soft p-4">
                             <input
                                 type="checkbox"
                                 id="is_active_edit"
@@ -523,20 +579,20 @@ export default function UserManagement({ users, departments, roles }: Props) {
                                 onChange={(e) =>
                                     setData('is_active', e.target.checked)
                                 }
-                                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                className="h-5 w-5 rounded border-line-strong text-accent-ink focus:ring-blue-500"
                             />
                             <label
                                 htmlFor="is_active_edit"
-                                className="text-xs font-bold text-blue-900 dark:text-blue-300"
+                                className="text-xs font-bold text-accent-ink"
                             >
                                 {t('page.users_index.account_active')}
                             </label>
                         </div>
 
                         {/* Shifts Section */}
-                        <div className="border-t border-gray-100 pt-4 dark:border-neutral-700">
+                        <div className="border-t border-line pt-4">
                             <div className="mb-3 flex items-center justify-between">
-                                <label className="text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
+                                <label className="text-xs font-semibold text-ink-subtle uppercase">
                                     {t('page.users_index.assigned_shifts')}
                                 </label>
                                 <button
@@ -552,24 +608,24 @@ export default function UserManagement({ users, departments, roles }: Props) {
                                             },
                                         ])
                                     }
-                                    className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700"
+                                    className="flex items-center gap-1 text-xs font-bold text-accent-ink hover:text-accent-ink"
                                 >
                                     <PlusIcon className="h-3.5 w-3.5" />{' '}
                                     {t('page.users_index.add_shift')}
                                 </button>
                             </div>
                             {data.shifts.length === 0 && (
-                                <p className="text-xs text-gray-400 italic dark:text-neutral-500">
+                                <p className="text-xs text-ink-subtle italic">
                                     {t('page.users_index.no_shifts')}
                                 </p>
                             )}
                             {data.shifts.map((shift, idx) => (
                                 <div
                                     key={idx}
-                                    className="mb-2 flex items-end gap-2 rounded-lg bg-gray-50 p-3 dark:bg-neutral-700/50"
+                                    className="mb-2 flex items-end gap-2 rounded-lg bg-surface-muted p-3"
                                 >
                                     <div className="flex-1">
-                                        <label className="text-[10px] font-semibold text-gray-400 uppercase">
+                                        <label className="text-[10px] font-semibold text-ink-subtle uppercase">
                                             {t('page.users_index.date')}
                                         </label>
                                         <input
@@ -590,11 +646,11 @@ export default function UserManagement({ users, departments, roles }: Props) {
                                                     ),
                                                 )
                                             }
-                                            className="mt-0.5 w-full rounded border border-gray-200 bg-white px-2 py-1.5 text-xs dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
+                                            className="mt-0.5 w-full rounded border border-line bg-surface px-2 py-1.5 text-ink"
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <label className="text-[10px] font-semibold text-gray-400 uppercase">
+                                        <label className="text-[10px] font-semibold text-ink-subtle uppercase">
                                             {t('page.users_index.type')}
                                         </label>
                                         <select
@@ -614,7 +670,7 @@ export default function UserManagement({ users, departments, roles }: Props) {
                                                     ),
                                                 )
                                             }
-                                            className="mt-0.5 w-full rounded border border-gray-200 bg-white px-2 py-1.5 text-xs dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
+                                            className="mt-0.5 w-full rounded border border-line bg-surface px-2 py-1.5 text-ink"
                                         >
                                             <option value="morning">
                                                 {t('page.users_index.morning')}
@@ -630,7 +686,7 @@ export default function UserManagement({ users, departments, roles }: Props) {
                                         </select>
                                     </div>
                                     <div className="w-20">
-                                        <label className="text-[10px] font-semibold text-gray-400 uppercase">
+                                        <label className="text-[10px] font-semibold text-ink-subtle uppercase">
                                             {t('page.users_index.start')}
                                         </label>
                                         <input
@@ -651,11 +707,11 @@ export default function UserManagement({ users, departments, roles }: Props) {
                                                     ),
                                                 )
                                             }
-                                            className="mt-0.5 w-full rounded border border-gray-200 bg-white px-2 py-1.5 text-xs dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
+                                            className="mt-0.5 w-full rounded border border-line bg-surface px-2 py-1.5 text-ink"
                                         />
                                     </div>
                                     <div className="w-20">
-                                        <label className="text-[10px] font-semibold text-gray-400 uppercase">
+                                        <label className="text-[10px] font-semibold text-ink-subtle uppercase">
                                             {t('page.users_index.end')}
                                         </label>
                                         <input
@@ -676,7 +732,7 @@ export default function UserManagement({ users, departments, roles }: Props) {
                                                     ),
                                                 )
                                             }
-                                            className="mt-0.5 w-full rounded border border-gray-200 bg-white px-2 py-1.5 text-xs dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
+                                            className="mt-0.5 w-full rounded border border-line bg-surface px-2 py-1.5 text-ink"
                                         />
                                     </div>
                                     <button
@@ -689,7 +745,7 @@ export default function UserManagement({ users, departments, roles }: Props) {
                                                 ),
                                             )
                                         }
-                                        className="mb-0.5 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                                        className="mb-0.5 rounded-lg p-1.5 text-ink-subtle transition-colors hover:bg-critical-soft hover:text-red-600"
                                     >
                                         <TrashIcon className="h-3.5 w-3.5" />
                                     </button>
@@ -706,14 +762,14 @@ export default function UserManagement({ users, departments, roles }: Props) {
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-bold text-gray-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+                                className="flex-1 rounded-xl border border-line bg-surface py-3 font-bold text-ink-subtle"
                             >
                                 {t('common.cancel')}
                             </button>
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="flex-[2] rounded-xl bg-blue-600 py-3 font-bold text-white hover:bg-blue-700 disabled:opacity-50"
+                                className="flex-[2] rounded-xl bg-accent py-3 font-bold text-ink-inverse hover:bg-accent-hover disabled:opacity-50"
                             >
                                 {processing
                                     ? t('page.users_index.saving')

@@ -6,9 +6,10 @@ use Database\Factories\BedTypeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'description', 'capacity', 'daily_rate'])]
+#[Fillable(['name', 'description', 'capacity', 'daily_rate', 'service_id'])]
 class BedType extends Model
 {
     /** @use HasFactory<BedTypeFactory> */
@@ -25,5 +26,10 @@ class BedType extends Model
     public function beds(): HasMany
     {
         return $this->hasMany(Bed::class);
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(Service::class);
     }
 }

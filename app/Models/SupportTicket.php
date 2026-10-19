@@ -18,6 +18,13 @@ class SupportTicket extends Model
         'priority',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'user_id' => 'integer',
+        ];
+    }
+
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id', 'id');

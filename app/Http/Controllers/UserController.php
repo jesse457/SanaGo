@@ -6,19 +6,43 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\Department;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Inertia::render('Users/index', [
-            'users' => User::with(['department:id,name', 'roles', 'shifts'])
-                ->latest()
-                ->get(),
+        $search = $request->input('search');
+        $role = $request->input('role');
+
+        // Build query with conditional search and role filters
+        $query = User::with(['department:id,name', 'roles', 'shifts'])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+            })
+            ->when($role && $role !== 'all', function ($query) use ($role) {
+                $query->whereHas('roles', function ($q) use ($role) {
+                    $q->where('name', $role);
+                });
+            })
+            ->latest();
+
+        return Inertia::render('Users/Index', [
+            // Paginate users (e.g., 10 per page) and append search parameters to page links
+            'users' => $query->paginate(10)->withQueryString(),
             'departments' => Department::select('id', 'name')->get(),
             'roles' => Role::select('id', 'name')->get(),
+            // Keep stats global rather than limited to the paginated subset
+            'stats' => [
+                'total' => User::count(),
+                'active' => User::where('is_active', true)->count(),
+            ],
+            'filters' => $request->only(['search', 'role']),
         ]);
     }
 
@@ -68,7 +92,7 @@ class UserController extends Controller
         // Sync shifts: delete existing, create new
         $user->shifts()->delete();
         foreach ($shifts as $shift) {
-            if (!empty($shift['shift_date']) && !empty($shift['shift_type'])) {
+            if (! empty($shift['shift_date']) && ! empty($shift['shift_type'])) {
                 $user->shifts()->create([
                     'shift_date' => $shift['shift_date'],
                     'shift_type' => $shift['shift_type'],

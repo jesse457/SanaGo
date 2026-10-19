@@ -48,17 +48,18 @@ class PatientFactory extends Factory
         $lastName = fake()->randomElement(self::NIGERIAN_LAST_NAMES);
 
         return [
-            'patient_uid' => 'PT-' . date('Y') . '-' . strtoupper(fake()->unique()->bothify('????###')),
+            'patient_uid' => 'PT-'.date('Y').'-'.strtoupper(fake()->unique()->bothify('????###')),
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'email' => strtolower($firstName . '.' . $lastName . fake()->numerify('##') . '@email.com'),
-            'phone' => '+234' . fake()->numerify('##########'),
+            'email' => strtolower($firstName.'.'.$lastName.fake()->numerify('##').'@email.com'),
+            'phone' => '+234'.fake()->numerify('##########'),
             'date_of_birth' => fake()->dateTimeBetween('-85 years', '-1 year')->format('Y-m-d'),
             'gender' => fake()->randomElement(Gender::cases()),
             'address' => fake()->randomElement(self::NIGERIAN_CITIES),
             'last_visit_date' => fake()->optional(0.6)->dateTimeBetween('-6 months', 'now'),
             'allergies' => fake()->randomElement(self::ALLERGIES_OPTIONS),
             'blood_type' => fake()->randomElement(self::BLOOD_TYPES),
+            'is_admitted_approve' => fake()->boolean(50),
         ];
     }
 

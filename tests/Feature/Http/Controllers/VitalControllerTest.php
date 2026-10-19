@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 use App\Models\Patient;
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain;
+use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 use function Tests\Helpers\migrateTenantTables;
 
@@ -12,11 +15,11 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     migrateTenantTables();
-    $this->seed(\Database\Seeders\RoleSeeder::class);
+    $this->seed(RoleSeeder::class);
     $this->admin = tap(User::factory()->create())->assignRole('admin');
     $this->withoutMiddleware([
-        \Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain::class,
-        \Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains::class,
+        InitializeTenancyBySubdomain::class,
+        PreventAccessFromCentralDomains::class,
     ]);
 });
 

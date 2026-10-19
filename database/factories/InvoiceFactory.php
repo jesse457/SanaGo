@@ -24,7 +24,7 @@ class InvoiceFactory extends Factory
         $invoiceDate = fake()->dateTimeBetween('-6 months', 'now');
 
         return [
-            'invoice_number' => 'INV-' . date('Y') . '-' . str_pad((string) self::$counter, 5, '0', STR_PAD_LEFT),
+            'invoice_number' => 'INV-'.date('Y').'-'.str_pad((string) self::$counter, 5, '0', STR_PAD_LEFT),
             'patient_id' => Patient::factory(),
             'invoice_date' => $invoiceDate->format('Y-m-d'),
             'due_date' => (clone $invoiceDate)->modify('+30 days')->format('Y-m-d'),

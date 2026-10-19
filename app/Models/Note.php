@@ -17,6 +17,14 @@ class Note extends Model
         'note',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'notable_id' => 'integer',
+            'user_id' => 'integer',
+        ];
+    }
+
     public function notable(): MorphTo
     {
         return $this->morphTo();

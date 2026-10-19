@@ -51,8 +51,11 @@ class AppServiceProvider extends ServiceProvider
             // Grant full access to any landlord user.
             // Use hasPermissionTo() instead of can() to avoid infinite recursion:
             // can() triggers the gate, which calls before(), which calls can()...
-            if ($user->hasPermissionTo('view-super-admin')) {
-                return true;
+
+            if (tenant('id') == null) {
+                if ($user->hasPermissionTo('view-super-admin')) {
+                    return true;
+                }
             }
 
             return null;

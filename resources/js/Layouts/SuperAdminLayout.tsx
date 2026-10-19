@@ -1,36 +1,41 @@
 import {
-    Squares2X2Icon,
-    MoonIcon,
-    SunIcon,
-    BuildingOfficeIcon,
-    CreditCardIcon,
     BanknotesIcon,
     Bars3Icon,
-    XMarkIcon,
-    Cog6ToothIcon,
-    ChevronDownIcon,
-    ShieldCheckIcon,
-    ArrowRightStartOnRectangleIcon,
     BellIcon,
+    BuildingOfficeIcon,
+    ChartBarIcon,
+    ChevronDownIcon,
+    Cog6ToothIcon,
+    CreditCardIcon,
+    MegaphoneIcon,
+    ShieldCheckIcon,
+    Squares2X2Icon,
+    TicketIcon,
     UserCircleIcon,
     UserGroupIcon,
-    TicketIcon,
-    MegaphoneIcon,
-    ChartBarIcon,
 } from '@heroicons/react/24/outline';
 import { ChevronLeftIcon } from '@heroicons/react/24/solid';
-import { Link, usePage, router } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import React, {
-    useState,
+    memo,
+    useCallback,
     useEffect,
     useMemo,
-    useCallback,
-    memo,
     useRef,
+    useState,
 } from 'react';
+import { AppToaster } from '@/Components/AppToaster';
 import { FlashHandler } from '@/Components/FlashHandler';
 import { LocaleSwitcher } from '@/Components/LocaleSwitcher';
 import { useTranslation, TranslationProvider } from '@/hooks/useTranslation';
+import { BrandMark } from '@/Layouts/components/BrandMark';
+import { DrawerHeader } from '@/Layouts/components/DrawerHeader';
+import { NavLink } from '@/Layouts/components/NavItem';
+import { NotificationsPanel } from '@/Layouts/components/NotificationsPanel';
+import { DrawerBackdrop } from '@/Layouts/components/ShellPrimitives';
+import { ThemeToggle } from '@/Layouts/components/ThemeToggle';
+import { UserChip, UserMeta } from '@/Layouts/components/UserChip';
+import { UserMenuPanel } from '@/Layouts/components/UserMenuPanel';
 
 interface User {
     id: number;
@@ -43,27 +48,6 @@ interface User {
 interface SuperAdminLayoutProps {
     headerTitle?: string;
     headerSubtitle?: string;
-}
-
-function getInitials(name: string): string {
-    return name
-        .split(' ')
-        .map((p) => p.charAt(0))
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
-}
-
-function getRoleBadge(role: string): string {
-    const map: Record<string, string> = {
-        'super-admin':
-            'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-100 dark:border-blue-800',
-    };
-
-    return (
-        map[role] ||
-        'bg-slate-50 dark:bg-neutral-700 text-slate-700 dark:text-neutral-300 border-slate-100 dark:border-neutral-600'
-    );
 }
 
 // ─── Nav Config ───
@@ -86,7 +70,7 @@ const NAV_CONFIG: NavGroup[] = [
     {
         category: 'Overview',
         categoryKey: 'nav.category.overview',
-        icon: <Squares2X2Icon className="h-5 w-5 shrink-0" />,
+        icon: <Squares2X2Icon className="h-4 w-4 shrink-0" />,
         items: [
             {
                 label: 'Dashboard',
@@ -99,7 +83,7 @@ const NAV_CONFIG: NavGroup[] = [
     {
         category: 'Tenant Management',
         categoryKey: 'nav.category.tenant_management',
-        icon: <BuildingOfficeIcon className="h-5 w-5 shrink-0" />,
+        icon: <BuildingOfficeIcon className="h-4 w-4 shrink-0" />,
         items: [
             {
                 label: 'Tenants',
@@ -124,7 +108,7 @@ const NAV_CONFIG: NavGroup[] = [
     {
         category: 'Sales',
         categoryKey: 'nav.category.sales',
-        icon: <UserGroupIcon className="h-5 w-5 shrink-0" />,
+        icon: <UserGroupIcon className="h-4 w-4 shrink-0" />,
         items: [
             {
                 label: 'Demo Requests',
@@ -137,7 +121,7 @@ const NAV_CONFIG: NavGroup[] = [
     {
         category: 'Support',
         categoryKey: 'nav.category.support',
-        icon: <TicketIcon className="h-5 w-5 shrink-0" />,
+        icon: <TicketIcon className="h-4 w-4 shrink-0" />,
         items: [
             {
                 label: 'Support Tickets',
@@ -150,7 +134,7 @@ const NAV_CONFIG: NavGroup[] = [
     {
         category: 'Administration',
         categoryKey: 'nav.category.administration',
-        icon: <ShieldCheckIcon className="h-5 w-5 shrink-0" />,
+        icon: <ShieldCheckIcon className="h-4 w-4 shrink-0" />,
         items: [
             {
                 label: 'Staff Users',
@@ -175,7 +159,7 @@ const NAV_CONFIG: NavGroup[] = [
     {
         category: 'Insights',
         categoryKey: 'nav.category.insights',
-        icon: <ChartBarIcon className="h-5 w-5 shrink-0" />,
+        icon: <ChartBarIcon className="h-4 w-4 shrink-0" />,
         items: [
             {
                 label: 'Analytics',
@@ -205,85 +189,127 @@ const SidebarNav = memo(function SidebarNav({
 
     return (
         <>
-            <div className="flex h-16 shrink-0 items-center border-b border-gray-100 px-4 dark:border-neutral-800">
-                <Link
+            <div className="flex h-14 shrink-0 items-center border-b border-line px-3.5">
+                <BrandMark
+                    icon={ShieldCheckIcon}
+                    caption={t('nav.super_admin')}
                     href="/dashboard/super-admin"
-                    className="flex w-full items-center gap-3 overflow-hidden"
-                >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200 dark:shadow-none">
-                        <ShieldCheckIcon className="h-6 w-6" />
-                    </div>
-                    {isOpen && (
-                        <div className="overflow-hidden">
-                            <span className="text-lg font-black tracking-tight whitespace-nowrap text-gray-900 dark:text-neutral-100">
-                                Sana<span className="text-blue-600">Go</span>
-                            </span>
-                            <span className="-mt-1 block text-[10px] font-medium text-gray-400">
-                                Super Admin
-                            </span>
-                        </div>
-                    )}
-                </Link>
+                    compact={!isOpen}
+                />
             </div>
 
-            <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain px-3 py-2">
-                {NAV_CONFIG.map((group) => (
-                    <div key={group.category} className="mb-1">
-                        <button
-                            onClick={() => onToggleCategory(group.category)}
-                            className={`group flex w-full items-center justify-between rounded-lg px-3 py-2.5 transition-all duration-200 ${isCategoryOpen(group.category) ? 'bg-blue-50/80 text-blue-600 shadow-sm dark:bg-blue-900/20' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-300'}`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div
-                                    className={`rounded-lg p-1 transition-colors ${isCategoryOpen(group.category) ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-neutral-400'}`}
-                                >
-                                    {group.icon}
-                                </div>
-                                {isOpen && (
-                                    <span className="text-[12px] font-semibold tracking-wide">
-                                        {t(group.categoryKey)}
-                                    </span>
-                                )}
-                            </div>
-                            {isOpen && (
-                                <ChevronDownIcon
-                                    className={`h-4 w-4 transition-transform duration-300 ${isCategoryOpen(group.category) ? 'rotate-180' : ''}`}
-                                />
-                            )}
-                        </button>
-                        {isOpen && isCategoryOpen(group.category) && (
-                            <div className="animate-slideDown mt-1 ml-7 space-y-1 border-l-2 border-gray-100 dark:border-neutral-800">
-                                {group.items.map((item) => (
-                                    <Link
-                                        key={item.href}
-                                        href={item.href}
-                                        className={`group/item flex items-center justify-between rounded-r-lg py-2 pr-3 pl-4 text-sm transition-all duration-200 ${isActive(item.href) ? '-ml-[2px] border-l-2 border-blue-600 bg-blue-50/60 font-semibold text-blue-600 dark:bg-blue-900/20' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200'}`}
+            <nav className="flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-2.5 py-3">
+                {NAV_CONFIG.map((group) => {
+                    const hasActiveChild = group.items.some((item) =>
+                        isActive(item.href),
+                    );
+                    const isExpanded = isCategoryOpen(group.category);
+
+                    return (
+                        <div key={group.category} className="space-y-0.5">
+                            <button
+                                type="button"
+                                onClick={() => onToggleCategory(group.category)}
+                                aria-expanded={isExpanded}
+                                title={t(group.categoryKey)}
+                                className={`group flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left transition-[background-color,color] duration-200 ease-premium focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none ${
+                                    hasActiveChild
+                                        ? 'text-ink'
+                                        : 'text-ink-muted hover:bg-surface-hover hover:text-ink'
+                                }`}
+                            >
+                                <span className="flex min-w-0 items-center gap-2.5">
+                                    <span
+                                        className={`shrink-0 transition-colors ${
+                                            isExpanded || hasActiveChild
+                                                ? 'text-accent'
+                                                : 'text-ink-subtle group-hover:text-ink-muted'
+                                        }`}
                                     >
-                                        <span className="truncate">
-                                            {t(item.labelKey)}
+                                        {group.icon}
+                                    </span>
+                                    {isOpen && (
+                                        <span className="truncate text-[12.5px] font-medium tracking-tight">
+                                            {t(group.categoryKey)}
                                         </span>
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                ))}
+                                    )}
+                                </span>
+                                {isOpen && (
+                                    <ChevronDownIcon
+                                        className={`h-3 w-3 shrink-0 text-ink-subtle transition-transform duration-200 ease-premium ${
+                                            isExpanded ? 'rotate-180' : ''
+                                        }`}
+                                    />
+                                )}
+                            </button>
+
+                            {isOpen && isExpanded && (
+                                <div className="ml-3.5 space-y-0.5 border-l border-line py-1 pl-2.5">
+                                    {group.items.map((item) => (
+                                        <NavLink
+                                            key={item.href}
+                                            href={item.href}
+                                            isActive={isActive(item.href)}
+                                            variant="sidebar"
+                                            linkComponent={(linkProps) => (
+                                                <Link
+                                                    href={linkProps.href}
+                                                    prefetch
+                                                    onClick={linkProps.onClick}
+                                                    className={
+                                                        linkProps.className
+                                                    }
+                                                >
+                                                    {linkProps.children}
+                                                </Link>
+                                            )}
+                                        >
+                                            {() => (
+                                                <span className="truncate text-[12.5px]">
+                                                    {t(item.labelKey)}
+                                                </span>
+                                            )}
+                                        </NavLink>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </nav>
 
-            <div className="space-y-1 border-t border-gray-100 p-3 dark:border-neutral-800">
-                <Link
+            <div className="space-y-0.5 border-t border-line p-2.5">
+                <NavLink
                     href="/settings"
-                    className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-blue-600 dark:hover:bg-neutral-800"
-                >
-                    <div className="rounded-lg bg-gray-100 p-1 transition-colors group-hover:bg-blue-100 dark:bg-neutral-800 dark:group-hover:bg-blue-900/30">
-                        <Cog6ToothIcon className="h-4 w-4" />
-                    </div>
-                    {isOpen && (
-                        <span className="text-sm font-medium">
-                            {t('nav.settings')}
-                        </span>
+                    isActive={isActive('/settings')}
+                    variant="sidebar"
+                    linkComponent={(linkProps) => (
+                        <Link
+                            href={linkProps.href}
+                            prefetch
+                            className={linkProps.className}
+                        >
+                            {linkProps.children}
+                        </Link>
                     )}
-                </Link>
+                >
+                    {({ isActive: settingsActive }) => (
+                        <>
+                            <Cog6ToothIcon
+                                className={`h-[17px] w-[17px] shrink-0 transition-colors ${
+                                    settingsActive
+                                        ? 'text-accent'
+                                        : 'text-ink-subtle group-hover:text-ink-muted'
+                                }`}
+                            />
+                            {isOpen && (
+                                <span className="truncate text-[12.5px]">
+                                    {t('nav.settings')}
+                                </span>
+                            )}
+                        </>
+                    )}
+                </NavLink>
             </div>
         </>
     );
@@ -291,56 +317,37 @@ const SidebarNav = memo(function SidebarNav({
 
 // ─── Notification Bell ───
 
+const SHELL_NOTIFICATIONS = [
+    {
+        id: 1,
+        message: 'New tenant registration',
+        time: '2 days ago',
+        read: false,
+    },
+    {
+        id: 2,
+        message: 'System update available',
+        time: '1 week ago',
+        read: true,
+    },
+];
+
 const NotificationsDropdown = memo(function NotificationsDropdown({
     onClose,
 }: {
     onClose: () => void;
 }) {
     const { t } = useTranslation();
-    const notifications = [
-        {
-            id: 1,
-            message: 'New tenant registration',
-            time: '2 days ago',
-            read: false,
-        },
-        {
-            id: 2,
-            message: 'System update available',
-            time: '1 week ago',
-            read: true,
-        },
-    ];
-    const unreadCount = notifications.filter((n) => !n.read).length;
+    const unreadCount = SHELL_NOTIFICATIONS.filter((n) => !n.read).length;
 
     return (
-        <div className="absolute top-full right-0 z-20 mt-2 w-80 rounded-xl border border-gray-200 bg-white py-2 shadow-xl dark:border-neutral-700 dark:bg-neutral-800">
-            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-neutral-700">
-                <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                    {t('common.notifications')}
-                </p>
-                {unreadCount > 0 && (
-                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                        {unreadCount} {t('common.new')}
-                    </span>
-                )}
-            </div>
-            <div className="max-h-64 overflow-y-auto overscroll-contain">
-                {notifications.map((n) => (
-                    <div
-                        key={n.id}
-                        className={`border-b border-gray-50 px-4 py-3 transition-colors hover:bg-gray-50 dark:border-neutral-700/50 dark:hover:bg-neutral-700/30 ${!n.read ? 'bg-blue-50/30 dark:bg-blue-900/5' : ''}`}
-                    >
-                        <p className="text-sm text-gray-700 dark:text-neutral-300">
-                            {n.message}
-                        </p>
-                        <p className="mt-1 text-[10px] font-medium text-gray-400">
-                            {n.time}
-                        </p>
-                    </div>
-                ))}
-            </div>
-        </div>
+        <NotificationsPanel
+            title={t('common.notifications')}
+            items={SHELL_NOTIFICATIONS}
+            unreadCount={unreadCount}
+            emptyLabel={t('common.no_notifications')}
+            onSelect={onClose}
+        />
     );
 });
 
@@ -348,60 +355,30 @@ const NotificationsDropdown = memo(function NotificationsDropdown({
 
 const UserMenuDropdown = memo(function UserMenuDropdown({
     user,
-    userRole,
     onClose,
 }: {
     user: User | null;
-    userRole: string;
+    userRole?: string;
     onClose: () => void;
 }) {
     const { t } = useTranslation();
 
     return (
-        <div className="absolute top-full right-0 z-20 mt-2 w-56 rounded-xl border border-gray-200 bg-white py-2 shadow-xl dark:border-neutral-700 dark:bg-neutral-800">
-            <div className="border-b border-gray-100 px-4 py-3 dark:border-neutral-700">
-                <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                    {user?.name || t('common.staff_user')}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-neutral-400">
-                    {user?.email}
-                </p>
-                <span
-                    className={`mt-1.5 inline-block rounded border px-2 py-0.5 text-[9px] font-bold uppercase ${getRoleBadge(userRole)}`}
-                >
-                    {t('nav.super_admin')}
-                </span>
-            </div>
-            <div className="py-1">
-                <Link
-                    href="/profile"
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 transition-colors duration-150 hover:bg-gray-50 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                    onClick={onClose}
-                >
-                    <UserCircleIcon className="h-4 w-4" />
-                    {t('nav.my_profile')}
-                </Link>
-                <Link
-                    href="/settings"
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 transition-colors duration-150 hover:bg-gray-50 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                    onClick={onClose}
-                >
-                    <Cog6ToothIcon className="h-4 w-4" />
-                    {t('nav.settings')}
-                </Link>
-            </div>
-            <div className="border-t border-gray-100 pt-1 dark:border-neutral-700">
-                <button
-                    onClick={() => {
-                        router.post('/logout');
-                    }}
-                    className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 transition-colors duration-150 hover:bg-red-50 dark:hover:bg-red-900/20"
-                >
-                    <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
-                    {t('nav.sign_out')}
-                </button>
-            </div>
-        </div>
+        <UserMenuPanel
+            user={user}
+            role="super-admin"
+            roleLabel={t('nav.super_admin')}
+            labels={{
+                profile: t('nav.my_profile'),
+                profileDescription: t('nav.profile_description'),
+                settings: t('nav.settings'),
+                settingsDescription: t('nav.settings_description'),
+                signOut: t('nav.sign_out'),
+                signOutDescription: t('nav.sign_out_description'),
+            }}
+            onClose={onClose}
+            onSignOut={() => router.post('/logout')}
+        />
     );
 });
 
@@ -452,6 +429,9 @@ export default function SuperAdminLayout({
     }, [isDark]);
 
     useEffect(() => {
+        // Navigation closes the mobile drawer: this is a response to an external
+        // event (a completed Inertia visit), not derived render state.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMobileMenuOpen(false);
     }, [url]);
 
@@ -547,39 +527,32 @@ export default function SuperAdminLayout({
         setNotifOpen(false);
     }, []);
 
-    const userRole = useMemo(() => 'super-admin', []);
-    const userInitials = useMemo(
-        () => (user ? getInitials(user.name) : 'SA'),
-        [user],
-    );
-    const unreadCount = 1;
+    const unreadCount = SHELL_NOTIFICATIONS.filter((n) => !n.read).length;
 
     return (
         <TranslationProvider>
             <FlashHandler />
-            <div className="flex h-screen overflow-hidden bg-gray-50 font-sans dark:bg-neutral-950">
+            <AppToaster />
+            <div className="flex h-dvh overflow-hidden bg-canvas font-sans">
                 {/* ─── Mobile backdrop ─── */}
-                {mobileMenuOpen && (
-                    <div
-                        className="fixed inset-0 z-[60] bg-gray-900/50 backdrop-blur-sm lg:hidden"
-                        onClick={() => setMobileMenuOpen(false)}
-                    />
-                )}
+                <DrawerBackdrop
+                    open={mobileMenuOpen}
+                    onClose={() => setMobileMenuOpen(false)}
+                />
 
                 {/* ─── Mobile sidebar ─── */}
                 <aside
-                    className={`fixed inset-y-0 left-0 z-[70] flex w-72 transform flex-col border-r bg-white transition-transform duration-300 ease-out lg:hidden dark:border-neutral-800 dark:bg-neutral-900 ${
+                    className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-line bg-surface transition-transform duration-300 ease-premium lg:hidden ${
                         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
                     }`}
                 >
-                    <div className="absolute top-4 right-4">
-                        <button
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="p-2 text-gray-500"
-                        >
-                            <XMarkIcon className="h-6 w-6" />
-                        </button>
-                    </div>
+                    <DrawerHeader onClose={() => setMobileMenuOpen(false)}>
+                        <BrandMark
+                            icon={ShieldCheckIcon}
+                            caption={t('nav.super_admin')}
+                            href="/dashboard/super-admin"
+                        />
+                    </DrawerHeader>
                     <SidebarNav
                         isOpen={true}
                         isActive={isActiveLink}
@@ -590,8 +563,8 @@ export default function SuperAdminLayout({
 
                 {/* ─── Desktop sidebar ─── */}
                 <aside
-                    className={`fixed inset-y-0 left-0 z-50 hidden flex-col border-r border-gray-200 bg-white transition-[width] duration-300 ease-out lg:flex dark:border-neutral-800 dark:bg-neutral-900 ${
-                        sidebarOpen ? 'w-64' : 'w-20'
+                    className={`relative hidden flex-col border-r border-line bg-surface transition-[width] duration-300 ease-premium lg:flex ${
+                        sidebarOpen ? 'w-64' : 'w-[68px]'
                     }`}
                 >
                     <SidebarNav
@@ -601,8 +574,9 @@ export default function SuperAdminLayout({
                         onToggleCategory={toggleCategory}
                     />
                     <button
+                        type="button"
                         onClick={() => setSidebarOpen((prev) => !prev)}
-                        className="absolute top-20 -right-3 z-50 rounded-full border border-gray-200 bg-white p-1 text-gray-400 shadow-sm transition-colors duration-150 hover:text-blue-600 dark:border-neutral-800 dark:bg-neutral-900"
+                        className="absolute top-20 -right-3 z-30 rounded-md border border-line bg-surface p-1.5 text-ink-subtle shadow-surface transition-[color,transform] duration-200 ease-premium hover:text-ink active:scale-95"
                         title={
                             sidebarOpen
                                 ? t('common.collapse_sidebar')
@@ -610,80 +584,59 @@ export default function SuperAdminLayout({
                         }
                     >
                         <ChevronLeftIcon
-                            className={`h-4 w-4 transition-transform duration-300 ${!sidebarOpen && 'rotate-180'}`}
+                            className={`h-3.5 w-3.5 transition-transform duration-300 ease-premium ${
+                                !sidebarOpen && 'rotate-180'
+                            }`}
                         />
                     </button>
                 </aside>
 
                 {/* ─── Main content area ─── */}
-                <div
-                    className={`flex min-w-0 flex-1 flex-col transition-[margin] duration-300 ease-out ${
-                        sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
-                    }`}
-                >
+                <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                     {/* ─── Top header ─── */}
-                    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-gray-200 bg-white/80 px-4 backdrop-blur-md lg:px-8 dark:border-neutral-800 dark:bg-neutral-900/80">
-                        <div className="flex items-center gap-4">
+                    <header className="chrome-blur sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-line px-4 lg:px-6">
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
                             <button
+                                type="button"
                                 onClick={() => setMobileMenuOpen(true)}
-                                className="-ml-2 rounded-lg p-2 text-gray-500 transition-colors duration-150 hover:bg-gray-100 lg:hidden dark:hover:bg-neutral-800"
+                                aria-label="Open navigation"
+                                className="-ml-1.5 rounded-md p-1.5 text-ink-muted transition-colors duration-150 ease-premium hover:bg-surface-hover hover:text-ink lg:hidden"
                             >
-                                <Bars3Icon className="h-6 w-6" />
+                                <Bars3Icon className="h-[18px] w-[18px]" />
                             </button>
-                            <div>
-                                <h1 className="max-w-[200px] truncate text-lg font-black tracking-tight text-gray-900 lg:max-w-none lg:text-xl dark:text-neutral-100">
+                            <div className="min-w-0">
+                                <h1 className="truncate text-[14px] font-semibold tracking-tight text-ink">
                                     {resolvedTitle}
                                 </h1>
-                                <p className="hidden truncate text-[10px] font-bold tracking-widest text-gray-400 uppercase sm:block">
+                                <p className="hidden truncate text-[11.5px] text-ink-subtle sm:block">
                                     {resolvedSubtitle}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 lg:gap-4">
-                            {/* Locale Switcher */}
+                        <div className="flex items-center gap-1.5 lg:gap-2">
                             <LocaleSwitcher variant="full" />
 
-                            {/* Theme toggle */}
-                            <button
-                                onClick={toggleTheme}
-                                role="switch"
-                                aria-checked={isDark}
-                                aria-label={t('common.toggle_dark_mode')}
-                                className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-300 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-neutral-900 ${
-                                    isDark
-                                        ? 'bg-blue-600'
-                                        : 'bg-gray-200 dark:bg-neutral-700'
-                                }`}
-                            >
-                                <span
-                                    className={`flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-md transition-transform duration-300 ${
-                                        isDark
-                                            ? 'translate-x-6'
-                                            : 'translate-x-0.5'
-                                    }`}
-                                >
-                                    {isDark ? (
-                                        <MoonIcon className="h-3.5 w-3.5 text-blue-600" />
-                                    ) : (
-                                        <SunIcon className="h-3.5 w-3.5 text-yellow-500" />
-                                    )}
-                                </span>
-                            </button>
+                            <ThemeToggle
+                                isDark={isDark}
+                                onToggle={toggleTheme}
+                            />
 
                             {/* Notifications */}
                             <div className="relative" ref={notifRef}>
                                 <button
+                                    type="button"
                                     onClick={() => {
                                         setNotifOpen((prev) => !prev);
                                         setUserMenuOpen(false);
                                     }}
-                                    className="relative rounded-lg p-2 text-gray-400 transition-colors duration-150 hover:bg-gray-100 hover:text-blue-600 dark:hover:bg-neutral-800"
                                     aria-label={t('common.notifications')}
+                                    aria-expanded={notifOpen}
+                                    className="relative rounded-md p-1.5 text-ink-subtle transition-colors duration-150 ease-premium hover:bg-surface-hover hover:text-ink"
                                 >
-                                    <BellIcon className="h-5 w-5" />
+                                    <BellIcon className="h-[18px] w-[18px]" />
                                     {unreadCount > 0 && (
-                                        <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full border-2 border-white bg-red-500 dark:border-neutral-900" />
+                                        <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-critical ring-2 ring-canvas" />
                                     )}
                                 </button>
 
@@ -696,47 +649,46 @@ export default function SuperAdminLayout({
 
                             {/* User menu */}
                             <div
-                                className="relative flex items-center gap-3 border-l border-gray-100 pl-2 dark:border-neutral-800"
+                                className="ml-1 flex items-center border-l border-line pl-2.5"
                                 ref={userMenuRef}
                             >
-                                <button
-                                    onClick={() => {
-                                        setUserMenuOpen((prev) => !prev);
-                                        setNotifOpen(false);
-                                    }}
-                                    className="flex cursor-pointer items-center gap-3"
-                                    aria-label={t('common.user_menu')}
-                                >
-                                    <div className="hidden text-right md:block">
-                                        <p className="text-xs font-bold text-gray-900 dark:text-neutral-100">
-                                            {user?.name ||
-                                                t('common.staff_user')}
-                                        </p>
-                                        <span
-                                            className={`rounded border px-2 py-0.5 text-[9px] font-bold uppercase ${getRoleBadge('super-admin')}`}
-                                        >
-                                            {t('nav.super_admin')}
-                                        </span>
-                                    </div>
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow-md">
-                                        {userInitials}
-                                    </div>
-                                </button>
+                                <div className="relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setUserMenuOpen((prev) => !prev);
+                                            setNotifOpen(false);
+                                        }}
+                                        aria-label={t('common.user_menu')}
+                                        aria-expanded={userMenuOpen}
+                                        className="group flex cursor-pointer items-center gap-2.5 rounded-md focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none"
+                                    >
+                                        <UserMeta
+                                            name={
+                                                user?.name ||
+                                                t('common.staff_user')
+                                            }
+                                            role={t('nav.super_admin')}
+                                        />
+                                        <UserChip name={user?.name} />
+                                    </button>
 
-                                {userMenuOpen && (
-                                    <UserMenuDropdown
-                                        user={user}
-                                        userRole="super-admin"
-                                        onClose={closeAllDropdowns}
-                                    />
-                                )}
+                                    {userMenuOpen && (
+                                        <UserMenuDropdown
+                                            user={user}
+                                            onClose={closeAllDropdowns}
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </header>
 
                     {/* ─── Page content ─── */}
-                    <main className="flex-1 overflow-y-auto bg-gray-50/50 p-4 lg:p-8 dark:bg-neutral-950">
-                        <div className="mx-auto max-w-7xl">{children}</div>
+                    <main className="flex-1 overflow-y-auto bg-canvas">
+                        <div className="mx-auto w-full max-w-[1560px] px-4 py-5 sm:px-6 lg:px-8">
+                            {children}
+                        </div>
                     </main>
                 </div>
             </div>

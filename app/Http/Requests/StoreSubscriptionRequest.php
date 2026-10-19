@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Enums\SubscriptionStatus;
-use App\Models\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

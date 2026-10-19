@@ -11,7 +11,7 @@ class DepartmentController extends Controller
 {
     public function index()
     {
-        return Inertia::render('Departments/index', [
+        return Inertia::render('Departments/Index', [
             'departments' => Department::with(['headOfDepartment:id,name'])
                 ->withCount(['users', 'wards'])
                 ->latest()

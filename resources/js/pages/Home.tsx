@@ -1,17 +1,15 @@
 import {
-    CalendarCheck,
-    FlaskConical,
-    Pill,
-    ChartNoAxesColumn,
-    Users,
-    Building2,
-    ChevronRight,
-    Stethoscope,
-    Heart,
-    Microscope,
-    ShieldCheck,
-    HeadphonesIcon,
-} from 'lucide-react';
+    BeakerIcon,
+    BuildingOffice2Icon,
+    CalendarDaysIcon,
+    ChartBarIcon,
+    ChevronRightIcon,
+    HeartIcon,
+    UserIcon,
+    LifebuoyIcon,
+    ShieldCheckIcon,
+    UsersIcon,
+} from '@heroicons/react/24/outline';
 import { LocaleSwitcher } from '@/Components/LocaleSwitcher';
 import Button from '@/Components/marketing/Button';
 import FeatureCard from '@/Components/marketing/FeatureCard';
@@ -22,92 +20,92 @@ import PublicLayout from '@/Layouts/PublicLayout';
 
 const MODULES = [
     {
-        icon: <Users />,
+        icon: <UsersIcon />,
         titleKey: 'marketing.modules.patient_management.title',
         descriptionKey: 'marketing.modules.patient_management.description',
-        color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600',
+        color: 'bg-accent-soft text-accent-ink',
     },
     {
-        icon: <CalendarCheck />,
+        icon: <CalendarDaysIcon />,
         titleKey: 'marketing.modules.appointments.title',
         descriptionKey: 'marketing.modules.appointments.description',
-        color: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600',
+        color: 'bg-positive-soft text-positive-ink',
     },
     {
-        icon: <FlaskConical />,
+        icon: <BeakerIcon />,
         titleKey: 'marketing.modules.lab.title',
         descriptionKey: 'marketing.modules.lab.description',
-        color: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600',
+        color: 'bg-accent-soft text-accent-ink',
     },
     {
-        icon: <Pill />,
+        icon: <BeakerIcon />,
         titleKey: 'marketing.modules.pharmacy.title',
         descriptionKey: 'marketing.modules.pharmacy.description',
-        color: 'bg-orange-50 dark:bg-orange-900/20 text-orange-600',
+        color: 'bg-warning-soft text-warning-ink',
     },
     {
-        icon: <ChartNoAxesColumn />,
+        icon: <ChartBarIcon />,
         titleKey: 'marketing.modules.billing.title',
         descriptionKey: 'marketing.modules.billing.description',
-        color: 'bg-rose-50 dark:bg-rose-900/20 text-rose-600',
+        color: 'bg-critical-soft text-critical-ink',
     },
     {
-        icon: <Building2 />,
+        icon: <BuildingOffice2Icon />,
         titleKey: 'marketing.modules.infrastructure.title',
         descriptionKey: 'marketing.modules.infrastructure.description',
-        color: 'bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600',
+        color: 'bg-accent-soft text-accent-ink',
     },
 ];
 
 const ROLES = [
     {
         roleKey: 'marketing.roles.admin.description',
-        icon: <Users size={24} />,
-        color: 'text-blue-600',
+        icon: <UsersIcon className="h-6 w-6" />,
+        color: 'text-accent-ink',
         label: 'Admin',
     },
     {
         roleKey: 'marketing.roles.doctor.description',
-        icon: <Stethoscope size={24} />,
-        color: 'text-emerald-600',
+        icon: <UserIcon className="h-6 w-6" />,
+        color: 'text-positive-ink',
         label: 'Doctor',
     },
     {
         roleKey: 'marketing.roles.nurse.description',
-        icon: <Heart size={24} />,
-        color: 'text-rose-600',
+        icon: <HeartIcon className="h-6 w-6" />,
+        color: 'text-critical-ink',
         label: 'Nurse',
     },
     {
         roleKey: 'marketing.roles.lab_tech.description',
-        icon: <Microscope size={24} />,
-        color: 'text-purple-600',
+        icon: <BeakerIcon className="h-6 w-6" />,
+        color: 'text-accent-ink',
         label: 'Lab Tech',
     },
     {
         roleKey: 'marketing.roles.pharmacist.description',
-        icon: <Pill size={24} />,
-        color: 'text-orange-600',
+        icon: <BeakerIcon className="h-6 w-6" />,
+        color: 'text-warning-ink',
         label: 'Pharmacist',
     },
 ];
 
 const SERVICES = [
     {
-        icon: <ShieldCheck className="h-5 w-5 text-blue-600" />,
-        color: 'bg-blue-100 dark:bg-blue-900/30',
+        icon: <ShieldCheckIcon className="h-5 w-5 text-accent-ink" />,
+        color: 'bg-accent-soft ',
         titleKey: 'marketing.services.security.title',
         descriptionKey: 'marketing.services.security.description',
     },
     {
-        icon: <Heart className="h-5 w-5 text-emerald-600" />,
-        color: 'bg-emerald-100 dark:bg-emerald-900/30',
+        icon: <HeartIcon className="h-5 w-5 text-positive-ink" />,
+        color: 'bg-positive-soft ',
         titleKey: 'marketing.services.consultation_surgery.title',
         descriptionKey: 'marketing.services.consultation_surgery.description',
     },
     {
-        icon: <HeadphonesIcon className="h-5 w-5 text-purple-600" />,
-        color: 'bg-purple-100 dark:bg-purple-900/30',
+        icon: <LifebuoyIcon className="h-5 w-5 text-accent-ink" />,
+        color: 'bg-accent-soft ',
         titleKey: 'marketing.services.support.title',
         descriptionKey: 'marketing.services.support.description',
     },
@@ -120,19 +118,19 @@ export default function Home() {
         <PublicLayout>
             {/* Hero */}
             <section className="relative scroll-mt-20 overflow-hidden pt-32 pb-20 lg:pt-44">
-                <div className="absolute top-0 right-0 -mt-48 -mr-48 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
-                <div className="absolute bottom-0 left-0 -mb-48 -ml-48 h-96 w-96 rounded-full bg-purple-500/10 blur-3xl" />
+                <div className="bg-accent-soft0/10 absolute top-0 right-0 -mt-48 -mr-48 h-96 w-96 rounded-full blur-3xl" />
+                <div className="absolute bottom-0 left-0 -mb-48 -ml-48 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
                 <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-2">
                     <div className="relative z-10">
-                        <p className="mb-4 animate-pulse text-xs font-bold tracking-[0.2em] text-blue-600 uppercase">
+                        <p className="mb-4 animate-pulse text-xs font-bold tracking-[0.2em] text-accent-ink uppercase">
                             {t('page.home.hero_badge')}
                         </p>
-                        <h1 className="text-5xl leading-[1.1] font-extrabold text-slate-900 lg:text-7xl dark:text-neutral-100">
+                        <h1 className="text-5xl leading-[1.1] font-extrabold text-ink lg:text-7xl">
                             {t('page.home.hero_title_line1')}{' '}
-                            <span className="relative inline-block text-blue-600">
+                            <span className="relative inline-block text-accent-ink">
                                 {t('page.home.hero_title_highlight')}
                                 <svg
-                                    className="absolute -bottom-2 left-0 -z-10 h-3 w-full text-blue-200 dark:text-blue-900/50"
+                                    className="absolute -bottom-2 left-0 -z-10 h-3 w-full text-accent/20"
                                     viewBox="0 0 200 10"
                                     preserveAspectRatio="none"
                                 >
@@ -147,7 +145,7 @@ export default function Home() {
                             <br />
                             {t('page.home.hero_title_line2')}
                         </h1>
-                        <p className="mt-8 max-w-lg text-lg leading-relaxed text-slate-500 dark:text-neutral-400">
+                        <p className="mt-8 max-w-lg text-lg leading-relaxed text-ink-muted">
                             {t('page.home.hero_description')}
                         </p>
 
@@ -161,10 +159,7 @@ export default function Home() {
                                 size="lg"
                             >
                                 {t('page.home.hero_explore')}{' '}
-                                <ChevronRight
-                                    size={18}
-                                    className="transition group-hover:translate-x-1"
-                                />
+                                <ChevronRightIcon className="h-[18px] w-[18px] transition group-hover:translate-x-1" />
                             </Button>
                             <LocaleSwitcher variant="full" />
                         </div>
@@ -186,7 +181,7 @@ export default function Home() {
                     </div>
 
                     <div className="relative hidden lg:block">
-                        <div className="rotate-2 overflow-hidden rounded-[60px] shadow-2xl transition-transform duration-700 hover:rotate-0">
+                        <div className="rotate-2 overflow-hidden rounded-[60px] shadow-float transition-transform duration-700 hover:rotate-0">
                             <img
                                 src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80"
                                 alt="Hospital dashboard on screen"
@@ -194,15 +189,15 @@ export default function Home() {
                                 loading="lazy"
                             />
                         </div>
-                        <div className="absolute -bottom-6 -left-10 flex items-center gap-4 rounded-3xl border border-slate-50 bg-white p-5 shadow-2xl transition duration-300 hover:scale-105 dark:border-neutral-700 dark:bg-neutral-800">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500 text-white">
-                                <ShieldCheck size={24} />
+                        <div className="absolute -bottom-6 -left-10 flex items-center gap-4 rounded-3xl border border-line bg-surface p-5 shadow-float transition duration-300 hover:scale-105">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-positive text-ink-inverse">
+                                <ShieldCheckIcon className="h-6 w-6" />
                             </div>
                             <div>
-                                <p className="leading-none font-bold text-slate-900 dark:text-neutral-100">
+                                <p className="leading-none font-bold text-ink">
                                     {t('marketing.services.security.title')}
                                 </p>
-                                <p className="mt-1 text-xs text-slate-400 dark:text-neutral-500">
+                                <p className="mt-1 text-xs text-ink-subtle">
                                     {t('marketing.stats.patient_centered')}
                                 </p>
                             </div>
@@ -212,7 +207,7 @@ export default function Home() {
             </section>
 
             {/* Modules */}
-            <section className="scroll-mt-20 bg-slate-50 py-24 dark:bg-neutral-800">
+            <section className="scroll-mt-20 bg-surface-muted py-24">
                 <div className="mx-auto max-w-7xl px-6">
                     <SectionHeading
                         title={t('page.home.modules_title')}
@@ -245,17 +240,17 @@ export default function Home() {
                         {ROLES.map((item) => (
                             <div
                                 key={item.label}
-                                className="group rounded-xl border border-slate-100 bg-white p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl dark:border-neutral-700 dark:bg-neutral-900"
+                                className="group rounded-xl border border-line bg-surface p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-float"
                             >
                                 <div
-                                    className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 transition duration-300 group-hover:scale-110 dark:bg-neutral-800 ${item.color}`}
+                                    className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-surface transition duration-300 group-hover:scale-110 ${item.color}`}
                                 >
                                     {item.icon}
                                 </div>
-                                <h3 className="mb-2 font-bold text-slate-900 dark:text-neutral-100">
+                                <h3 className="mb-2 font-bold text-ink">
                                     {item.label}
                                 </h3>
-                                <p className="text-xs leading-relaxed text-slate-400 dark:text-neutral-500">
+                                <p className="text-xs leading-relaxed text-ink-subtle">
                                     {t(item.roleKey)}
                                 </p>
                             </div>
@@ -265,10 +260,10 @@ export default function Home() {
             </section>
 
             {/* Why Choose SanaGo */}
-            <section className="scroll-mt-20 bg-slate-50 py-24 dark:bg-neutral-800">
+            <section className="scroll-mt-20 bg-surface-muted py-24">
                 <div className="mx-auto grid max-w-7xl items-center gap-16 px-6 lg:grid-cols-2">
                     <div>
-                        <h2 className="mb-6 text-4xl font-bold text-slate-900 dark:text-neutral-100">
+                        <h2 className="mb-6 text-4xl font-bold text-ink">
                             {t('page.home.services_title')}
                         </h2>
                         <div className="space-y-6">
@@ -283,10 +278,10 @@ export default function Home() {
                                         {service.icon}
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-slate-900 dark:text-neutral-100">
+                                        <h3 className="font-bold text-ink">
                                             {t(service.titleKey)}
                                         </h3>
-                                        <p className="mt-1 text-sm text-slate-500 dark:text-neutral-400">
+                                        <p className="mt-1 text-sm text-ink-muted">
                                             {t(service.descriptionKey)}
                                         </p>
                                     </div>
@@ -295,15 +290,15 @@ export default function Home() {
                         </div>
                     </div>
 
-                    <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-br from-slate-900 to-slate-800 p-10 text-white shadow-2xl lg:p-14 dark:from-neutral-800 dark:to-neutral-900">
+                    <div className="relative overflow-hidden rounded-[20px] bg-ink p-10 text-ink-inverse shadow-float lg:p-14">
                         <div className="relative z-10 space-y-6">
-                            <p className="text-xs font-bold tracking-[0.2em] text-blue-400 uppercase">
+                            <p className="text-xs font-bold tracking-[0.2em] text-accent uppercase">
                                 {t('page.home.services_title')}
                             </p>
                             <h3 className="text-3xl font-bold">
                                 {t('page.home.modules_title')}
                             </h3>
-                            <p className="leading-relaxed text-slate-300">
+                            <p className="leading-relaxed text-ink-subtle">
                                 {t('page.home.services_subtitle')}
                             </p>
                             <div className="space-y-3 pt-4">
@@ -316,35 +311,35 @@ export default function Home() {
                                 ].map((item) => (
                                     <div
                                         key={item}
-                                        className="flex items-center gap-3 text-sm text-slate-300"
+                                        className="flex items-center gap-3 text-sm text-ink-subtle"
                                     >
-                                        <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
+                                        <div className="bg-accent-soft0 h-1.5 w-1.5 shrink-0 rounded-full" />
                                         {item}
                                     </div>
                                 ))}
                             </div>
                         </div>
-                        <div className="absolute top-0 right-0 -mt-32 -mr-32 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
+                        <div className="bg-accent-soft0/20 absolute top-0 right-0 -mt-32 -mr-32 h-64 w-64 rounded-full blur-3xl" />
                     </div>
                 </div>
             </section>
 
             {/* CTA */}
             <section className="px-6 py-20">
-                <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[50px] bg-gradient-to-br from-slate-900 to-slate-800 p-12 text-center shadow-2xl lg:p-24 dark:from-neutral-800 dark:to-neutral-900">
+                <div className="relative mx-auto max-w-5xl overflow-hidden rounded-2xl bg-ink p-12 text-center shadow-float lg:p-24">
                     <div className="relative z-10">
-                        <h2 className="mb-6 text-4xl font-bold text-white lg:text-5xl">
+                        <h2 className="mb-6 text-4xl font-bold text-ink-inverse lg:text-5xl">
                             {t('page.home.cta_title')}
                         </h2>
-                        <p className="mx-auto mb-10 max-w-sm text-slate-300">
+                        <p className="mx-auto mb-10 max-w-sm text-ink-subtle">
                             {t('page.home.cta_description')}
                         </p>
                         <Button href="/login" size="xl">
                             {t('page.home.cta_button')}
                         </Button>
                     </div>
-                    <div className="absolute top-0 right-0 -mt-32 -mr-32 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
-                    <div className="absolute bottom-0 left-0 -mb-32 -ml-32 h-64 w-64 rounded-full bg-purple-500/20 blur-3xl" />
+                    <div className="bg-accent-soft0/20 absolute top-0 right-0 -mt-32 -mr-32 h-64 w-64 rounded-full blur-3xl" />
+                    <div className="absolute bottom-0 left-0 -mb-32 -ml-32 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
                 </div>
             </section>
         </PublicLayout>

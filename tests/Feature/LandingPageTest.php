@@ -114,7 +114,7 @@ describe('Demo Request Validation', function () {
         ],
         'message exceeds 2000 chars' => [
             ['name' => 'Dr. Smith', 'email' => 'test@example.com', 'message' => str_repeat('Y', 2001)],
-            ['message'],  
+            ['message'],
         ],
     ];
 

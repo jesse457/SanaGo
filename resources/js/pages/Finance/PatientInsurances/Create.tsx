@@ -1,19 +1,19 @@
-import {
-    HomeIcon,
-    ChevronRightIcon,
-    UserIcon,
-    CheckBadgeIcon,
-    ArrowPathIcon,
-    CheckIcon,
-    CheckCircleIcon,
-    ExclamationTriangleIcon,
-    XMarkIcon,
-} from '@heroicons/react/24/outline';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { CheckIcon, CreditCardIcon } from '@heroicons/react/24/outline';
+import { Head, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import {
+    Button,
+    Checkbox,
+    Field,
+    FieldSet,
+    Input,
+    PageHeader,
+    Select,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
+import { FormPageCard, FormStatusAlerts } from '@/pages/Radiology/components';
 
 interface LocalPayer {
     id: number;
@@ -111,349 +111,210 @@ export default function PatientInsurancesCreate({
         ? route('patient-insurances.show', insurance!.id)
         : route('patient-insurances.index');
 
+    const pageTitle = isEdit ? t('editInsurance') : t('linkPatientInsurance');
+
     return (
         <AppLayout
-            headerTitle={
-                isEdit ? t('editInsurance') : t('linkPatientInsurance')
-            }
+            headerTitle={pageTitle}
             headerSubtitle={t('connectPatientToInsurancePolicy')}
         >
-            <Head
-                title={isEdit ? t('editInsurance') : t('linkInsurance')}
-            />
+            <Head title={isEdit ? t('editInsurance') : t('linkInsurance')} />
 
-            <div className="max-w-8xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8">
-                {/* Breadcrumbs */}
-                <nav className="flex text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                    <ol className="inline-flex items-center space-x-2">
-                        <li className="flex cursor-pointer items-center transition-colors hover:text-blue-600">
-                            <HomeIcon className="mr-1 h-4 w-4" /> {t('home')}
-                        </li>
-                        <li>
-                            <ChevronRightIcon className="h-4 w-4" />
-                        </li>
-                        <li className="cursor-pointer transition-colors hover:text-blue-600">
-                            {t('finance')}
-                        </li>
-                        <li>
-                            <ChevronRightIcon className="h-4 w-4" />
-                        </li>
-                        <li className="cursor-pointer transition-colors hover:text-blue-600">
-                            {t('patientInsurances')}
-                        </li>
-                        <li>
-                            <ChevronRightIcon className="h-4 w-4" />
-                        </li>
-                        <li className="font-medium text-blue-600">
-                            {isEdit ? t('edit') : t('new')}
-                        </li>
-                    </ol>
-                </nav>
+            <div className="mx-auto flex max-w-5xl flex-col gap-6">
+                <PageHeader
+                    title={pageTitle}
+                    description={t('connectPatientToInsurancePolicy')}
+                    breadcrumbs={[
+                        { label: t('home'), href: route('dashboard') },
+                        { label: t('finance') },
+                        { label: t('patientInsurances') },
+                        { label: isEdit ? t('edit') : t('new') },
+                    ]}
+                />
 
-                {/* Alerts */}
-                {successMessage && (
-                    <div className="flex items-start justify-between rounded-lg border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-900/20">
-                        <div className="flex items-center gap-3">
-                            <CheckCircleIcon className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                            <div>
-                                <h3 className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
-                                    {t('success')}
-                                </h3>
-                                <div className="mt-1 text-sm text-emerald-700 dark:text-emerald-400">
-                                    {successMessage}
-                                </div>
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setSuccessMessage(null)}
-                            className="rounded-lg p-1.5 text-emerald-500 transition hover:text-emerald-700 dark:hover:text-emerald-300"
-                        >
-                            <XMarkIcon className="h-5 w-5" />
-                        </button>
-                    </div>
-                )}
+                <FormStatusAlerts
+                    successMessage={successMessage}
+                    onDismissSuccess={() => setSuccessMessage(null)}
+                    errorMessage={errorMessage}
+                    hasFieldErrors={Object.keys(errors).length > 0}
+                    successTitle={t('success')}
+                    errorTitle={t('error')}
+                    errorFallback={t('someFieldsRequireAttention')}
+                />
 
-                {(errorMessage || Object.keys(errors).length > 0) && (
-                    <div className="flex items-start justify-between rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-                        <div className="flex items-center gap-3">
-                            <ExclamationTriangleIcon className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
-                            <div>
-                                <h3 className="text-sm font-bold text-red-800 dark:text-red-300">
-                                    {t('error')}
-                                </h3>
-                                <div className="mt-1 text-sm text-red-700 dark:text-red-400">
-                                    {errorMessage ||
-                                        t('someFieldsRequireAttention')}
-                                </div>
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setErrorMessage(null)}
-                            className="rounded-lg p-1.5 text-red-500 transition hover:text-red-700 dark:hover:text-red-300"
-                        >
-                            <XMarkIcon className="h-5 w-5" />
-                        </button>
-                    </div>
-                )}
-
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-                    <form onSubmit={handleSubmit} className="space-y-8 p-6">
-                        {/* Section: Patient & Payer */}
-                        <div className="space-y-4">
-                            <h3 className="flex items-center gap-2 border-b border-gray-100 pb-2 text-sm font-bold tracking-wide text-blue-600 uppercase dark:border-neutral-700">
-                                <UserIcon className="h-5 w-5" />
-                                {t('patientAndPayer')}
-                            </h3>
-                            <div className="grid grid-cols-1 gap-4">
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('patient')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        value={data.patient_id}
-                                        onChange={(e) =>
-                                            setData(
-                                                'patient_id',
-                                                e.target.value,
-                                            )
-                                        }
-                                        className={`w-full rounded-lg border py-2 px-3 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.patient_id ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                    >
-                                        <option value="">
-                                            {t('selectPatient')}
-                                        </option>
-                                        {patientOptions.map((opt) => (
-                                            <option
-                                                key={opt.value}
-                                                value={opt.value}
-                                            >
-                                                {opt.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.patient_id && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.patient_id}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('payer')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        value={data.payer_id}
-                                        onChange={(e) =>
-                                            setData('payer_id', e.target.value)
-                                        }
-                                        className={`w-full rounded-lg border py-2 px-3 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.payer_id ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                    >
-                                        <option value="">
-                                            {t('selectPayer')}
-                                        </option>
-                                        {payerOptions.map((opt) => (
-                                            <option
-                                                key={opt.value}
-                                                value={opt.value}
-                                            >
-                                                {opt.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.payer_id && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.payer_id}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Section: Policy Details */}
-                        <div className="space-y-4">
-                            <h3 className="flex items-center gap-2 border-b border-gray-100 pb-2 text-sm font-bold tracking-wide text-blue-600 uppercase dark:border-neutral-700">
-                                <CheckBadgeIcon className="h-5 w-5" />
-                                {t('policyDetails')}
-                            </h3>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('policyNumber')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={data.policy_number}
-                                        onChange={(e) =>
-                                            setData(
-                                                'policy_number',
-                                                e.target.value,
-                                            )
-                                        }
-                                        className={`w-full rounded-lg border py-2 pr-3 pl-3 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.policy_number ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                    />
-                                    {errors.policy_number && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.policy_number}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('cardNumber')}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={data.card_number}
-                                        onChange={(e) =>
-                                            setData(
-                                                'card_number',
-                                                e.target.value,
-                                            )
-                                        }
-                                        className={`w-full rounded-lg border py-2 pr-3 pl-3 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.card_number ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                    />
-                                    {errors.card_number && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.card_number}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('validFrom')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="date"
-                                        value={data.valid_from}
-                                        onChange={(e) =>
-                                            setData(
-                                                'valid_from',
-                                                e.target.value,
-                                            )
-                                        }
-                                        className={`w-full rounded-lg border py-2 pr-3 pl-3 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.valid_from ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                    />
-                                    {errors.valid_from && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.valid_from}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('validUntil')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="date"
-                                        value={data.valid_until}
-                                        onChange={(e) =>
-                                            setData(
-                                                'valid_until',
-                                                e.target.value,
-                                            )
-                                        }
-                                        className={`w-full rounded-lg border py-2 pr-3 pl-3 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.valid_until ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                    />
-                                    {errors.valid_until && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.valid_until}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('beneficiaryType')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        value={data.beneficiary_type}
-                                        onChange={(e) =>
-                                            setData(
-                                                'beneficiary_type',
-                                                e.target.value,
-                                            )
-                                        }
-                                        className={`w-full rounded-lg border py-2 px-3 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.beneficiary_type ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                    >
-                                        {BENEFICIARY_OPTIONS.map((opt) => (
-                                            <option
-                                                key={opt.value}
-                                                value={opt.value}
-                                            >
-                                                {opt.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.beneficiary_type && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.beneficiary_type}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-2 pt-6">
-                                    <input
-                                        type="checkbox"
-                                        id="is_primary"
-                                        checked={data.is_primary}
-                                        onChange={(e) =>
-                                            setData(
-                                                'is_primary',
-                                                e.target.checked,
-                                            )
-                                        }
-                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
-                                    />
-                                    <label
-                                        htmlFor="is_primary"
-                                        className="text-sm font-medium text-gray-700 dark:text-neutral-300"
-                                    >
-                                        {t('primaryInsurance')}
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Form Actions */}
-                        <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4 dark:border-neutral-700">
-                            <Link
-                                href={backRoute}
-                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                            >
+                <FormPageCard
+                    title={t('policyDetails')}
+                    headingIcon={CreditCardIcon}
+                    onSubmit={handleSubmit}
+                    footer={
+                        <>
+                            <Button variant="secondary" href={backRoute}>
                                 {t('cancel')}
-                            </Link>
-                            <button
+                            </Button>
+                            <Button
                                 type="submit"
-                                disabled={processing}
-                                className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                loading={processing}
+                                icon={CheckIcon}
                             >
-                                {processing ? (
-                                    <span className="flex items-center gap-2">
-                                        <ArrowPathIcon className="h-4 w-4 animate-spin" />{' '}
-                                        {t('saving')}...
-                                    </span>
-                                ) : (
-                                    <span className="flex items-center gap-2">
-                                        <CheckIcon className="h-4 w-4" />{' '}
-                                        {isEdit
-                                            ? t('update')
-                                            : t('linkInsurance')}
-                                    </span>
-                                )}
-                            </button>
+                                {processing
+                                    ? `${t('saving')}...`
+                                    : isEdit
+                                      ? t('update')
+                                      : t('linkInsurance')}
+                            </Button>
+                        </>
+                    }
+                >
+                    <FieldSet title={t('patientAndPayer')} columns={2}>
+                        <Field
+                            label={t('patient')}
+                            htmlFor="patient_id"
+                            required
+                            error={errors.patient_id}
+                        >
+                            <Select
+                                id="patient_id"
+                                value={data.patient_id}
+                                onChange={(e) =>
+                                    setData('patient_id', e.target.value)
+                                }
+                                placeholder={t('selectPatient')}
+                                invalid={Boolean(errors.patient_id)}
+                            >
+                                {patientOptions.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </Select>
+                        </Field>
+
+                        <Field
+                            label={t('payer')}
+                            htmlFor="payer_id"
+                            required
+                            error={errors.payer_id}
+                        >
+                            <Select
+                                id="payer_id"
+                                value={data.payer_id}
+                                onChange={(e) =>
+                                    setData('payer_id', e.target.value)
+                                }
+                                placeholder={t('selectPayer')}
+                                invalid={Boolean(errors.payer_id)}
+                            >
+                                {payerOptions.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </Select>
+                        </Field>
+                    </FieldSet>
+
+                    <FieldSet title={t('policyDetails')} columns={2}>
+                        <Field
+                            label={t('policyNumber')}
+                            htmlFor="policy_number"
+                            required
+                            error={errors.policy_number}
+                        >
+                            <Input
+                                id="policy_number"
+                                type="text"
+                                value={data.policy_number}
+                                onChange={(e) =>
+                                    setData('policy_number', e.target.value)
+                                }
+                                invalid={Boolean(errors.policy_number)}
+                            />
+                        </Field>
+
+                        <Field
+                            label={t('cardNumber')}
+                            htmlFor="card_number"
+                            error={errors.card_number}
+                        >
+                            <Input
+                                id="card_number"
+                                type="text"
+                                value={data.card_number}
+                                onChange={(e) =>
+                                    setData('card_number', e.target.value)
+                                }
+                                invalid={Boolean(errors.card_number)}
+                            />
+                        </Field>
+
+                        <Field
+                            label={t('validFrom')}
+                            htmlFor="valid_from"
+                            required
+                            error={errors.valid_from}
+                        >
+                            <Input
+                                id="valid_from"
+                                type="date"
+                                value={data.valid_from}
+                                onChange={(e) =>
+                                    setData('valid_from', e.target.value)
+                                }
+                                invalid={Boolean(errors.valid_from)}
+                            />
+                        </Field>
+
+                        <Field
+                            label={t('validUntil')}
+                            htmlFor="valid_until"
+                            required
+                            error={errors.valid_until}
+                        >
+                            <Input
+                                id="valid_until"
+                                type="date"
+                                value={data.valid_until}
+                                onChange={(e) =>
+                                    setData('valid_until', e.target.value)
+                                }
+                                invalid={Boolean(errors.valid_until)}
+                            />
+                        </Field>
+
+                        <Field
+                            label={t('beneficiaryType')}
+                            htmlFor="beneficiary_type"
+                            required
+                            error={errors.beneficiary_type}
+                        >
+                            <Select
+                                id="beneficiary_type"
+                                value={data.beneficiary_type}
+                                onChange={(e) =>
+                                    setData('beneficiary_type', e.target.value)
+                                }
+                                invalid={Boolean(errors.beneficiary_type)}
+                            >
+                                {BENEFICIARY_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </Select>
+                        </Field>
+
+                        <div className="flex items-end pb-2.5">
+                            <Checkbox
+                                id="is_primary"
+                                checked={data.is_primary}
+                                onChange={(e) =>
+                                    setData('is_primary', e.target.checked)
+                                }
+                                label={t('primaryInsurance')}
+                            />
                         </div>
-                    </form>
-                </div>
+                    </FieldSet>
+                </FormPageCard>
             </div>
         </AppLayout>
     );

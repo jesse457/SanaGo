@@ -1,64 +1,188 @@
 import {
-    MagnifyingGlassIcon,
-    FunnelIcon,
-    PencilSquareIcon,
-    EyeIcon,
-    ChevronRightIcon,
-    HomeIcon,
     ArrowDownTrayIcon,
     BeakerIcon,
-    UserIcon,
     CalendarIcon,
     CheckBadgeIcon,
-    EllipsisVerticalIcon,
+    ClockIcon,
+    InboxIcon,
+    PencilSquareIcon,
+    Squares2X2Icon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import debounce from 'lodash/debounce';
-import React, { useState, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Pagination } from '@/Components/Pagination';
+import {
+    Button,
+    EmptyState,
+    PageHeader,
+    SegmentedControl,
+    Select,
+    StatCard,
+    StatGrid,
+    Table,
+    TableBody,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+    Toolbar,
+    ToolbarSearch,
+    ToolbarSpacer,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
+import {
+    formatLabDate,
+    LabPatientIdentity,
+    LabRequestTableRow,
+} from '@/pages/LabTests/components/LabRequestCard';
+import type { LabRequestRow } from '@/pages/LabTests/components/LabRequestCard';
+import { ResultStatusBadge } from '@/pages/LabTests/components/ResultStatusBadge';
+
+interface LabResult extends LabRequestRow {
+    result_date: string;
+}
 
 interface Props {
-    results: any;
+    results: {
+        data: LabResult[];
+        links: { url: string | null; label: string; active: boolean }[];
+        total: number;
+        from: number;
+        to: number;
+    };
     filters: {
         search?: string;
         status?: string;
     };
 }
 
+/**
+ * ResultsArchiveCard — a completed/in-progress result tile for the archive
+ * grid view. Patient identity, test profile and the verification date.
+ */
+function ResultsArchiveCard({
+    result,
+    editHref,
+}: {
+    result: LabResult;
+    editHref: string;
+}) {
+    return (
+        <article className="flex h-full flex-col rounded-xl border border-line bg-surface p-5 transition-[border-color,transform] duration-200 ease-premium hover:-translate-y-0.5 hover:border-line-strong">
+            <div className="mb-3.5 flex items-start justify-between gap-3">
+                <LabPatientIdentity request={result} avatarSize="md" />
+                <ResultStatusBadge status={result.status} />
+            </div>
+
+            <div className="mt-1 flex items-center gap-2 rounded-lg bg-surface-muted px-3.5 py-2.5">
+                <BeakerIcon className="h-4 w-4 shrink-0 text-accent" />
+                <div className="min-w-0">
+                    <div className="truncate text-[13px] font-medium text-ink">
+                        {result.test_definition.test_name}
+                    </div>
+                    {result.test_definition.code && (
+                        <div className="mt-0.5 text-[10px] tracking-[0.1em] text-ink-subtle uppercase">
+                            {result.test_definition.code}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-3.5">
+                <span className="inline-flex items-center gap-1.5 text-[11px] whitespace-nowrap text-ink-subtle tabular-nums">
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {formatLabDate(result.result_date)}
+                </span>
+                <div className="flex items-center gap-1">
+                    <Button
+                        href={editHref}
+                        variant="ghost"
+                        size="icon"
+                        icon={PencilSquareIcon}
+                        aria-label="Edit result"
+                    />
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        icon={ArrowDownTrayIcon}
+                        aria-label="Download result"
+                    />
+                </div>
+            </div>
+        </article>
+    );
+}
+
 export default function ResultsIndex({ results, filters }: Props) {
     const { t } = useTranslation();
-    const [search, setSearch] = useState(filters.search || '');
 
-    // Handle Search with Debounce
-    const handleSearch = useCallback(
-        debounce((value: string) => {
-            router.get(
-                route('lab-results.index'),
-                { ...filters, search: value },
-                {
-                    preserveState: true,
-                    replace: true,
-                },
-            );
-        }, 300),
-        [filters],
-    );
+    // Persist selected view format (grid vs table) locally
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('results_view_mode');
 
-    const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearch(e.target.value);
-        handleSearch(e.target.value);
+            if (saved === 'grid' || saved === 'table') {
+                return saved;
+            }
+        }
+
+        return 'table';
+    });
+
+    const [params, setParams] = useState({
+        search: filters.search || '',
+        status: filters.status || '',
+    });
+
+    // Sync input parameters with query filters on navigation
+    useEffect(() => {
+        // Mirror server-driven filters into local params on navigation.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setParams({
+            search: filters.search || '',
+            status: filters.status || '',
+        });
+    }, [filters]);
+
+    const handleViewModeChange = (mode: 'grid' | 'table') => {
+        setViewMode(mode);
+
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('results_view_mode', mode);
+        }
     };
 
-    const getStatusStyle = (status: string) => {
-        switch (status) {
-            case 'Completed':
-                return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-            case 'In Progress':
-                return 'bg-amber-50 text-amber-700 border-amber-200';
-            default:
-                return 'bg-gray-50 text-gray-700 border-gray-200';
-        }
+    const stats = useMemo(
+        () => ({
+            total: results.total,
+            completed: results.data.filter((r) => r.status === 'Completed')
+                .length,
+            inProgress: results.data.filter((r) => r.status === 'In Progress')
+                .length,
+        }),
+        [results],
+    );
+
+    const requestUpdate = useMemo(
+        () =>
+            debounce((query) => {
+                router.get(route('lab-results.index'), query, {
+                    preserveState: true,
+                    replace: true,
+                });
+            }, 300),
+        [],
+    );
+
+    const handleFilterChange = (key: string, value: string) => {
+        const newParams = {
+            ...params,
+            [key]: value,
+            page: '1',
+        };
+        setParams(newParams);
+        requestUpdate(newParams);
     };
 
     return (
@@ -68,216 +192,177 @@ export default function ResultsIndex({ results, filters }: Props) {
         >
             <Head title={t('lab_tests.results.index.head_title')} />
 
-            <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
-                {/* Breadcrumbs */}
-                <nav className="mb-6 flex text-[10px] font-bold tracking-widest text-gray-400 uppercase">
-                    <ol className="flex items-center gap-2">
-                        <li className="transition-colors hover:text-blue-600">
-                            <Link
-                                href="/lab/dashboard"
-                                className="flex items-center gap-1"
-                            >
-                                <HomeIcon className="h-3 w-3" />{' '}
-                                {t('common.home')}
-                            </Link>
-                        </li>
-                        <li>
-                            <ChevronRightIcon className="h-3 w-3" />
-                        </li>
-                        <li className="text-blue-600">
-                            {t('lab_tests.results.index.results_archive')}
-                        </li>
-                    </ol>
-                </nav>
-
-                {/* Filters Bar */}
-                <div className="mb-6 flex flex-col items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:flex-row">
-                    <div className="relative w-full md:max-w-md">
-                        <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder={t(
-                                'lab_tests.results.index.search_placeholder',
-                            )}
-                            value={search}
-                            onChange={onSearchChange}
-                            className="w-full rounded-xl border-gray-200 py-2 pr-4 pl-10 text-sm transition-all focus:ring-4 focus:ring-blue-500/10"
-                        />
-                    </div>
-
-                    <div className="flex w-full items-center gap-3 md:w-auto">
-                        <select
-                            value={filters.status || ''}
-                            onChange={(e) =>
-                                router.get(route('lab-results.index'), {
-                                    ...filters,
-                                    status: e.target.value,
-                                })
-                            }
-                            className="rounded-xl border-gray-200 text-sm focus:ring-blue-500"
-                        >
-                            <option value="">
-                                {t('lab_tests.results.index.all_statuses')}
-                            </option>
-                            <option value="Completed">
-                                {t('lab_tests.results.index.completed')}
-                            </option>
-                            <option value="In Progress">
-                                {t('lab_tests.results.index.in_progress')}
-                            </option>
-                        </select>
-
-                        <button className="flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-gray-800">
-                            <ArrowDownTrayIcon className="h-4 w-4" />
+            <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
+                <PageHeader
+                    icon={BeakerIcon}
+                    eyebrow={t('lab_tests.results.index.results_archive')}
+                    title={t('lab_tests.results.index.title')}
+                    description={t('lab_tests.results.index.subtitle')}
+                    breadcrumbs={[
+                        { label: t('common.home'), href: '/lab/dashboard' },
+                        { label: t('lab_tests.results.index.results_archive') },
+                    ]}
+                    meta={
+                        <>
+                            <span className="tabular-nums">
+                                {results.total}{' '}
+                                {t('lab_tests.results.index.results_archive')}
+                            </span>
+                        </>
+                    }
+                    actions={
+                        <Button variant="secondary" icon={ArrowDownTrayIcon}>
                             {t('lab_tests.results.index.export')}
-                        </button>
-                    </div>
-                </div>
+                        </Button>
+                    }
+                />
 
-                {/* Table Content */}
-                <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-                    <table className="w-full text-left">
-                        <thead className="border-b border-gray-100 bg-gray-50/50 dark:bg-neutral-700/50">
-                            <tr>
-                                <th className="px-6 py-4 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                <StatGrid columns={3}>
+                    <StatCard
+                        icon={BeakerIcon}
+                        label={t('lab_tests.results.index.results_archive')}
+                        value={stats.total}
+                        tone="accent"
+                    />
+                    <StatCard
+                        icon={CheckBadgeIcon}
+                        label={t('lab_tests.results.index.completed')}
+                        value={stats.completed}
+                        tone="positive"
+                    />
+                    <StatCard
+                        icon={ClockIcon}
+                        label={t('lab_tests.results.index.in_progress')}
+                        value={stats.inProgress}
+                        tone="warning"
+                    />
+                </StatGrid>
+
+                <Toolbar>
+                    <ToolbarSearch
+                        value={params.search}
+                        onChange={(value) =>
+                            handleFilterChange('search', value)
+                        }
+                        placeholder={t(
+                            'lab_tests.results.index.search_placeholder',
+                        )}
+                    />
+                    <Select
+                        aria-label={t('lab_tests.results.index.status')}
+                        className="h-9 w-auto text-[13px]"
+                        value={params.status}
+                        onChange={(event) =>
+                            handleFilterChange('status', event.target.value)
+                        }
+                    >
+                        <option value="">
+                            {t('lab_tests.results.index.all_statuses')}
+                        </option>
+                        <option value="Completed">
+                            {t('lab_tests.results.index.completed')}
+                        </option>
+                        <option value="In Progress">
+                            {t('lab_tests.results.index.in_progress')}
+                        </option>
+                    </Select>
+                    <ToolbarSpacer />
+                    <SegmentedControl
+                        value={viewMode}
+                        onChange={(value) =>
+                            handleViewModeChange(value as 'grid' | 'table')
+                        }
+                        size="sm"
+                        options={[
+                            {
+                                value: 'grid',
+                                icon: Squares2X2Icon,
+                                ariaLabel: 'Grid view',
+                            },
+                            {
+                                value: 'table',
+                                label: 'Table',
+                                ariaLabel: 'Table view',
+                            },
+                        ]}
+                    />
+                </Toolbar>
+
+                {results.data.length === 0 ? (
+                    <EmptyState
+                        icon={InboxIcon}
+                        title={t(
+                            'lab_tests.results.index.no_results',
+                            'No Results Found',
+                        )}
+                        description={t(
+                            'lab_tests.results.index.no_results_description',
+                            'Please adjust filters or try a different search query.',
+                        )}
+                    />
+                ) : viewMode === 'grid' ? (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {results.data.map((result) => (
+                            <ResultsArchiveCard
+                                key={result.id}
+                                result={result}
+                                editHref={route('results.edit', result.id)}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                                <TableHeaderCell>
                                     {t(
                                         'lab_tests.results.index.patient_details',
                                     )}
-                                </th>
-                                <th className="px-6 py-4 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                </TableHeaderCell>
+                                <TableHeaderCell>
                                     {t('lab_tests.results.index.test_profile')}
-                                </th>
-                                <th className="px-6 py-4 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                </TableHeaderCell>
+                                <TableHeaderCell>
                                     {t('lab_tests.results.index.result_date')}
-                                </th>
-                                <th className="px-6 py-4 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                </TableHeaderCell>
+                                <TableHeaderCell>
                                     {t('lab_tests.results.index.status')}
-                                </th>
-                                <th className="px-6 py-4 text-right text-[10px] font-black tracking-widest text-gray-400 uppercase">
-                                    {t('lab_tests.results.index.actions')}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {results.data.map((result: any) => (
-                                <tr
+                                </TableHeaderCell>
+                                <TableHeaderCell numeric>
+                                    <span className="sr-only">
+                                        {t('common.actions')}
+                                    </span>
+                                </TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {results.data.map((result) => (
+                                <LabRequestTableRow
                                     key={result.id}
-                                    className="group transition-colors hover:bg-blue-50/30"
-                                >
-                                    <td className="px-6 py-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-sm font-bold text-blue-600">
-                                                {
-                                                    result.lab_request.patient
-                                                        .first_name[0]
-                                                }
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-gray-900">
-                                                    {
-                                                        result.lab_request
-                                                            .patient.first_name
-                                                    }{' '}
-                                                    {
-                                                        result.lab_request
-                                                            .patient.last_name
-                                                    }
-                                                </p>
-                                                <p className="font-mono text-[10px] text-gray-400">
-                                                    {
-                                                        result.lab_request
-                                                            .patient.patient_uid
-                                                    }
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <div className="flex items-center gap-2">
-                                            <BeakerIcon className="h-4 w-4 text-purple-400" />
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-700">
-                                                    {
-                                                        result.lab_request
-                                                            .test_definition
-                                                            .test_name
-                                                    }
-                                                </p>
-                                                <p className="text-[10px] text-gray-400 uppercase">
-                                                    {
-                                                        result.lab_request
-                                                            .test_definition
-                                                            .code
-                                                    }
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <div className="flex items-center gap-2 text-gray-600">
-                                            <CalendarIcon className="h-4 w-4 text-gray-300" />
-                                            <span className="text-sm">
-                                                {new Date(
-                                                    result.result_date,
-                                                ).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <span
-                                            className={`rounded-lg border px-2.5 py-1 text-[10px] font-black tracking-wider uppercase ${getStatusStyle(result.status)}`}
-                                        >
-                                            {result.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-5 text-right">
-                                        <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                                            <Link
-                                                href={route(
-                                                    'results.edit',
-                                                    result.id,
-                                                )}
-                                                className="rounded-lg p-2 text-gray-400 transition-all hover:bg-blue-50 hover:text-blue-600"
-                                            >
-                                                <PencilSquareIcon className="h-5 w-5" />
-                                            </Link>
-                                            <button className="rounded-lg p-2 text-gray-400 transition-all hover:bg-emerald-50 hover:text-emerald-600">
-                                                <ArrowDownTrayIcon className="h-5 w-5" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-
-                    {/* Pagination */}
-                    <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50/50 px-6 py-4 dark:bg-neutral-700/50">
-                        <p className="text-xs text-gray-500">
-                            {t('lab_tests.results.index.showing_archives', {
-                                from: results.from,
-                                to: results.to,
-                                total: results.total,
-                            })}
-                        </p>
-                        <div className="flex gap-2">
-                            {results.links.map((link: any, i: number) => (
-                                <Link
-                                    key={i}
-                                    href={link.url || ''}
-                                    dangerouslySetInnerHTML={{
-                                        __html: link.label,
-                                    }}
-                                    className={`rounded-lg px-3 py-1 text-[10px] font-bold transition-all ${
-                                        link.active
-                                            ? 'bg-blue-600 text-white shadow-md'
-                                            : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                                    } ${!link.url && 'pointer-events-none opacity-30'}`}
+                                    request={result}
+                                    date={result.result_date}
+                                    dateIcon={
+                                        <CalendarIcon className="h-3.5 w-3.5 text-ink-subtle" />
+                                    }
+                                    actionLabel={t('common.edit')}
+                                    actionHref={route(
+                                        'results.edit',
+                                        result.id,
+                                    )}
                                 />
                             ))}
-                        </div>
-                    </div>
-                </div>
+                        </TableBody>
+                    </Table>
+                )}
+
+                <Pagination
+                    links={results.links}
+                    meta={{
+                        from: results.from,
+                        to: results.to,
+                        total: results.total,
+                    }}
+                />
             </div>
         </AppLayout>
     );

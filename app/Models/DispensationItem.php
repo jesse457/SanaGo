@@ -9,6 +9,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['dispensation_id', 'medication_id', 'quantity', 'unit_price'])]
 class DispensationItem extends Model
 {
+    protected function casts(): array
+    {
+        return [
+            'quantity' => 'integer',
+            'unit_price' => 'decimal:2',
+        ];
+    }
+
     public function dispensation(): BelongsTo
     {
         return $this->belongsTo(Dispensation::class);

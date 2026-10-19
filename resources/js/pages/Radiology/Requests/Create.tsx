@@ -1,24 +1,25 @@
-import {
-    HomeIcon,
-    ChevronRightIcon,
-    CameraIcon,
-    UserIcon,
-    DocumentTextIcon,
-    CheckCircleIcon,
-    ExclamationTriangleIcon,
-    XMarkIcon,
-    CheckIcon,
-    ArrowPathIcon,
-} from '@heroicons/react/24/outline';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { CameraIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
-import AppLayout from '@/Layouts/AppLayout';
+import {
+    Button,
+    Field,
+    FieldSet,
+    PageHeader,
+    Select,
+    Textarea,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
+import AppLayout from '@/Layouts/AppLayout';
+import { FormPageCard, FormStatusAlerts } from '@/pages/Radiology/components';
 import type { Patient } from '@/types';
 
 interface Props {
-    patients: Pick<Patient, 'id' | 'first_name' | 'last_name' | 'patient_uid'>[];
+    patients: Pick<
+        Patient,
+        'id' | 'first_name' | 'last_name' | 'patient_uid'
+    >[];
 }
 
 const IMAGING_TYPES = [
@@ -72,236 +73,157 @@ export default function RadiologyRequestsCreate({ patients }: Props) {
     };
 
     return (
-        <AppLayout headerTitle={t('radiology.newRequest')} headerSubtitle={t('radiology.requestImaging')}>
+        <AppLayout
+            headerTitle={t('radiology.newRequest')}
+            headerSubtitle={t('radiology.requestImaging')}
+        >
             <Head title={t('radiology.newRequest')} />
 
-            <div className="max-w-8xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8">
-                {/* Breadcrumbs */}
-                <nav className="flex text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                    <ol className="inline-flex items-center space-x-2">
-                        <li className="flex cursor-pointer items-center transition-colors hover:text-blue-600">
-                            <HomeIcon className="mr-1 h-4 w-4" /> {t('common.home')}
-                        </li>
-                        <li>
-                            <ChevronRightIcon className="h-4 w-4" />
-                        </li>
-                        <li className="cursor-pointer transition-colors hover:text-blue-600">
-                            {t('radiology.title')}
-                        </li>
-                        <li>
-                            <ChevronRightIcon className="h-4 w-4" />
-                        </li>
-                        <li className="font-medium text-blue-600">
-                            {t('radiology.newRequest')}
-                        </li>
-                    </ol>
-                </nav>
+            <div className="mx-auto flex max-w-5xl flex-col gap-6">
+                <PageHeader
+                    title={t('radiology.newRequest')}
+                    description={t('radiology.requestImaging')}
+                    breadcrumbs={[
+                        { label: t('common.home'), href: route('dashboard') },
+                        { label: t('radiology.title') },
+                        { label: t('radiology.newRequest') },
+                    ]}
+                />
 
-                {/* Alerts */}
-                {successMessage && (
-                    <div className="flex items-start justify-between rounded-lg border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-900/20">
-                        <div className="flex items-center gap-3">
-                            <CheckCircleIcon className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                            <div>
-                                <h3 className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
-                                    {t('common.success')}
-                                </h3>
-                                <div className="mt-1 text-sm text-emerald-700 dark:text-emerald-400">
-                                    {successMessage}
-                                </div>
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setSuccessMessage(null)}
-                            className="rounded-lg p-1.5 text-emerald-500 transition hover:text-emerald-700 dark:hover:text-emerald-300"
-                        >
-                            <XMarkIcon className="h-5 w-5" />
-                        </button>
-                    </div>
-                )}
+                <FormStatusAlerts
+                    successMessage={successMessage}
+                    onDismissSuccess={() => setSuccessMessage(null)}
+                    errorMessage={errorMessage}
+                    hasFieldErrors={Object.keys(errors).length > 0}
+                    successTitle={t('common.success')}
+                    errorTitle={t('common.error')}
+                    errorFallback={t('common.someFieldsRequireAttention')}
+                />
 
-                {(errorMessage || Object.keys(errors).length > 0) && (
-                    <div className="flex items-start justify-between rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-                        <div className="flex items-center gap-3">
-                            <ExclamationTriangleIcon className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
-                            <div>
-                                <h3 className="text-sm font-bold text-red-800 dark:text-red-300">
-                                    {t('common.error')}
-                                </h3>
-                                <div className="mt-1 text-sm text-red-700 dark:text-red-400">
-                                    {errorMessage || t('common.someFieldsRequireAttention')}
-                                </div>
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setErrorMessage(null)}
-                            className="rounded-lg p-1.5 text-red-500 transition hover:text-red-700 dark:hover:text-red-300"
-                        >
-                            <XMarkIcon className="h-5 w-5" />
-                        </button>
-                    </div>
-                )}
-
-                {/* Main Form Card */}
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-                    <form onSubmit={handleSubmit} className="space-y-8 p-6">
-                        {/* Section 1: Patient */}
-                        <div className="space-y-4">
-                            <h3 className="flex items-center gap-2 border-b border-gray-100 pb-2 text-sm font-bold tracking-wide text-blue-600 uppercase dark:border-neutral-700">
-                                <UserIcon className="h-5 w-5" />
-                                {t('radiology.patient')}
-                            </h3>
-
-                            <div className="space-y-1">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                    {t('radiology.selectPatient')}{' '}
-                                    <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative">
-                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                        <UserIcon className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                    <select
-                                        value={data.patient_id}
-                                        onChange={(e) => setData('patient_id', e.target.value)}
-                                        className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.patient_id ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                    >
-                                        <option value="">{t('radiology.selectPatientPlaceholder')}</option>
-                                        {patientOptions.map((p) => (
-                                            <option key={p.value} value={p.value}>
-                                                {p.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                {errors.patient_id && (
-                                    <p className="mt-1 text-xs text-red-500">
-                                        {errors.patient_id}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Section 2: Imaging Details */}
-                        <div className="space-y-4">
-                            <h3 className="flex items-center gap-2 border-b border-gray-100 pb-2 text-sm font-bold tracking-wide text-blue-600 uppercase dark:border-neutral-700">
-                                <CameraIcon className="h-5 w-5" />
-                                {t('radiology.imagingDetails')}
-                            </h3>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('radiology.imagingType')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <CameraIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <select
-                                            value={data.imaging_type}
-                                            onChange={(e) => setData('imaging_type', e.target.value)}
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.imaging_type ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        >
-                                            <option value="">{t('radiology.selectImagingType')}</option>
-                                            {IMAGING_TYPES.map((it) => (
-                                                <option key={it.value} value={it.value}>
-                                                    {it.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    {errors.imaging_type && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.imaging_type}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('radiology.bodyPart')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <select
-                                            value={data.body_part}
-                                            onChange={(e) => setData('body_part', e.target.value)}
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.body_part ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        >
-                                            <option value="">{t('radiology.selectBodyPart')}</option>
-                                            {BODY_PARTS.map((bp) => (
-                                                <option key={bp.value} value={bp.value}>
-                                                    {bp.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    {errors.body_part && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.body_part}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                    {t('radiology.clinicalNotes')}{' '}
-                                    <span className="ml-1 text-xs font-normal text-gray-400">
-                                        {t('common.optional')}
-                                    </span>
-                                </label>
-                                <textarea
-                                    value={data.clinical_notes}
-                                    onChange={(e) => setData('clinical_notes', e.target.value)}
-                                    rows={3}
-                                    placeholder={t('radiology.clinicalNotesPlaceholder')}
-                                    className={`w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100 ${errors.clinical_notes ? 'border-red-300 dark:border-red-500' : ''}`}
-                                />
-                                {errors.clinical_notes && (
-                                    <p className="mt-1 text-xs text-red-500">
-                                        {errors.clinical_notes}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Form Actions */}
-                        <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4 dark:border-neutral-700">
-                            <Link
+                <FormPageCard
+                    title={t('radiology.patient')}
+                    headingIcon={CameraIcon}
+                    onSubmit={handleSubmit}
+                    footer={
+                        <>
+                            <Button
+                                variant="secondary"
                                 href={route('radiology.requests.index')}
-                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
                             >
                                 {t('common.cancel')}
-                            </Link>
-
-                            <button
+                            </Button>
+                            <Button
                                 type="submit"
-                                disabled={processing}
-                                className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                loading={processing}
+                                icon={CheckIcon}
                             >
-                                {processing ? (
-                                    <span className="flex items-center gap-2">
-                                        <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                                        {t('radiology.submitting')}...
-                                    </span>
-                                ) : (
-                                    <span className="flex items-center gap-2">
-                                        <CheckIcon className="h-4 w-4" />
-                                        {t('radiology.submitRequest')}
-                                    </span>
+                                {processing
+                                    ? `${t('radiology.submitting')}...`
+                                    : t('radiology.submitRequest')}
+                            </Button>
+                        </>
+                    }
+                >
+                    <FieldSet columns={1}>
+                        <Field
+                            label={t('radiology.selectPatient')}
+                            htmlFor="patient_id"
+                            required
+                            error={errors.patient_id}
+                        >
+                            <Select
+                                id="patient_id"
+                                value={data.patient_id}
+                                onChange={(e) =>
+                                    setData('patient_id', e.target.value)
+                                }
+                                placeholder={t(
+                                    'radiology.selectPatientPlaceholder',
                                 )}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                                invalid={Boolean(errors.patient_id)}
+                            >
+                                {patientOptions.map((p) => (
+                                    <option key={p.value} value={p.value}>
+                                        {p.label}
+                                    </option>
+                                ))}
+                            </Select>
+                        </Field>
+                    </FieldSet>
+
+                    <FieldSet title={t('radiology.imagingDetails')} columns={2}>
+                        <Field
+                            label={t('radiology.imagingType')}
+                            htmlFor="imaging_type"
+                            required
+                            error={errors.imaging_type}
+                        >
+                            <Select
+                                id="imaging_type"
+                                value={data.imaging_type}
+                                onChange={(e) =>
+                                    setData('imaging_type', e.target.value)
+                                }
+                                placeholder={t('radiology.selectImagingType')}
+                                invalid={Boolean(errors.imaging_type)}
+                            >
+                                {IMAGING_TYPES.map((it) => (
+                                    <option key={it.value} value={it.value}>
+                                        {it.label}
+                                    </option>
+                                ))}
+                            </Select>
+                        </Field>
+
+                        <Field
+                            label={t('radiology.bodyPart')}
+                            htmlFor="body_part"
+                            required
+                            error={errors.body_part}
+                        >
+                            <Select
+                                id="body_part"
+                                value={data.body_part}
+                                onChange={(e) =>
+                                    setData('body_part', e.target.value)
+                                }
+                                placeholder={t('radiology.selectBodyPart')}
+                                invalid={Boolean(errors.body_part)}
+                            >
+                                {BODY_PARTS.map((bp) => (
+                                    <option key={bp.value} value={bp.value}>
+                                        {bp.label}
+                                    </option>
+                                ))}
+                            </Select>
+                        </Field>
+
+                        <Field
+                            label={t('radiology.clinicalNotes')}
+                            htmlFor="clinical_notes"
+                            labelAction={
+                                <span className="text-[10px] font-medium tracking-normal text-ink-subtle normal-case">
+                                    {t('common.optional')}
+                                </span>
+                            }
+                            error={errors.clinical_notes}
+                            className="sm:col-span-2"
+                        >
+                            <Textarea
+                                id="clinical_notes"
+                                value={data.clinical_notes}
+                                onChange={(e) =>
+                                    setData('clinical_notes', e.target.value)
+                                }
+                                rows={3}
+                                placeholder={t(
+                                    'radiology.clinicalNotesPlaceholder',
+                                )}
+                                invalid={Boolean(errors.clinical_notes)}
+                            />
+                        </Field>
+                    </FieldSet>
+                </FormPageCard>
             </div>
         </AppLayout>
     );

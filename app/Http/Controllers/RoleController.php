@@ -13,7 +13,7 @@ class RoleController extends Controller
 {
     public function index()
     {
-        return Inertia::render('Roles/index', [
+        return Inertia::render('Roles/Index', [
             'roles' => Role::with('permissions')
                 ->withCount('users')
                 ->get()
@@ -71,6 +71,7 @@ class RoleController extends Controller
             'manage-users' => ['Administration', 'Manage Users'],
             'manage-roles' => ['Administration', 'Manage Roles & Permissions'],
             'view-audit-logs' => ['Administration', 'View Audit Logs'],
+            'view-radiology' => ['Radiology', 'View Radiology'],
         ];
 
         $grouped = [];
@@ -81,7 +82,6 @@ class RoleController extends Controller
 
         return $grouped;
     }
-       
 
     public function store(StoreRoleRequest $request)
     {

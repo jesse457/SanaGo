@@ -17,8 +17,10 @@ class StoreSurgeryRequest extends FormRequest
     {
         return [
             'patient_id' => ['required', 'exists:patients,id'],
-            'surgeon_id' => ['required', 'exists:users,id'],
+            'surgeon_id' => ['nullable', 'exists:users,id'],
+            'surgeon_name' => ['nullable', 'required_without:surgeon_id', 'string', 'max:255'],
             'anesthetist_id' => ['nullable', 'exists:users,id'],
+            'anesthetist_name' => ['nullable', 'required_without:anesthetist_id', 'string', 'max:255'],
             'bed_id' => ['nullable', 'exists:beds,id'],
             'surgery_name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -27,6 +29,13 @@ class StoreSurgeryRequest extends FormRequest
             'urgency' => ['required', Rule::enum(UrgencyLevel::class)],
             'surgery_fee' => ['required', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'surgeon_name.required_without' => 'Please select a surgeon or enter an external surgeon name.',
         ];
     }
 }

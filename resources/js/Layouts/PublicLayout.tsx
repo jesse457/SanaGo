@@ -1,24 +1,35 @@
+import {
+    ArrowUpIcon,
+    ArrowRightIcon,
+    Bars3Icon,
+    HeartIcon,
+} from '@heroicons/react/24/outline';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { HeartPulse, Menu, X, Sun, Moon, ArrowUp } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { PropsWithChildren } from 'react';
+import { AppToaster } from '@/Components/AppToaster';
 import { FlashHandler } from '@/Components/FlashHandler';
 import { LocaleSwitcher } from '@/Components/LocaleSwitcher';
+import { Button } from '@/Components/ui';
 import { useTranslation, TranslationProvider } from '@/hooks/useTranslation';
+import { BrandMark } from '@/Layouts/components/BrandMark';
+import { DrawerHeader } from '@/Layouts/components/DrawerHeader';
+import { NavLink } from '@/Layouts/components/NavItem';
+import { SectionLabel } from '@/Layouts/components/ShellPrimitives';
+import { IconThemeToggle } from '@/Layouts/components/ThemeToggle';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
     name: string;
     href: string;
-    isRoute: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
-    { name: 'nav.home', href: '/', isRoute: true },
-    { name: 'nav.features', href: '/features', isRoute: true },
-    { name: 'nav.pricing', href: '/pricing', isRoute: true },
-    { name: 'nav.about', href: '/about', isRoute: true },
-    { name: 'nav.contact', href: '/contact', isRoute: true },
+    { name: 'nav.home', href: '/' },
+    { name: 'nav.features', href: '/features' },
+    { name: 'nav.pricing', href: '/pricing' },
+    { name: 'nav.about', href: '/about' },
+    { name: 'nav.contact', href: '/contact' },
 ];
 
 const FOOTER_MODULES = [
@@ -45,35 +56,17 @@ export default function PublicLayout({ children }: PropsWithChildren) {
     const { url } = usePage();
     const { t } = useTranslation();
 
-    // Initialize dark mode
+    // Dark mode is resolved once during the initial render: the inline script in
+    // the Blade shell has already applied the class, so no effect is needed.
     useEffect(() => {
-        const storedTheme = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia(
-            '(prefers-color-scheme: dark)',
-        ).matches;
-        const shouldBeDark =
-            storedTheme === 'dark' || (!storedTheme && prefersDark);
-        setIsDark(shouldBeDark);
+        document.documentElement.classList.toggle('dark', isDark);
+    }, [isDark]);
 
-        if (shouldBeDark) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    }, []);
-
-    // Toggle dark mode
     const toggleDarkMode = () => {
         const newDark = !isDark;
         setIsDark(newDark);
-
-        if (newDark) {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        }
+        document.documentElement.classList.toggle('dark', newDark);
+        localStorage.setItem('theme', newDark ? 'dark' : 'light');
     };
 
     // Show scroll to top button
@@ -104,28 +97,28 @@ export default function PublicLayout({ children }: PropsWithChildren) {
 
     // Prevent body scroll when mobile menu is open
     useEffect(() => {
-        if (mobileMenuOpen) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'unset';
-        }
+        document.body.style.overflow = mobileMenuOpen ? 'hidden' : 'unset';
 
         return () => {
             document.body.style.overflow = 'unset';
         };
     }, [mobileMenuOpen]);
 
-    const isActive = (href: string) => {
-        if (href === '/') {
-            return url === '/';
-        }
+    const isActive = useCallback(
+        (href: string) => {
+            if (href === '/') {
+                return url === '/';
+            }
 
-        return url.startsWith(href);
-    };
+            return url.startsWith(href);
+        },
+        [url],
+    );
 
     return (
         <TranslationProvider>
             <FlashHandler />
+            <AppToaster />
             <>
                 <Head>
                     <title>{`SanaGo — ${t('site.title')}`}</title>
@@ -136,79 +129,69 @@ export default function PublicLayout({ children }: PropsWithChildren) {
                     />
                 </Head>
 
-                <div className="min-h-screen overflow-x-hidden bg-white font-sans text-slate-900 transition-colors duration-300 selection:bg-blue-100 dark:bg-neutral-900 dark:text-neutral-100 dark:selection:bg-blue-800">
+                <div className="min-h-screen overflow-x-hidden bg-canvas font-sans text-ink">
                     {/* Navigation */}
-                    <header className="fixed top-0 z-50 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md transition-colors duration-300 dark:border-neutral-800 dark:bg-neutral-900/80">
-                        <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-                            {/* Logo */}
-                            <Link
+                    <header className="chrome-blur fixed top-0 z-30 w-full border-b border-line">
+                        <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-5 sm:px-8">
+                            <BrandMark
+                                icon={HeartIcon}
+                                caption={t('layout.hms_platform')}
                                 href="/"
-                                className="flex items-center gap-3 transition hover:opacity-80"
-                            >
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/30">
-                                    <HeartPulse className="h-5 w-5" />
-                                </div>
-                                <span className="text-xl font-black tracking-tight text-slate-800 dark:text-neutral-100">
-                                    Sana
-                                    <span className="text-blue-600">Go</span>
-                                </span>
-                            </Link>
+                                size="sm"
+                            />
 
                             {/* Desktop Navigation */}
-                            <div className="hidden items-center gap-8 md:flex">
+                            <div className="hidden items-center gap-1 md:flex">
                                 {NAV_ITEMS.map((item) => (
-                                    <Link
+                                    <NavLink
                                         key={item.name}
                                         href={item.href}
-                                        className={cn(
-                                            'text-sm font-semibold transition',
-                                            isActive(item.href)
-                                                ? 'text-blue-600 dark:text-blue-400'
-                                                : 'text-slate-600 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400',
+                                        isActive={isActive(item.href)}
+                                        variant="inline"
+                                        linkComponent={(linkProps) => (
+                                            <Link {...linkProps}>
+                                                {linkProps.children}
+                                            </Link>
                                         )}
                                     >
-                                        {t(item.name)}
-                                    </Link>
+                                        {() => (
+                                            <span className="text-[12.5px] font-medium">
+                                                {t(item.name)}
+                                            </span>
+                                        )}
+                                    </NavLink>
                                 ))}
-                                <button
-                                    onClick={toggleDarkMode}
-                                    className="cursor-pointer rounded-xl p-2 text-slate-600 transition hover:bg-slate-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
-                                    aria-label="Toggle dark mode"
-                                >
-                                    {isDark ? (
-                                        <Sun size={18} />
-                                    ) : (
-                                        <Moon size={18} />
-                                    )}
-                                </button>
+                            </div>
+
+                            <div className="hidden items-center gap-2 md:flex">
+                                <IconThemeToggle
+                                    isDark={isDark}
+                                    onToggle={toggleDarkMode}
+                                />
                                 <LocaleSwitcher variant="full" />
-                                <Link
+                                <Button
                                     href="/login"
-                                    className="transform rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition duration-200 hover:scale-105 hover:bg-blue-700 dark:shadow-blue-900/30"
+                                    size="sm"
+                                    className="ml-1"
                                 >
                                     {t('auth.login.submit')}
-                                </Link>
+                                </Button>
                             </div>
 
                             {/* Mobile Menu Button */}
-                            <div className="flex items-center gap-3 md:hidden">
+                            <div className="flex items-center gap-2 md:hidden">
+                                <IconThemeToggle
+                                    isDark={isDark}
+                                    onToggle={toggleDarkMode}
+                                />
                                 <button
-                                    onClick={toggleDarkMode}
-                                    className="cursor-pointer rounded-xl p-2 text-slate-600 transition hover:bg-slate-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
-                                    aria-label="Toggle dark mode"
-                                >
-                                    {isDark ? (
-                                        <Sun size={18} />
-                                    ) : (
-                                        <Moon size={18} />
-                                    )}
-                                </button>
-                                <button
-                                    className="cursor-pointer p-2 text-slate-600 dark:text-neutral-400"
+                                    type="button"
                                     onClick={() => setMobileMenuOpen(true)}
                                     aria-label="Open menu"
+                                    aria-expanded={mobileMenuOpen}
+                                    className="cursor-pointer rounded-md border border-line bg-surface p-1.5 text-ink-muted transition-colors duration-150 ease-premium hover:border-line-strong hover:bg-surface-hover hover:text-ink"
                                 >
-                                    <Menu />
+                                    <Bars3Icon className="h-[18px] w-[18px]" />
                                 </button>
                             </div>
                         </nav>
@@ -217,150 +200,150 @@ export default function PublicLayout({ children }: PropsWithChildren) {
                     {/* Mobile Sidebar */}
                     <div
                         className={cn(
-                            'fixed inset-0 z-50 transition-all duration-300 md:hidden',
+                            'fixed inset-0 z-50 md:hidden',
                             mobileMenuOpen ? 'visible' : 'invisible',
                         )}
                     >
                         <div
                             className={cn(
-                                'absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300',
+                                'absolute inset-0 bg-ink/25 backdrop-blur-[2px] transition-opacity duration-300 ease-premium',
                                 mobileMenuOpen ? 'opacity-100' : 'opacity-0',
                             )}
                             onClick={() => setMobileMenuOpen(false)}
                         />
                         <div
                             className={cn(
-                                'absolute top-0 right-0 h-full w-80 bg-white shadow-2xl transition-transform duration-300 dark:bg-neutral-900',
+                                'absolute top-0 right-0 flex h-full w-80 max-w-[85vw] flex-col border-l border-line bg-surface transition-transform duration-300 ease-premium',
                                 mobileMenuOpen
                                     ? 'translate-x-0'
                                     : 'translate-x-full',
                             )}
                         >
-                            <div className="flex items-center justify-between border-b border-slate-100 p-6 dark:border-neutral-800">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
-                                        <HeartPulse className="h-4 w-4" />
-                                    </div>
-                                    <span className="text-lg font-black text-slate-800 dark:text-neutral-100">
-                                        Sana
-                                        <span className="text-blue-600">
-                                            Go
-                                        </span>
-                                    </span>
-                                </div>
-                                <button
-                                    onClick={() => setMobileMenuOpen(false)}
-                                    className="cursor-pointer p-2 text-slate-500 dark:text-neutral-400"
-                                    aria-label="Close menu"
-                                >
-                                    <X size={20} />
-                                </button>
-                            </div>
-                            <div className="flex flex-col gap-4 p-6">
+                            <DrawerHeader
+                                onClose={() => setMobileMenuOpen(false)}
+                                closeLabel="Close menu"
+                            >
+                                <BrandMark
+                                    icon={HeartIcon}
+                                    href="/"
+                                    size="sm"
+                                />
+                            </DrawerHeader>
+
+                            <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2.5">
                                 {NAV_ITEMS.map((item) => (
-                                    <Link
+                                    <NavLink
                                         key={item.name}
                                         href={item.href}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className={cn(
-                                            'py-2 text-left text-base font-semibold transition',
-                                            isActive(item.href)
-                                                ? 'text-blue-600 dark:text-blue-400'
-                                                : 'text-slate-600 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400',
+                                        isActive={isActive(item.href)}
+                                        variant="inline"
+                                        onNavigate={() =>
+                                            setMobileMenuOpen(false)
+                                        }
+                                        linkComponent={(linkProps) => (
+                                            <Link {...linkProps}>
+                                                {linkProps.children}
+                                            </Link>
                                         )}
                                     >
-                                        {t(item.name)}
-                                    </Link>
+                                        {() => (
+                                            <span className="text-[13px] font-medium">
+                                                {t(item.name)}
+                                            </span>
+                                        )}
+                                    </NavLink>
                                 ))}
-                                <div className="pt-4">
-                                    <Link
-                                        href="/login"
-                                        className="block w-full rounded-xl bg-blue-600 px-6 py-3 text-center font-bold text-white transition hover:bg-blue-700"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        {t('auth.login.submit')}
-                                    </Link>
-                                </div>
+                            </div>
+
+                            <div className="border-t border-line p-3">
+                                <Button
+                                    href="/login"
+                                    size="md"
+                                    fullWidth
+                                    trailingIcon={ArrowRightIcon}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    {t('auth.login.submit')}
+                                </Button>
                             </div>
                         </div>
                     </div>
 
                     {/* Main Content */}
-                    <main>{children}</main>
+                    <main className="pt-16">{children}</main>
 
                     {/* Footer */}
-                    <footer className="border-t border-slate-100 bg-white pt-24 pb-12 dark:border-neutral-800 dark:bg-neutral-900">
-                        <div className="mx-auto grid max-w-7xl gap-12 px-6 md:grid-cols-3">
-                            {/* Branding */}
-                            <div>
-                                <Link
-                                    href="/"
-                                    className="mb-6 flex items-center gap-3 transition hover:opacity-80"
-                                >
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
-                                        <HeartPulse className="h-4 w-4" />
-                                    </div>
-                                    <span className="text-lg font-black text-slate-800 dark:text-neutral-100">
-                                        Sana
-                                        <span className="text-blue-600">
-                                            Go
-                                        </span>
-                                    </span>
-                                </Link>
-                                <p className="max-w-xs text-sm leading-relaxed text-slate-500 dark:text-neutral-500">
-                                    {t('footer.description')}
-                                </p>
+                    <footer className="border-t border-line bg-surface-muted">
+                        <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8">
+                            <div className="grid gap-12 md:grid-cols-3">
+                                {/* Branding */}
+                                <div>
+                                    <BrandMark
+                                        icon={HeartIcon}
+                                        caption={t('layout.hms_platform')}
+                                        href="/"
+                                        size="sm"
+                                    />
+                                    <p className="mt-5 max-w-xs text-[13px] leading-relaxed text-ink-muted">
+                                        {t('footer.description')}
+                                    </p>
+                                </div>
+
+                                {/* Modules */}
+                                <div>
+                                    <SectionLabel className="mb-4">
+                                        {t('footer.modules_heading')}
+                                    </SectionLabel>
+                                    <ul className="space-y-2.5">
+                                        {FOOTER_MODULES.map((item) => (
+                                            <li
+                                                key={item}
+                                                className="cursor-pointer text-[13px] text-ink-muted transition-colors duration-150 ease-premium hover:text-ink"
+                                            >
+                                                {t(item)}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                                {/* Platform */}
+                                <div>
+                                    <SectionLabel className="mb-4">
+                                        {t('footer.platform_heading')}
+                                    </SectionLabel>
+                                    <ul className="space-y-2.5">
+                                        {FOOTER_PLATFORM.map((item) => (
+                                            <li
+                                                key={item}
+                                                className="cursor-pointer text-[13px] text-ink-muted transition-colors duration-150 ease-premium hover:text-ink"
+                                            >
+                                                {t(item)}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             </div>
 
-                            {/* Modules */}
-                            <div>
-                                <h4 className="mb-6 text-xs font-bold tracking-widest text-slate-900 uppercase dark:text-neutral-100">
-                                    {t('footer.modules_heading')}
-                                </h4>
-                                <ul className="space-y-3 text-sm font-medium text-slate-500 dark:text-neutral-500">
-                                    {FOOTER_MODULES.map((item) => (
-                                        <li
-                                            key={item}
-                                            className="cursor-pointer transition hover:text-blue-600"
-                                        >
-                                            {t(item)}
-                                        </li>
-                                    ))}
-                                </ul>
+                            <div className="mt-14 flex flex-col items-center justify-between gap-3 border-t border-line pt-6 text-[11px] font-medium tracking-[0.06em] text-ink-subtle sm:flex-row">
+                                <p>{t('footer.name')}</p>
+                                <p>{t('footer.builtWith')}</p>
                             </div>
-
-                            {/* Platform */}
-                            <div>
-                                <h4 className="mb-6 text-xs font-bold tracking-widest text-slate-900 uppercase dark:text-neutral-100">
-                                    {t('footer.platform_heading')}
-                                </h4>
-                                <ul className="space-y-3 text-sm font-medium text-slate-500 dark:text-neutral-500">
-                                    {FOOTER_PLATFORM.map((item) => (
-                                        <li
-                                            key={item}
-                                            className="cursor-pointer transition hover:text-blue-600"
-                                        >
-                                            {t(item)}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
-
-                        <div className="mx-auto mt-20 flex max-w-7xl flex-col items-center justify-between gap-4 border-t border-slate-50 px-6 pt-8 text-xs font-bold tracking-widest text-slate-400 uppercase md:flex-row dark:border-neutral-800 dark:text-neutral-500">
-                            <p>{t('footer.name')}</p>
-                            <p>{t('footer.builtWith')}</p>
                         </div>
                     </footer>
 
                     {/* Scroll to Top Button */}
                     {showScrollTop && (
                         <button
+                            type="button"
                             onClick={scrollToTop}
-                            className="fixed right-6 bottom-6 z-40 transform cursor-pointer rounded-full bg-blue-600 p-3 text-white shadow-lg transition duration-200 hover:scale-110 hover:bg-blue-700"
                             aria-label="Scroll to top"
+                            className={cn(
+                                'animate-fade-in fixed right-6 bottom-6 z-30 inline-flex h-10 w-10 items-center justify-center rounded-full',
+                                'border border-line bg-surface text-ink-muted shadow-raised',
+                                'transition-[transform,color,background-color,border-color] duration-200 ease-premium hover:border-line-strong hover:bg-surface-hover hover:text-ink active:scale-95',
+                            )}
                         >
-                            <ArrowUp size={20} />
+                            <ArrowUpIcon className="h-[18px] w-[18px]" />
                         </button>
                     )}
                 </div>

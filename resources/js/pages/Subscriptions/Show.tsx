@@ -1,14 +1,21 @@
 import {
-    CheckIcon,
-    BuildingOfficeIcon,
-    CurrencyDollarIcon,
-    CalendarDaysIcon,
     ArrowPathIcon,
+    BuildingOfficeIcon,
+    CalendarDaysIcon,
+    CheckIcon,
+    CurrencyDollarIcon,
+    PencilSquareIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link } from '@inertiajs/react';
-import DetailItem from '@/Components/DetailItem';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
-import StatusBadge from '@/Components/StatusBadge';
+import { Head } from '@inertiajs/react';
+import {
+    Badge,
+    Button,
+    Card,
+    KeyValue,
+    KeyValueGrid,
+    PageHeader,
+} from '@/Components/ui';
+import type { BadgeTone } from '@/Components/ui';
 import SuperAdminLayout from '@/Layouts/SuperAdminLayout';
 
 interface Subscription {
@@ -24,111 +31,159 @@ interface Subscription {
     features_json: { feature_label: string; is_highlighted: boolean }[];
 }
 
+const statusTone: Record<string, BadgeTone> = {
+    active: 'positive',
+    inactive: 'neutral',
+    cancelled: 'critical',
+};
+
 export default function SubscriptionsShow({
     subscription: sub,
 }: {
     subscription: Subscription;
 }) {
-    const badgeColor: Record<string, 'emerald' | 'gray' | 'red'> = {
-        active: 'emerald',
-        inactive: 'gray',
-        cancelled: 'red',
-    };
-
     return (
         <SuperAdminLayout
             headerTitle={sub.plan_name}
-            headerSubtitle="Subscription Details"
+            headerSubtitle="Subscription details"
         >
             <Head title={`${sub.plan_name} — Subscription`} />
-            <div className="mx-auto max-w-6xl space-y-6 px-6">
-                <PageBreadcrumb
-                    items={[
-                        { label: 'Home' },
+            <div className="mx-auto max-w-6xl space-y-5 pb-12">
+                <PageHeader
+                    eyebrow="Subscription"
+                    title={`${sub.plan_name} plan`}
+                    description={sub.tenant_name}
+                    breadcrumbs={[
                         { label: 'Subscriptions', href: '/subscriptions' },
                         { label: sub.plan_name },
                     ]}
+                    actions={
+                        <>
+                            <Button href="/subscriptions" variant="secondary">
+                                Back to list
+                            </Button>
+                            <Button
+                                href={`/subscriptions/${sub.id}/edit`}
+                                icon={PencilSquareIcon}
+                            >
+                                Edit subscription
+                            </Button>
+                        </>
+                    }
+                    meta={
+                        <Badge tone={statusTone[sub.status] ?? 'neutral'} dot>
+                            {sub.status}
+                        </Badge>
+                    }
                 />
 
-                <div className="grid gap-6 lg:grid-cols-3">
-                    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2 dark:border-neutral-700 dark:bg-neutral-800">
-                        <h2 className="mb-4 text-lg font-bold text-gray-900 dark:text-neutral-100">
-                            {sub.plan_name} Plan
-                        </h2>
-                        <div className="mb-6 grid gap-4 sm:grid-cols-2">
-                            <DetailItem
-                                label="Tenant"
-                                value={sub.tenant_name}
-                                icon={BuildingOfficeIcon}
-                            />
-                            <DetailItem
-                                label="Price"
-                                value={`$${sub.price}/${sub.billing_cycle}`}
-                                icon={CurrencyDollarIcon}
-                            />
-                            <div className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700/50">
-                                <span className="text-[10px] font-bold text-gray-400 uppercase dark:text-neutral-500">
-                                    Status
-                                </span>
-                                <div className="mt-1 ml-0">
-                                    <StatusBadge
-                                        label={sub.status}
-                                        color={badgeColor[sub.status] || 'gray'}
-                                    />
-                                </div>
-                            </div>
-                            <DetailItem
-                                label="Auto Renew"
-                                value={sub.auto_renew ? 'Yes' : 'No'}
-                                icon={ArrowPathIcon}
-                            />
-                            <DetailItem
-                                label="Start"
-                                value={sub.start_date}
-                                icon={CalendarDaysIcon}
-                            />
-                            <DetailItem
-                                label="End"
-                                value={sub.end_date || '—'}
-                                icon={CalendarDaysIcon}
-                            />
-                        </div>
+                <div className="grid gap-5 lg:grid-cols-3">
+                    <div className="space-y-5 lg:col-span-2">
+                        <Card className="p-5 sm:p-6">
+                            <h2 className="text-[15px] font-semibold tracking-tight text-ink">
+                                Plan details
+                            </h2>
+                            <KeyValueGrid columns={2} className="mt-4">
+                                <KeyValue
+                                    label="Tenant"
+                                    value={sub.tenant_name}
+                                    icon={BuildingOfficeIcon}
+                                />
+                                <KeyValue
+                                    label="Price"
+                                    value={`$${sub.price}/${sub.billing_cycle}`}
+                                    icon={CurrencyDollarIcon}
+                                />
+                                <KeyValue
+                                    label="Status"
+                                    value={sub.status}
+                                    icon={ArrowPathIcon}
+                                />
+                                <KeyValue
+                                    label="Auto renew"
+                                    value={sub.auto_renew ? 'Yes' : 'No'}
+                                    icon={ArrowPathIcon}
+                                />
+                                <KeyValue
+                                    label="Start"
+                                    value={sub.start_date}
+                                    icon={CalendarDaysIcon}
+                                />
+                                <KeyValue
+                                    label="End"
+                                    value={sub.end_date || '—'}
+                                    icon={CalendarDaysIcon}
+                                />
+                            </KeyValueGrid>
+                        </Card>
+
                         {sub.features_json && sub.features_json.length > 0 && (
-                            <div className="border-t border-gray-100 pt-4 dark:border-neutral-700">
-                                <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                    Features
-                                </h3>
-                                <ul className="space-y-2">
-                                    {sub.features_json.map((f, i) => (
+                            <Card>
+                                <div className="border-b border-line px-5 py-4 sm:px-6">
+                                    <h2 className="text-[15px] font-semibold tracking-tight text-ink">
+                                        Features
+                                    </h2>
+                                </div>
+                                <ul className="divide-y divide-line">
+                                    {sub.features_json.map((feature, index) => (
                                         <li
-                                            key={i}
-                                            className={`flex items-center gap-2 text-sm ${f.is_highlighted ? 'font-semibold' : 'text-gray-600 dark:text-neutral-400'}`}
+                                            key={index}
+                                            className="flex items-center gap-2.5 px-5 py-3 sm:px-6"
                                         >
                                             <CheckIcon
-                                                className={`h-4 w-4 ${f.is_highlighted ? 'text-blue-600' : 'text-gray-300 dark:text-neutral-600'}`}
+                                                className={
+                                                    feature.is_highlighted
+                                                        ? 'h-4 w-4 shrink-0 text-accent'
+                                                        : 'h-4 w-4 shrink-0 text-ink-subtle'
+                                                }
                                             />
-                                            {f.feature_label}
+                                            <span
+                                                className={
+                                                    feature.is_highlighted
+                                                        ? 'text-[13px] font-semibold text-ink'
+                                                        : 'text-[13px] text-ink-muted'
+                                                }
+                                            >
+                                                {feature.feature_label}
+                                            </span>
                                         </li>
                                     ))}
                                 </ul>
-                            </div>
+                            </Card>
                         )}
                     </div>
 
-                    <div className="space-y-3">
-                        <Link
-                            href={`/subscriptions/${sub.id}/edit`}
-                            className="block w-full rounded-xl bg-blue-600 py-3 text-center text-sm font-bold text-white hover:bg-blue-700"
-                        >
-                            Edit Subscription
-                        </Link>
-                        <Link
-                            href="/subscriptions"
-                            className="block w-full rounded-xl bg-gray-100 py-3 text-center text-sm font-semibold text-gray-700 dark:bg-neutral-800 dark:text-neutral-300"
-                        >
-                            Back to List
-                        </Link>
-                    </div>
+                    <Card className="h-fit p-5 sm:p-6">
+                        <p className="text-[11px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">
+                            Billing
+                        </p>
+                        <p className="mt-2 text-[26px] leading-none font-semibold tracking-[-0.02em] text-ink tabular-nums">
+                            ${sub.price}
+                        </p>
+                        <p className="mt-1 text-[12.5px] text-ink-subtle">
+                            per {sub.billing_cycle}
+                        </p>
+                        <dl className="mt-4 space-y-2 border-t border-line pt-4 text-[12.5px]">
+                            <div className="flex items-center justify-between">
+                                <dt className="text-ink-subtle">Start</dt>
+                                <dd className="font-medium text-ink tabular-nums">
+                                    {sub.start_date}
+                                </dd>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <dt className="text-ink-subtle">End</dt>
+                                <dd className="font-medium text-ink tabular-nums">
+                                    {sub.end_date || '—'}
+                                </dd>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <dt className="text-ink-subtle">Auto renew</dt>
+                                <dd className="font-medium text-ink">
+                                    {sub.auto_renew ? 'Yes' : 'No'}
+                                </dd>
+                            </div>
+                        </dl>
+                    </Card>
                 </div>
             </div>
         </SuperAdminLayout>

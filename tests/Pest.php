@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
+use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /*
@@ -24,7 +28,7 @@ expect()->extend('toBeOne', function () {
 });
 
 expect()->extend('toBeInertiaComponent', function (string $_component) {
-    return $this->toBeInstanceOf(\Inertia\Inertia::class);
+    return $this->toBeInstanceOf(Inertia::class);
 });
 
 /*
@@ -36,7 +40,7 @@ expect()->extend('toBeInertiaComponent', function (string $_component) {
 // Global afterEach: ensure model connection resolvers don't leak between tests
 afterEach(function () {
     // Reset connection resolver to Laravel's default database manager
-    \Illuminate\Database\Eloquent\Model::setConnectionResolver(app('db'));
+    Model::setConnectionResolver(app('db'));
 });
 
 /*
@@ -48,11 +52,11 @@ afterEach(function () {
 /**
  * Create a user with a specific permission for authorization tests.
  */
-function userWithPermission(string $permission): \App\Models\User
+function userWithPermission(string $permission): User
 {
-    $user = \App\Models\User::factory()->create();
+    $user = User::factory()->create();
 
-    $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'test-role-'.$permission]);
+    $role = Role::firstOrCreate(['name' => 'test-role-'.$permission]);
     $role->givePermissionTo($permission);
     $user->assignRole($role);
 
@@ -62,7 +66,7 @@ function userWithPermission(string $permission): \App\Models\User
 /**
  * Create a user without any roles or permissions.
  */
-function unauthorizedUser(): \App\Models\User
+function unauthorizedUser(): User
 {
-    return \App\Models\User::factory()->create();
+    return User::factory()->create();
 }

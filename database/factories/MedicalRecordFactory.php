@@ -36,7 +36,7 @@ class MedicalRecordFactory extends Factory
             'consultation_id' => null,
             'record_date' => fake()->dateTimeBetween('-6 months', 'now')->format('Y-m-d'),
             'chief_complaint' => $complaint,
-            'history_of_present_illness' => "Patient reports gradual onset. No previous similar episodes. No known aggravating factors.",
+            'history_of_present_illness' => 'Patient reports gradual onset. No previous similar episodes. No known aggravating factors.',
             'physical_exam' => $exam,
             'diagnosis' => $diagnosis,
             'treatment_plan' => $plan,

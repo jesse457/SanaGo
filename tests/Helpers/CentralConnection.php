@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Helpers;
 
 use Illuminate\Database\ConnectionResolverInterface;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Resolves the 'central' database connection to the default connection.
@@ -18,7 +19,7 @@ function resolveCentralToDefault(): void
 {
     $db = app('db');
 
-    \Illuminate\Database\Eloquent\Model::setConnectionResolver(
+    Model::setConnectionResolver(
         new class($db) implements ConnectionResolverInterface
         {
             private $db;

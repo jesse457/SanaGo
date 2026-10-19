@@ -64,13 +64,24 @@ This is a **Hospital Management System (SanaGo)**. The backend follows a **servi
 ### Frontend structure
 
 - **`resources/js/pages/`** — Inertia page components, one per route. Mirrors domain structure: `Patients/`, `Appointments/`, `LabTests/`, `Pharmacy/`, `Settings/`, `Users/`, `Consultations/`, etc.
+- **`resources/js/Components/ui/`** — the shared UI kit. Every page composes from here; pages must not define their own button / card / table / badge / modal markup. `index.ts` is the API reference.
+- **`resources/js/pages/<Module>/components/`** — module-scoped pieces shared by two or more pages of that module.
 - **`resources/js/routes/`** — auto-generated typed route helpers (laravel-wayfinder). Use these instead of hardcoding URLs. Import from `@/routes/...`.
 - **`resources/js/actions/`** — typed Inertia form action helpers (auto-generated, mirrors controllers).
 - **`resources/js/types/`** — shared TypeScript type definitions.
-- **`resources/js/Layouts/`** — `AppLayout.tsx` (authenticated) and `SandboxLayout.tsx`.
+- **`resources/js/Layouts/`** — `AppLayout.tsx` (authenticated), `PublicLayout.tsx` (marketing), `SuperAdminLayout.tsx` (landlord).
 - **`resources/js/hooks/`** — custom hooks (e.g., `useNotifications`).
-- **`resources/js/lib/utils.ts`** — utility functions.
+- **`resources/js/lib/utils.ts`** — `cn()` class merger and shared utilities.
 - **`@/*`** import alias maps to `resources/js/*`.
+
+### UI system
+
+Design tokens live in `resources/css/app.css` (`@theme` + `@theme inline` + `:root`/`.dark` variables). Two rules follow from that:
+
+- **Use semantic tokens, not palette steps, and no `dark:` variants.** `bg-canvas`, `bg-surface`, `bg-surface-muted`, `bg-surface-inset`, `bg-surface-hover`, `border-line`, `border-line-strong`, `text-ink`, `text-ink-muted`, `text-ink-subtle`, `text-ink-inverse`, `bg-accent`/`text-accent-ink`/`bg-accent-soft`, `bg-positive-soft`/`text-positive-ink`, `bg-warning-soft`/`text-warning-ink`, `bg-critical-soft`/`text-critical-ink`. They flip automatically with the `.dark` class on `<html>`.
+- **Elevation and radii are constrained**: only `shadow-surface`/`shadow-raised`/`shadow-float`; `rounded-md` for controls, `rounded-lg`/`rounded-xl` for panels, `rounded-full` only for badges/dots. No gradients. Motion is 150–300ms with `ease-premium`, animating transform/opacity only.
+
+States are components too: `Skeleton*` for loading, `EmptyState` for empty, `Alert` for errors, `Dialog` for modals (never `window.alert`). Mount one `AppToaster` from the layout — pages call `toast()` but never render their own `<Toaster />`.
 
 ### Route generation
 
@@ -109,7 +120,7 @@ The Laravel Boost guidelines are specifically curated by Laravel maintainers for
 
 This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
 
-- php - 8.4
+- php - 8.5
 - inertiajs/inertia-laravel (INERTIA_LARAVEL) - v3
 - laravel/framework (LARAVEL) - v13
 - laravel/prompts (PROMPTS) - v0
@@ -205,7 +216,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Always use curly braces for control structures, even for single-line bodies.
 - Use PHP 8 constructor property promotion: `public function __construct(public GitHub $github) { }`. Do not leave empty zero-parameter `__construct()` methods unless the constructor is private.
 - Use explicit return type declarations and type hints for all method parameters: `function isAccessible(User $user, ?string $path = null): bool`
-- Follow existing application Enum naming conventions.
+- Use TitleCase for Enum keys: `FavoritePerson`, `BestLake`, `Monthly`.
 - Prefer PHPDoc blocks over inline comments. Only add inline comments for exceptionally complex logic.
 - Use array shape type definitions in PHPDoc blocks.
 
@@ -214,6 +225,13 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 # Deployment
 
 - Laravel can be deployed using [Laravel Cloud](https://cloud.laravel.com/), which is the fastest way to deploy and scale production Laravel applications.
+
+=== tests rules ===
+
+# Test Enforcement
+
+- Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
+- Run the minimum number of tests needed to ensure code quality and speed. Use `php artisan test --compact` with a specific filename or filter.
 
 === inertia-laravel/core rules ===
 

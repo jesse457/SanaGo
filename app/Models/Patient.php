@@ -9,12 +9,13 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-#[Fillable(['patient_uid', 'first_name', 'last_name', 'email', 'phone', 'date_of_birth', 'gender', 'address', 'last_visit_date', 'allergies', 'blood_type'])]
+#[Fillable(['patient_uid', 'first_name', 'last_name', 'email', 'phone', 'date_of_birth', 'gender', 'address', 'last_visit_date', 'allergies', 'blood_type', 'is_admitted_approve'])]
 class Patient extends Model implements HasMedia
 {
     /** @use HasFactory<PatientFactory> */
@@ -35,6 +36,13 @@ class Patient extends Model implements HasMedia
     protected $appends = ['age', 'photo_url'];
 
     /**
+     * The relationships that should always be loaded.
+     *
+     * @var array
+     */
+    protected $with = ['media'];
+
+    /**
      * Accessor for Age.
      */
     public function getAgeAttribute()
@@ -53,7 +61,7 @@ class Patient extends Model implements HasMedia
 
     // app/Models/Patient.php
 
-    public function latestAdmission()
+    public function latestAdmission(): HasOne
     {
         return $this->hasOne(Admission::class)->latestOfMany();
     }
@@ -106,6 +114,36 @@ class Patient extends Model implements HasMedia
     public function supplyUsages(): HasMany
     {
         return $this->hasMany(SupplyUsage::class);
+    }
+
+    public function patientInsurances(): HasMany
+    {
+        return $this->hasMany(PatientInsurance::class);
+    }
+
+    public function surgeries(): HasMany
+    {
+        return $this->hasMany(Surgery::class);
+    }
+
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(Certificate::class);
+    }
+
+    public function radiologyRequests(): HasMany
+    {
+        return $this->hasMany(RadiologyRequest::class);
+    }
+
+    public function emergencyCases(): HasMany
+    {
+        return $this->hasMany(EmergencyCase::class);
+    }
+
+    public function cashPayments(): HasMany
+    {
+        return $this->hasMany(CashPayment::class);
     }
 
     public function getActivitylogOptions(): LogOptions

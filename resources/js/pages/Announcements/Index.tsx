@@ -1,18 +1,24 @@
 import {
+    MegaphoneIcon,
     PlusIcon,
     TrashIcon,
-    MegaphoneIcon,
-    ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, useForm } from '@inertiajs/react';
-import type { FormEvent } from 'react';
+import { Head, useForm } from '@inertiajs/react';
 import { useState } from 'react';
-import EmptyState from '@/Components/EmptyState';
-import Modal from '@/Components/Modal';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
-import StatusBadge from '@/Components/StatusBadge';
+import {
+    Alert,
+    Button,
+    Card,
+    Dialog,
+    EmptyState,
+    PageHeader,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import SuperAdminLayout from '@/Layouts/SuperAdminLayout';
+import {
+    AnnouncementStatusBadge,
+    AnnouncementTypeBadge,
+} from '@/pages/Announcements/components/AnnouncementBadges';
 
 interface Announcement {
     id: number;
@@ -25,20 +31,6 @@ interface Announcement {
     created_at: string;
 }
 
-const TYPE_COLORS: Record<string, 'blue' | 'amber' | 'emerald'> = {
-    info: 'blue',
-    warning: 'amber',
-    success: 'emerald',
-};
-
-const TYPE_ICON_CLASSES: Record<string, string> = {
-    info: 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-    warning:
-        'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400',
-    success:
-        'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
-};
-
 export default function AnnouncementsIndex({
     announcements,
 }: {
@@ -47,9 +39,8 @@ export default function AnnouncementsIndex({
     const { t } = useTranslation();
     const [delModal, setDelModal] = useState<Announcement | null>(null);
     const { delete: destroy, processing } = useForm();
-    const handleDelete = (e: FormEvent) => {
-        e.preventDefault();
 
+    const handleDelete = () => {
         if (delModal) {
             destroy(`/announcements/${delModal.id}`, {
                 onSuccess: () => setDelModal(null),
@@ -63,130 +54,131 @@ export default function AnnouncementsIndex({
             headerSubtitle="System-wide announcements for all tenants"
         >
             <Head title="Announcements" />
-            <div className="mx-auto max-w-7xl space-y-6 px-6">
-                <PageBreadcrumb
-                    items={[
-                        { label: t('common.home'), href: '/' },
+
+            <div className="space-y-6 pb-12">
+                <PageHeader
+                    title="Announcements"
+                    description="System-wide messages shown to every tenant on their dashboard."
+                    icon={MegaphoneIcon}
+                    breadcrumbs={[
+                        { label: t('common.home'), href: '/dashboard' },
                         { label: 'Announcements' },
                     ]}
+                    actions={
+                        <Button href="/announcements/create" icon={PlusIcon}>
+                            New announcement
+                        </Button>
+                    }
                 />
-
-                <div className="flex justify-end">
-                    <Link
-                        href="/announcements/create"
-                        className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-                    >
-                        <PlusIcon className="h-4 w-4" /> New Announcement
-                    </Link>
-                </div>
 
                 {announcements.length === 0 ? (
                     <EmptyState
                         icon={MegaphoneIcon}
-                        title="No announcements"
+                        title="No announcements yet"
                         description="Get started by creating your first system-wide announcement."
                         action={{
-                            label: 'New Announcement',
+                            label: 'New announcement',
                             href: '/announcements/create',
                         }}
                     />
                 ) : (
-                    <div className="space-y-4">
-                        {announcements.map((a) => (
-                            <div
-                                key={a.id}
-                                className="group rounded-xl border border-gray-200 bg-white p-6 transition-all duration-200 hover:border-blue-400 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                    <div className="flex flex-col gap-3">
+                        {announcements.map((announcement) => (
+                            <Card
+                                key={announcement.id}
+                                className="group p-5 transition-colors duration-200 ease-premium hover:border-line-strong"
                             >
-                                <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-4">
+                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-muted text-accent">
+                                        <MegaphoneIcon className="h-[18px] w-[18px]" />
+                                    </span>
+
                                     <div className="min-w-0 flex-1">
-                                        <div className="mb-2 flex items-center gap-3">
-                                            <div
-                                                className={`rounded-lg p-2 ${TYPE_ICON_CLASSES[a.type] || 'bg-gray-50 text-gray-600 dark:bg-neutral-700 dark:text-neutral-300'}`}
-                                            >
-                                                <MegaphoneIcon className="h-5 w-5" />
-                                            </div>
-                                            <h3 className="text-lg font-bold text-gray-900 dark:text-neutral-100">
-                                                {a.title}
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <h3 className="text-[15px] font-semibold tracking-tight text-ink">
+                                                {announcement.title}
                                             </h3>
-                                            <StatusBadge
-                                                label={a.type}
-                                                color={
-                                                    TYPE_COLORS[a.type] ||
-                                                    'gray'
+                                            <AnnouncementTypeBadge
+                                                type={announcement.type}
+                                            />
+                                            <AnnouncementStatusBadge
+                                                isPublished={
+                                                    announcement.is_published
                                                 }
                                             />
-                                            {a.is_published ? (
-                                                <StatusBadge
-                                                    label="Published"
-                                                    color="emerald"
-                                                />
-                                            ) : (
-                                                <StatusBadge
-                                                    label="Draft"
-                                                    color="gray"
-                                                />
-                                            )}
                                         </div>
-                                        <p className="mb-3 line-clamp-2 text-sm text-gray-600 dark:text-neutral-400">
-                                            {a.body}
+
+                                        <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-ink-muted">
+                                            {announcement.body}
                                         </p>
-                                        <div className="flex gap-4 text-xs text-gray-400 dark:text-neutral-500">
-                                            {a.published_at && (
-                                                <span>
-                                                    Published:{' '}
+
+                                        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[12px] text-ink-subtle">
+                                            {announcement.published_at && (
+                                                <span className="tabular-nums">
+                                                    Published{' '}
                                                     {new Date(
-                                                        a.published_at,
+                                                        announcement.published_at,
                                                     ).toLocaleString()}
                                                 </span>
                                             )}
-                                            {a.expires_at && (
-                                                <span>
-                                                    Expires:{' '}
+                                            {announcement.expires_at && (
+                                                <span className="tabular-nums">
+                                                    Expires{' '}
                                                     {new Date(
-                                                        a.expires_at,
+                                                        announcement.expires_at,
                                                     ).toLocaleString()}
                                                 </span>
                                             )}
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => setDelModal(a)}
-                                        className="shrink-0 rounded-lg p-2 text-gray-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
-                                    >
-                                        <TrashIcon className="h-4 w-4" />
-                                    </button>
+
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        icon={TrashIcon}
+                                        aria-label={`Delete ${announcement.title}`}
+                                        onClick={() =>
+                                            setDelModal(announcement)
+                                        }
+                                        className="shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                                    />
                                 </div>
-                            </div>
+                            </Card>
                         ))}
                     </div>
                 )}
             </div>
 
-            <Modal
-                isOpen={delModal !== null}
+            <Dialog
+                open={delModal !== null}
                 onClose={() => setDelModal(null)}
-                title="Delete Announcement"
+                title="Delete announcement"
+                description="This cannot be undone."
+                size="sm"
+                footer={
+                    <>
+                        <Button
+                            variant="secondary"
+                            onClick={() => setDelModal(null)}
+                            disabled={processing}
+                        >
+                            {t('common.cancel')}
+                        </Button>
+                        <Button
+                            variant="danger"
+                            loading={processing}
+                            onClick={handleDelete}
+                        >
+                            {processing ? 'Deleting…' : 'Delete'}
+                        </Button>
+                    </>
+                }
             >
-                <ExclamationTriangleIcon className="mx-auto mb-4 h-12 w-12 text-red-600" />
-                <p className="text-center text-gray-700 dark:text-neutral-300">
-                    Delete <strong>{delModal?.title}</strong>?
-                </p>
-                <div className="mt-6 flex justify-end gap-3">
-                    <button
-                        onClick={() => setDelModal(null)}
-                        className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-neutral-600 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                    >
-                        {t('common.cancel')}
-                    </button>
-                    <button
-                        onClick={handleDelete}
-                        disabled={processing}
-                        className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-                    >
-                        {processing ? 'Deleting...' : 'Delete'}
-                    </button>
-                </div>
-            </Modal>
+                <Alert tone="critical" title="Permanent removal">
+                    Deleting <strong>{delModal?.title}</strong> removes it for
+                    every tenant immediately.
+                </Alert>
+            </Dialog>
         </SuperAdminLayout>
     );
 }

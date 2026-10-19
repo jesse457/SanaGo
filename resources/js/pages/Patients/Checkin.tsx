@@ -1,27 +1,46 @@
 import {
-    MagnifyingGlassIcon,
-    MapPinIcon,
-    CalendarDaysIcon,
+    ArchiveBoxIcon,
     ArrowRightIcon,
-    PlusIcon,
+    CalendarDaysIcon,
     CheckBadgeIcon,
     ClockIcon,
-    ArchiveBoxIcon,
-    UsersIcon,
+    EyeIcon,
     InboxIcon,
+    ListBulletIcon,
+    Squares2X2Icon,
+    UsersIcon,
     XMarkIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, router } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'framer-motion';
-import React, { useState, useEffect } from 'react';
-import EmptyState from '@/Components/EmptyState';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
+import { Head, router } from '@inertiajs/react';
+import { AnimatePresence, motion } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
 import { Pagination } from '@/Components/Pagination';
-import StatCard from '@/Components/StatCard';
-import StatusBadge from '@/Components/StatusBadge';
-import ViewToggle from '@/Components/ViewToggle';
+import {
+    Button,
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    PageHeader,
+    SegmentedControl,
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+    Toolbar,
+    ToolbarSearch,
+    ToolbarSpacer,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
+import { AdmissionLocation } from '@/pages/Patients/components/AdmissionMeta';
+import { AdmissionStatusBadge } from '@/pages/Patients/components/AdmissionStatusBadge';
+import { PatientEmptyState } from '@/pages/Patients/components/PatientEmptyState';
+import { PatientIdentity } from '@/pages/Patients/components/PatientIdentity';
+import { PatientStatGrid } from '@/pages/Patients/components/PatientStatGrid';
+import type { PatientStat } from '@/pages/Patients/components/PatientStatGrid';
 
 interface Admission {
     id: number;
@@ -50,34 +69,45 @@ interface Props {
     filters: { search?: string; status?: string };
 }
 
-const statusColors: Record<string, 'rose' | 'amber' | 'blue'> = {
-    Admitted: 'rose',
-    Pending: 'amber',
-    Discharged: 'blue',
-};
+const statusFilters = ['Admitted', 'Pending', 'Discharged'] as const;
 
 export default function AdmissionsIndex({ admissions, stats, filters }: Props) {
     const { t } = useTranslation();
-    const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
 
     // Server-side search logic with 300ms debounce
     useEffect(() => {
-        const timeout = setTimeout(() => {
-            router.get(
-                route('admissions.index'),
-                { search: searchQuery, status: filters.status || '' },
-                { preserveState: true, replace: true },
-            );
-        }, 300);
+        const currentSearch = filters.search || '';
 
-        return () => clearTimeout(timeout);
-    }, [searchQuery]);
+        if (searchQuery !== currentSearch) {
+            const timeout = setTimeout(() => {
+                router.get(
+                    route('admissions.index'),
+                    {
+                        search: searchQuery,
+                        status: filters.status || '',
+                        page: 1,
+                    },
+                    { preserveState: true, replace: true },
+                );
+            }, 300);
+
+            return () => clearTimeout(timeout);
+        }
+        // `filters.status` is intentionally read without being a dependency:
+        // adding it would re-fire the debounced visit on every status change.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchQuery, filters.search]);
 
     const handleFilter = (status: string | null) => {
         router.get(
             route('admissions.index'),
-            { search: searchQuery, status: status || '' },
+            {
+                search: searchQuery,
+                status: status || '',
+                page: 1,
+            },
             { preserveState: true },
         );
     };
@@ -87,6 +117,42 @@ export default function AdmissionsIndex({ admissions, stats, filters }: Props) {
         router.get(route('admissions.index'), {}, { preserveState: true });
     };
 
+    const statusLabel = (status: string) =>
+        status === 'Admitted'
+            ? t('page.checkin.admitted')
+            : status === 'Pending'
+              ? t('page.checkin.pending')
+              : t('page.checkin.discharged');
+
+    const statCards: PatientStat[] = [
+        {
+            label: t('page.checkin.total_registry'),
+            value: stats.total,
+            icon: UsersIcon,
+            tone: 'neutral',
+        },
+        {
+            label: t('page.checkin.currently_admitted'),
+            value: stats.active,
+            icon: CheckBadgeIcon,
+            tone: 'positive',
+        },
+        {
+            label: t('page.checkin.pending_placement'),
+            value: stats.pending,
+            icon: ClockIcon,
+            tone: 'warning',
+        },
+        {
+            label: t('page.checkin.total_discharged'),
+            value: stats.discharged,
+            icon: ArchiveBoxIcon,
+            tone: 'accent',
+        },
+    ];
+
+    const hasAdmissions = admissions.data.length > 0;
+
     return (
         <AppLayout
             headerTitle={t('page.checkin.title')}
@@ -94,347 +160,304 @@ export default function AdmissionsIndex({ admissions, stats, filters }: Props) {
         >
             <Head title={t('page.checkin.head_title')} />
 
-            <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
-                {/* 1. Breadcrumbs */}
-                <PageBreadcrumb
-                    items={[
-                        { label: t('common.home') },
+            <div className="space-y-6 pb-12">
+                <PageHeader
+                    eyebrow={t('page.checkin.breadcrumb_admissions')}
+                    title={t('page.checkin.title')}
+                    description={t('page.checkin.subtitle')}
+                    breadcrumbs={[
+                        { label: t('common.home'), href: '/dashboard' },
                         { label: t('page.checkin.breadcrumb_admissions') },
                     ]}
+                    actions={
+                        <Button
+                            href={route('appointments.create')}
+                            variant="primary"
+                        >
+                            {t('page.checkin.new_admission')}
+                        </Button>
+                    }
                 />
 
-                {/* 2. Stats Cards */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <StatCard
-                        label={t('page.checkin.total_registry')}
-                        value={stats.total}
-                        icon={UsersIcon}
-                        color="blue"
-                    />
-                    <StatCard
-                        label={t('page.checkin.currently_admitted')}
-                        value={stats.active}
-                        icon={CheckBadgeIcon}
-                        color="purple"
-                    />
-                    <StatCard
-                        label={t('page.checkin.pending_placement')}
-                        value={stats.pending}
-                        icon={ClockIcon}
-                        color="amber"
-                    />
-                    <StatCard
-                        label={t('page.checkin.total_discharged')}
-                        value={stats.discharged}
-                        icon={ArchiveBoxIcon}
-                        color="blue"
-                    />
-                </div>
+                <PatientStatGrid stats={statCards} />
 
-                {/* 3. Controls / Search & Filters Bar */}
-                <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-                    <div className="flex flex-grow flex-col gap-3 sm:flex-row lg:max-w-2xl">
-                        {/* Search Input */}
-                        <div className="relative flex-grow">
-                            <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-neutral-500" />
-                            <input
-                                type="text"
-                                placeholder={t(
-                                    'page.checkin.search_placeholder',
-                                )}
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full rounded-lg border border-gray-200 bg-white py-2 pr-4 pl-9 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800"
-                            />
-                        </div>
+                <Toolbar>
+                    <ToolbarSearch
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder={t('page.checkin.search_placeholder')}
+                    />
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        {statusFilters.map((status) => {
+                            const active = filters.status === status;
 
-                        {/* Status Quick Filters */}
-                        <div className="flex gap-2">
-                            {['Admitted', 'Pending', 'Discharged'].map((s) => (
-                                <button
-                                    key={s}
+                            return (
+                                <Button
+                                    key={status}
+                                    size="sm"
+                                    variant={active ? 'primary' : 'outline'}
                                     onClick={() =>
-                                        handleFilter(
-                                            filters.status === s ? '' : s,
-                                        )
+                                        handleFilter(active ? '' : status)
                                     }
-                                    className={`rounded-lg border px-3 py-2 text-xs font-bold transition-all ${
-                                        filters.status === s
-                                            ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
-                                            : 'border-gray-200 bg-white text-gray-600 hover:border-blue-400 hover:text-blue-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400'
-                                    }`}
                                 >
-                                    {s === 'Admitted'
-                                        ? t('page.checkin.admitted')
-                                        : s === 'Pending'
-                                          ? t('page.checkin.pending')
-                                          : t('page.checkin.discharged')}
-                                </button>
-                            ))}
-                        </div>
+                                    {statusLabel(status)}
+                                </Button>
+                            );
+                        })}
                     </div>
+                    <ToolbarSpacer />
+                    <SegmentedControl
+                        value={viewMode}
+                        onChange={setViewMode}
+                        options={[
+                            {
+                                value: 'grid',
+                                icon: Squares2X2Icon,
+                                ariaLabel: 'Grid view',
+                            },
+                            {
+                                value: 'table',
+                                icon: ListBulletIcon,
+                                ariaLabel: 'Table view',
+                            },
+                        ]}
+                    />
+                </Toolbar>
 
-                    {/* Action buttons and View Mode Toggle */}
-                    <div className="flex items-center gap-3 self-end lg:self-auto">
-                        <Link
-                            href={route('appointments.create')}
-                            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700"
-                        >
-                            <PlusIcon className="h-4 w-4" />{' '}
-                            {t('page.checkin.new_admission')}
-                        </Link>
-                        <ViewToggle view={viewMode} onChange={setViewMode} />
-                    </div>
-                </div>
-
-                {/* 4. Main Content Area */}
                 <AnimatePresence mode="wait">
-                    {admissions.data.length === 0 ? (
-                        /* Empty State Container */
+                    {!hasAdmissions && (
                         <motion.div
                             key="empty"
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            className="space-y-6"
+                            exit={{ opacity: 0, y: -12 }}
                         >
-                            <EmptyState
+                            <PatientEmptyState
                                 icon={InboxIcon}
                                 title={t('page.checkin.empty_title')}
                                 description={t(
                                     'page.checkin.empty_description',
                                 )}
+                                actionLabel={t('page.checkin.new_admission')}
+                                actionHref={route('appointments.create')}
+                                secondaryAction={
+                                    <Button
+                                        variant="secondary"
+                                        icon={XMarkIcon}
+                                        onClick={clearFilters}
+                                    >
+                                        {t('page.checkin.clear_filters')}
+                                    </Button>
+                                }
                             />
-                            <div className="flex justify-center gap-4">
-                                <button
-                                    onClick={clearFilters}
-                                    className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-6 py-3 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
-                                >
-                                    <XMarkIcon className="h-4 w-4" />{' '}
-                                    {t('page.checkin.clear_filters')}
-                                </button>
-                                <Link
-                                    href={route('appointments.create')}
-                                    className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition-all hover:bg-blue-700"
-                                >
-                                    <PlusIcon className="h-4 w-4" />{' '}
-                                    {t('page.checkin.new_admission')}
-                                </Link>
-                            </div>
                         </motion.div>
-                    ) : viewMode === 'grid' ? (
-                        /* Grid View layout */
+                    )}
+
+                    {hasAdmissions && viewMode === 'grid' && (
                         <motion.div
                             key="grid"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+                            className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
                         >
                             {admissions.data.map((admission) => (
-                                <div
+                                <Card
                                     key={admission.id}
-                                    className="group relative flex h-full flex-col rounded-xl border border-gray-200 bg-white p-6 transition-all hover:border-blue-400 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                                    className="flex flex-col transition-colors duration-200 ease-premium hover:border-line-strong"
                                 >
-                                    <div className="mb-4 flex items-start justify-between">
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-900 text-sm font-black text-white dark:bg-neutral-700">
-                                            {admission.patient.first_name[0]}
-                                            {admission.patient.last_name[0]}
-                                        </div>
-                                        <StatusBadge
-                                            label={admission.status}
-                                            color={
-                                                statusColors[
-                                                    admission.status
-                                                ] || 'gray'
+                                    <CardHeader
+                                        actions={
+                                            <AdmissionStatusBadge
+                                                status={admission.status}
+                                                label={statusLabel(
+                                                    admission.status,
+                                                )}
+                                            />
+                                        }
+                                    >
+                                        <PatientIdentity
+                                            firstName={
+                                                admission.patient.first_name
+                                            }
+                                            lastName={
+                                                admission.patient.last_name
+                                            }
+                                            patientUid={
+                                                admission.patient.patient_uid
                                             }
                                         />
-                                    </div>
-                                    <div className="mb-4 flex-grow">
-                                        <h3 className="truncate text-base font-bold text-gray-900 dark:text-neutral-100">
-                                            {admission.patient.first_name}{' '}
-                                            {admission.patient.last_name}
-                                        </h3>
-                                        <p className="mb-3 font-mono text-xs font-bold text-blue-500">
-                                            {admission.patient.patient_uid}
-                                        </p>
+                                    </CardHeader>
 
-                                        <div className="mb-2 flex items-center gap-2">
-                                            <CalendarDaysIcon className="h-3.5 w-3.5 text-gray-400 dark:text-neutral-500" />
-                                            <span className="text-xs font-semibold text-gray-700 dark:text-neutral-300">
-                                                {admission.admission_date}
-                                            </span>
+                                    <CardContent className="flex-1">
+                                        <div className="flex items-center gap-2 text-[12px] font-medium text-ink-muted">
+                                            <CalendarDaysIcon className="h-3.5 w-3.5 shrink-0 text-ink-subtle" />
+                                            {admission.admission_date}
                                         </div>
-                                        <p className="line-clamp-2 h-8 text-xs text-gray-500 dark:text-neutral-500">
+                                        <p className="mt-2 line-clamp-2 text-[12.5px] leading-relaxed text-ink-subtle">
                                             {admission.reason_for_admission ||
                                                 t('page.checkin.no_reason')}
                                         </p>
-                                    </div>
-                                    <div className="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-neutral-700">
-                                        <div className="flex items-center gap-2">
-                                            <MapPinIcon className="h-4 w-4 flex-shrink-0 text-blue-500" />
-                                            <div>
-                                                <div className="text-xs font-bold text-gray-950 uppercase dark:text-neutral-100">
-                                                    {t('page.checkin.bed')}:{' '}
-                                                    {admission.bed?.code}
-                                                </div>
-                                                <div className="text-[10px] font-semibold text-gray-400 uppercase dark:text-neutral-500">
-                                                    {admission.bed?.ward?.name}
-                                                </div>
-                                            </div>
+                                    </CardContent>
+
+                                    <CardFooter className="justify-between gap-2">
+                                        <AdmissionLocation
+                                            code={admission.bed?.code}
+                                            ward={admission.bed?.ward?.name}
+                                        />
+                                        <div className="flex items-center gap-1.5">
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                icon={EyeIcon}
+                                                href={route(
+                                                    'admissions.show',
+                                                    admission.id,
+                                                )}
+                                                aria-label={
+                                                    t('common.view_details') ||
+                                                    'View details'
+                                                }
+                                            />
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                icon={ArrowRightIcon}
+                                                href={route(
+                                                    'admissions.create',
+                                                    admission.id,
+                                                )}
+                                                aria-label={
+                                                    t('common.manage') ||
+                                                    'Manage'
+                                                }
+                                            />
                                         </div>
-                                        <Link
-                                            href={route(
-                                                'admissions.create',
-                                                admission.id,
-                                            )}
-                                            className="rounded-lg bg-gray-50 p-2 text-gray-400 transition-all hover:bg-blue-50 hover:text-blue-600 dark:bg-neutral-700 dark:text-neutral-500 dark:hover:bg-blue-950/40"
-                                        >
-                                            <ArrowRightIcon className="h-4 w-4" />
-                                        </Link>
-                                    </div>
-                                </div>
+                                    </CardFooter>
+                                </Card>
                             ))}
                         </motion.div>
-                    ) : (
-                        /* Table View layout */
+                    )}
+
+                    {hasAdmissions && viewMode === 'table' && (
                         <motion.div
                             key="table"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800"
                         >
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
-                                <thead className="bg-gray-50 text-xs font-bold text-gray-500 uppercase dark:bg-neutral-700 dark:text-neutral-500">
-                                    <tr>
-                                        <th className="px-6 py-4 text-left">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHeaderCell>
                                             {t('page.checkin.table_patient')}
-                                        </th>
-                                        <th className="px-6 py-4 text-left">
+                                        </TableHeaderCell>
+                                        <TableHeaderCell>
                                             {t(
                                                 'page.checkin.table_date_reason',
                                             )}
-                                        </th>
-                                        <th className="px-6 py-4 text-left">
+                                        </TableHeaderCell>
+                                        <TableHeaderCell>
                                             {t('page.checkin.table_location')}
-                                        </th>
-                                        <th className="px-6 py-4 text-center">
+                                        </TableHeaderCell>
+                                        <TableHeaderCell>
                                             {t('page.checkin.table_status')}
-                                        </th>
-                                        <th className="px-6 py-4"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200 dark:divide-neutral-700">
+                                        </TableHeaderCell>
+                                        <TableHeaderCell numeric>
+                                            {t('common.actions')}
+                                        </TableHeaderCell>
+                                    </TableRow>
+                                </TableHeader>
+
+                                <TableBody>
                                     {admissions.data.map((admission) => (
-                                        <tr
-                                            key={admission.id}
-                                            className="dark:hover:bg-neutral-750 transition-all hover:bg-gray-50"
-                                        >
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-900 text-xs font-black text-white dark:bg-neutral-700">
-                                                        {
-                                                            admission.patient
-                                                                .first_name[0]
-                                                        }
-                                                        {
-                                                            admission.patient
-                                                                .last_name[0]
-                                                        }
-                                                    </div>
-                                                    <div>
-                                                        <div className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                                            {
-                                                                admission
-                                                                    .patient
-                                                                    .first_name
-                                                            }{' '}
-                                                            {
-                                                                admission
-                                                                    .patient
-                                                                    .last_name
-                                                            }
-                                                        </div>
-                                                        <div className="font-mono text-[10px] font-bold tracking-wider text-blue-500 uppercase">
-                                                            {
-                                                                admission
-                                                                    .patient
-                                                                    .patient_uid
-                                                            }
-                                                        </div>
-                                                    </div>
+                                        <TableRow key={admission.id}>
+                                            <TableCell>
+                                                <PatientIdentity
+                                                    firstName={
+                                                        admission.patient
+                                                            .first_name
+                                                    }
+                                                    lastName={
+                                                        admission.patient
+                                                            .last_name
+                                                    }
+                                                    patientUid={
+                                                        admission.patient
+                                                            .patient_uid
+                                                    }
+                                                    size="sm"
+                                                />
+                                            </TableCell>
+                                            <TableCell muted>
+                                                <div className="flex items-center gap-2 text-[12.5px]">
+                                                    <CalendarDaysIcon className="h-3.5 w-3.5 shrink-0 text-ink-subtle" />
+                                                    {admission.admission_date}
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="mb-1 flex items-center gap-2">
-                                                    <CalendarDaysIcon className="h-3.5 w-3.5 text-gray-400 dark:text-neutral-500" />
-                                                    <span className="text-xs font-bold text-gray-700 dark:text-neutral-300">
-                                                        {
-                                                            admission.admission_date
-                                                        }
-                                                    </span>
-                                                </div>
-                                                <div className="max-w-[180px] truncate text-[11px] text-gray-400 dark:text-neutral-500">
+                                                <div className="mt-0.5 line-clamp-1 max-w-[220px] text-[12px] text-ink-subtle">
                                                     {
                                                         admission.reason_for_admission
                                                     }
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <MapPinIcon className="h-4 w-4 text-blue-500" />
-                                                    <div>
-                                                        <div className="text-xs font-bold text-gray-900 uppercase dark:text-neutral-100">
-                                                            {t(
-                                                                'page.checkin.bed',
-                                                            )}
-                                                            :{' '}
-                                                            {
-                                                                admission.bed
-                                                                    ?.code
-                                                            }
-                                                        </div>
-                                                        <div className="text-[9px] font-bold text-gray-400 uppercase dark:text-neutral-500">
-                                                            {
-                                                                admission.bed
-                                                                    ?.ward?.name
-                                                            }
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <StatusBadge
-                                                    label={admission.status}
-                                                    color={
-                                                        statusColors[
-                                                            admission.status
-                                                        ] || 'gray'
+                                            </TableCell>
+                                            <TableCell>
+                                                <AdmissionLocation
+                                                    code={admission.bed?.code}
+                                                    ward={
+                                                        admission.bed?.ward
+                                                            ?.name
                                                     }
                                                 />
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <Link
-                                                    href={route(
-                                                        'admissions.create',
-                                                        admission.id,
+                                            </TableCell>
+                                            <TableCell>
+                                                <AdmissionStatusBadge
+                                                    status={admission.status}
+                                                    label={statusLabel(
+                                                        admission.status,
                                                     )}
-                                                    className="inline-block rounded-lg border bg-gray-50 p-2 text-gray-400 transition-all hover:border-gray-200 hover:bg-white hover:text-blue-600 dark:bg-neutral-700 dark:text-neutral-500 dark:hover:border-neutral-600"
-                                                >
-                                                    <ArrowRightIcon className="h-4 w-4" />
-                                                </Link>
-                                            </td>
-                                        </tr>
+                                                />
+                                            </TableCell>
+                                            <TableCell numeric>
+                                                <div className="flex items-center justify-end gap-1.5">
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        icon={EyeIcon}
+                                                        href={route(
+                                                            'admissions.show',
+                                                            admission.id,
+                                                        )}
+                                                        aria-label={
+                                                            t(
+                                                                'common.view_details',
+                                                            ) || 'View details'
+                                                        }
+                                                    />
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        icon={ArrowRightIcon}
+                                                        href={route(
+                                                            'admissions.create',
+                                                            admission.id,
+                                                        )}
+                                                        aria-label={
+                                                            t(
+                                                                'common.manage',
+                                                            ) || 'Manage'
+                                                        }
+                                                    />
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
                                     ))}
-                                </tbody>
-                            </table>
+                                </TableBody>
+                            </Table>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
-                {/* 5. Pagination */}
-                {admissions.data.length > 0 && (
+                {hasAdmissions && (
                     <Pagination
                         links={admissions.links}
                         meta={{

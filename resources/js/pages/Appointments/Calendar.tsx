@@ -2,10 +2,7 @@ import {
     CalendarDaysIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
-    FunnelIcon,
-    MagnifyingGlassIcon,
     PencilSquareIcon,
-    PlusCircleIcon,
     XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { Head, Link } from '@inertiajs/react';
@@ -25,14 +22,13 @@ import {
 } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import React, { useState, useMemo } from 'react';
-import { useTranslation } from '@/hooks/useTranslation';
-import AppLayout from '@/Layouts/AppLayout';
 import EmptyState from '@/Components/EmptyState';
 import Modal from '@/Components/Modal';
 import PageBreadcrumb from '@/Components/PageBreadcrumb';
 import StatCard from '@/Components/StatCard';
 import StatusBadge from '@/Components/StatusBadge';
-import ViewToggle from '@/Components/ViewToggle';
+import { useTranslation } from '@/hooks/useTranslation';
+import AppLayout from '@/Layouts/AppLayout';
 
 // ---------- Types ----------
 interface Patient {
@@ -67,7 +63,10 @@ interface Props {
     };
 }
 
-const statusColors: Record<string, 'blue' | 'emerald' | 'gray' | 'red' | 'amber'> = {
+const statusColors: Record<
+    string,
+    'blue' | 'emerald' | 'gray' | 'red' | 'amber'
+> = {
     scheduled: 'blue',
     confirmed: 'emerald',
     completed: 'gray',
@@ -81,7 +80,8 @@ export default function AppointmentCalendar({ appointments, stats }: Props) {
 
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-    const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+    const [selectedAppointment, setSelectedAppointment] =
+        useState<Appointment | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
 
     // Navigation
@@ -98,6 +98,7 @@ export default function AppointmentCalendar({ appointments, stats }: Props) {
         const monthEnd = endOfMonth(currentMonth);
         const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
         const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
         return eachDayOfInterval({ start: calStart, end: calEnd });
     }, [currentMonth]);
 
@@ -105,15 +106,23 @@ export default function AppointmentCalendar({ appointments, stats }: Props) {
     const appointmentsByDate = useMemo(() => {
         const map: Record<string, Appointment[]> = {};
         appointments.forEach((apt) => {
-            if (!map[apt.appointment_date]) map[apt.appointment_date] = [];
+            if (!map[apt.appointment_date]) {
+                map[apt.appointment_date] = [];
+            }
+
             map[apt.appointment_date].push(apt);
         });
+
         return map;
     }, [appointments]);
 
     const selectedAppointments = useMemo(() => {
-        if (!selectedDate) return [];
+        if (!selectedDate) {
+            return [];
+        }
+
         const dateStr = format(selectedDate, 'yyyy-MM-dd');
+
         return appointmentsByDate[dateStr] || [];
     }, [selectedDate, appointmentsByDate]);
 
@@ -180,39 +189,37 @@ export default function AppointmentCalendar({ appointments, stats }: Props) {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={prevMonth}
-                            className="rounded-xl border border-gray-200 bg-white p-2 text-gray-500 transition hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                            className="rounded-xl border border-line bg-surface p-2 text-ink-subtle transition hover:bg-surface-hover"
                         >
                             <ChevronLeftIcon className="h-5 w-5" />
                         </button>
-                        <h2 className="min-w-[200px] text-center text-lg font-bold text-gray-900 dark:text-neutral-100">
+                        <h2 className="min-w-[200px] text-center text-lg font-bold text-ink">
                             {format(currentMonth, 'MMMM yyyy')}
                         </h2>
                         <button
                             onClick={nextMonth}
-                            className="rounded-xl border border-gray-200 bg-white p-2 text-gray-500 transition hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                            className="rounded-xl border border-line bg-surface p-2 text-ink-subtle transition hover:bg-surface-hover"
                         >
                             <ChevronRightIcon className="h-5 w-5" />
                         </button>
                         {!isToday(currentMonth) && (
                             <button
                                 onClick={goToToday}
-                                className="ml-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-bold text-gray-600 transition hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                                className="ml-2 rounded-xl border border-line bg-surface px-4 py-2 text-xs font-bold text-ink-muted transition hover:bg-surface-hover"
                             >
                                 {t('page.appointment_calendar.common.today')}
                             </button>
                         )}
                     </div>
-
-                    
                 </div>
 
                 {/* Calendar Grid */}
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-                    <div className="grid grid-cols-7 border-b border-gray-200 dark:border-neutral-700">
+                <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-surface">
+                    <div className="grid grid-cols-7 border-b border-line">
                         {weekDays.map((day) => (
                             <div
                                 key={day}
-                                className="px-2 py-3 text-center text-[10px] font-black tracking-widest text-gray-400 uppercase dark:text-neutral-400"
+                                className="px-2 py-3 text-center text-[10px] font-black tracking-widest text-ink-subtle uppercase"
                             >
                                 {day}
                             </div>
@@ -223,31 +230,33 @@ export default function AppointmentCalendar({ appointments, stats }: Props) {
                         {calendarDays.map((day, idx) => {
                             const dateStr = format(day, 'yyyy-MM-dd');
                             const dayAppts = appointmentsByDate[dateStr] || [];
-                            const isSelected = selectedDate && isSameDay(day, selectedDate);
-                            const isCurrentMonth = isSameMonth(day, currentMonth);
+                            const isSelected =
+                                selectedDate && isSameDay(day, selectedDate);
+                            const isCurrentMonth = isSameMonth(
+                                day,
+                                currentMonth,
+                            );
                             const today = isToday(day);
 
                             return (
                                 <button
                                     key={idx}
                                     onClick={() => setSelectedDate(day)}
-                                    className={`relative flex flex-col items-center border-b border-r border-gray-100 p-2 transition-colors hover:bg-blue-50 dark:border-neutral-700 dark:hover:bg-blue-900/20 ${
-                                        !isCurrentMonth
-                                            ? 'text-gray-300 dark:text-neutral-600'
-                                            : ''
+                                    className={`relative flex flex-col items-center border-r border-b border-line p-2 transition-colors hover:bg-accent-soft ${
+                                        !isCurrentMonth ? 'text-ink-subtle' : ''
                                     } ${
                                         isSelected
-                                            ? 'bg-blue-50 ring-2 ring-inset ring-blue-500 dark:bg-blue-900/20 dark:ring-blue-400'
+                                            ? 'bg-accent-soft ring-2 ring-accent ring-inset'
                                             : ''
                                     }`}
                                 >
                                     <span
                                         className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
                                             today
-                                                ? 'bg-blue-600 text-white'
+                                                ? 'bg-accent text-ink-inverse'
                                                 : isSelected
-                                                  ? 'text-blue-600 dark:text-blue-400'
-                                                  : 'text-gray-900 dark:text-neutral-100'
+                                                  ? 'text-accent'
+                                                  : 'text-ink'
                                         }`}
                                     >
                                         {format(day, 'd')}
@@ -258,21 +267,28 @@ export default function AppointmentCalendar({ appointments, stats }: Props) {
                                             <span
                                                 key={apt.id}
                                                 className={`h-1.5 w-1.5 rounded-full ${
-                                                    statusColors[apt.status] === 'blue'
-                                                        ? 'bg-blue-500'
-                                                        : statusColors[apt.status] === 'emerald'
-                                                          ? 'bg-emerald-500'
-                                                          : statusColors[apt.status] === 'gray'
-                                                            ? 'bg-gray-400'
-                                                            : statusColors[apt.status] === 'red'
-                                                              ? 'bg-red-500'
-                                                              : 'bg-amber-500'
+                                                    statusColors[apt.status] ===
+                                                    'blue'
+                                                        ? 'bg-accent-soft0'
+                                                        : statusColors[
+                                                                apt.status
+                                                            ] === 'emerald'
+                                                          ? 'bg-positive'
+                                                          : statusColors[
+                                                                  apt.status
+                                                              ] === 'gray'
+                                                            ? 'bg-ink-subtle'
+                                                            : statusColors[
+                                                                    apt.status
+                                                                ] === 'red'
+                                                              ? 'bg-critical'
+                                                              : 'bg-warning'
                                                 }`}
                                                 title={`${apt.patient.first_name} ${apt.patient.last_name}`}
                                             />
                                         ))}
                                         {dayAppts.length > 3 && (
-                                            <span className="text-[8px] font-bold text-gray-400 dark:text-neutral-500">
+                                            <span className="text-[8px] font-bold text-ink-subtle">
                                                 +{dayAppts.length - 3}
                                             </span>
                                         )}
@@ -291,23 +307,29 @@ export default function AppointmentCalendar({ appointments, stats }: Props) {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800"
+                            className="rounded-xl border border-line bg-surface p-6 shadow-surface"
                         >
                             <div className="mb-4 flex items-center justify-between">
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-neutral-100">
+                                <h3 className="text-lg font-bold text-ink">
                                     {format(selectedDate, 'EEEE, MMM dd')}
                                 </h3>
-                                <span className="text-xs font-bold text-gray-400 dark:text-neutral-400">
+                                <span className="text-xs font-bold text-ink-subtle">
                                     {selectedAppointments.length}{' '}
-                                    {t('page.appointment_calendar.appointments')}
+                                    {t(
+                                        'page.appointment_calendar.appointments',
+                                    )}
                                 </span>
                             </div>
 
                             {selectedAppointments.length === 0 ? (
                                 <EmptyState
                                     icon={CalendarDaysIcon}
-                                    title={t('page.appointment_calendar.no_appointments')}
-                                    description={t('page.appointment_calendar.no_appointments_desc')}
+                                    title={t(
+                                        'page.appointment_calendar.no_appointments',
+                                    )}
+                                    description={t(
+                                        'page.appointment_calendar.no_appointments_desc',
+                                    )}
                                 />
                             ) : (
                                 <div className="space-y-3">
@@ -318,32 +340,42 @@ export default function AppointmentCalendar({ appointments, stats }: Props) {
                                                 setSelectedAppointment(apt);
                                                 setModalOpen(true);
                                             }}
-                                            className="flex w-full items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-4 text-left transition hover:border-blue-300 hover:bg-white dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-blue-800 dark:hover:bg-neutral-800"
+                                            className="flex w-full items-center justify-between rounded-lg border border-line bg-surface-muted p-4 text-left transition hover:border-accent hover:bg-surface-hover"
                                         >
                                             <div className="flex items-center gap-4">
                                                 <StatusBadge
-                                                    label={t(`page.appointment_calendar.status.${apt.status}`)}
-                                                    color={statusColors[apt.status]}
+                                                    label={t(
+                                                        `page.appointment_calendar.status.${apt.status}`,
+                                                    )}
+                                                    color={
+                                                        statusColors[apt.status]
+                                                    }
                                                 />
                                                 <div>
-                                                    <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
+                                                    <p className="text-sm font-bold text-ink">
                                                         {apt.patient.first_name}{' '}
                                                         {apt.patient.last_name}
                                                     </p>
-                                                    <p className="text-xs text-gray-500 dark:text-neutral-400">
-                                                        {t('page.appointment_calendar.common.doctor_label', {
-                                                            name: apt.doctor.name,
-                                                        })}
+                                                    <p className="text-xs text-ink-subtle">
+                                                        {t(
+                                                            'page.appointment_calendar.common.doctor_label',
+                                                            {
+                                                                name: apt.doctor
+                                                                    .name,
+                                                            },
+                                                        )}
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-sm font-bold text-gray-700 dark:text-neutral-200">
+                                                <p className="text-sm font-bold text-ink-muted">
                                                     {apt.appointment_time}
                                                 </p>
-                                                <p className="text-[10px] font-bold uppercase text-gray-400 dark:text-neutral-500">
-                                                    {t('page.appointment_calendar.details.queue_position')}:{' '}
-                                                    {apt.queue_position}
+                                                <p className="text-[10px] font-bold text-ink-subtle uppercase">
+                                                    {t(
+                                                        'page.appointment_calendar.details.queue_position',
+                                                    )}
+                                                    : {apt.queue_position}
                                                 </p>
                                             </div>
                                         </button>
@@ -366,82 +398,113 @@ export default function AppointmentCalendar({ appointments, stats }: Props) {
                     {selectedAppointment && (
                         <div className="space-y-6">
                             <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold dark:bg-blue-900/30 dark:text-blue-400">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft font-bold text-accent text-accent-ink">
                                     {selectedAppointment.patient.first_name[0]}
                                     {selectedAppointment.patient.last_name[0]}
                                 </div>
                                 <div>
-                                    <p className="text-lg font-bold text-gray-900 dark:text-neutral-100">
+                                    <p className="text-lg font-bold text-ink">
                                         {selectedAppointment.patient.first_name}{' '}
                                         {selectedAppointment.patient.last_name}
                                     </p>
                                     <Link
-                                        href={route('patients.show', selectedAppointment.patient.id)}
-                                        className="text-xs font-bold text-blue-600 hover:underline dark:text-blue-400"
+                                        href={route(
+                                            'patients.show',
+                                            selectedAppointment.patient.id,
+                                        )}
+                                        className="text-xs font-bold text-accent hover:underline"
                                     >
-                                        {t('page.appointment_calendar.common.view_profile')}
+                                        {t(
+                                            'page.appointment_calendar.common.view_profile',
+                                        )}
                                     </Link>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
-                                        {t('page.appointment_calendar.details.doctor')}
+                                    <p className="text-xs font-semibold text-ink-subtle uppercase">
+                                        {t(
+                                            'page.appointment_calendar.details.doctor',
+                                        )}
                                     </p>
-                                    <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
+                                    <p className="text-sm font-bold text-ink">
                                         {selectedAppointment.doctor.name}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
-                                        {t('page.appointment_calendar.details.date_time')}
+                                    <p className="text-xs font-semibold text-ink-subtle uppercase">
+                                        {t(
+                                            'page.appointment_calendar.details.date_time',
+                                        )}
                                     </p>
-                                    <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                        {format(parseISO(selectedAppointment.appointment_date), 'MMM dd, yyyy')}{' '}
+                                    <p className="text-sm font-bold text-ink">
+                                        {format(
+                                            parseISO(
+                                                selectedAppointment.appointment_date,
+                                            ),
+                                            'MMM dd, yyyy',
+                                        )}{' '}
                                         {selectedAppointment.appointment_time}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
-                                        {t('page.appointment_calendar.details.status')}
+                                    <p className="text-xs font-semibold text-ink-subtle uppercase">
+                                        {t(
+                                            'page.appointment_calendar.details.status',
+                                        )}
                                     </p>
                                     <StatusBadge
-                                        label={t(`page.appointment_calendar.status.${selectedAppointment.status}`)}
-                                        color={statusColors[selectedAppointment.status]}
+                                        label={t(
+                                            `page.appointment_calendar.status.${selectedAppointment.status}`,
+                                        )}
+                                        color={
+                                            statusColors[
+                                                selectedAppointment.status
+                                            ]
+                                        }
                                     />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
-                                        {t('page.appointment_calendar.details.queue_position')}
+                                    <p className="text-xs font-semibold text-ink-subtle uppercase">
+                                        {t(
+                                            'page.appointment_calendar.details.queue_position',
+                                        )}
                                     </p>
-                                    <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
+                                    <p className="text-sm font-bold text-ink">
                                         {selectedAppointment.queue_position}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
-                                        {t('page.appointment_calendar.details.consultation_fee')}
+                                    <p className="text-xs font-semibold text-ink-subtle uppercase">
+                                        {t(
+                                            'page.appointment_calendar.details.consultation_fee',
+                                        )}
                                     </p>
-                                    <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
+                                    <p className="text-sm font-bold text-ink">
                                         ${selectedAppointment.consultation_fee}
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="flex justify-end gap-3 border-t border-gray-100 pt-4 dark:border-neutral-700">
+                            <div className="flex justify-end gap-3 border-t border-line pt-4">
                                 <button
                                     onClick={() => {
                                         setModalOpen(false);
                                         setSelectedAppointment(null);
                                     }}
-                                    className="rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                                    className="rounded-xl border border-line bg-surface px-5 py-2.5 text-sm font-bold text-ink-muted hover:bg-surface-hover"
                                 >
-                                    {t('page.appointment_calendar.common.close')}
+                                    {t(
+                                        'page.appointment_calendar.common.close',
+                                    )}
                                 </button>
                                 <Link
-                                    href={route('appointments.edit', selectedAppointment.id)}
-                                    className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
+                                    href={route(
+                                        'appointments.edit',
+                                        selectedAppointment.id,
+                                    )}
+                                    className="flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-ink-inverse shadow-surface hover:bg-accent-hover"
                                 >
                                     <PencilSquareIcon className="h-5 w-5" />
                                     {t('page.appointment_calendar.common.edit')}

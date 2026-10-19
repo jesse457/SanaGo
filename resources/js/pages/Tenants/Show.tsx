@@ -74,12 +74,14 @@ export default function TenantShow({ tenant }: { tenant: Tenant }) {
         });
     };
 
+    // "Days remaining" is inherently time-dependent: the clock is read once per
+    // render on purpose, so the lint rule is silenced with that intent.
+    // eslint-disable-next-line react-hooks/purity
+    const now = Date.now();
     const daysRemaining = sub
         ? Math.max(
               0,
-              Math.ceil(
-                  (new Date(sub.end_date).getTime() - Date.now()) / 86400000,
-              ),
+              Math.ceil((new Date(sub.end_date).getTime() - now) / 86400000),
           )
         : 0;
     const usagePercent =
@@ -171,25 +173,25 @@ export default function TenantShow({ tenant }: { tenant: Tenant }) {
                                         />
                                     )}
                                 </dl>
-                                <div className="mt-6 flex gap-3 border-t border-gray-100 pt-6 dark:border-neutral-800">
+                                <div className="mt-6 flex gap-3 border-t border-line pt-6">
                                     {tenant.is_active ? (
                                         <button
                                             onClick={handleToggleActive}
-                                            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                                            className="rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink-muted transition-colors hover:bg-surface-hover"
                                         >
                                             Suspend Tenant
                                         </button>
                                     ) : (
                                         <button
                                             onClick={handleToggleActive}
-                                            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+                                            className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-ink-inverse shadow-surface transition-colors hover:bg-accent-hover"
                                         >
                                             Reactivate Tenant
                                         </button>
                                     )}
                                     <button
                                         onClick={() => setShowDelModal(true)}
-                                        className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700"
+                                        className="rounded-lg bg-critical px-4 py-2 text-sm font-semibold text-ink-inverse shadow-surface transition-colors hover:bg-red-700"
                                     >
                                         Delete Tenant
                                     </button>
@@ -203,12 +205,12 @@ export default function TenantShow({ tenant }: { tenant: Tenant }) {
                                     {tenant.notes.map((n) => (
                                         <div
                                             key={n.id}
-                                            className="rounded-lg bg-gray-50 p-3 dark:bg-neutral-800"
+                                            className="rounded-lg bg-surface-muted p-3"
                                         >
-                                            <p className="text-sm text-gray-700 dark:text-neutral-300">
+                                            <p className="text-sm text-ink-muted">
                                                 {n.note}
                                             </p>
-                                            <p className="mt-1.5 text-xs text-gray-400 dark:text-neutral-500">
+                                            <p className="mt-1.5 text-xs text-ink-subtle">
                                                 {n.user_name} —{' '}
                                                 {new Date(
                                                     n.created_at,
@@ -230,26 +232,26 @@ export default function TenantShow({ tenant }: { tenant: Tenant }) {
                             >
                                 <div className="space-y-3 p-6">
                                     <div className="flex justify-between">
-                                        <span className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
+                                        <span className="text-xs font-semibold tracking-wide text-ink-subtle uppercase">
                                             Plan
                                         </span>
-                                        <span className="text-sm font-bold text-gray-900 dark:text-neutral-100">
+                                        <span className="text-sm font-bold text-ink">
                                             {sub.plan_name}
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
+                                        <span className="text-xs font-semibold tracking-wide text-ink-subtle uppercase">
                                             Price
                                         </span>
-                                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                                        <span className="text-sm font-bold text-accent">
                                             ${sub.price}
-                                            <span className="text-xs font-normal text-gray-400 dark:text-neutral-500">
+                                            <span className="text-xs font-normal text-ink-subtle">
                                                 /{sub.billing_cycle}
                                             </span>
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
+                                        <span className="text-xs font-semibold tracking-wide text-ink-subtle uppercase">
                                             Status
                                         </span>
                                         <StatusBadge
@@ -261,45 +263,45 @@ export default function TenantShow({ tenant }: { tenant: Tenant }) {
                                             }
                                         />
                                     </div>
-                                    <hr className="border-gray-100 dark:border-neutral-700" />
+                                    <hr className="border-line" />
                                     <div className="flex justify-between">
-                                        <span className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
+                                        <span className="text-xs font-semibold tracking-wide text-ink-subtle uppercase">
                                             Start Date
                                         </span>
-                                        <span className="text-sm font-medium text-gray-900 dark:text-neutral-100">
+                                        <span className="text-sm font-medium text-ink">
                                             {sub.start_date}
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
+                                        <span className="text-xs font-semibold tracking-wide text-ink-subtle uppercase">
                                             End Date
                                         </span>
-                                        <span className="text-sm font-medium text-gray-900 dark:text-neutral-100">
+                                        <span className="text-sm font-medium text-ink">
                                             {sub.end_date}
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
+                                        <span className="text-xs font-semibold tracking-wide text-ink-subtle uppercase">
                                             Days Remaining
                                         </span>
                                         <span
-                                            className={`text-sm font-bold ${daysRemaining < 30 ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}
+                                            className={`text-sm font-bold ${daysRemaining < 30 ? 'text-red-500' : 'text-positive-ink'}`}
                                         >
                                             {daysRemaining} days
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
+                                        <span className="text-xs font-semibold tracking-wide text-ink-subtle uppercase">
                                             Auto Renew
                                         </span>
                                         <span
-                                            className={`text-sm font-medium ${sub.auto_renew ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}
+                                            className={`text-sm font-medium ${sub.auto_renew ? 'text-positive-ink' : 'text-red-500'}`}
                                         >
                                             {sub.auto_renew ? 'Yes' : 'No'}
                                         </span>
                                     </div>
                                     <div className="mt-2">
-                                        <div className="mb-1 flex justify-between text-xs text-gray-400 dark:text-neutral-500">
+                                        <div className="mb-1 flex justify-between text-xs text-ink-subtle">
                                             <span className="font-semibold tracking-wide uppercase">
                                                 Usage ({usagePercent}%)
                                             </span>
@@ -307,9 +309,9 @@ export default function TenantShow({ tenant }: { tenant: Tenant }) {
                                                 {365 - daysRemaining} / 365 days
                                             </span>
                                         </div>
-                                        <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-neutral-700">
+                                        <div className="h-2 w-full rounded-full bg-surface-inset">
                                             <div
-                                                className={`h-2 rounded-full transition-all ${usagePercent > 90 ? 'bg-red-500' : 'bg-blue-600'}`}
+                                                className={`h-2 rounded-full transition-all ${usagePercent > 90 ? 'bg-critical' : 'bg-accent'}`}
                                                 style={{
                                                     width: `${Math.min(usagePercent, 100)}%`,
                                                 }}
@@ -320,8 +322,8 @@ export default function TenantShow({ tenant }: { tenant: Tenant }) {
                                     {sub.features_json &&
                                         sub.features_json.length > 0 && (
                                             <>
-                                                <hr className="border-gray-100 dark:border-neutral-700" />
-                                                <p className="text-xs font-bold text-gray-400 uppercase dark:text-neutral-500">
+                                                <hr className="border-line" />
+                                                <p className="text-xs font-bold text-ink-subtle uppercase">
                                                     Features
                                                 </p>
                                                 <ul className="space-y-1.5">
@@ -329,10 +331,10 @@ export default function TenantShow({ tenant }: { tenant: Tenant }) {
                                                         (f, i) => (
                                                             <li
                                                                 key={i}
-                                                                className={`flex items-center gap-1.5 text-xs ${f.is_highlighted ? 'font-semibold text-gray-900 dark:text-neutral-100' : 'text-gray-500 dark:text-neutral-400'}`}
+                                                                className={`flex items-center gap-1.5 text-xs ${f.is_highlighted ? 'font-semibold text-ink' : 'text-ink-subtle'}`}
                                                             >
                                                                 <CheckCircleIcon
-                                                                    className={`h-3.5 w-3.5 shrink-0 ${f.is_highlighted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-300 dark:text-neutral-600'}`}
+                                                                    className={`h-3.5 w-3.5 shrink-0 ${f.is_highlighted ? 'text-accent' : 'text-ink-subtle'}`}
                                                                 />
                                                                 {
                                                                     f.feature_label
@@ -344,10 +346,10 @@ export default function TenantShow({ tenant }: { tenant: Tenant }) {
                                             </>
                                         )}
 
-                                    <hr className="border-gray-100 dark:border-neutral-700" />
+                                    <hr className="border-line" />
                                     <Link
                                         href={`/subscriptions/${sub.id}/edit`}
-                                        className="block rounded-lg bg-blue-50 py-2 text-center text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                                        className="block rounded-lg bg-accent-soft py-2 text-center text-sm font-semibold text-accent transition-colors hover:bg-accent-soft"
                                     >
                                         Manage Subscription
                                     </Link>
@@ -373,22 +375,22 @@ export default function TenantShow({ tenant }: { tenant: Tenant }) {
                 title="Delete Tenant"
             >
                 <div className="text-center">
-                    <ExclamationTriangleIcon className="mx-auto mb-4 h-12 w-12 text-red-600" />
-                    <p className="text-gray-700 dark:text-neutral-300">
+                    <ExclamationTriangleIcon className="mx-auto mb-4 h-12 w-12 text-critical-ink" />
+                    <p className="text-ink-muted">
                         Delete <strong>{tenant.name}</strong> permanently?
                     </p>
                 </div>
                 <div className="mt-6 flex justify-end gap-3">
                     <button
                         onClick={() => setShowDelModal(false)}
-                        className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                        className="rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-ink-muted transition-colors hover:bg-surface-hover"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleDelete}
                         disabled={delProcessing}
-                        className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-lg bg-critical px-4 py-2 text-sm font-semibold text-ink-inverse transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {delProcessing ? 'Deleting...' : 'Delete'}
                     </button>

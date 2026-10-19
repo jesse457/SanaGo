@@ -1,26 +1,40 @@
 import {
-    MagnifyingGlassIcon,
-    PlusIcon,
     BeakerIcon,
-    PencilSquareIcon,
-    TrashIcon,
-    CurrencyDollarIcon,
     CheckBadgeIcon,
-    XMarkIcon,
-    ArrowPathIcon,
+    CurrencyDollarIcon,
+    PencilSquareIcon,
+    PlusIcon,
+    TrashIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Head, router, useForm } from '@inertiajs/react';
 import debounce from 'lodash/debounce';
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import EmptyState from '@/Components/EmptyState';
-import FormInput from '@/Components/FormInput';
-import FormTextarea from '@/Components/FormTextarea';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
+import { useMemo, useState, useEffect } from 'react';
+import type { FormEvent } from 'react';
 import { Pagination } from '@/Components/Pagination';
-import StatCard from '@/Components/StatCard';
-import StatusBadge from '@/Components/StatusBadge';
-import ViewToggle from '@/Components/ViewToggle';
+import {
+    Alert,
+    Badge,
+    Button,
+    Card,
+    Dialog,
+    EmptyState,
+    Field,
+    Input,
+    PageHeader,
+    SegmentedControl,
+    StatCard,
+    StatGrid,
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+    Textarea,
+    Toolbar,
+    ToolbarSearch,
+    ToolbarSpacer,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 
@@ -52,31 +66,40 @@ export default function LabTestManagement({ tests, filters }: Props) {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedId, setSelectedId] = useState<number | null>(null);
 
-    // Form logic for EDIT MODAL
-    const { data, setData, put, processing, errors, reset, clearErrors } =
-        useForm({
-            test_name: '',
-            code: '',
-            price: 0,
-            units: '',
-            description: '',
-            is_active: true,
-        });
+    const { data, setData, put, processing, errors, reset } = useForm({
+        test_name: '',
+        code: '',
+        price: 0,
+        units: '',
+        description: '',
+        is_active: true,
+    });
 
-    // Handle Search
+    const requestSearch = useMemo(
+        () =>
+            debounce((query: string) => {
+                router.get(
+                    route('tests.index'),
+                    { search: query },
+                    { preserveState: true, replace: true },
+                );
+            }, 300),
+        [],
+    );
+
+    const handleSearchChange = (value: string) => {
+        setSearchQuery(value);
+        requestSearch(value);
+    };
+
     useEffect(() => {
-        const timeout = setTimeout(() => {
-            router.get(
-                route('tests.index'),
-                { search: searchQuery },
-                { preserveState: true, replace: true },
-            );
-        }, 300);
+        // Mirror a server-driven filter change (pagination / back-forward).
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSearchQuery(filters.search || '');
+    }, [filters.search]);
 
-        return () => clearTimeout(timeout);
-    }, [searchQuery]);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
-    // Open Edit Modal
     const openEditModal = (test: LabTest) => {
         setSelectedId(test.id);
         setData({
@@ -90,8 +113,13 @@ export default function LabTestManagement({ tests, filters }: Props) {
         setIsEditModalOpen(true);
     };
 
-    const handleUpdate = (e: React.FormEvent) => {
-        e.preventDefault();
+    const openDeleteModal = (id: number) => {
+        setSelectedId(id);
+        setDeleteModalOpen(true);
+    };
+
+    const handleUpdate = (event: FormEvent) => {
+        event.preventDefault();
         put(route('tests.update', selectedId!), {
             onSuccess: () => {
                 setIsEditModalOpen(false);
@@ -101,22 +129,30 @@ export default function LabTestManagement({ tests, filters }: Props) {
         });
     };
 
-    const handleDelete = (id: number) => {
-        if (confirm(t('lab_tests.index.delete_confirm'))) {
-            router.delete(route('tests.destroy', id), { preserveScroll: true });
-        }
+    const handleDelete = () => {
+        router.delete(route('tests.destroy', selectedId?.toString()), {
+            onSuccess: () => setDeleteModalOpen(false),
+            preserveScroll: true,
+        });
     };
 
     const stats = useMemo(
         () => ({
             total: tests.total,
-            active: tests.data.filter((t) => t.is_active).length,
+            active: tests.data.filter((test) => test.is_active).length,
             avgPrice:
-                tests.data.reduce((acc, t) => acc + Number(t.price), 0) /
-                (tests.data.length || 1),
+                tests.data.reduce(
+                    (accumulator, test) => accumulator + Number(test.price),
+                    0,
+                ) / (tests.data.length || 1),
         }),
         [tests],
     );
+
+    const statusLabel = (test: LabTest) =>
+        test.is_active
+            ? t('lab_tests.index.active_status')
+            : t('lab_tests.index.inactive_status');
 
     return (
         <AppLayout
@@ -126,237 +162,236 @@ export default function LabTestManagement({ tests, filters }: Props) {
             <Head title={t('lab_tests.index.head_title')} />
 
             <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
-                {/* Breadcrumbs */}
-                <PageBreadcrumb
-                    items={[
+                <PageHeader
+                    eyebrow={t('lab_tests.index.test_definitions')}
+                    title={t('lab_tests.index.title')}
+                    description={t('lab_tests.index.subtitle')}
+                    breadcrumbs={[
                         { label: t('common.home'), href: route('dashboard') },
                         { label: t('lab_tests.index.test_definitions') },
                     ]}
+                    actions={
+                        <Button
+                            href={route('tests.create')}
+                            icon={PlusIcon}
+                            variant="accent"
+                        >
+                            {t('lab_tests.index.new_test')}
+                        </Button>
+                    }
                 />
 
-                {/* Stats */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <StatGrid columns={3}>
                     <StatCard
                         label={t('lab_tests.index.total_tests')}
                         value={stats.total}
                         icon={BeakerIcon}
-                        color="blue"
+                        tone="accent"
                     />
                     <StatCard
                         label={t('lab_tests.index.active')}
                         value={stats.active}
                         icon={CheckBadgeIcon}
-                        color="emerald"
+                        tone="positive"
                     />
                     <StatCard
                         label={t('lab_tests.index.avg_price')}
-                        value={`$${stats.avgPrice.toFixed(2)}`}
+                        value={`FCFA ${stats.avgPrice.toFixed(2)}`}
                         icon={CurrencyDollarIcon}
-                        color="amber"
+                        tone="warning"
                     />
-                </div>
+                </StatGrid>
 
-                {/* Controls */}
-                <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-                    <div className="relative flex-grow lg:max-w-md">
-                        <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-neutral-500" />
-                        <input
-                            type="text"
-                            placeholder={t(
-                                'lab_tests.index.search_placeholder',
-                            )}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full rounded-lg border border-gray-200 bg-white py-2 pr-4 pl-9 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800"
-                        />
-                    </div>
+                <Toolbar>
+                    <ToolbarSearch
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        placeholder={t('lab_tests.index.search_placeholder')}
+                    />
+                    <ToolbarSpacer />
+                    <SegmentedControl
+                        value={viewMode}
+                        onChange={setViewMode}
+                        options={[
+                            {
+                                value: 'grid',
+                                label: t('common.grid', 'Grid'),
+                                ariaLabel: 'Grid view',
+                            },
+                            {
+                                value: 'table',
+                                label: t('common.table', 'Table'),
+                                ariaLabel: 'Table view',
+                            },
+                        ]}
+                        size="sm"
+                    />
+                </Toolbar>
 
-                    <div className="flex items-center gap-3">
-                        <Link
-                            href={route('tests.create')}
-                            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700"
-                        >
-                            <PlusIcon className="h-4 w-4" />{' '}
-                            {t('lab_tests.index.new_test')}
-                        </Link>
-                        <ViewToggle view={viewMode} onChange={setViewMode} />
-                    </div>
-                </div>
+                {tests.data.length === 0 ? (
+                    <EmptyState
+                        icon={BeakerIcon}
+                        title={t('lab_tests.index.no_tests')}
+                        description={t('lab_tests.index.no_tests_description')}
+                        action={{
+                            label: t('lab_tests.index.create_first_test'),
+                            href: route('tests.create'),
+                        }}
+                    />
+                ) : viewMode === 'grid' ? (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {tests.data.map((test) => (
+                            <Card
+                                key={test.id}
+                                className="group flex h-full flex-col p-5 transition-[border-color,transform] duration-200 ease-premium hover:-translate-y-0.5 hover:border-line-strong"
+                            >
+                                <div className="mb-4 flex items-start justify-between gap-3">
+                                    <span
+                                        className={
+                                            test.is_active
+                                                ? 'flex h-10 w-10 items-center justify-center rounded-lg bg-accent-soft text-accent-ink'
+                                                : 'flex h-10 w-10 items-center justify-center rounded-lg bg-surface-inset text-ink-subtle'
+                                        }
+                                    >
+                                        <BeakerIcon className="h-5 w-5" />
+                                    </span>
+                                    <Badge
+                                        tone={
+                                            test.is_active
+                                                ? 'positive'
+                                                : 'muted'
+                                        }
+                                        dot
+                                    >
+                                        {statusLabel(test)}
+                                    </Badge>
+                                </div>
 
-                {/* Main Content Area */}
-                <AnimatePresence mode="wait">
-                    {tests.data.length === 0 ? (
-                        <motion.div
-                            key="empty"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                        >
-                            <EmptyState
-                                icon={BeakerIcon}
-                                title={t('lab_tests.index.no_tests')}
-                                description={t(
-                                    'lab_tests.index.no_tests_description',
-                                )}
-                                action={{
-                                    label: t(
-                                        'lab_tests.index.create_first_test',
-                                    ),
-                                    href: route('tests.create'),
-                                }}
-                            />
-                        </motion.div>
-                    ) : viewMode === 'grid' ? (
-                        <motion.div
-                            key="grid"
-                            className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
-                        >
-                            {tests.data.map((test) => (
-                                <div
-                                    key={test.id}
-                                    className="group relative flex h-full flex-col rounded-xl border border-gray-200 bg-white p-6 transition-all hover:border-blue-400 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
-                                >
-                                    <div className="mb-4 flex items-start justify-between">
-                                        <div
-                                            className={`flex h-12 w-12 items-center justify-center rounded-lg ${test.is_active ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'bg-gray-50 text-gray-400 dark:bg-neutral-700 dark:text-neutral-500'}`}
-                                        >
-                                            <BeakerIcon className="h-6 w-6" />
-                                        </div>
-                                        <StatusBadge
-                                            label={
-                                                test.is_active
-                                                    ? t(
-                                                          'lab_tests.index.active_status',
-                                                      )
-                                                    : t(
-                                                          'lab_tests.index.inactive_status',
-                                                      )
-                                            }
-                                            color={
-                                                test.is_active
-                                                    ? 'emerald'
-                                                    : 'gray'
+                                <h3 className="truncate text-[14px] font-semibold tracking-tight text-ink">
+                                    {test.test_name}
+                                </h3>
+                                <p className="mt-0.5 font-mono text-[10.5px] tracking-[0.08em] text-accent-ink uppercase">
+                                    {test.code}
+                                </p>
+                                <p className="mt-2 line-clamp-2 h-9 text-[12.5px] leading-relaxed text-ink-muted">
+                                    {test.description ||
+                                        t('lab_tests.index.no_description')}
+                                </p>
+
+                                <div className="mt-4 flex items-center justify-between gap-2 border-t border-line pt-3.5">
+                                    <span className="text-[14px] font-semibold text-ink tabular-nums">
+                                        FCFA {Number(test.price).toFixed(2)}
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            icon={PencilSquareIcon}
+                                            aria-label={t(
+                                                'lab_tests.index.edit_test',
+                                            )}
+                                            onClick={() => openEditModal(test)}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            icon={TrashIcon}
+                                            className="hover:text-critical-ink"
+                                            aria-label={t(
+                                                'lab_tests.index.delete_title',
+                                            )}
+                                            onClick={() =>
+                                                openDeleteModal(test.id)
                                             }
                                         />
                                     </div>
-                                    <div className="mb-4 flex-grow">
-                                        <h3 className="truncate text-lg font-bold text-gray-900 dark:text-neutral-100">
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                                <TableHeaderCell>
+                                    {t('lab_tests.index.test_name')}
+                                </TableHeaderCell>
+                                <TableHeaderCell numeric>
+                                    {t('lab_tests.index.price')}
+                                </TableHeaderCell>
+                                <TableHeaderCell>
+                                    {t('lab_tests.index.status')}
+                                </TableHeaderCell>
+                                <TableHeaderCell numeric>
+                                    <span className="sr-only">
+                                        {t('common.actions', 'Actions')}
+                                    </span>
+                                </TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {tests.data.map((test) => (
+                                <TableRow key={test.id}>
+                                    <TableCell>
+                                        <div className="text-[13px] font-semibold text-ink">
                                             {test.test_name}
-                                        </h3>
-                                        <p className="mb-3 font-mono text-xs font-bold text-blue-500">
-                                            {test.code}
-                                        </p>
-                                        <p className="line-clamp-2 h-10 text-sm text-gray-500 dark:text-neutral-500">
-                                            {test.description ||
-                                                t(
-                                                    'lab_tests.index.no_description',
-                                                )}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-neutral-700">
-                                        <div className="text-lg font-bold text-gray-900 dark:text-neutral-100">
-                                            ${Number(test.price).toFixed(2)}
                                         </div>
-                                        <div className="flex gap-2">
-                                            <button
+                                        <div className="font-mono text-[10.5px] text-ink-subtle">
+                                            {test.code}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell numeric>
+                                        FCFA {Number(test.price).toFixed(2)}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge
+                                            tone={
+                                                test.is_active
+                                                    ? 'positive'
+                                                    : 'muted'
+                                            }
+                                            dot
+                                        >
+                                            {statusLabel(test)}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell numeric>
+                                        <div className="flex items-center justify-end gap-1">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                icon={PencilSquareIcon}
+                                                aria-label={t(
+                                                    'lab_tests.index.edit_test',
+                                                )}
                                                 onClick={() =>
                                                     openEditModal(test)
                                                 }
-                                                className="rounded-md p-1.5 text-gray-400 transition-all hover:bg-blue-50 hover:text-blue-600 dark:text-neutral-500 dark:hover:bg-blue-900/20"
-                                            >
-                                                <PencilSquareIcon className="h-4 w-4" />
-                                            </button>
-                                            <button
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                icon={TrashIcon}
+                                                className="hover:text-critical-ink"
+                                                aria-label={t(
+                                                    'lab_tests.index.delete_title',
+                                                )}
                                                 onClick={() =>
-                                                    handleDelete(test.id)
+                                                    openDeleteModal(test.id)
                                                 }
-                                                className="rounded-md p-1.5 text-gray-400 transition-all hover:bg-blue-50 hover:text-blue-600 dark:text-neutral-500 dark:hover:bg-blue-900/20"
-                                            >
-                                                <TrashIcon className="h-4 w-4" />
-                                            </button>
+                                            />
                                         </div>
-                                    </div>
-                                </div>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </motion.div>
-                    ) : (
-                        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
-                                <thead className="bg-gray-50 text-xs font-bold text-gray-500 uppercase dark:bg-neutral-700 dark:text-neutral-500">
-                                    <tr>
-                                        <th className="px-6 py-4 text-left">
-                                            {t('lab_tests.index.test_name')}
-                                        </th>
-                                        <th className="px-6 py-4 text-left">
-                                            {t('lab_tests.index.price')}
-                                        </th>
-                                        <th className="px-6 py-4 text-center">
-                                            {t('lab_tests.index.status')}
-                                        </th>
-                                        <th className="px-6 py-4"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200 dark:divide-neutral-700">
-                                    {tests.data.map((test) => (
-                                        <tr
-                                            key={test.id}
-                                            className="hover:bg-gray-50 dark:hover:bg-neutral-700"
-                                        >
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                                    {test.test_name}
-                                                </div>
-                                                <div className="font-mono text-[10px] text-gray-400 dark:text-neutral-500">
-                                                    {test.code}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                                ${Number(test.price).toFixed(2)}
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <StatusBadge
-                                                    label={
-                                                        test.is_active
-                                                            ? t(
-                                                                  'lab_tests.index.active_status',
-                                                              )
-                                                            : t(
-                                                                  'lab_tests.index.inactive_status',
-                                                              )
-                                                    }
-                                                    color={
-                                                        test.is_active
-                                                            ? 'emerald'
-                                                            : 'gray'
-                                                    }
-                                                />
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button
-                                                    onClick={() =>
-                                                        openEditModal(test)
-                                                    }
-                                                    className="mr-2 p-1 text-gray-400 hover:text-blue-600 dark:text-neutral-500"
-                                                >
-                                                    <PencilSquareIcon className="h-5 w-5" />
-                                                </button>
-                                                <button
-                                                    onClick={() =>
-                                                        handleDelete(test.id)
-                                                    }
-                                                    className="p-1 text-gray-400 hover:text-blue-600 dark:text-neutral-500"
-                                                >
-                                                    <TrashIcon className="h-5 w-5" />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </AnimatePresence>
+                        </TableBody>
+                    </Table>
+                )}
 
-                {/* Pagination */}
                 <Pagination
                     links={tests.links}
                     meta={{
@@ -367,84 +402,133 @@ export default function LabTestManagement({ tests, filters }: Props) {
                 />
             </div>
 
-            {/* --- EDIT MODAL --- */}
-            {isEditModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div
-                        className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm"
-                        onClick={() => setIsEditModalOpen(false)}
-                    ></div>
-                    <div className="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-xl dark:bg-neutral-800">
-                        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-6 py-4 dark:border-neutral-700 dark:bg-neutral-700">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-neutral-100">
-                                {t('lab_tests.index.edit_test')}
-                            </h3>
-                            <button
-                                onClick={() => setIsEditModalOpen(false)}
-                                className="text-gray-400 hover:text-gray-600 dark:text-neutral-500 dark:hover:text-neutral-400"
-                            >
-                                <XMarkIcon className="h-5 w-5" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleUpdate} className="space-y-4 p-6">
-                            <FormInput
-                                name="test_name"
-                                label={t('lab_tests.index.test_name')}
-                                value={data.test_name}
-                                onChange={(v) => setData('test_name', v)}
-                                errors={errors}
-                                required
+            <Dialog
+                open={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                title={t('lab_tests.index.edit_test')}
+                size="xl"
+                footer={
+                    <>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setIsEditModalOpen(false)}
+                        >
+                            {t('common.cancel')}
+                        </Button>
+                        <Button
+                            type="submit"
+                            form="lab-test-edit-form"
+                            loading={processing}
+                        >
+                            {t('common.save_changes')}
+                        </Button>
+                    </>
+                }
+            >
+                <form
+                    id="lab-test-edit-form"
+                    onSubmit={handleUpdate}
+                    className="space-y-4"
+                >
+                    <Field
+                        label={t('lab_tests.index.test_name')}
+                        htmlFor="edit-test-name"
+                        required
+                        error={errors.test_name}
+                    >
+                        <Input
+                            id="edit-test-name"
+                            value={data.test_name}
+                            invalid={Boolean(errors.test_name)}
+                            onChange={(event) =>
+                                setData('test_name', event.target.value)
+                            }
+                        />
+                    </Field>
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <Field
+                            label={t('lab_tests.index.code')}
+                            htmlFor="edit-test-code"
+                            error={errors.code}
+                        >
+                            <Input
+                                id="edit-test-code"
+                                value={data.code}
+                                invalid={Boolean(errors.code)}
+                                onChange={(event) =>
+                                    setData('code', event.target.value)
+                                }
                             />
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormInput
-                                    name="code"
-                                    label={t('lab_tests.index.code')}
-                                    value={data.code}
-                                    onChange={(v) => setData('code', v)}
-                                    errors={errors}
-                                />
-                                <FormInput
-                                    name="price"
-                                    label={t('lab_tests.index.price')}
-                                    type="number"
-                                    step="0.01"
-                                    value={data.price}
-                                    onChange={(v) =>
-                                        setData('price', Number(v))
-                                    }
-                                    errors={errors}
-                                />
-                            </div>
-                            <FormTextarea
-                                name="description"
-                                label={t('lab_tests.index.description')}
-                                value={data.description}
-                                onChange={(v) => setData('description', v)}
-                                rows={3}
+                        </Field>
+                        <Field
+                            label={t('lab_tests.index.price')}
+                            htmlFor="edit-test-price"
+                            error={errors.price}
+                        >
+                            <Input
+                                id="edit-test-price"
+                                type="number"
+                                step="0.01"
+                                value={data.price}
+                                invalid={Boolean(errors.price)}
+                                onChange={(event) =>
+                                    setData('price', Number(event.target.value))
+                                }
                             />
-                            <div className="flex justify-end gap-3 border-t border-gray-100 pt-4 dark:border-neutral-700">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsEditModalOpen(false)}
-                                    className="rounded-xl border border-gray-200 px-4 py-2 font-bold text-gray-500 transition-all hover:bg-gray-50 dark:border-neutral-600 dark:text-neutral-400 dark:hover:bg-neutral-700"
-                                >
-                                    {t('common.cancel')}
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-blue-700 disabled:opacity-50"
-                                >
-                                    {processing && (
-                                        <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                                    )}{' '}
-                                    {t('common.save_changes')}
-                                </button>
-                            </div>
-                        </form>
+                        </Field>
                     </div>
-                </div>
-            )}
+
+                    <Field
+                        label={t('lab_tests.index.description')}
+                        htmlFor="edit-test-description"
+                        error={errors.description}
+                    >
+                        <Textarea
+                            id="edit-test-description"
+                            rows={3}
+                            value={data.description}
+                            invalid={Boolean(errors.description)}
+                            onChange={(event) =>
+                                setData('description', event.target.value)
+                            }
+                        />
+                    </Field>
+                </form>
+            </Dialog>
+
+            <Dialog
+                open={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                title={t('lab_tests.index.delete_title')}
+                description={t('lab_tests.index.delete_confirm')}
+                size="md"
+                footer={
+                    <>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            fullWidth
+                            onClick={() => setDeleteModalOpen(false)}
+                        >
+                            {t('cancel')}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="danger"
+                            fullWidth
+                            onClick={handleDelete}
+                        >
+                            {t('deleteMedication')}
+                        </Button>
+                    </>
+                }
+            >
+                <Alert tone="warning" title={t('lab_tests.index.delete_title')}>
+                    {data?.test_name ? <b>{data.test_name}</b> : null}
+                </Alert>
+            </Dialog>
         </AppLayout>
     );
 }

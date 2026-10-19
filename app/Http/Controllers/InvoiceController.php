@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\InvoiceStatus;
 use App\Http\Requests\StoreInvoiceRequest;
+use App\Models\CashShift;
 use App\Models\Invoice;
 use App\Models\Patient;
 use App\Services\Billing\BillingService;
@@ -58,7 +59,7 @@ class InvoiceController extends Controller
 
     public function show(Invoice $invoice)
     {
-        $invoice->load(['patient', 'items']);
+        $invoice->load(['patient', 'items', 'claim.payer', 'cashPayments']);
 
         return Inertia::render('Finance/Invoices/Show', [
             'invoice' => $invoice,
@@ -75,6 +76,30 @@ class InvoiceController extends Controller
         $service->updateStatus($invoice, $status);
 
         return back()->with('success', 'Invoice status updated.');
+    }
+
+    public function recordPayment(Request $request, Invoice $invoice, BillingService $service)
+    {
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:1', 'max:'.$invoice->remaining_balance],
+            'payment_method' => ['required', 'in:cash,mobile_money,bank_transfer'],
+        ]);
+
+        // Find or use active cash shift
+        $shift = CashShift::where('status', 'open')->latest()->first();
+
+        if (! $shift) {
+            return back()->with('error', 'No open cash shift. Please open a shift first.');
+        }
+
+        $service->recordPayment(
+            $invoice,
+            (float) $validated['amount'],
+            $shift->id,
+            $validated['payment_method']
+        );
+
+        return back()->with('success', 'Payment recorded successfully.');
     }
 
     public function destroy(Invoice $invoice)

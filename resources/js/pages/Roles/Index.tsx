@@ -6,6 +6,8 @@ import {
     MagnifyingGlassIcon,
     UserGroupIcon,
     ExclamationTriangleIcon,
+    CheckIcon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
@@ -16,6 +18,14 @@ import FormTextarea from '@/Components/FormTextarea';
 import Modal from '@/Components/Modal';
 import PageBreadcrumb from '@/Components/PageBreadcrumb';
 import StatusBadge from '@/Components/StatusBadge';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 
@@ -49,8 +59,10 @@ export default function RoleManagement({
         'add' | 'edit' | 'delete' | null
     >(null);
     const [selectedItem, setSelectedItem] = useState<Role | null>(null);
+    const [expandedCategories, setExpandedCategories] = useState<
+        Record<string, boolean>
+    >({});
 
-    // --- Inertia Form ---
     const {
         data,
         setData,
@@ -80,8 +92,14 @@ export default function RoleManagement({
                 description: role.description,
                 permissions: role.permissions,
             });
-        } else {
+        } else if (mode === 'add') {
             reset();
+            // Expand all categories by default when adding
+            const allExpanded: Record<string, boolean> = {};
+            Object.keys(available_permissions).forEach((cat) => {
+                allExpanded[cat] = true;
+            });
+            setExpandedCategories(allExpanded);
         }
 
         setModalOpen(true);
@@ -102,6 +120,25 @@ export default function RoleManagement({
                 ? current.filter((p) => p !== permissionSlug)
                 : [...current, permissionSlug],
         );
+    };
+
+    const toggleCategory = (category: string, perms: PermissionItem[]) => {
+        const slugs = perms.map((p) => p.slug);
+        const allSelected = slugs.every((s) => data.permissions.includes(s));
+
+        if (allSelected) {
+            setData(
+                'permissions',
+                data.permissions.filter((p) => !slugs.includes(p)),
+            );
+        } else {
+            const toAdd = slugs.filter((s) => !data.permissions.includes(s));
+            setData('permissions', [...data.permissions, ...toAdd]);
+        }
+    };
+
+    const toggleExpandCategory = (cat: string) => {
+        setExpandedCategories((prev) => ({ ...prev, [cat]: !prev[cat] }));
     };
 
     const handleSubmit = (e: FormEvent) => {
@@ -130,28 +167,26 @@ export default function RoleManagement({
         );
     }, [roles, searchQuery]);
 
+    const totalPermissions = Object.values(available_permissions).flat().length;
+
     return (
         <AppLayout
             headerTitle={t('page.roles_index.title')}
             headerSubtitle={t('page.roles_index.subtitle')}
         >
             <Head title={t('page.roles_index.head_title')} />
-
             <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                {/* Breadcrumbs */}
                 <PageBreadcrumb
                     items={[
                         { label: t('common.home'), href: '/' },
-                        {
-                            label: t('page.roles_index.breadcrumb_roles'),
-                        },
+                        { label: t('page.roles_index.breadcrumb_roles') },
                     ]}
                 />
 
                 {/* Header Controls */}
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div className="relative w-full sm:w-96">
-                        <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-neutral-500" />
+                        <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-ink-subtle" />
                         <input
                             type="text"
                             placeholder={t(
@@ -159,117 +194,155 @@ export default function RoleManagement({
                             )}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full rounded-lg border border-gray-200 bg-white py-2 pr-4 pl-9 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+                            className="w-full rounded-lg border border-line bg-surface py-2 pr-4 pl-9 text-ink transition-all placeholder:text-ink-subtle focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         />
                     </div>
-
                     <button
                         onClick={() => openModal('add')}
-                        className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+                        className="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-ink-inverse shadow-surface transition-colors hover:bg-accent-hover"
                     >
                         <PlusIcon className="h-4 w-4" />{' '}
                         {t('page.roles_index.add_role')}
                     </button>
                 </div>
 
-                {/* Grid */}
+                {/* ─── ROLES TABLE ─── */}
                 {filteredRoles.length === 0 ? (
                     <EmptyState icon={ShieldCheckIcon} title="No roles found" />
                 ) : (
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {filteredRoles.map((role) => (
-                            <div
-                                key={role.id}
-                                className="group relative flex h-full flex-col rounded-xl border border-gray-200 bg-white p-6 transition-all duration-200 hover:border-blue-400 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
-                            >
-                                <div className="mb-4 flex items-start justify-between">
-                                    <div className="rounded-lg bg-blue-50 p-3 text-blue-600">
-                                        <ShieldCheckIcon className="h-6 w-6" />
-                                    </div>
-                                    <div className="flex items-center gap-1.5 rounded-lg bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-500 dark:bg-neutral-700 dark:text-neutral-500">
-                                        <UserGroupIcon className="h-3.5 w-3.5" />{' '}
-                                        {role.user_count}{' '}
-                                        {t('page.roles_index.users')}
-                                    </div>
-                                </div>
-
-                                <div className="mb-4 flex-grow">
-                                    <h3 className="truncate text-lg font-bold text-gray-900 dark:text-neutral-100">
-                                        {role.name}
-                                    </h3>
-                                    <span className="mt-1 inline-block rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs font-semibold text-gray-400 dark:bg-neutral-700 dark:text-neutral-500">
-                                        {role.slug}
-                                    </span>
-                                    <p className="mt-3 line-clamp-2 text-sm text-gray-500 dark:text-neutral-500">
-                                        {role.description}
-                                    </p>
-                                </div>
-
-                                <div className="mb-6">
-                                    <p className="mb-2 text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-neutral-500">
-                                        {t('page.roles_index.key_permissions')}
-                                    </p>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {role.permissions
-                                            .slice(0, 3)
-                                            .map((p) => (
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                                <TableHeaderCell>
+                                    {t('page.roles_index.role_name')}
+                                </TableHeaderCell>
+                                <TableHeaderCell>Slug</TableHeaderCell>
+                                <TableHeaderCell>
+                                    {t('page.roles_index.users')}
+                                </TableHeaderCell>
+                                <TableHeaderCell>
+                                    {t('page.roles_index.key_permissions')}
+                                </TableHeaderCell>
+                                <TableHeaderCell numeric>
+                                    {t('common.actions')}
+                                </TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredRoles.map((role) => (
+                                <TableRow key={role.id}>
+                                    <TableCell>
+                                        <div className="flex items-center gap-3">
+                                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+                                                <ShieldCheckIcon className="h-5 w-5" />
+                                            </span>
+                                            <div className="min-w-0">
+                                                <p className="text-[13px] font-semibold text-ink">
+                                                    {role.name}
+                                                </p>
+                                                <p className="mt-0.5 line-clamp-1 max-w-[200px] text-xs text-ink-subtle">
+                                                    {role.description}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <code className="rounded bg-surface-inset px-2 py-1 text-xs font-medium text-ink-muted">
+                                            {role.slug}
+                                        </code>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span className="inline-flex items-center gap-1.5 text-ink-muted">
+                                            <UserGroupIcon className="h-4 w-4 text-ink-subtle" />
+                                            <span className="font-medium tabular-nums">
+                                                {role.user_count}
+                                            </span>
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-wrap gap-1">
+                                            {role.permissions
+                                                .slice(0, 3)
+                                                .map((p) => (
+                                                    <StatusBadge
+                                                        key={p}
+                                                        label={p.replace(
+                                                            /-/g,
+                                                            ' ',
+                                                        )}
+                                                        color="blue"
+                                                    />
+                                                ))}
+                                            {role.permissions.length > 3 && (
                                                 <StatusBadge
-                                                    key={p}
-                                                    label={p.replace(/-/g, ' ')}
-                                                    color="blue"
+                                                    label={`+${role.permissions.length - 3}`}
+                                                    color="gray"
                                                 />
-                                            ))}
-                                        {role.permissions.length > 3 && (
-                                            <StatusBadge
-                                                label={t(
-                                                    'page.roles_index.more_count',
-                                                    {
-                                                        count:
-                                                            role.permissions
-                                                                .length - 3,
-                                                    },
+                                            )}
+                                            {role.permissions.length === 0 && (
+                                                <span className="text-xs text-ink-subtle">
+                                                    —
+                                                </span>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell numeric>
+                                        <div className="flex items-center justify-end gap-1.5">
+                                            <button
+                                                onClick={() =>
+                                                    openModal('edit', role)
+                                                }
+                                                className="cursor-pointer rounded-lg p-2 text-ink-subtle transition-colors hover:bg-accent-soft hover:text-accent"
+                                                title={t(
+                                                    'page.roles_index.edit_role',
                                                 )}
-                                                color="gray"
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-2 border-t border-gray-100 pt-4 opacity-0 transition-opacity group-hover:opacity-100 dark:border-neutral-700">
-                                    <button
-                                        onClick={() => openModal('edit', role)}
-                                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gray-50 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:bg-neutral-700 dark:text-neutral-400"
-                                    >
-                                        <PencilSquareIcon className="h-4 w-4" />{' '}
-                                        {t('page.roles_index.edit_role')}
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            openModal('delete', role)
-                                        }
-                                        className="rounded-lg bg-gray-50 px-3 py-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:bg-neutral-700 dark:text-neutral-500 dark:hover:bg-red-900/20"
-                                    >
-                                        <TrashIcon className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                                            >
+                                                <PencilSquareIcon className="h-4 w-4" />
+                                            </button>
+                                            <button
+                                                onClick={() =>
+                                                    openModal('delete', role)
+                                                }
+                                                className="cursor-pointer rounded-lg p-2 text-ink-subtle transition-colors hover:bg-critical-soft hover:text-red-600"
+                                                title={t(
+                                                    'page.roles_index.delete_role',
+                                                )}
+                                            >
+                                                <TrashIcon className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 )}
+
+                {/* Stats summary */}
+                <div className="flex items-center gap-4 text-xs text-ink-subtle">
+                    <span>
+                        {roles.length} {t('page.roles_index.roles')}
+                    </span>
+                    <span>·</span>
+                    <span>
+                        {totalPermissions}{' '}
+                        {t('page.roles_index.total_permissions')}
+                    </span>
+                </div>
             </div>
 
-            {/* --- MODAL --- */}
+            {/* ─── MODAL ─── */}
             <Modal
                 isOpen={modalOpen}
                 onClose={closeModal}
                 title={`${modalMode === 'add' ? t('page.roles_index.add') : modalMode === 'edit' ? t('page.roles_index.edit') : t('page.roles_index.confirm_delete')} ${t('page.roles_index.role')}`}
-                maxWidth="max-w-2xl"
+                maxWidth="max-w-3xl"
             >
                 {modalMode === 'delete' ? (
                     <div>
                         <div className="py-4 text-center">
-                            <ExclamationTriangleIcon className="mx-auto mb-4 h-12 w-12 text-red-600" />
-                            <p className="mb-2 text-gray-700 dark:text-neutral-300">
+                            <ExclamationTriangleIcon className="mx-auto mb-4 h-12 w-12 text-critical-ink" />
+                            <p className="mb-2 text-ink-muted">
                                 {t('page.roles_index.delete_confirm', {
                                     name: selectedItem?.name || '',
                                 })}
@@ -280,11 +353,11 @@ export default function RoleManagement({
                                 </p>
                             )}
                         </div>
-                        <div className="flex justify-end gap-3 border-t border-gray-100 pt-6 dark:border-neutral-700">
+                        <div className="flex justify-end gap-3 border-t border-line pt-6">
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                                className="cursor-pointer rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-ink-muted transition-colors hover:bg-surface-hover"
                             >
                                 {t('common.cancel')}
                             </button>
@@ -292,7 +365,7 @@ export default function RoleManagement({
                                 type="button"
                                 onClick={handleSubmit}
                                 disabled={processing}
-                                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-700 disabled:opacity-50"
+                                className="cursor-pointer rounded-lg bg-critical px-4 py-2 text-sm font-medium text-ink-inverse shadow-surface transition-colors hover:bg-red-700 disabled:opacity-50"
                             >
                                 {processing
                                     ? t('common.processing')
@@ -302,6 +375,7 @@ export default function RoleManagement({
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Role name & description */}
                         <div className="grid grid-cols-2 gap-4">
                             <FormInput
                                 name="name"
@@ -323,67 +397,189 @@ export default function RoleManagement({
                             />
                         </div>
 
-                        <div className="border-t border-gray-100 pt-6 dark:border-neutral-700">
-                            <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-neutral-100">
-                                <ShieldCheckIcon className="h-4 w-4 text-blue-600" />{' '}
+                        {/* ─── PERMISSIONS TABLE BY CATEGORY ─── */}
+                        <div className="border-t border-line pt-6">
+                            <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink">
+                                <ShieldCheckIcon className="h-4 w-4 text-accent-ink" />
                                 {t('page.roles_index.assign_permissions')}
+                                <span className="ml-auto text-xs font-normal text-ink-subtle">
+                                    {data.permissions.length} /{' '}
+                                    {totalPermissions}{' '}
+                                    {t('page.roles_index.selected')}
+                                </span>
                             </h4>
-                            <div className="space-y-6">
+
+                            <div className="max-h-[50vh] overflow-y-auto rounded-xl border border-line">
                                 {Object.entries(available_permissions).map(
-                                    ([category, perms]) => (
-                                        <div key={category}>
-                                            <h5 className="mb-3 text-xs font-bold tracking-wider text-gray-400 uppercase dark:text-neutral-500">
-                                                {category}
-                                            </h5>
-                                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                                {perms.map((perm) => (
-                                                    <label
-                                                        key={perm.slug}
-                                                        className={`flex cursor-pointer items-start rounded-lg border p-3 transition-all ${data.permissions.includes(perm.slug) ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-white hover:bg-gray-50 dark:border-neutral-700 dark:hover:bg-neutral-700'}`}
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={data.permissions.includes(
-                                                                perm.slug,
-                                                            )}
-                                                            onChange={() =>
-                                                                togglePermission(
-                                                                    perm.slug,
-                                                                )
+                                    ([category, perms]) => {
+                                        const selectedCount = perms.filter(
+                                            (p) =>
+                                                data.permissions.includes(
+                                                    p.slug,
+                                                ),
+                                        ).length;
+                                        const allSelected =
+                                            selectedCount === perms.length;
+                                        const someSelected =
+                                            selectedCount > 0 && !allSelected;
+                                        const isExpanded =
+                                            expandedCategories[category] ??
+                                            true;
+
+                                        return (
+                                            <div
+                                                key={category}
+                                                className="border-b border-line last:border-0"
+                                            >
+                                                {/* Category header */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        toggleExpandCategory(
+                                                            category,
+                                                        )
+                                                    }
+                                                    className="flex w-full cursor-pointer items-center gap-3 bg-surface-muted px-4 py-2.5 text-left transition-colors hover:bg-surface-hover"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={allSelected}
+                                                        ref={(el) => {
+                                                            if (el) {
+                                                                el.indeterminate =
+                                                                    someSelected;
                                                             }
-                                                            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600"
-                                                        />
-                                                        <div className="ml-3 text-sm">
-                                                            <span
-                                                                className={`block font-medium ${data.permissions.includes(perm.slug) ? 'text-blue-900' : 'text-gray-900 dark:text-neutral-100'}`}
-                                                            >
-                                                                {perm.label}
-                                                            </span>
-                                                            <span className="font-mono text-xs text-gray-500 dark:text-neutral-500">
-                                                                {perm.slug}
-                                                            </span>
-                                                        </div>
-                                                    </label>
-                                                ))}
+                                                        }}
+                                                        onChange={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleCategory(
+                                                                category,
+                                                                perms,
+                                                            );
+                                                        }}
+                                                        className="h-4 w-4 rounded border-line-strong text-accent-ink"
+                                                    />
+                                                    <span className="flex-1 text-xs font-bold tracking-wider text-ink-muted uppercase">
+                                                        {category}
+                                                    </span>
+                                                    <span className="text-[10px] font-medium text-ink-subtle">
+                                                        {selectedCount}/
+                                                        {perms.length}
+                                                    </span>
+                                                </button>
+
+                                                {/* Permission rows table */}
+                                                {isExpanded && (
+                                                    <Table bare>
+                                                        <TableHeader>
+                                                            <TableRow className="hover:bg-transparent">
+                                                                <TableHeaderCell className="w-10">
+                                                                    <span className="sr-only">
+                                                                        Select
+                                                                    </span>
+                                                                </TableHeaderCell>
+                                                                <TableHeaderCell>
+                                                                    {t(
+                                                                        'page.roles_index.permission',
+                                                                    )}
+                                                                </TableHeaderCell>
+                                                                <TableHeaderCell>
+                                                                    Slug
+                                                                </TableHeaderCell>
+                                                                <TableHeaderCell
+                                                                    numeric
+                                                                    className="w-12"
+                                                                >
+                                                                    {t(
+                                                                        'page.roles_index.granted',
+                                                                    )}
+                                                                </TableHeaderCell>
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody>
+                                                            {perms.map(
+                                                                (perm) => {
+                                                                    const isChecked =
+                                                                        data.permissions.includes(
+                                                                            perm.slug,
+                                                                        );
+
+                                                                    return (
+                                                                        <TableRow
+                                                                            key={
+                                                                                perm.slug
+                                                                            }
+                                                                            className={`cursor-pointer ${isChecked ? 'bg-accent-soft hover:bg-accent-soft' : ''}`}
+                                                                            onClick={() =>
+                                                                                togglePermission(
+                                                                                    perm.slug,
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            <TableCell className="w-10">
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={
+                                                                                        isChecked
+                                                                                    }
+                                                                                    onChange={() =>
+                                                                                        togglePermission(
+                                                                                            perm.slug,
+                                                                                        )
+                                                                                    }
+                                                                                    className="h-4 w-4 rounded border-line-strong accent-accent"
+                                                                                />
+                                                                            </TableCell>
+                                                                            <TableCell
+                                                                                className={`text-xs ${isChecked ? 'font-semibold text-accent-ink' : 'text-ink-muted'}`}
+                                                                            >
+                                                                                {
+                                                                                    perm.label
+                                                                                }
+                                                                            </TableCell>
+                                                                            <TableCell>
+                                                                                <code className="text-[10px] text-ink-subtle">
+                                                                                    {
+                                                                                        perm.slug
+                                                                                    }
+                                                                                </code>
+                                                                            </TableCell>
+                                                                            <TableCell
+                                                                                numeric
+                                                                            >
+                                                                                {isChecked ? (
+                                                                                    <CheckIcon className="ml-auto h-4 w-4 text-accent" />
+                                                                                ) : (
+                                                                                    <XMarkIcon className="ml-auto h-4 w-4 text-ink-subtle" />
+                                                                                )}
+                                                                            </TableCell>
+                                                                        </TableRow>
+                                                                    );
+                                                                },
+                                                            )}
+                                                        </TableBody>
+                                                    </Table>
+                                                )}
                                             </div>
-                                        </div>
-                                    ),
+                                        );
+                                    },
                                 )}
                             </div>
                         </div>
 
-                        <div className="flex justify-end gap-3 border-t border-gray-100 pt-6 dark:border-neutral-700">
+                        {/* Actions */}
+                        <div className="flex justify-end gap-3 border-t border-line pt-6">
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                                className="cursor-pointer rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-ink-muted transition-colors hover:bg-surface-hover"
                             >
                                 {t('common.cancel')}
                             </button>
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 disabled:opacity-50"
+                                className="cursor-pointer rounded-lg bg-accent px-4 py-2 text-sm font-medium text-ink-inverse shadow-surface transition-colors hover:bg-accent-hover disabled:opacity-50"
                             >
                                 {processing
                                     ? t('common.processing')

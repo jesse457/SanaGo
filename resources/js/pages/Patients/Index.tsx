@@ -1,29 +1,52 @@
 import {
-    PencilSquareIcon,
-    MagnifyingGlassIcon,
-    UserPlusIcon,
+    BeakerIcon,
     CalendarDaysIcon,
     ClipboardDocumentListIcon,
-    ArrowPathIcon,
-    UserGroupIcon,
     ClockIcon,
+    ListBulletIcon,
+    PencilSquareIcon,
+    Squares2X2Icon,
+    UserGroupIcon,
     UserMinusIcon,
+    UserPlusIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import React, { useState, useMemo, useEffect } from 'react';
-import { toast, Toaster } from 'sonner';
-import EmptyState from '@/Components/EmptyState';
-import FormInput from '@/Components/FormInput';
-import FormSelect from '@/Components/FormSelect';
-import FormTextarea from '@/Components/FormTextarea';
-import Modal from '@/Components/Modal';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
-import StatCard from '@/Components/StatCard';
-import StatusBadge from '@/Components/StatusBadge';
-import ViewToggle from '@/Components/ViewToggle';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { Pagination } from '@/Components/Pagination';
+import {
+    Alert,
+    Badge,
+    Button,
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    Dialog,
+    Field,
+    FieldSet,
+    Input,
+    PageHeader,
+    SegmentedControl,
+    Select,
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+    Textarea,
+    Toolbar,
+    ToolbarSearch,
+    ToolbarSpacer,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
+import { PatientEmptyState } from '@/pages/Patients/components/PatientEmptyState';
+import { PatientIdentity } from '@/pages/Patients/components/PatientIdentity';
+import { PatientStatGrid } from '@/pages/Patients/components/PatientStatGrid';
+import type { PatientStat } from '@/pages/Patients/components/PatientStatGrid';
 
 interface Patient {
     id: number;
@@ -40,7 +63,13 @@ interface Patient {
 }
 
 interface Props {
-    patients: Patient[];
+    patients: {
+        data: Patient[];
+        links: { url: string | null; label: string; active: boolean }[];
+        from: number;
+        to: number;
+        total: number;
+    };
     filters: { search?: string };
 }
 
@@ -66,12 +95,20 @@ export default function PatientManagement({ patients, filters }: Props) {
         });
 
     useEffect(() => {
-        if (searchQuery !== filters.search) {
+        const currentSearch = filters.search || '';
+
+        if (searchQuery !== currentSearch) {
+            // Debounced search: the spinner reflects a pending request started
+            // by this effect, it is not derived render state.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsSearching(true);
             const timer = setTimeout(() => {
                 router.get(
                     route('patients.index'),
-                    { search: searchQuery },
+                    {
+                        search: searchQuery,
+                        page: 1,
+                    },
                     {
                         preserveState: true,
                         replace: true,
@@ -82,7 +119,7 @@ export default function PatientManagement({ patients, filters }: Props) {
 
             return () => clearTimeout(timer);
         }
-    }, [searchQuery]);
+    }, [searchQuery, filters.search]);
 
     const openEditModal = (patient: Patient) => {
         setSelectedPatient(patient);
@@ -109,8 +146,8 @@ export default function PatientManagement({ patients, filters }: Props) {
         router.get(`patients/${patient.id}/consultations`);
     };
 
-    const handleSubmit = (e: FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = (event: FormEvent) => {
+        event.preventDefault();
 
         if (!selectedPatient) {
             return;
@@ -126,9 +163,9 @@ export default function PatientManagement({ patients, filters }: Props) {
 
     const stats = useMemo(
         () => ({
-            total: patients.length,
-            newPatients: patients.filter((p) => !p.last_visit_date).length,
-            recentVisits: patients.filter((p) => {
+            total: patients.total,
+            newPatients: patients.data.filter((p) => !p.last_visit_date).length,
+            recentVisits: patients.data.filter((p) => {
                 if (!p.last_visit_date) {
                     return false;
                 }
@@ -140,13 +177,40 @@ export default function PatientManagement({ patients, filters }: Props) {
 
                 return daysDiff <= 30;
             }).length,
-            totalVisits: patients.reduce(
+            totalVisits: patients.data.reduce(
                 (acc, p) => acc + (p.last_visit_date ? 1 : 0),
                 0,
             ),
         }),
-        [patients],
+        [patients.data, patients.total],
     );
+
+    const statCards: PatientStat[] = [
+        {
+            label: t('page.patients_index.total_patients'),
+            value: stats.total,
+            icon: UserGroupIcon,
+            tone: 'accent',
+        },
+        {
+            label: t('page.patients_index.new_patients'),
+            value: stats.newPatients,
+            icon: UserPlusIcon,
+            tone: 'positive',
+        },
+        {
+            label: t('page.patients_index.recent_visits'),
+            value: stats.recentVisits,
+            icon: ClockIcon,
+            tone: 'neutral',
+        },
+        {
+            label: t('page.patients_index.active_records'),
+            value: stats.totalVisits,
+            icon: ClipboardDocumentListIcon,
+            tone: 'warning',
+        },
+    ];
 
     const formatDate = (dateString: string | null) => {
         if (!dateString) {
@@ -160,382 +224,450 @@ export default function PatientManagement({ patients, filters }: Props) {
         });
     };
 
+    const hasPatients = patients.data.length > 0;
+
     return (
         <AppLayout
             headerTitle={t('page.patients_index.title')}
             headerSubtitle={t('page.patients_index.subtitle')}
         >
             <Head title={t('page.patients_index.title')} />
-            <Toaster position="top-right" richColors />
 
-            <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
-                {/* Breadcrumbs */}
-                <PageBreadcrumb
-                    items={[
-                        { label: t('common.home') },
+            <div className="space-y-6 pb-12">
+                <PageHeader
+                    eyebrow={t('page.patients_index.subtitle')}
+                    title={t('page.patients_index.title')}
+                    breadcrumbs={[
+                        { label: t('common.home'), href: '/dashboard' },
                         { label: t('page.patients_index.title') },
                     ]}
+                    actions={
+                        <Button
+                            href={route('patients.create')}
+                            icon={UserPlusIcon}
+                        >
+                            {t('page.patients_index.add_patient')}
+                        </Button>
+                    }
                 />
 
-                {/* Stats Overview */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <StatCard
-                        label={t('page.patients_index.total_patients')}
-                        value={stats.total}
-                        icon={UserGroupIcon}
-                        color="blue"
-                    />
-                    <StatCard
-                        label={t('page.patients_index.new_patients')}
-                        value={stats.newPatients}
-                        icon={UserPlusIcon}
-                        color="emerald"
-                    />
-                    <StatCard
-                        label={t('page.patients_index.recent_visits')}
-                        value={stats.recentVisits}
-                        icon={ClockIcon}
-                        color="purple"
-                    />
-                    <StatCard
-                        label={t('page.patients_index.active_records')}
-                        value={stats.totalVisits}
-                        icon={ClipboardDocumentListIcon}
-                        color="amber"
-                    />
-                </div>
+                <PatientStatGrid stats={statCards} />
 
-                {/* Header Controls */}
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                    <div className="relative w-full sm:w-96">
-                        <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder={t(
-                                'page.patients_index.search_placeholder',
-                            )}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pr-10 pl-9 text-sm transition-all outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-                        />
-                        {isSearching && (
-                            <ArrowPathIcon className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin text-blue-500" />
+                <Toolbar>
+                    <ToolbarSearch
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder={t(
+                            'page.patients_index.search_placeholder',
                         )}
-                    </div>
+                        busy={isSearching}
+                    />
+                    <ToolbarSpacer />
+                    <SegmentedControl
+                        value={viewMode}
+                        onChange={setViewMode}
+                        options={[
+                            {
+                                value: 'grid',
+                                icon: Squares2X2Icon,
+                                ariaLabel: 'Grid view',
+                            },
+                            {
+                                value: 'table',
+                                icon: ListBulletIcon,
+                                ariaLabel: 'Table view',
+                            },
+                        ]}
+                    />
+                </Toolbar>
 
-                    <div className="flex items-center gap-3">
-                        <ViewToggle view={viewMode} onChange={setViewMode} />
-                        <Link
-                            href={route('patients.create')}
-                            className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold whitespace-nowrap text-white shadow-sm transition-all hover:bg-blue-700"
-                        >
-                            <UserPlusIcon className="h-4 w-4" />{' '}
-                            {t('page.patients_index.add_patient')}
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Content: Grid or Table */}
-                {viewMode === 'grid' ? (
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {patients.map((patient) => (
-                            <div
-                                key={patient.id}
-                                className="group relative rounded-xl border border-gray-200 bg-white p-6 transition-all hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
-                            >
-                                <div className="mb-4 flex items-start justify-between">
-                                    <div className="h-12 w-12 overflow-hidden rounded-full ring-2 ring-white dark:ring-neutral-700">
-                                        {patient.photo_url ? (
-                                            <img
-                                                src={patient.photo_url}
-                                                alt=""
-                                                className="h-full w-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="flex h-full w-full items-center justify-center bg-blue-100 text-sm font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                                {patient.first_name.charAt(0)}
-                                                {patient.last_name.charAt(0)}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <StatusBadge
-                                        label={
-                                            patient.last_visit_date
-                                                ? t('common.active')
-                                                : t('common.new')
-                                        }
-                                        color={
-                                            patient.last_visit_date
-                                                ? 'emerald'
-                                                : 'amber'
-                                        }
-                                    />
-                                </div>
-                                <h3 className="truncate text-lg font-bold text-gray-900 dark:text-neutral-100">
-                                    {patient.first_name} {patient.last_name}
-                                </h3>
-                                <div className="mt-1 mb-4 flex items-center gap-2">
-                                    <span className="rounded bg-blue-50 px-1.5 py-0.5 font-mono text-xs font-bold text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
-                                        {patient.patient_uid}
-                                    </span>
-                                    <span className="text-xs font-bold tracking-tight text-gray-400 uppercase dark:text-neutral-500">
-                                        {patient.gender}
-                                    </span>
-                                </div>
-                                <div className="mb-4 flex items-center justify-between border-t border-gray-100 py-4 dark:border-neutral-700">
-                                    <div className="flex gap-4">
-                                        <div className="text-center">
-                                            <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                                {patient.age}
-                                            </p>
-                                            <p className="text-[10px] font-bold tracking-tight text-gray-400 uppercase dark:text-neutral-500">
-                                                {t('page.patients_index.years')}
-                                            </p>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                                {patient.phone?.slice(-4) ||
-                                                    '--'}
-                                            </p>
-                                            <p className="text-[10px] font-bold tracking-tight text-gray-400 uppercase dark:text-neutral-500">
-                                                {t('page.patients_index.phone')}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 rounded-lg bg-gray-50 px-3 py-1.5 text-[10px] font-bold text-gray-500 dark:bg-neutral-700/50 dark:text-neutral-400">
-                                        <CalendarDaysIcon className="h-3.5 w-3.5" />{' '}
-                                        {formatDate(patient.last_visit_date)}
-                                    </div>
-                                </div>
-                                <div className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                                    <button
-                                        onClick={() =>
-                                            navigateToProfile(patient)
-                                        }
-                                        className="flex-1 rounded-lg bg-gray-900 py-2 text-xs font-bold text-white transition-colors hover:bg-black dark:bg-neutral-700 dark:hover:bg-neutral-600"
-                                    >
-                                        {t('page.patients_index.records')}
-                                    </button>
-                                    <button
-                                        onClick={() => openEditModal(patient)}
-                                        className="rounded-lg bg-gray-50 px-3 py-2 text-gray-400 transition-colors hover:text-blue-600 dark:bg-neutral-700"
-                                    >
-                                        <PencilSquareIcon className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
-                            <thead className="bg-gray-50 dark:bg-neutral-800">
-                                <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                        {t(
-                                            'page.patients_index.table_patient_details',
-                                        )}
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                        {t('page.patients_index.table_contact')}
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                        {t(
-                                            'page.patients_index.table_demographics',
-                                        )}
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                        {t(
-                                            'page.patients_index.table_last_visit',
-                                        )}
-                                    </th>
-                                    <th className="px-6 py-4"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-neutral-700">
-                                {patients.map((patient) => (
-                                    <tr
-                                        key={patient.id}
-                                        className="transition-colors hover:bg-gray-50 dark:hover:bg-neutral-700/30"
-                                    >
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center gap-4">
-                                                <div className="h-10 w-10 overflow-hidden rounded-full">
-                                                    {patient.photo_url ? (
-                                                        <img
-                                                            src={
-                                                                patient.photo_url
-                                                            }
-                                                            alt=""
-                                                            className="h-full w-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="flex h-full w-full items-center justify-center bg-blue-100 text-xs font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                                            {
-                                                                patient
-                                                                    .first_name[0]
-                                                            }
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <div className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                                        {patient.first_name}{' '}
-                                                        {patient.last_name}
-                                                    </div>
-                                                    <div className="font-mono text-[10px] font-bold text-blue-600 dark:text-blue-400">
-                                                        {patient.patient_uid}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-xs font-bold whitespace-nowrap text-gray-500 dark:text-neutral-400">
-                                            {patient.phone}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <StatusBadge
-                                                label={`${patient.age} ${t('page.patients_index.yrs')} • ${patient.gender}`}
-                                                color="gray"
-                                            />
-                                        </td>
-                                        <td className="px-6 py-4 text-xs font-bold tracking-tight whitespace-nowrap text-gray-400 uppercase dark:text-neutral-500">
-                                            {formatDate(
-                                                patient.last_visit_date,
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button
-                                                onClick={() =>
-                                                    openEditModal(patient)
-                                                }
-                                                className="p-2 text-gray-400 transition-colors hover:text-blue-600"
-                                            >
-                                                <PencilSquareIcon className="h-5 w-5" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                {/* Empty State */}
-                {patients.length === 0 && (
-                    <EmptyState
+                {!hasPatients && (
+                    <PatientEmptyState
                         icon={UserMinusIcon}
                         title={t('page.patients_index.empty_title')}
                         description={t('page.patients_index.empty_description')}
-                        action={{
-                            label: t('page.patients_index.add_patient'),
-                            href: route('patients.create'),
+                        actionLabel={t('page.patients_index.add_patient')}
+                        actionHref={route('patients.create')}
+                        actionIcon={UserPlusIcon}
+                    />
+                )}
+
+                {hasPatients && viewMode === 'grid' && (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        {patients.data.map((patient) => (
+                            <Card
+                                key={patient.id}
+                                className="group flex flex-col transition-colors duration-200 ease-premium hover:border-line-strong"
+                            >
+                                <CardHeader
+                                    actions={
+                                        <Badge
+                                            tone={
+                                                patient.last_visit_date
+                                                    ? 'positive'
+                                                    : 'warning'
+                                            }
+                                            variant="soft"
+                                            dot
+                                        >
+                                            {patient.last_visit_date
+                                                ? t('common.active')
+                                                : t('common.new')}
+                                        </Badge>
+                                    }
+                                >
+                                    <PatientIdentity
+                                        firstName={patient.first_name}
+                                        lastName={patient.last_name}
+                                        patientUid={patient.patient_uid}
+                                        photoUrl={patient.photo_url}
+                                        demographics={patient.gender}
+                                    />
+                                </CardHeader>
+
+                                <CardContent className="flex-1">
+                                    <div className="flex items-end gap-7">
+                                        <div>
+                                            <p className="text-[15px] font-semibold text-ink tabular-nums">
+                                                {patient.age}
+                                            </p>
+                                            <p className="mt-0.5 text-[11px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">
+                                                {t('page.patients_index.years')}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[15px] font-semibold text-ink tabular-nums">
+                                                {patient.phone?.slice(-4) ||
+                                                    '--'}
+                                            </p>
+                                            <p className="mt-0.5 text-[11px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">
+                                                {t('page.patients_index.phone')}
+                                            </p>
+                                        </div>
+                                        <div className="ml-auto flex items-center gap-1.5 text-[12px] text-ink-subtle tabular-nums">
+                                            <CalendarDaysIcon className="h-3.5 w-3.5" />
+                                            {formatDate(
+                                                patient.last_visit_date,
+                                            )}
+                                        </div>
+                                    </div>
+                                </CardContent>
+
+                                <CardFooter className="justify-start gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        icon={ClipboardDocumentListIcon}
+                                        onClick={() =>
+                                            navigateToProfile(patient)
+                                        }
+                                        className="flex-1"
+                                    >
+                                        {t('page.patients_index.records')}
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        icon={BeakerIcon}
+                                        href={route(
+                                            'vitals.create',
+                                            patient.id,
+                                        )}
+                                        className="flex-1"
+                                    >
+                                        {t('page.patients_index.vitals')}
+                                    </Button>
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        icon={PencilSquareIcon}
+                                        aria-label={t('common.edit')}
+                                        onClick={() => openEditModal(patient)}
+                                    />
+                                </CardFooter>
+                            </Card>
+                        ))}
+                    </div>
+                )}
+
+                {hasPatients && viewMode === 'table' && (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHeaderCell>
+                                    {t(
+                                        'page.patients_index.table_patient_details',
+                                    )}
+                                </TableHeaderCell>
+                                <TableHeaderCell>
+                                    {t('page.patients_index.table_contact')}
+                                </TableHeaderCell>
+                                <TableHeaderCell>
+                                    {t(
+                                        'page.patients_index.table_demographics',
+                                    )}
+                                </TableHeaderCell>
+                                <TableHeaderCell>
+                                    {t('page.patients_index.table_last_visit')}
+                                </TableHeaderCell>
+                                <TableHeaderCell numeric>
+                                    {t('common.actions')}
+                                </TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {patients.data.map((patient) => (
+                                <TableRow key={patient.id}>
+                                    <TableCell>
+                                        <PatientIdentity
+                                            firstName={patient.first_name}
+                                            lastName={patient.last_name}
+                                            patientUid={patient.patient_uid}
+                                            photoUrl={patient.photo_url}
+                                            size="sm"
+                                        />
+                                    </TableCell>
+                                    <TableCell muted>
+                                        {patient.phone ?? '—'}
+                                    </TableCell>
+                                    <TableCell muted>
+                                        <span className="tabular-nums">
+                                            {patient.age}{' '}
+                                            {t('page.patients_index.yrs')}
+                                        </span>
+                                        {' · '}
+                                        {patient.gender}
+                                    </TableCell>
+                                    <TableCell muted>
+                                        <span className="tabular-nums">
+                                            {formatDate(
+                                                patient.last_visit_date,
+                                            )}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell numeric>
+                                        <div className="flex items-center justify-end gap-1">
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                icon={BeakerIcon}
+                                                aria-label={t(
+                                                    'page.patients_index.vitals',
+                                                )}
+                                                href={route(
+                                                    'vitals.create',
+                                                    patient.id,
+                                                )}
+                                            />
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                icon={ClipboardDocumentListIcon}
+                                                aria-label={t(
+                                                    'page.patients_index.records',
+                                                )}
+                                                onClick={() =>
+                                                    navigateToProfile(patient)
+                                                }
+                                            />
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                icon={PencilSquareIcon}
+                                                aria-label={t('common.edit')}
+                                                onClick={() =>
+                                                    openEditModal(patient)
+                                                }
+                                            />
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
+
+                {hasPatients && (
+                    <Pagination
+                        links={patients.links}
+                        meta={{
+                            from: patients.from,
+                            to: patients.to,
+                            total: patients.total,
                         }}
                     />
                 )}
             </div>
 
-            {/* Edit Modal */}
-            <Modal
-                isOpen={modalOpen}
+            <Dialog
+                open={modalOpen}
                 onClose={closeModal}
                 title={t('page.patients_index.edit_patient')}
-            >
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2">
-                            <label className="ml-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                                {t('page.patients_index.patient_uid')}
-                            </label>
-                            <input
-                                type="text"
-                                value={selectedPatient?.patient_uid || ''}
-                                readOnly
-                                className="mt-1.5 w-full rounded-xl border-none bg-gray-100 px-4 py-3 text-sm font-bold text-gray-500 dark:bg-neutral-700 dark:text-neutral-400"
-                            />
-                        </div>
-                        <FormInput
-                            name="first_name"
-                            label={t('page.patients_index.first_name')}
-                            value={data.first_name}
-                            onChange={(v) => setData('first_name', v)}
-                            errors={errors}
-                            required
-                            className="col-span-2 sm:col-span-1"
-                        />
-                        <FormInput
-                            name="last_name"
-                            label={t('page.patients_index.last_name')}
-                            value={data.last_name}
-                            onChange={(v) => setData('last_name', v)}
-                            errors={errors}
-                            required
-                            className="col-span-2 sm:col-span-1"
-                        />
-                        <FormSelect
-                            name="gender"
-                            label={t('page.patients_index.gender')}
-                            value={data.gender}
-                            onChange={(v) =>
-                                setData(
-                                    'gender',
-                                    v as 'male' | 'female' | 'other',
-                                )
-                            }
-                            errors={errors}
-                            options={[
-                                { value: 'male', label: t('common.male') },
-                                { value: 'female', label: t('common.female') },
-                                { value: 'other', label: t('common.other') },
-                            ]}
-                            className="col-span-2 sm:col-span-1"
-                        />
-                        <FormInput
-                            name="age"
-                            label={t('page.patients_index.age')}
-                            type="number"
-                            value={data.age}
-                            onChange={(v) => setData('age', parseInt(v) || 0)}
-                            errors={errors}
-                            className="col-span-2 sm:col-span-1"
-                        />
-                        <FormInput
-                            name="phone"
-                            label={t('page.patients_index.phone_number')}
-                            value={data.phone}
-                            onChange={(v) => setData('phone', v)}
-                            errors={errors}
-                            className="col-span-2"
-                        />
-                        <FormTextarea
-                            name="address"
-                            label={t('page.patients_index.address')}
-                            value={data.address}
-                            onChange={(v) => setData('address', v)}
-                            errors={errors}
-                            rows={2}
-                            className="col-span-2"
-                        />
-                    </div>
-                    <div className="flex gap-4 border-t border-gray-100 pt-4 dark:border-neutral-700">
-                        <button
-                            type="button"
-                            onClick={closeModal}
-                            className="flex-1 rounded-xl border border-gray-200 bg-white py-4 font-bold text-gray-400 transition-all hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                        >
+                description={t('page.patients_index.patient_uid')}
+                size="lg"
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={closeModal}>
                             {t('common.cancel')}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
+                            form="patient-edit-form"
+                            loading={processing}
                             disabled={processing}
-                            className="flex-[2] rounded-xl bg-blue-600 py-4 font-bold text-white shadow-sm transition-all hover:bg-blue-700"
                         >
                             {processing
                                 ? t('common.processing')
                                 : t('common.save_changes')}
-                        </button>
-                    </div>
+                        </Button>
+                    </>
+                }
+            >
+                <form
+                    id="patient-edit-form"
+                    onSubmit={handleSubmit}
+                    className="flex flex-col gap-5"
+                >
+                    {Object.keys(errors).length > 0 && (
+                        <Alert tone="critical" title={t('common.edit')}>
+                            {errors.first_name ??
+                                errors.last_name ??
+                                errors.gender ??
+                                errors.age ??
+                                errors.phone ??
+                                errors.address}
+                        </Alert>
+                    )}
+
+                    <Field
+                        label={t('page.patients_index.patient_uid')}
+                        htmlFor="patient_uid"
+                    >
+                        <Input
+                            id="patient_uid"
+                            value={selectedPatient?.patient_uid || ''}
+                            readOnly
+                            disabled
+                        />
+                    </Field>
+
+                    <FieldSet columns={2}>
+                        <Field
+                            label={t('page.patients_index.first_name')}
+                            htmlFor="first_name"
+                            required
+                            error={errors.first_name}
+                        >
+                            <Input
+                                id="first_name"
+                                name="first_name"
+                                value={data.first_name}
+                                invalid={Boolean(errors.first_name)}
+                                onChange={(event) =>
+                                    setData('first_name', event.target.value)
+                                }
+                            />
+                        </Field>
+                        <Field
+                            label={t('page.patients_index.last_name')}
+                            htmlFor="last_name"
+                            required
+                            error={errors.last_name}
+                        >
+                            <Input
+                                id="last_name"
+                                name="last_name"
+                                value={data.last_name}
+                                invalid={Boolean(errors.last_name)}
+                                onChange={(event) =>
+                                    setData('last_name', event.target.value)
+                                }
+                            />
+                        </Field>
+                        <Field
+                            label={t('page.patients_index.gender')}
+                            htmlFor="gender"
+                            error={errors.gender}
+                        >
+                            <Select
+                                id="gender"
+                                name="gender"
+                                value={data.gender}
+                                invalid={Boolean(errors.gender)}
+                                onChange={(event) =>
+                                    setData(
+                                        'gender',
+                                        event.target.value as
+                                            | 'male'
+                                            | 'female'
+                                            | 'other',
+                                    )
+                                }
+                            >
+                                <option value="male">{t('common.male')}</option>
+                                <option value="female">
+                                    {t('common.female')}
+                                </option>
+                                <option value="other">
+                                    {t('common.other')}
+                                </option>
+                            </Select>
+                        </Field>
+                        <Field
+                            label={t('page.patients_index.age')}
+                            htmlFor="age"
+                            error={errors.age}
+                        >
+                            <Input
+                                id="age"
+                                name="age"
+                                type="number"
+                                value={data.age}
+                                invalid={Boolean(errors.age)}
+                                onChange={(event) =>
+                                    setData(
+                                        'age',
+                                        parseInt(event.target.value) || 0,
+                                    )
+                                }
+                            />
+                        </Field>
+                        <Field
+                            label={t('page.patients_index.phone_number')}
+                            htmlFor="phone"
+                            error={errors.phone}
+                            className="sm:col-span-2"
+                        >
+                            <Input
+                                id="phone"
+                                name="phone"
+                                value={data.phone}
+                                invalid={Boolean(errors.phone)}
+                                onChange={(event) =>
+                                    setData('phone', event.target.value)
+                                }
+                            />
+                        </Field>
+                        <Field
+                            label={t('page.patients_index.address')}
+                            htmlFor="address"
+                            error={errors.address}
+                            className="sm:col-span-2"
+                        >
+                            <Textarea
+                                id="address"
+                                name="address"
+                                rows={2}
+                                value={data.address}
+                                invalid={Boolean(errors.address)}
+                                onChange={(event) =>
+                                    setData('address', event.target.value)
+                                }
+                            />
+                        </Field>
+                    </FieldSet>
                 </form>
-            </Modal>
+            </Dialog>
         </AppLayout>
     );
 }

@@ -37,7 +37,7 @@ class LabTestDefinitionFactory extends Factory
 
         return [
             'test_name' => $test,
-            'code' => $code . '-' . fake()->unique()->lexify('???'),
+            'code' => $code.'-'.fake()->unique()->lexify('???'),
             'price' => $price,
             'units' => $units,
             'description' => "Laboratory test: {$test}. Performed in-house with results available within 24 hours.",

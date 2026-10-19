@@ -1,12 +1,12 @@
 import {
-    XMarkIcon,
-    MegaphoneIcon,
-    ExclamationTriangleIcon,
     CheckCircleIcon,
+    ExclamationTriangleIcon,
+    MegaphoneIcon,
 } from '@heroicons/react/20/solid';
 import type { PageProps } from '@inertiajs/core';
 import { usePage } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { Alert } from '@/Components/ui';
 
 interface Announcement {
     id: number;
@@ -23,138 +23,119 @@ interface CustomPageProps extends PageProps {
     announcements?: Announcement[];
 }
 
-const STYLES: Record<
-    string,
-    {
-        bg: string;
-        border: string;
-        icon: React.ReactNode;
-        linkClass: string;
-    }
-> = {
-    info: {
-        bg: 'bg-blue-50/60 dark:bg-blue-950/20 backdrop-blur-md',
-        border: 'border-b border-blue-100 dark:border-blue-900/30',
-        icon: (
-            <MegaphoneIcon className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
-        ),
-        linkClass: 'text-blue-700 dark:text-blue-400 hover:underline',
-    },
-    warning: {
-        bg: 'bg-amber-50/60 dark:bg-amber-950/20 backdrop-blur-md',
-        border: 'border-b border-amber-100 dark:border-amber-900/30',
-        icon: (
-            <ExclamationTriangleIcon className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-        ),
-        linkClass: 'text-amber-700 dark:text-amber-400 hover:underline',
-    },
-    success: {
-        bg: 'bg-emerald-50/60 dark:bg-emerald-950/20 backdrop-blur-md',
-        border: 'border-b border-emerald-100 dark:border-emerald-900/30',
-        icon: (
-            <CheckCircleIcon className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-        ),
-        linkClass: 'text-emerald-700 dark:text-emerald-400 hover:underline',
-    },
-};
+const TONE_BY_TYPE = {
+    info: 'info',
+    warning: 'warning',
+    success: 'positive',
+} as const;
 
+const ICON_BY_TYPE = {
+    info: MegaphoneIcon,
+    warning: ExclamationTriangleIcon,
+    success: CheckCircleIcon,
+} as const;
+
+/**
+ * AnnouncementBanner — system-wide notices above the shell. Uses the shared
+ * Alert tones, one row per announcement, dismissible and persisted locally.
+ */
 export default function AnnouncementBanner() {
     const { props } = usePage<CustomPageProps>();
     const announcements = props.announcements;
 
-    const [dismissed, setDismissed] = useState<Set<number>>(new Set());
-    const [dismissing, setDismissing] = useState<Set<number>>(new Set());
+    const [dismissed, setDismissed] = useState<Set<number>>(() => {
+        if (typeof window === 'undefined') {
+            return new Set();
+        }
 
-    useEffect(() => {
         try {
-            const stored = sessionStorage.getItem('dismissed_announcements');
+            const stored = localStorage.getItem('dismissed_announcements');
 
-            if (stored) {
-                setDismissed(new Set(JSON.parse(stored)));
-            }
-        } catch {}
-    }, []);
+            return stored ? new Set<number>(JSON.parse(stored)) : new Set();
+        } catch {
+            return new Set();
+        }
+    });
+    const [dismissing, setDismissing] = useState<Set<number>>(new Set());
 
     if (!announcements || announcements.length === 0) {
         return null;
     }
 
-    const visible = announcements.filter((a) => !dismissed.has(a.id));
+    const visible = announcements.filter((item) => !dismissed.has(item.id));
 
     if (visible.length === 0) {
         return null;
     }
 
     const handleDismiss = (id: number) => {
-        setDismissing((prev) => new Set([...prev, id]));
+        setDismissing((previous) => new Set([...previous, id]));
+
         setTimeout(() => {
             const next = new Set([...dismissed, id]);
             setDismissed(next);
-            sessionStorage.setItem(
+            localStorage.setItem(
                 'dismissed_announcements',
                 JSON.stringify([...next]),
             );
-            setDismissing((prev) => {
-                const updated = new Set(prev);
+            setDismissing((previous) => {
+                const updated = new Set(previous);
                 updated.delete(id);
 
                 return updated;
             });
-        }, 200); // 200ms snappy page layout shift
+        }, 300);
     };
 
     return (
-        <div className="flex w-full shrink-0 flex-col transition-all duration-200">
-            {visible.map((a) => {
-                const s = STYLES[a.type] || STYLES.info;
-                const isDismissing = dismissing.has(a.id);
+        <div
+            role="region"
+            aria-label="System announcements"
+            className="relative z-40 flex w-full shrink-0 flex-col gap-2 border-b border-line bg-canvas px-4 py-2.5 lg:px-6"
+        >
+            {visible.map((announcement) => {
+                const type = announcement.type ?? 'info';
+                const isDismissing = dismissing.has(announcement.id);
+                const Icon = ICON_BY_TYPE[type] ?? MegaphoneIcon;
 
                 return (
                     <div
-                        key={a.id}
-                        className={`flex w-full origin-top items-center justify-between gap-3 px-4 py-2 transition-all duration-200 ease-out lg:px-6 ${s.bg} ${s.border} ${
+                        key={announcement.id}
+                        aria-live="polite"
+                        className={`origin-top transition-[opacity,transform] duration-300 ease-premium ${
                             isDismissing
-                                ? 'pointer-events-none max-h-0 overflow-hidden border-b-0 py-0 opacity-0'
-                                : 'max-h-12 opacity-100'
-                        } `}
-                        style={{
-                            ...(isDismissing && {
-                                paddingTop: 0,
-                                paddingBottom: 0,
-                                height: 0,
-                                borderBottomWidth: 0,
-                            }),
-                        }}
+                                ? 'pointer-events-none scale-y-95 opacity-0'
+                                : 'scale-y-100 opacity-100'
+                        }`}
                     >
-                        {/* Inline message alignment */}
-                        <div className="flex min-w-0 flex-1 items-center gap-2.5 text-xs sm:text-sm">
-                            {s.icon}
-                            <div className="flex flex-col gap-x-2 gap-y-0.5 truncate sm:flex-row sm:items-center">
-                                <span className="shrink-0 font-semibold text-zinc-900 dark:text-zinc-100">
-                                    {a.title}
-                                </span>
-                                <span className="truncate text-zinc-600 dark:text-zinc-300">
-                                    {a.body}
-                                </span>
-                            </div>
-                            {a.link_url && (
-                                <a
-                                    href={a.link_url}
-                                    className={`ml-2 shrink-0 text-xs font-semibold tracking-wider uppercase underline underline-offset-4 ${s.linkClass}`}
-                                >
-                                    {a.link_text || 'Learn more'}
-                                </a>
-                            )}
-                        </div>
-
-                        {/* Tight dismissal trigger */}
-                        <button
-                            onClick={() => handleDismiss(a.id)}
-                            aria-label="Dismiss banner"
-                            className="rounded-md p-1 text-zinc-400 transition-all duration-150 hover:bg-black/5 hover:text-zinc-600 active:scale-95 dark:text-zinc-500 dark:hover:bg-white/5 dark:hover:text-zinc-300"
+                        <Alert
+                            tone={TONE_BY_TYPE[type] ?? 'info'}
+                            title={announcement.title}
+                            action={
+                                <div className="flex items-center gap-2">
+                                    {announcement.link_url && (
+                                        <a
+                                            href={announcement.link_url}
+                                            className="inline-flex items-center rounded-md border border-line-strong bg-surface px-2 py-1 text-[11.5px] font-semibold text-ink transition-colors duration-150 hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none"
+                                        >
+                                            {announcement.link_text ??
+                                                'Learn more'}
+                                        </a>
+                                    )}
+                                    <button
+                                        onClick={() =>
+                                            handleDismiss(announcement.id)
+                                        }
+                                        aria-label={`Dismiss announcement: ${announcement.title}`}
+                                        className="rounded-md p-1 text-ink-subtle transition-colors duration-150 hover:bg-surface-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none active:scale-90"
+                                    >
+                                        <Icon className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            }
                         >
-                            <XMarkIcon className="h-4 w-4" />
-                        </button>
+                            {announcement.body}
+                        </Alert>
                     </div>
                 );
             })}

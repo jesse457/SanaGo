@@ -1,7 +1,6 @@
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import { Head } from '@inertiajs/react';
-import EmptyState from '@/Components/EmptyState';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
+import { Button, Card, EmptyState, PageHeader } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 
@@ -15,19 +14,34 @@ export default function MedicalRecordsIndex() {
         >
             <Head title={t('page.medical_records_index.head_title')} />
 
-            <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
-                <PageBreadcrumb
-                    items={[
-                        { label: t('common.home') },
+            <div className="mx-auto max-w-7xl space-y-5 pb-12">
+                <PageHeader
+                    title={t('page.medical_records_index.title')}
+                    description={t('page.medical_records_index.subtitle')}
+                    breadcrumbs={[
+                        { label: t('common.home'), href: '/dashboard' },
                         { label: t('page.medical_records_index.title') },
                     ]}
+                    actions={
+                        <Button
+                            href="/consultations/create"
+                            variant="secondary"
+                        >
+                            {t('common.new')}
+                        </Button>
+                    }
                 />
 
-                <EmptyState
-                    icon={DocumentTextIcon}
-                    title={t('page.medical_records_index.heading')}
-                    description={t('page.medical_records_index.description')}
-                />
+                <Card>
+                    <EmptyState
+                        panel={false}
+                        icon={DocumentTextIcon}
+                        title={t('page.medical_records_index.heading')}
+                        description={t(
+                            'page.medical_records_index.description',
+                        )}
+                    />
+                </Card>
             </div>
         </AppLayout>
     );

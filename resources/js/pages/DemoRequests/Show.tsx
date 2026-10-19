@@ -105,8 +105,8 @@ export default function DemoRequestsShow({
                                 />
                             </div>
                             {req.message && (
-                                <div className="mx-6 mb-6 rounded-lg bg-gray-50 p-4 dark:bg-neutral-800">
-                                    <p className="text-sm text-gray-700 dark:text-neutral-300">
+                                <div className="mx-6 mb-6 rounded-lg bg-surface-muted p-4">
+                                    <p className="text-sm text-ink-muted">
                                         {req.message}
                                     </p>
                                 </div>
@@ -124,10 +124,10 @@ export default function DemoRequestsShow({
                                     req.notes.map((n) => (
                                         <div
                                             key={n.id}
-                                            className="rounded-lg bg-gray-50 p-3 dark:bg-neutral-800"
+                                            className="rounded-lg bg-surface-muted p-3"
                                         >
                                             <p className="text-sm">{n.note}</p>
-                                            <p className="mt-1 text-xs text-gray-400">
+                                            <p className="mt-1 text-xs text-ink-subtle">
                                                 {n.user_name} —{' '}
                                                 {new Date(
                                                     n.created_at,
@@ -144,7 +144,7 @@ export default function DemoRequestsShow({
                                         preserveScroll: true,
                                     });
                                 }}
-                                className="flex items-end gap-2 border-t border-gray-100 px-6 pt-4 pb-6 dark:border-neutral-700"
+                                className="flex items-end gap-2 border-t border-line px-6 pt-4 pb-6"
                             >
                                 <FormTextarea
                                     name="note"
@@ -158,7 +158,7 @@ export default function DemoRequestsShow({
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="shrink-0 rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50"
+                                    className="shrink-0 rounded-lg bg-accent px-4 py-3 text-sm font-bold text-ink-inverse hover:bg-accent-hover disabled:opacity-50"
                                 >
                                     Add
                                 </button>
@@ -170,7 +170,7 @@ export default function DemoRequestsShow({
                         <PageSection title="Pipeline">
                             <div className="space-y-4 p-6">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
+                                    <span className="text-xs font-semibold tracking-wide text-ink-subtle uppercase">
                                         Current Stage
                                     </span>
                                     <StatusBadge
@@ -210,7 +210,7 @@ export default function DemoRequestsShow({
                                             { preserveScroll: true },
                                         )
                                     }
-                                    className="w-full rounded-lg bg-blue-600 py-3 text-sm font-bold text-white hover:bg-blue-700"
+                                    className="w-full rounded-lg bg-accent py-3 text-sm font-bold text-ink-inverse hover:bg-accent-hover"
                                 >
                                     Update Status
                                 </button>

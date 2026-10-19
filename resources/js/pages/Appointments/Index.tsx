@@ -1,31 +1,47 @@
 import {
-    MagnifyingGlassIcon,
-    PlusIcon,
-    CheckIcon,
     ArrowPathIcon,
-    ClockIcon,
-    CheckBadgeIcon,
-    UserGroupIcon,
-    CalendarIcon,
-    UserIcon,
     ArrowRightIcon,
+    CalendarDaysIcon,
+    CheckBadgeIcon,
+    CheckIcon,
+    ClockIcon,
+    ListBulletIcon,
     NoSymbolIcon,
+    PlusIcon,
+    Squares2X2Icon,
+    UserGroupIcon,
+    UserIcon,
 } from '@heroicons/react/24/outline';
 import { Head, Link, router } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import debounce from 'lodash/debounce';
-import React, { useState, useMemo } from 'react';
-
-import EmptyState from '@/Components/EmptyState';
-import FormInput from '@/Components/FormInput';
-import FormSelect from '@/Components/FormSelect';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
+import { useEffect, useMemo, useState } from 'react';
 import { Pagination } from '@/Components/Pagination';
-import StatCard from '@/Components/StatCard';
-import StatusBadge from '@/Components/StatusBadge';
-import ViewToggle from '@/Components/ViewToggle';
+import {
+    Button,
+    EmptyState,
+    Input,
+    PageHeader,
+    SegmentedControl,
+    Select,
+    StatCard,
+    StatGrid,
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+    Toolbar,
+    ToolbarSearch,
+    ToolbarSpacer,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
+import {
+    AppointmentIdentity,
+    AppointmentStatusBadge,
+} from '@/pages/Appointments/components/AppointmentIdentity';
 
 interface Patient {
     first_name: string;
@@ -71,19 +87,18 @@ interface Props {
     };
 }
 
-const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
-};
-
-const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-        y: 0,
-        opacity: 1,
-        transition: { type: 'spring' as const, stiffness: 300, damping: 24 },
+const viewOptions = [
+    {
+        value: 'table' as const,
+        icon: ListBulletIcon,
+        ariaLabel: 'Table view',
     },
-};
+    {
+        value: 'grid' as const,
+        icon: Squares2X2Icon,
+        ariaLabel: 'Grid view',
+    },
+];
 
 export default function AppointmentIndex({
     appointments,
@@ -91,7 +106,19 @@ export default function AppointmentIndex({
     filters,
 }: Props) {
     const { t } = useTranslation();
-    const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+
+    // Persist the selected view format (grid vs table) locally so it survives pagination reloads
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('appointments_view_mode');
+
+            if (saved === 'grid' || saved === 'table') {
+                return saved;
+            }
+        }
+
+        return 'table';
+    });
 
     const [params, setParams] = useState({
         search: filters.search || '',
@@ -99,6 +126,27 @@ export default function AppointmentIndex({
         doctor_id: filters.doctor_id || '',
         date: filters.date || '',
     });
+
+    // Synchronize local params with server-side filters on pagination or navigation back/forward
+    useEffect(() => {
+        // Server-driven filters changed (pagination, back/forward): mirror them
+        // into the local param state. External event, not derived render state.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setParams({
+            search: filters.search || '',
+            status: filters.status || '',
+            doctor_id: filters.doctor_id || '',
+            date: filters.date || '',
+        });
+    }, [filters]);
+
+    const handleViewModeChange = (mode: 'grid' | 'table') => {
+        setViewMode(mode);
+
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('appointments_view_mode', mode);
+        }
+    };
 
     const stats = useMemo(
         () => ({
@@ -126,7 +174,11 @@ export default function AppointmentIndex({
     );
 
     const handleFilterChange = (key: string, value: string) => {
-        const newParams = { ...params, [key]: value };
+        const newParams = {
+            ...params,
+            [key]: value,
+            page: '1', // Explicitly force result set to start on page 1 when filters are changed
+        };
         setParams(newParams);
         requestUpdate(newParams);
     };
@@ -143,23 +195,6 @@ export default function AppointmentIndex({
         );
     };
 
-    const statusColor = (status: string) => {
-        switch (status) {
-            case 'Waiting':
-                return 'amber';
-            case 'In Consultation':
-                return 'blue';
-            case 'Canceled':
-                return 'red';
-            case 'Completed':
-                return 'emerald';
-            case 'Scheduled':
-                return 'purple';
-            default:
-                return 'gray';
-        }
-    };
-
     return (
         <AppLayout
             headerTitle={t('manageAppointments')}
@@ -167,398 +202,349 @@ export default function AppointmentIndex({
         >
             <Head title={t('appointments')} />
 
-            <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={containerVariants}
-                className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8"
-            >
-                <PageBreadcrumb
-                    items={[{ label: t('home') }, { label: t('appointments') }]}
+            <div className="space-y-5">
+                <PageHeader
+                    eyebrow={t('queueManagement')}
+                    title={t('manageAppointments')}
+                    description={t('monitorPatientQueues')}
+                    actions={
+                        <Button
+                            href={route('appointments.create')}
+                            variant="accent"
+                            icon={PlusIcon}
+                        >
+                            {t('bookNew')}
+                        </Button>
+                    }
                 />
 
-                {/* Stats Overview */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <motion.div
-                        initial={{ scale: 0.95, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{
-                            delay: 0.1,
-                            type: 'spring',
-                            stiffness: 200,
-                        }}
-                    >
-                        <StatCard
-                            icon={UserGroupIcon}
-                            label={t('totalAppointments')}
-                            value={stats.total}
-                            color="blue"
-                        />
-                    </motion.div>
-                    <motion.div
-                        initial={{ scale: 0.95, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{
-                            delay: 0.2,
-                            type: 'spring',
-                            stiffness: 200,
-                        }}
-                    >
-                        <StatCard
-                            icon={ClockIcon}
-                            label={t('waitingInHall')}
-                            value={stats.waiting}
-                            color="amber"
-                        />
-                    </motion.div>
-                    <motion.div
-                        initial={{ scale: 0.95, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{
-                            delay: 0.3,
-                            type: 'spring',
-                            stiffness: 200,
-                        }}
-                    >
-                        <StatCard
-                            icon={CalendarIcon}
-                            label={t('todaysScheduled')}
-                            value={stats.scheduled}
-                            color="purple"
-                        />
-                    </motion.div>
-                    <motion.div
-                        initial={{ scale: 0.95, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{
-                            delay: 0.4,
-                            type: 'spring',
-                            stiffness: 200,
-                        }}
-                    >
-                        <StatCard
-                            icon={CheckBadgeIcon}
-                            label={t('totalCompleted')}
-                            value={stats.completed}
-                            color="emerald"
-                        />
-                    </motion.div>
-                </div>
+                <StatGrid columns={4}>
+                    <StatCard
+                        icon={UserGroupIcon}
+                        label={t('totalAppointments')}
+                        value={stats.total}
+                        tone="accent"
+                    />
+                    <StatCard
+                        icon={ClockIcon}
+                        label={t('waitingInHall')}
+                        value={stats.waiting}
+                        tone="warning"
+                    />
+                    <StatCard
+                        icon={CalendarDaysIcon}
+                        label={t('todaysScheduled')}
+                        value={stats.scheduled}
+                        tone="neutral"
+                    />
+                    <StatCard
+                        icon={CheckBadgeIcon}
+                        label={t('totalCompleted')}
+                        value={stats.completed}
+                        tone="positive"
+                    />
+                </StatGrid>
 
-                {/* Header Controls */}
-                <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-                    <div className="grid w-full grid-cols-1 items-center gap-3 sm:grid-cols-2 lg:flex lg:w-auto">
-                        <FormInput
-                            name="search"
-                            icon={MagnifyingGlassIcon}
-                            placeholder={t('searchPatient')}
-                            value={params.search}
-                            onChange={(value) =>
-                                handleFilterChange('search', value)
-                            }
-                            className="flex-grow sm:min-w-[240px]"
-                        />
-                        <FormSelect
-                            name="status"
-                            value={params.status}
-                            onChange={(value) =>
-                                handleFilterChange('status', value)
-                            }
-                            options={[
-                                { value: '', label: t('allStatuses') },
-                                { value: 'Scheduled', label: t('scheduled') },
-                                { value: 'Waiting', label: t('waiting') },
-                                {
-                                    value: 'In Consultation',
-                                    label: t('inConsultation'),
-                                },
-                                { value: 'Completed', label: t('completed') },
-                                { value: 'Canceled', label: t('canceled') },
-                            ]}
-                        />
-                        <FormSelect
-                            name="doctor_id"
-                            value={params.doctor_id}
-                            onChange={(value) =>
-                                handleFilterChange('doctor_id', value)
-                            }
-                            options={[
-                                { value: '', label: t('allDoctors') },
-                                ...doctors.map((d) => ({
-                                    value: d.id.toString(),
-                                    label: d.name,
-                                })),
-                            ]}
-                        />
-                        <FormInput
-                            name="date"
-                            type="date"
-                            value={params.date}
-                            onChange={(value) =>
-                                handleFilterChange('date', value)
-                            }
-                        />
-                    </div>
+                <Toolbar>
+                    <ToolbarSearch
+                        value={params.search}
+                        onChange={(value) =>
+                            handleFilterChange('search', value)
+                        }
+                        placeholder={t('searchPatient')}
+                    />
+                    <Select
+                        name="status"
+                        aria-label={t('status')}
+                        value={params.status}
+                        onChange={(event) =>
+                            handleFilterChange('status', event.target.value)
+                        }
+                        className="sm:w-44"
+                    >
+                        <option value="">{t('allStatuses')}</option>
+                        <option value="Scheduled">{t('scheduled')}</option>
+                        <option value="Waiting">{t('waiting')}</option>
+                        <option value="In Consultation">
+                            {t('inConsultation')}
+                        </option>
+                        <option value="Completed">{t('completed')}</option>
+                        <option value="Canceled">{t('canceled')}</option>
+                    </Select>
+                    <Select
+                        name="doctor_id"
+                        aria-label={t('doctor')}
+                        value={params.doctor_id}
+                        onChange={(event) =>
+                            handleFilterChange('doctor_id', event.target.value)
+                        }
+                        className="sm:w-48"
+                    >
+                        <option value="">{t('allDoctors')}</option>
+                        {doctors.map((doctor) => (
+                            <option key={doctor.id} value={doctor.id}>
+                                {doctor.name}
+                            </option>
+                        ))}
+                    </Select>
+                    <Input
+                        name="date"
+                        type="date"
+                        aria-label={t('date')}
+                        value={params.date}
+                        onChange={(event) =>
+                            handleFilterChange('date', event.target.value)
+                        }
+                        className="sm:w-40"
+                    />
+                    <ToolbarSpacer />
+                    <SegmentedControl
+                        options={viewOptions}
+                        value={viewMode}
+                        onChange={handleViewModeChange}
+                    />
+                </Toolbar>
 
-                    <div className="flex items-center gap-3">
-                        <Link
-                            href={route('appointments.create')}
-                            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700"
-                        >
-                            <PlusIcon className="h-4 w-4" /> {t('bookNew')}
-                        </Link>
-                        <ViewToggle view={viewMode} onChange={setViewMode} />
-                    </div>
-                </div>
-
-                {/* Main Content */}
                 <AnimatePresence mode="wait">
                     {appointments.data.length === 0 ? (
                         <motion.div
                             key="empty"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
                         >
                             <EmptyState
                                 icon={ArrowPathIcon}
                                 title={t('noAppointmentsFound')}
                                 description={t('adjustFiltersOrBook')}
+                                action={{
+                                    label: t('bookNew'),
+                                    href: route('appointments.create'),
+                                }}
                             />
                         </motion.div>
                     ) : viewMode === 'grid' ? (
                         <motion.div
                             key="grid"
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 20 }}
-                            className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.22 }}
+                            className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
                         >
                             {appointments.data.map((apt) => (
-                                <motion.div
+                                <div
                                     key={apt.id}
-                                    variants={itemVariants}
-                                    whileHover={{ y: -4 }}
-                                    className="flex h-full flex-col rounded-xl border border-gray-200 bg-white p-6 transition-all hover:border-blue-400 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-blue-500"
+                                    className="flex h-full flex-col rounded-xl border border-line bg-surface p-4 transition-[border-color,box-shadow] duration-300 ease-premium hover:border-line-strong hover:shadow-surface"
                                 >
-                                    <div className="mb-4 flex items-start justify-between">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50 text-lg font-bold text-blue-600 shadow-sm dark:bg-blue-900/20 dark:text-blue-400">
-                                            {apt.patient.first_name[0]}
-                                            {apt.patient.last_name[0]}
-                                        </div>
-                                        <StatusBadge
-                                            label={apt.status}
-                                            color={statusColor(apt.status)}
-                                            className={
+                                    <div className="mb-3 flex items-start justify-between gap-3">
+                                        <AppointmentIdentity
+                                            firstName={apt.patient.first_name}
+                                            lastName={apt.patient.last_name}
+                                            patientUid={apt.patient.patient_uid}
+                                        />
+                                        <AppointmentStatusBadge
+                                            status={apt.status}
+                                            pulse={
                                                 apt.status === 'In Consultation'
-                                                    ? 'animate-pulse'
-                                                    : ''
                                             }
                                         />
                                     </div>
-                                    <div className="mb-4 flex-grow">
-                                        <h3 className="mb-1 text-lg leading-tight font-bold text-gray-900 dark:text-neutral-100">
-                                            {apt.patient.first_name}{' '}
-                                            {apt.patient.last_name}
-                                        </h3>
-                                        <p className="mb-4 font-mono text-xs text-gray-400 dark:text-neutral-500">
-                                            {apt.patient.patient_uid}
-                                        </p>
-                                        <div className="space-y-2 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-700/50">
-                                            <div className="flex items-center gap-2">
-                                                <UserIcon className="h-4 w-4 text-blue-500" />
-                                                <span className="text-xs font-bold text-gray-700 dark:text-neutral-300">
-                                                    {apt.doctor?.name}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <CalendarIcon className="h-4 w-4 text-gray-400" />
-                                                <span className="text-xs font-medium text-gray-600 dark:text-neutral-400">
-                                                    {apt.appointment_date} @{' '}
-                                                    {apt.appointment_time}
-                                                </span>
-                                            </div>
+
+                                    <dl className="mb-3 flex-1 space-y-2 rounded-lg border border-line bg-surface-muted px-3 py-2.5">
+                                        <div className="flex items-center gap-2 text-[12px]">
+                                            <UserIcon className="h-3.5 w-3.5 shrink-0 text-ink-subtle" />
+                                            <dt className="sr-only">
+                                                {t('doctor')}
+                                            </dt>
+                                            <dd className="truncate font-medium text-ink">
+                                                {apt.doctor?.name ?? '—'}
+                                            </dd>
                                         </div>
-                                    </div>
-                                    <div className="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-neutral-700">
-                                        <div className="flex gap-2">
+                                        <div className="flex items-center gap-2 text-[12px] text-ink-muted">
+                                            <CalendarDaysIcon className="h-3.5 w-3.5 shrink-0 text-ink-subtle" />
+                                            <dt className="sr-only">
+                                                {t('schedule')}
+                                            </dt>
+                                            <dd className="truncate tabular-nums">
+                                                {apt.appointment_date} ·{' '}
+                                                {apt.appointment_time}
+                                            </dd>
+                                        </div>
+                                    </dl>
+
+                                    <div className="flex items-center justify-between border-t border-line pt-3">
+                                        <div className="flex gap-1.5">
                                             {apt.status === 'Scheduled' && (
-                                                <button
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    icon={CheckIcon}
                                                     onClick={() =>
                                                         handleStatusUpdate(
                                                             apt.id,
                                                             'Waiting',
                                                         )
                                                     }
-                                                    className="rounded-md bg-emerald-50 p-1.5 text-emerald-600 transition-colors hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
                                                     title={t('checkIn')}
                                                 >
-                                                    <CheckIcon className="h-4 w-4" />
-                                                </button>
+                                                    {t('checkIn')}
+                                                </Button>
                                             )}
                                         </div>
-                                        <Link
+                                        <Button
+                                            size="sm"
+                                            variant="secondary"
+                                            trailingIcon={ArrowRightIcon}
                                             href={route(
                                                 'appointments.show',
                                                 apt.id,
                                             )}
-                                            className="flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
                                         >
-                                            {t('manage')}{' '}
-                                            <ArrowRightIcon className="h-4 w-4" />
-                                        </Link>
+                                            {t('manage')}
+                                        </Button>
                                     </div>
-                                </motion.div>
+                                </div>
                             ))}
                         </motion.div>
                     ) : (
                         <motion.div
                             key="table"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.22 }}
                         >
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
-                                <thead className="bg-gray-50 dark:bg-neutral-800">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHeaderCell>
                                             {t('patient')}
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
+                                        </TableHeaderCell>
+                                        <TableHeaderCell>
                                             {t('doctor')}
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
+                                        </TableHeaderCell>
+                                        <TableHeaderCell>
                                             {t('schedule')}
-                                        </th>
-                                        <th className="px-6 py-3 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
+                                        </TableHeaderCell>
+                                        <TableHeaderCell>
                                             {t('status')}
-                                        </th>
-                                        <th className="px-6 py-3"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200 dark:divide-neutral-700">
+                                        </TableHeaderCell>
+                                        <TableHeaderCell>
+                                            <span className="sr-only">
+                                                {t('actions')}
+                                            </span>
+                                        </TableHeaderCell>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
                                     {appointments.data.map((apt) => (
-                                        <tr
-                                            key={apt.id}
-                                            className="transition-colors hover:bg-gray-50 dark:hover:bg-neutral-700/30"
-                                        >
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center">
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-sm font-bold text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
-                                                        {
-                                                            apt.patient
-                                                                .first_name[0]
-                                                        }
-                                                        {
-                                                            apt.patient
-                                                                .last_name[0]
-                                                        }
-                                                    </div>
-                                                    <div className="ml-4">
-                                                        <div className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                                            {
-                                                                apt.patient
-                                                                    .first_name
-                                                            }{' '}
-                                                            {
-                                                                apt.patient
-                                                                    .last_name
-                                                            }
-                                                        </div>
-                                                        <div className="font-mono text-[10px] text-gray-400 dark:text-neutral-500">
-                                                            {
-                                                                apt.patient
-                                                                    .patient_uid
-                                                            }
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                                    {apt.doctor?.name}
-                                                </div>
-                                                <div className="text-[10px] text-gray-400 uppercase dark:text-neutral-500">
-                                                    {
-                                                        apt.doctor?.department
-                                                            ?.name
+                                        <TableRow key={apt.id}>
+                                            <TableCell>
+                                                <AppointmentIdentity
+                                                    firstName={
+                                                        apt.patient.first_name
                                                     }
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm font-bold text-gray-800 dark:text-neutral-100">
+                                                    lastName={
+                                                        apt.patient.last_name
+                                                    }
+                                                    patientUid={
+                                                        apt.patient.patient_uid
+                                                    }
+                                                    size="sm"
+                                                />
+                                            </TableCell>
+                                            <TableCell muted>
+                                                <p className="text-[13px] font-medium text-ink">
+                                                    {apt.doctor?.name ?? '—'}
+                                                </p>
+                                                <p className="text-[11px] text-ink-subtle">
+                                                    {apt.doctor?.department
+                                                        ?.name ?? ''}
+                                                </p>
+                                            </TableCell>
+                                            <TableCell muted>
+                                                <p className="text-[13px] font-medium text-ink tabular-nums">
                                                     {apt.appointment_date}
-                                                </div>
-                                                <div className="text-[10px] text-gray-500 dark:text-neutral-400">
+                                                </p>
+                                                <p className="text-[11px] text-ink-subtle tabular-nums">
                                                     {apt.appointment_time}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <StatusBadge
-                                                    label={apt.status}
-                                                    color={statusColor(
-                                                        apt.status,
-                                                    )}
-                                                    className={
+                                                </p>
+                                            </TableCell>
+                                            <TableCell>
+                                                <AppointmentStatusBadge
+                                                    status={apt.status}
+                                                    pulse={
                                                         apt.status ===
                                                         'In Consultation'
-                                                            ? 'animate-pulse'
-                                                            : ''
                                                     }
                                                 />
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center justify-end gap-1">
                                                     {apt.status ===
                                                         'Scheduled' && (
-                                                        <button
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            icon={CheckIcon}
                                                             onClick={() =>
                                                                 handleStatusUpdate(
                                                                     apt.id,
                                                                     'Waiting',
                                                                 )
                                                             }
-                                                            className="rounded-lg p-1.5 text-emerald-600 transition-all hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
-                                                        >
-                                                            <CheckIcon className="h-5 w-5" />
-                                                        </button>
+                                                            aria-label={t(
+                                                                'checkIn',
+                                                            )}
+                                                            title={t('checkIn')}
+                                                        />
                                                     )}
                                                     {[
                                                         'Scheduled',
                                                         'Waiting',
                                                     ].includes(apt.status) && (
-                                                        <button
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            icon={NoSymbolIcon}
                                                             onClick={() =>
                                                                 handleStatusUpdate(
                                                                     apt.id,
                                                                     'Canceled',
                                                                 )
                                                             }
-                                                            className="rounded-lg p-1.5 text-red-500 transition-all hover:bg-red-50 dark:hover:bg-red-900/20"
-                                                        >
-                                                            <NoSymbolIcon className="h-5 w-5" />
-                                                        </button>
+                                                            aria-label={t(
+                                                                'canceled',
+                                                            )}
+                                                            title={t(
+                                                                'canceled',
+                                                            )}
+                                                            className="text-critical-ink hover:bg-critical-soft"
+                                                        />
                                                     )}
                                                     <Link
                                                         href={route(
                                                             'appointments.show',
                                                             apt.id,
                                                         )}
-                                                        className="p-1.5 text-gray-400 transition-all hover:text-blue-600 dark:hover:text-blue-400"
+                                                        aria-label={t('manage')}
+                                                        title={t('manage')}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-ink-subtle transition-colors duration-200 ease-premium hover:bg-surface-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none"
                                                     >
-                                                        <ArrowRightIcon className="h-5 w-5" />
+                                                        <ArrowRightIcon className="h-4 w-4" />
                                                     </Link>
                                                 </div>
-                                            </td>
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     ))}
-                                </tbody>
-                            </table>
+                                </TableBody>
+                            </Table>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
-                {/* Pagination */}
                 <Pagination
                     links={appointments.links}
                     meta={{
@@ -567,7 +553,7 @@ export default function AppointmentIndex({
                         total: appointments.total,
                     }}
                 />
-            </motion.div>
+            </div>
         </AppLayout>
     );
 }

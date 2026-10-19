@@ -65,6 +65,13 @@ class RoleSeeder extends Seeder
 
             // System
             'view-audit-logs',
+
+            // Radiology
+            'view-radiology',
+            'validate-radiology',
+
+            // Caisse (Cash Register)
+            'manage-caisse',
         ];
 
         foreach ($permissions as $permission) {
@@ -85,6 +92,7 @@ class RoleSeeder extends Seeder
             'view-admissions',
             'create-admissions',
             'discharge-admissions',
+            'manage-caisse',
         ]);
 
         $doctor = Role::create(['name' => 'doctor']);
@@ -101,6 +109,8 @@ class RoleSeeder extends Seeder
             'record-vitals',
             'view-lab-tests',
             'view-lab-results',
+            'view-radiology',
+            'validate-radiology',
             'dispense-drugs',
             'view-drugs',
         ]);
@@ -112,6 +122,8 @@ class RoleSeeder extends Seeder
             'manage-lab-tests',
             'view-lab-results',
             'create-lab-results',
+            'view-radiology',
+            'validate-radiology',
         ]);
 
         $pharma = Role::create(['name' => 'pharma']);

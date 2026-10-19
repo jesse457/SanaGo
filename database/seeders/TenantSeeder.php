@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\Tenant;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Stancl\Tenancy\Jobs\CreateDatabase;
 use Stancl\Tenancy\Jobs\MigrateDatabase;
 use Stancl\Tenancy\Jobs\SeedDatabase;
@@ -18,13 +20,13 @@ class TenantSeeder extends Seeder
         ];
 
         foreach ($tenants as $data) {
-            $exists = \Illuminate\Support\Facades\DB::table('tenants')
+            $exists = DB::table('tenants')
                 ->where('id', $data['id'])
                 ->exists();
 
             if (! $exists) {
                 // Use DB facade to bypass Eloquent event system in CLI
-                \Illuminate\Support\Facades\DB::table('tenants')->insert([
+                DB::table('tenants')->insert([
                     'id' => $data['id'],
                     'data' => json_encode(['name' => $data['name']]),
                     'created_at' => now(),
@@ -34,9 +36,16 @@ class TenantSeeder extends Seeder
                 $tenant = Tenant::query()->where('id', $data['id'])->first();
                 $tenant->domains()->create(['domain' => $data['domain']]);
 
+                // In TenantSeeder, modify how you run the tenant seeder
                 dispatch_sync(new CreateDatabase($tenant));
                 dispatch_sync(new MigrateDatabase($tenant));
-                dispatch_sync(new SeedDatabase($tenant));
+
+                // Instead of dispatch_sync(new SeedDatabase($tenant)), do:
+                tenancy()->initialize($tenant);
+                // Clear permission cache
+                Artisan::call('permission:cache-reset');
+                $this->call(TenantDatabaseSeeder::class);
+                tenancy()->end();
             }
         }
     }

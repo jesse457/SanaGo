@@ -1,22 +1,28 @@
 import {
-    UserCircleIcon,
-    UserIcon,
-    PhoneIcon,
-    EnvelopeIcon,
-    PhotoIcon,
     BriefcaseIcon,
     CheckIcon,
-    ArrowPathIcon,
+    EnvelopeIcon,
+    PhotoIcon,
+    UserCircleIcon,
+    UserIcon,
     XMarkIcon,
-    CheckCircleIcon,
-    ExclamationTriangleIcon,
-    MapPinIcon,
-    HomeIcon,
-    ChevronRightIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, useForm } from '@inertiajs/react';
+import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { toast } from 'sonner';
+import {
+    Alert,
+    Avatar,
+    Button,
+    Field,
+    FieldSet,
+    Input,
+    PageHeader,
+    SectionCard,
+    Select,
+    Textarea,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 
@@ -48,6 +54,7 @@ export default function CreateUser({ departments, roles }: Props) {
         password: '',
     });
 
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -63,19 +70,32 @@ export default function CreateUser({ departments, roles }: Props) {
                 file.type,
             )
         ) {
-            alert('Invalid file type. Please upload an image.');
+            toast.error(
+                'That file type is not supported. Use a PNG, JPG or GIF.',
+            );
 
             return;
         }
 
         if (file.size > 2 * 1024 * 1024) {
-            alert('File too large. Max 2MB allowed.');
+            toast.error(
+                'That image is larger than 2 MB. Choose a smaller file.',
+            );
 
             return;
         }
 
         setData('profile_picture' as any, file);
         setImagePreview(URL.createObjectURL(file));
+    };
+
+    const clearPhoto = () => {
+        setImagePreview(null);
+        setData('profile_picture' as any, null);
+
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     };
 
     const submit = (e: FormEvent) => {
@@ -94,6 +114,8 @@ export default function CreateUser({ departments, roles }: Props) {
         });
     };
 
+    const hasErrors = Boolean(errorMessage) || Object.keys(errors).length > 0;
+
     return (
         <AppLayout
             headerTitle={t('page.users_create.title')}
@@ -102,400 +124,367 @@ export default function CreateUser({ departments, roles }: Props) {
             <Head title={t('page.users_create.head_title')} />
 
             <div className="max-w-8xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8">
-                {/* Breadcrumbs */}
-                <nav className="flex text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
-                    <ol className="inline-flex items-center space-x-2">
-                        <li className="flex cursor-pointer items-center transition-colors hover:text-blue-600">
-                            <HomeIcon className="mr-1 h-4 w-4" /> {t('common.home')}
-                        </li>
-                        <li>
-                            <ChevronRightIcon className="h-4 w-4" />
-                        </li>
-                        <li className="cursor-pointer transition-colors hover:text-blue-600">
-                            {t('page.users_create.user_management')}
-                        </li>
-                        <li>
-                            <ChevronRightIcon className="h-4 w-4" />
-                        </li>
-                        <li className="font-medium text-blue-600">
-                            {t('page.users_create.new_registration')}
-                        </li>
-                    </ol>
-                </nav>
+                <PageHeader
+                    icon={UserCircleIcon}
+                    eyebrow={t('page.users_create.user_management')}
+                    title={t('page.users_create.new_registration')}
+                    description={t('page.users_create.subtitle')}
+                    breadcrumbs={[
+                        { label: t('common.home'), href: '/' },
+                        {
+                            label: t('page.users_create.user_management'),
+                            href: route('users.index'),
+                        },
+                        { label: t('page.users_create.new_registration') },
+                    ]}
+                />
 
-                {/* Alerts */}
                 {successMessage && (
-                    <div className="flex items-start justify-between rounded-lg border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-900/20">
-                        <div className="flex items-center gap-3">
-                            <CheckCircleIcon className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                            <div>
-                                <h3 className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
-                                    {t('common.success')}
-                                </h3>
-                                <div className="mt-1 text-sm text-emerald-700 dark:text-emerald-400">
-                                    {successMessage}
-                                </div>
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setSuccessMessage(null)}
-                            className="rounded-lg p-1.5 text-emerald-500 transition hover:text-emerald-700 dark:hover:text-emerald-300"
-                        >
-                            <XMarkIcon className="h-5 w-5" />
-                        </button>
-                    </div>
+                    <Alert
+                        tone="positive"
+                        title={t('common.success')}
+                        action={
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                icon={XMarkIcon}
+                                aria-label={t('common.close')}
+                                onClick={() => setSuccessMessage(null)}
+                            />
+                        }
+                    >
+                        {successMessage}
+                    </Alert>
                 )}
 
-                {(errorMessage || Object.keys(errors).length > 0) && (
-                    <div className="flex items-start justify-between rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-                        <div className="flex items-center gap-3">
-                            <ExclamationTriangleIcon className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
-                            <div>
-                                <h3 className="text-sm font-bold text-red-800 dark:text-red-300">
-                                    {t('page.users_create.registration_failed')}
-                                </h3>
-                                <div className="mt-1 text-sm text-red-700 dark:text-red-400">
-                                    {errorMessage || t('page.users_create.correct_fields')}
-                                </div>
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setErrorMessage(null)}
-                            className="rounded-lg p-1.5 text-red-500 transition hover:text-red-700 dark:hover:text-red-300"
-                        >
-                            <XMarkIcon className="h-5 w-5" />
-                        </button>
-                    </div>
+                {hasErrors && (
+                    <Alert
+                        tone="critical"
+                        title={t('page.users_create.registration_failed')}
+                        action={
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                icon={XMarkIcon}
+                                aria-label={t('common.close')}
+                                onClick={() => setErrorMessage(null)}
+                            />
+                        }
+                    >
+                        {errorMessage || t('page.users_create.correct_fields')}
+                    </Alert>
                 )}
 
-                {/* Main Form Card */}
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-                    <form onSubmit={submit} className="space-y-8 p-6">
-                        {/* Section 1: Personal Information */}
-                        <div className="space-y-4">
-                            <h3 className="flex items-center gap-2 border-b border-gray-100 pb-2 text-sm font-bold tracking-wide text-blue-600 uppercase dark:border-neutral-700">
-                                <UserCircleIcon className="h-5 w-5" />
-                                {t('page.users_create.personal_information')}
-                            </h3>
-
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <div className="md:col-span-2 space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('page.users_create.full_name')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <UserIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            value={data.name}
-                                            onChange={(e) => setData('name', e.target.value)}
-                                            placeholder={t('page.users_create.full_name_placeholder')}
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.name ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        />
-                                    </div>
-                                    {errors.name && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.name}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('page.users_create.phone_number')}
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <PhoneIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <input
-                                            type="tel"
-                                            value={data.phone_number}
-                                            onChange={(e) => setData('phone_number', e.target.value)}
-                                            placeholder={t('page.users_create.phone_placeholder')}
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.phone_number ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        />
-                                    </div>
-                                    {errors.phone_number && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.phone_number}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('page.users_create.email_address')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <EnvelopeIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <input
-                                            type="email"
-                                            value={data.email}
-                                            onChange={(e) => setData('email', e.target.value)}
-                                            placeholder={t('page.users_create.email_placeholder')}
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.email ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        />
-                                    </div>
-                                    {errors.email && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.email}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('page.users_create.gender')}
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <UserCircleIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <select
-                                            value={data.gender}
-                                            onChange={(e) => setData('gender', e.target.value)}
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.gender ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        >
-                                            <option value="">{t('page.users_create.select_gender')}</option>
-                                            <option value="Male">{t('common.male')}</option>
-                                            <option value="Female">{t('common.female')}</option>
-                                        </select>
-                                    </div>
-                                    {errors.gender && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.gender}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('page.users_create.temporary_password')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <CheckIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <input
-                                            type="password"
-                                            value={data.password}
-                                            onChange={(e) => setData('password', e.target.value)}
-                                            placeholder={t('page.users_create.password_placeholder')}
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.password ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        />
-                                    </div>
-                                    {errors.password && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.password}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="md:col-span-2 space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('page.users_create.physical_address')}
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute top-3 left-0 flex items-start pl-3">
-                                            <MapPinIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <textarea
-                                            value={data.address}
-                                            onChange={(e) => setData('address', e.target.value)}
-                                            rows={2}
-                                            placeholder={t('page.users_create.address_placeholder')}
-                                            className={`w-full resize-none rounded-lg border px-3 py-2 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.address ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        />
-                                    </div>
-                                    {errors.address && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.address}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Section 2: Employment Details */}
-                        <div className="space-y-4">
-                            <h3 className="flex items-center gap-2 border-b border-gray-100 pb-2 text-sm font-bold tracking-wide text-blue-600 uppercase dark:border-neutral-700">
-                                <BriefcaseIcon className="h-5 w-5" />
-                                {t('page.users_create.employment_details')}
-                            </h3>
-
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('page.users_create.department')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <BriefcaseIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <select
-                                            value={data.department_id}
-                                            onChange={(e) => setData('department_id', e.target.value)}
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.department_id ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        >
-                                            <option value="">{t('page.users_create.select_department')}</option>
-                                            {departments.map((dept) => (
-                                                <option key={dept.id} value={dept.id}>
-                                                    {dept.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    {errors.department_id && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.department_id}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="space-y-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
-                                        {t('page.users_create.system_role')}{' '}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <UserIcon className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <select
-                                            value={data.role}
-                                            onChange={(e) => setData('role', e.target.value)}
-                                            className={`w-full rounded-lg border py-2 pr-3 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-neutral-700 dark:text-neutral-100 ${errors.role ? 'border-red-300 ring-1 ring-red-100 dark:border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                                        >
-                                            <option value="">{t('page.users_create.select_role')}</option>
-                                            {roles.map((role) => (
-                                                <option key={role.id} value={role.name}>
-                                                    {role.name.replace('_', ' ')}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    {errors.role && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.role}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Section 3: Profile Picture */}
-                        <div className="space-y-4">
-                            <h3 className="flex items-center gap-2 border-b border-gray-100 pb-2 text-sm font-bold tracking-wide text-blue-600 uppercase dark:border-neutral-700">
-                                <PhotoIcon className="h-5 w-5" />
-                                {t('page.users_create.profile_picture')}{' '}
-                                <span className="ml-1 text-xs font-normal text-gray-400">
-                                    {t('common.optional')}
-                                </span>
-                            </h3>
-
-                            <div
-                                onDragOver={(e) => {
-                                    e.preventDefault();
-                                    setIsDragging(true);
-                                }}
-                                onDragLeave={() => setIsDragging(false)}
-                                onDrop={(e) => {
-                                    e.preventDefault();
-                                    setIsDragging(false);
-                                    handleFile(e.dataTransfer.files[0]);
-                                }}
-                                className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-all ${isDragging ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10' : 'border-gray-200 bg-gray-50 hover:bg-gray-100 dark:border-neutral-600 dark:bg-neutral-700/30 dark:hover:bg-neutral-700'}`}
+                <form onSubmit={submit} className="space-y-6">
+                    <SectionCard
+                        icon={UserCircleIcon}
+                        title={t('page.users_create.personal_information')}
+                    >
+                        <FieldSet columns={2}>
+                            <Field
+                                label={t('page.users_create.full_name')}
+                                htmlFor="name"
+                                required
+                                error={errors.name}
+                                className="sm:col-span-2"
                             >
-                                {imagePreview ? (
-                                    <div className="relative mb-4">
-                                        <img
-                                            src={imagePreview}
-                                            alt="Preview"
-                                            className="h-24 w-24 rounded-xl object-cover shadow-lg"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setImagePreview(null);
-                                                setData(
-                                                    'profile_picture' as any,
-                                                    null,
-                                                );
-                                            }}
-                                            className="absolute -top-2 -right-2 rounded-full border border-gray-100 bg-white p-1 text-red-500 shadow-md transition-colors hover:bg-red-50 dark:border-neutral-600 dark:bg-neutral-700 dark:hover:bg-red-900/20"
-                                        >
-                                            <XMarkIcon className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <PhotoIcon className="mb-2 h-12 w-12 text-gray-300 dark:text-neutral-500" />
-                                )}
+                                <Input
+                                    id="name"
+                                    name="name"
+                                    icon={UserIcon}
+                                    autoComplete="name"
+                                    value={data.name}
+                                    onChange={(e) =>
+                                        setData('name', e.target.value)
+                                    }
+                                    placeholder={t(
+                                        'page.users_create.full_name_placeholder',
+                                    )}
+                                    invalid={Boolean(errors.name)}
+                                />
+                            </Field>
 
-                                <label className="cursor-pointer text-sm font-bold text-blue-600 hover:text-blue-700">
-                                    <span>
-                                        {t('page.users_create.upload_photo')}
-                                    </span>
-                                    <input
-                                        type="file"
-                                        className="sr-only"
-                                        accept="image/*"
-                                        onChange={(e) =>
-                                            e.target.files?.[0] &&
-                                            handleFile(e.target.files[0])
-                                        }
-                                    />
-                                </label>
-                                <p className="mt-1 text-xs font-bold text-gray-400 uppercase dark:text-neutral-500">
+                            <Field
+                                label={t('page.users_create.phone_number')}
+                                htmlFor="phone_number"
+                                error={errors.phone_number}
+                            >
+                                <Input
+                                    id="phone_number"
+                                    name="phone_number"
+                                    type="tel"
+                                    autoComplete="tel"
+                                    value={data.phone_number}
+                                    onChange={(e) =>
+                                        setData('phone_number', e.target.value)
+                                    }
+                                    placeholder={t(
+                                        'page.users_create.phone_placeholder',
+                                    )}
+                                    invalid={Boolean(errors.phone_number)}
+                                />
+                            </Field>
+
+                            <Field
+                                label={t('page.users_create.email_address')}
+                                htmlFor="email"
+                                required
+                                error={errors.email}
+                            >
+                                <Input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    autoComplete="email"
+                                    icon={EnvelopeIcon}
+                                    value={data.email}
+                                    onChange={(e) =>
+                                        setData('email', e.target.value)
+                                    }
+                                    placeholder={t(
+                                        'page.users_create.email_placeholder',
+                                    )}
+                                    invalid={Boolean(errors.email)}
+                                />
+                            </Field>
+
+                            <Field
+                                label={t('page.users_create.gender')}
+                                htmlFor="gender"
+                                error={errors.gender}
+                            >
+                                <Select
+                                    id="gender"
+                                    name="gender"
+                                    value={data.gender}
+                                    onChange={(e) =>
+                                        setData('gender', e.target.value)
+                                    }
+                                    invalid={Boolean(errors.gender)}
+                                >
+                                    <option value="">
+                                        {t('page.users_create.select_gender')}
+                                    </option>
+                                    <option value="Male">
+                                        {t('common.male')}
+                                    </option>
+                                    <option value="Female">
+                                        {t('common.female')}
+                                    </option>
+                                </Select>
+                            </Field>
+
+                            <Field
+                                label={t(
+                                    'page.users_create.temporary_password',
+                                )}
+                                htmlFor="password"
+                                required
+                                error={errors.password}
+                            >
+                                <Input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    autoComplete="new-password"
+                                    value={data.password}
+                                    onChange={(e) =>
+                                        setData('password', e.target.value)
+                                    }
+                                    placeholder={t(
+                                        'page.users_create.password_placeholder',
+                                    )}
+                                    invalid={Boolean(errors.password)}
+                                />
+                            </Field>
+
+                            <Field
+                                label={t('page.users_create.physical_address')}
+                                htmlFor="address"
+                                error={errors.address}
+                                className="sm:col-span-2"
+                            >
+                                <Textarea
+                                    id="address"
+                                    name="address"
+                                    rows={2}
+                                    autoComplete="street-address"
+                                    value={data.address}
+                                    onChange={(e) =>
+                                        setData('address', e.target.value)
+                                    }
+                                    placeholder={t(
+                                        'page.users_create.address_placeholder',
+                                    )}
+                                    invalid={Boolean(errors.address)}
+                                />
+                            </Field>
+                        </FieldSet>
+                    </SectionCard>
+
+                    <SectionCard
+                        icon={BriefcaseIcon}
+                        title={t('page.users_create.employment_details')}
+                    >
+                        <FieldSet columns={2}>
+                            <Field
+                                label={t('page.users_create.department')}
+                                htmlFor="department_id"
+                                required
+                                error={errors.department_id}
+                            >
+                                <Select
+                                    id="department_id"
+                                    name="department_id"
+                                    value={data.department_id}
+                                    onChange={(e) =>
+                                        setData('department_id', e.target.value)
+                                    }
+                                    invalid={Boolean(errors.department_id)}
+                                >
+                                    <option value="">
+                                        {t(
+                                            'page.users_create.select_department',
+                                        )}
+                                    </option>
+                                    {departments.map((dept) => (
+                                        <option key={dept.id} value={dept.id}>
+                                            {dept.name}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </Field>
+
+                            <Field
+                                label={t('page.users_create.system_role')}
+                                htmlFor="role"
+                                required
+                                error={errors.role}
+                            >
+                                <Select
+                                    id="role"
+                                    name="role"
+                                    value={data.role}
+                                    onChange={(e) =>
+                                        setData('role', e.target.value)
+                                    }
+                                    invalid={Boolean(errors.role)}
+                                >
+                                    <option value="">
+                                        {t('page.users_create.select_role')}
+                                    </option>
+                                    {roles.map((role) => (
+                                        <option key={role.id} value={role.name}>
+                                            {role.name.replace('_', ' ')}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </Field>
+                        </FieldSet>
+                    </SectionCard>
+
+                    <SectionCard
+                        icon={PhotoIcon}
+                        title={t('page.users_create.profile_picture')}
+                        description={t('page.users_create.max_photo_size')}
+                    >
+                        <div
+                            onDragOver={(e) => {
+                                e.preventDefault();
+                                setIsDragging(true);
+                            }}
+                            onDragLeave={() => setIsDragging(false)}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                setIsDragging(false);
+                                handleFile(e.dataTransfer.files[0]);
+                            }}
+                            className={`flex flex-col items-start gap-4 rounded-lg border border-dashed p-4 transition-colors duration-200 ease-premium sm:flex-row sm:items-center ${
+                                isDragging
+                                    ? 'border-accent bg-accent-soft'
+                                    : 'border-line-strong bg-surface-muted'
+                            }`}
+                        >
+                            <Avatar
+                                size="xl"
+                                src={imagePreview}
+                                name={
+                                    data.name ||
+                                    t('page.users_create.full_name')
+                                }
+                            />
+
+                            <div className="min-w-0 flex-1">
+                                <p className="text-[13px] font-medium text-ink">
+                                    {t('page.users_create.upload_photo')}
+                                </p>
+                                <p className="mt-0.5 text-[12px] text-ink-subtle">
                                     {t('page.users_create.max_photo_size')}
                                 </p>
                             </div>
-                            {(errors as any).profile_picture && (
-                                <p className="mt-1 ml-1 text-xs font-bold text-red-500">
-                                    {(errors as any).profile_picture}
-                                </p>
-                            )}
-                        </div>
 
-                        {/* Form Actions */}
-                        <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4 dark:border-neutral-700">
-                            <Link
-                                href={route('users.index')}
-                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                            >
-                                {t('common.cancel')}
-                            </Link>
-
-                            <button
-                                type="submit"
-                                disabled={processing}
-                                className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {processing ? (
-                                    <span className="flex items-center gap-2">
-                                        <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                                        {t('page.users_create.creating')}
-                                    </span>
-                                ) : (
-                                    <span className="flex items-center gap-2">
-                                        <CheckIcon className="h-4 w-4" />
-                                        {t('page.users_create.complete_registration')}
-                                    </span>
+                            <div className="flex shrink-0 items-center gap-2">
+                                {imagePreview && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        icon={XMarkIcon}
+                                        onClick={clearPhoto}
+                                    >
+                                        {t('common.delete')}
+                                    </Button>
                                 )}
-                            </button>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    icon={PhotoIcon}
+                                    onClick={() =>
+                                        fileInputRef.current?.click()
+                                    }
+                                >
+                                    {t('page.users_create.upload_photo')}
+                                </Button>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    name="profile_picture"
+                                    className="sr-only"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+
+                                        if (file) {
+                                            handleFile(file);
+                                        }
+                                    }}
+                                />
+                            </div>
                         </div>
-                    </form>
-                </div>
+
+                        {(errors as any).profile_picture && (
+                            <p className="mt-2 text-[12px] leading-snug font-medium text-critical-ink">
+                                {(errors as any).profile_picture}
+                            </p>
+                        )}
+                    </SectionCard>
+
+                    <div className="flex flex-wrap items-center justify-end gap-2 border-t border-line pt-4">
+                        <Button variant="secondary" href={route('users.index')}>
+                            {t('common.cancel')}
+                        </Button>
+                        <Button
+                            type="submit"
+                            icon={CheckIcon}
+                            loading={processing}
+                        >
+                            {processing
+                                ? t('page.users_create.creating')
+                                : t('page.users_create.complete_registration')}
+                        </Button>
+                    </div>
+                </form>
             </div>
         </AppLayout>
     );

@@ -7,11 +7,16 @@ import {
     ClockIcon,
 } from '@heroicons/react/24/outline';
 import { Head } from '@inertiajs/react';
-import DetailItem from '@/Components/DetailItem';
-import EmptyState from '@/Components/EmptyState';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
-import PageSection from '@/Components/PageSection';
-import StatCard from '@/Components/StatCard';
+import {
+    EmptyState,
+    KeyValue,
+    KeyValueGrid,
+    PageHeader,
+    ProgressBar,
+    SectionCard,
+    StatCard,
+    StatGrid,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 
@@ -35,12 +40,14 @@ export default function BillingIndex({
     tenant_name,
 }: BillingProps) {
     const { t } = useTranslation();
+    // "Days remaining" is inherently time-dependent: the clock is read once per
+    // render on purpose, so the lint rule is silenced with that intent.
+    // eslint-disable-next-line react-hooks/purity
+    const now = Date.now();
     const daysRemaining = sub
         ? Math.max(
               0,
-              Math.ceil(
-                  (new Date(sub.end_date).getTime() - Date.now()) / 86400000,
-              ),
+              Math.ceil((new Date(sub.end_date).getTime() - now) / 86400000),
           )
         : 0;
     const usagePercent = daysRemaining
@@ -53,9 +60,16 @@ export default function BillingIndex({
             headerSubtitle={tenant_name}
         >
             <Head title="Billing" />
-            <div className="mx-auto max-w-5xl space-y-6 px-6">
-                <PageBreadcrumb
-                    items={[{ label: t('common.home') }, { label: 'Billing' }]}
+
+            <div className="mx-auto flex max-w-5xl flex-col gap-6">
+                <PageHeader
+                    title="Billing & Subscription"
+                    eyebrow={tenant_name}
+                    description="Your current plan, billing period and included features."
+                    breadcrumbs={[
+                        { label: t('common.home'), href: route('dashboard') },
+                        { label: 'Billing' },
+                    ]}
                 />
 
                 {!sub ? (
@@ -66,83 +80,82 @@ export default function BillingIndex({
                     />
                 ) : (
                     <>
-                        {/* Stats Row */}
-                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                        <StatGrid columns={4}>
                             <StatCard
                                 icon={ArchiveBoxIcon}
                                 label="Plan"
                                 value={sub.plan_name}
-                                color="blue"
+                                tone="accent"
                             />
                             <StatCard
                                 icon={CurrencyDollarIcon}
                                 label="Price"
                                 value={`${sub.price}/${sub.billing_cycle}`}
-                                color="purple"
+                                tone="accent"
                             />
                             <StatCard
                                 icon={CheckCircleIcon}
                                 label="Status"
                                 value={sub.status}
-                                color={
+                                tone={
                                     sub.status === 'active'
-                                        ? 'emerald'
-                                        : 'amber'
+                                        ? 'positive'
+                                        : 'warning'
                                 }
                             />
                             <StatCard
                                 icon={ClockIcon}
                                 label="Auto Renew"
                                 value={sub.auto_renew ? 'Yes' : 'No'}
-                                color={sub.auto_renew ? 'emerald' : 'red'}
+                                tone={sub.auto_renew ? 'positive' : 'critical'}
                             />
-                        </div>
+                        </StatGrid>
 
                         <div className="grid gap-6 lg:grid-cols-3">
-                            {/* Plan Details */}
                             <div className="lg:col-span-2">
-                                <PageSection
+                                <SectionCard
                                     title="Plan Details"
                                     icon={CreditCardIcon}
                                 >
-                                    <div className="p-6">
-                                        <div className="grid gap-4 sm:grid-cols-2">
-                                            <DetailItem
+                                    <div className="space-y-4">
+                                        <KeyValueGrid columns={2}>
+                                            <KeyValue
                                                 label="Start Date"
                                                 value={sub.start_date}
                                                 icon={CalendarDaysIcon}
                                             />
-                                            <DetailItem
+                                            <KeyValue
                                                 label="End Date"
                                                 value={sub.end_date}
                                                 icon={CalendarDaysIcon}
                                             />
-                                            <div className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700/50">
-                                                <div className="flex items-center gap-2">
-                                                    <ClockIcon className="h-4 w-4 text-gray-400 dark:text-neutral-500" />
-                                                    <span className="text-[10px] font-bold text-gray-400 uppercase dark:text-neutral-500">
-                                                        Days Remaining
-                                                    </span>
-                                                </div>
-                                                <p
-                                                    className={`mt-1 ml-6 text-sm font-bold ${
-                                                        daysRemaining < 30
-                                                            ? 'text-red-500'
-                                                            : 'text-emerald-600'
-                                                    }`}
-                                                >
-                                                    {daysRemaining} days
-                                                </p>
-                                            </div>
-                                            <DetailItem
+                                            <KeyValue
                                                 label="Billing Cycle"
                                                 value={sub.billing_cycle}
                                             />
-                                        </div>
-                                        <div className="mt-4">
-                                            <div className="mb-1 flex justify-between text-xs text-gray-400">
+                                            <div className="min-w-0">
+                                                <dt className="flex items-center gap-1.5 text-[10.5px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">
+                                                    <ClockIcon className="h-3.5 w-3.5" />
+                                                    Days Remaining
+                                                </dt>
+                                                <dd className="mt-1 flex items-center gap-2">
+                                                    <span
+                                                        className={`text-[13px] font-semibold tabular-nums ${
+                                                            daysRemaining < 30
+                                                                ? 'text-critical-ink'
+                                                                : 'text-positive-ink'
+                                                        }`}
+                                                    >
+                                                        {daysRemaining} days
+                                                    </span>
+                                                </dd>
+                                            </div>
+                                        </KeyValueGrid>
+
+                                        <div>
+                                            <div className="mb-1.5 flex justify-between text-[12px] text-ink-subtle tabular-nums">
                                                 <span>
-                                                    Period Usage ({usagePercent}
+                                                    Period usage ({usagePercent}
                                                     %)
                                                 </span>
                                                 <span>
@@ -150,60 +163,53 @@ export default function BillingIndex({
                                                     days
                                                 </span>
                                             </div>
-                                            <div className="h-2.5 w-full rounded-full bg-gray-100 dark:bg-neutral-700">
-                                                <div
-                                                    className={`h-2.5 rounded-full transition-all ${
-                                                        usagePercent > 90
-                                                            ? 'bg-red-500'
-                                                            : 'bg-blue-600'
-                                                    }`}
-                                                    style={{
-                                                        width: `${Math.min(usagePercent, 100)}%`,
-                                                    }}
-                                                />
-                                            </div>
+                                            <ProgressBar
+                                                value={Math.min(
+                                                    usagePercent,
+                                                    100,
+                                                )}
+                                                tone={
+                                                    usagePercent > 90
+                                                        ? 'critical'
+                                                        : 'accent'
+                                                }
+                                                label="Period usage"
+                                            />
                                         </div>
                                     </div>
-                                </PageSection>
+                                </SectionCard>
                             </div>
 
-                            {/* Features */}
-                            <div>
-                                <PageSection title="Your Plan Features">
-                                    <div className="p-6">
-                                        {sub.features_json &&
-                                        sub.features_json.length > 0 ? (
-                                            <ul className="space-y-2.5">
-                                                {sub.features_json.map(
-                                                    (f, i) => (
-                                                        <li
-                                                            key={i}
-                                                            className={`flex items-center gap-2 text-sm ${
-                                                                f.is_highlighted
-                                                                    ? 'font-semibold text-gray-900 dark:text-neutral-100'
-                                                                    : 'text-gray-500 dark:text-neutral-400'
-                                                            }`}
-                                                        >
-                                                            <CheckCircleIcon
-                                                                className={`h-4 w-4 ${
-                                                                    f.is_highlighted
-                                                                        ? 'text-blue-600'
-                                                                        : 'text-gray-300 dark:text-neutral-600'
-                                                                }`}
-                                                            />
-                                                            {f.feature_label}
-                                                        </li>
-                                                    ),
-                                                )}
-                                            </ul>
-                                        ) : (
-                                            <p className="text-sm text-gray-400">
-                                                No feature details available.
-                                            </p>
-                                        )}
-                                    </div>
-                                </PageSection>
-                            </div>
+                            <SectionCard title="Your Plan Features">
+                                {sub.features_json &&
+                                sub.features_json.length > 0 ? (
+                                    <ul className="space-y-2.5">
+                                        {sub.features_json.map((f, i) => (
+                                            <li
+                                                key={i}
+                                                className={`flex items-center gap-2 text-[13px] ${
+                                                    f.is_highlighted
+                                                        ? 'font-semibold text-ink'
+                                                        : 'text-ink-subtle'
+                                                }`}
+                                            >
+                                                <CheckCircleIcon
+                                                    className={`h-4 w-4 shrink-0 ${
+                                                        f.is_highlighted
+                                                            ? 'text-accent'
+                                                            : 'text-ink-subtle'
+                                                    }`}
+                                                />
+                                                {f.feature_label}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-[13px] text-ink-subtle">
+                                        No feature details available.
+                                    </p>
+                                )}
+                            </SectionCard>
                         </div>
                     </>
                 )}

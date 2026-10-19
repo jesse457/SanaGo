@@ -2,11 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Enums\AdmissionStatus;
 use App\Models\Admission;
 use App\Models\Bed;
 use App\Models\Patient;
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain;
+use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 use function Tests\Helpers\migrateTenantTables;
 
@@ -14,11 +18,11 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     migrateTenantTables();
-    $this->seed(\Database\Seeders\RoleSeeder::class);
+    $this->seed(RoleSeeder::class);
     $this->admin = tap(User::factory()->create())->assignRole('admin');
     $this->withoutMiddleware([
-        \Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain::class,
-        \Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains::class,
+        InitializeTenancyBySubdomain::class,
+        PreventAccessFromCentralDomains::class,
     ]);
 });
 
@@ -46,7 +50,7 @@ it('discharges an admitted patient', function () {
     $admission = Admission::factory()->admitted()->create();
     $this->actingAs($this->admin)->post(route('admissions.discharge', $admission))
         ->assertRedirect();
-    expect(Admission::find($admission->id)->status)->toBe(\App\Enums\AdmissionStatus::Discharged);
+    expect(Admission::find($admission->id)->status)->toBe(AdmissionStatus::Discharged);
 });
 
 it('validates required fields on store', function () {

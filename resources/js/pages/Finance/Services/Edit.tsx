@@ -1,8 +1,4 @@
-import {
-    TagIcon,
-    ArrowPathIcon,
-    CheckIcon,
-} from '@heroicons/react/24/outline';
+import { TagIcon, ArrowPathIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { Head, Link, useForm } from '@inertiajs/react';
 import FormInput from '@/Components/FormInput';
 import FormSelect from '@/Components/FormSelect';
@@ -121,7 +117,7 @@ export default function ServicesEdit({ service }: { service: Service }) {
                             rows={3}
                         />
 
-                        <div className="space-y-4 border-t border-gray-100 pt-4 dark:border-neutral-700">
+                        <div className="space-y-4 border-t border-line pt-4">
                             <div className="flex items-center gap-3">
                                 <input
                                     type="checkbox"
@@ -130,11 +126,11 @@ export default function ServicesEdit({ service }: { service: Service }) {
                                     onChange={(e) =>
                                         setData('is_active', e.target.checked)
                                     }
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
+                                    className="rounded border-line-strong bg-surface text-accent-ink focus:ring-blue-500"
                                 />
                                 <label
                                     htmlFor="is_active"
-                                    className="text-sm font-medium text-gray-700 dark:text-neutral-300"
+                                    className="text-sm font-medium text-ink-muted"
                                 >
                                     Service actif
                                 </label>
@@ -151,28 +147,28 @@ export default function ServicesEdit({ service }: { service: Service }) {
                                             e.target.checked,
                                         )
                                     }
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
+                                    className="rounded border-line-strong bg-surface text-accent-ink focus:ring-blue-500"
                                 />
                                 <label
                                     htmlFor="requires_upfront_payment"
-                                    className="text-sm font-medium text-gray-700 dark:text-neutral-300"
+                                    className="text-sm font-medium text-ink-muted"
                                 >
                                     Paiement avant service requis
                                 </label>
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4 dark:border-neutral-700">
+                        <div className="flex items-center justify-end gap-3 border-t border-line pt-4">
                             <Link
                                 href={route('finance.services.index')}
-                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                                className="rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-hover"
                             >
                                 Annuler
                             </Link>
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-bold text-ink-inverse transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 {processing ? (
                                     <span className="flex items-center gap-2">

@@ -1,60 +1,62 @@
-import { Link } from '@inertiajs/react';
-import { cva } from 'class-variance-authority';
-import type { VariantProps } from 'class-variance-authority';
-import type { ComponentPropsWithoutRef } from 'react';
-import { cn } from '@/lib/utils';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonProps } from '@/Components/ui/Button';
+import { Button as UiButton } from '@/Components/ui/Button';
 
-const buttonVariants = cva(
-    'inline-flex items-center justify-center rounded-2xl font-bold transition-all duration-200 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-70',
-    {
-        variants: {
-            variant: {
-                primary:
-                    'bg-blue-600 text-white shadow-xl shadow-blue-200 hover:bg-blue-700 dark:shadow-blue-900/30',
-                secondary:
-                    'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700',
-                ghost: 'text-slate-600 hover:bg-slate-100 hover:text-blue-600 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-blue-400',
-            },
-            size: {
-                sm: 'px-4 py-2 text-xs',
-                md: 'px-6 py-2.5 text-sm',
-                lg: 'px-8 py-4 text-base',
-                xl: 'px-12 py-4 text-base',
-            },
-        },
-        defaultVariants: {
-            variant: 'primary',
-            size: 'md',
-        },
-    },
-);
+/**
+ * Marketing call-to-action.
+ *
+ * A thin semantic layer over the shared kit button: marketing pages speak
+ * `primary` / `secondary` / `ghost`, the kit keeps the geometry, the pill-free
+ * radii and the focus ring. `primary` maps to the kit's `accent`, so the site's
+ * one considered blue carries every conversion point.
+ */
 
-type ButtonProps = ComponentPropsWithoutRef<'button'> &
-    VariantProps<typeof buttonVariants> & {
-        href?: string;
-    };
+type MarketingVariant = 'primary' | 'secondary' | 'ghost';
+type MarketingSize = 'md' | 'lg' | 'xl';
+
+export interface MarketingButtonProps {
+    variant?: MarketingVariant;
+    size?: MarketingSize;
+    href?: string;
+    className?: string;
+    children?: ReactNode;
+}
+
+const variantMap = {
+    primary: 'accent',
+    secondary: 'secondary',
+    ghost: 'ghost',
+} as const;
+
+/* `xl` gets extra horizontal breathing room rather than a new control height. */
+const sizeMap = {
+    md: 'md',
+    lg: 'lg',
+    xl: 'lg',
+} as const;
 
 export default function Button({
-    variant,
-    size,
-    className,
+    variant = 'primary',
+    size = 'md',
     href,
+    className,
     children,
     ...props
-}: ButtonProps) {
-    const classes = cn(buttonVariants({ variant, size }), className);
+}: MarketingButtonProps &
+    Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'children'>) {
+    const shared = {
+        variant: variantMap[variant],
+        size: sizeMap[size],
+        className:
+            size === 'xl' ? `px-6 text-[15px] ${className ?? ''}` : className,
+        children,
+    };
 
     if (href) {
-        return (
-            <Link href={href} className={classes}>
-                {children}
-            </Link>
-        );
+        return <UiButton href={href} {...(shared as ButtonProps)} />;
     }
 
     return (
-        <button className={classes} {...props}>
-            {children}
-        </button>
+        <UiButton {...(shared as ButtonProps)} {...(props as ButtonProps)} />
     );
 }

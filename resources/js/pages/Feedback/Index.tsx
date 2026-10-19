@@ -19,6 +19,14 @@ import Modal from '@/Components/Modal';
 import PageBreadcrumb from '@/Components/PageBreadcrumb';
 import StatCard from '@/Components/StatCard';
 import StatusBadge from '@/Components/StatusBadge';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+} from '@/Components/ui';
 import ViewToggle from '@/Components/ViewToggle';
 import AppLayout from '@/Layouts/AppLayout';
 
@@ -138,20 +146,20 @@ export default function FeedbackHistory({ feedbacks }: Props) {
                 {/* Header Controls */}
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div className="relative w-full sm:w-80">
-                        <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-neutral-500" />
+                        <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-ink-subtle" />
                         <input
                             type="text"
                             placeholder="Search feedback..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full rounded-lg border border-gray-200 bg-white py-2 pr-4 pl-9 text-sm transition-all outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800"
+                            className="w-full rounded-lg border border-line bg-surface py-2 pr-4 pl-9 text-sm transition-all outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
 
                     <div className="flex items-center gap-3">
                         <Link
                             href={route('feedback.create')}
-                            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700"
+                            className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-bold text-ink-inverse shadow-surface transition-all hover:bg-accent-hover"
                         >
                             <PlusIcon className="h-4 w-4" /> New Feedback
                         </Link>
@@ -171,10 +179,10 @@ export default function FeedbackHistory({ feedbacks }: Props) {
                         {filteredFeedback.map((feedback) => (
                             <div
                                 key={feedback.id}
-                                className="flex h-full flex-col rounded-xl border border-gray-200 bg-white p-6 transition-all hover:border-blue-400 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                                className="flex h-full flex-col rounded-xl border border-line bg-surface p-6 transition-all hover:border-accent hover:shadow-surface"
                             >
                                 <div className="mb-4 flex items-start justify-between">
-                                    <div className="rounded-lg bg-blue-50 p-2.5 text-blue-600">
+                                    <div className="rounded-lg bg-accent-soft p-2.5 text-accent-ink">
                                         <ChatBubbleBottomCenterTextIcon className="h-6 w-6" />
                                     </div>
                                     <StatusBadge
@@ -183,19 +191,19 @@ export default function FeedbackHistory({ feedbacks }: Props) {
                                     />
                                 </div>
                                 <div className="mb-4 flex-grow">
-                                    <h3 className="mb-1 text-lg font-bold text-gray-900 dark:text-neutral-100">
+                                    <h3 className="mb-1 text-lg font-bold text-ink">
                                         {feedback.subject}
                                     </h3>
-                                    <div className="mb-4 flex items-center gap-1.5 text-xs font-medium text-gray-400 uppercase dark:text-neutral-500">
+                                    <div className="mb-4 flex items-center gap-1.5 text-xs font-medium text-ink-subtle uppercase">
                                         <TagIcon className="h-3 w-3" />{' '}
                                         {feedback.category}
                                     </div>
-                                    <p className="line-clamp-2 text-sm leading-relaxed text-gray-500 dark:text-neutral-500">
+                                    <p className="line-clamp-2 text-sm leading-relaxed text-ink-subtle">
                                         {feedback.message}
                                     </p>
                                 </div>
-                                <div className="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-neutral-700">
-                                    <span className="text-[10px] font-bold text-gray-400 dark:text-neutral-500">
+                                <div className="flex items-center justify-between border-t border-line pt-4">
+                                    <span className="text-[10px] font-bold text-ink-subtle">
                                         {new Date(
                                             feedback.created_at,
                                         ).toLocaleDateString()}
@@ -204,7 +212,7 @@ export default function FeedbackHistory({ feedbacks }: Props) {
                                         onClick={() =>
                                             handleViewDetails(feedback)
                                         }
-                                        className="flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700"
+                                        className="flex items-center gap-1.5 rounded-lg bg-accent-soft px-3 py-1.5 text-xs font-bold text-accent-ink"
                                     >
                                         View Details{' '}
                                         <ArrowRightIcon className="h-4 w-4" />
@@ -214,77 +222,76 @@ export default function FeedbackHistory({ feedbacks }: Props) {
                         ))}
                     </div>
                 ) : (
-                    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
-                            <thead className="bg-gray-50 dark:bg-neutral-700">
-                                <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase dark:text-neutral-500">
-                                        Feedback Details
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase dark:text-neutral-500">
-                                        Category
-                                    </th>
-                                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase dark:text-neutral-500">
-                                        Status
-                                    </th>
-                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase dark:text-neutral-500">
-                                        Submitted
-                                    </th>
-                                    <th className="px-6 py-4"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-neutral-700">
-                                {filteredFeedback.map((feedback) => (
-                                    <tr
-                                        key={feedback.id}
-                                        className="transition-colors hover:bg-gray-50 dark:hover:bg-neutral-700"
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                                <TableHeaderCell>
+                                    Feedback details
+                                </TableHeaderCell>
+                                <TableHeaderCell>Category</TableHeaderCell>
+                                <TableHeaderCell numeric>
+                                    Status
+                                </TableHeaderCell>
+                                <TableHeaderCell numeric>
+                                    Submitted
+                                </TableHeaderCell>
+                                <TableHeaderCell numeric>
+                                    <span className="sr-only">Actions</span>
+                                </TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredFeedback.map((feedback) => (
+                                <TableRow key={feedback.id}>
+                                    <TableCell>
+                                        <div className="text-[13px] font-semibold text-ink">
+                                            {feedback.subject}
+                                        </div>
+                                        <div className="line-clamp-1 text-xs text-ink-subtle">
+                                            {feedback.message}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span className="rounded bg-surface-inset px-2 py-1 text-xs font-semibold text-ink-muted capitalize">
+                                            {feedback.category.replace(
+                                                '-',
+                                                ' ',
+                                            )}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell numeric>
+                                        <StatusBadge
+                                            label={statusLabel(feedback.status)}
+                                            color={statusColor(feedback.status)}
+                                        />
+                                    </TableCell>
+                                    <TableCell
+                                        numeric
+                                        muted
+                                        className="text-[12px]"
                                     >
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                                {feedback.subject}
-                                            </div>
-                                            <div className="line-clamp-1 text-xs text-gray-500 dark:text-neutral-500">
-                                                {feedback.message}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="rounded bg-gray-100 px-2 py-1 text-xs font-bold text-gray-600 capitalize dark:text-neutral-400">
-                                                {feedback.category.replace(
-                                                    '-',
-                                                    ' ',
-                                                )}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <StatusBadge
-                                                label={statusLabel(
-                                                    feedback.status,
-                                                )}
-                                                color={statusColor(
-                                                    feedback.status,
-                                                )}
-                                            />
-                                        </td>
-                                        <td className="px-6 py-4 text-right text-xs font-medium text-gray-400 dark:text-neutral-500">
-                                            {new Date(
-                                                feedback.created_at,
-                                            ).toLocaleDateString()}
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button
-                                                onClick={() =>
-                                                    handleViewDetails(feedback)
-                                                }
-                                                className="p-1.5 text-gray-400 transition-all hover:text-blue-600 dark:text-neutral-500"
-                                            >
-                                                <ArrowRightIcon className="h-5 w-5" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                        {new Date(
+                                            feedback.created_at,
+                                        ).toLocaleDateString()}
+                                    </TableCell>
+                                    <TableCell numeric>
+                                        <button
+                                            onClick={() =>
+                                                handleViewDetails(feedback)
+                                            }
+                                            aria-label={
+                                                'View details for ' +
+                                                feedback.subject
+                                            }
+                                            className="p-1.5 text-ink-subtle transition-colors duration-150 ease-premium hover:text-accent"
+                                        >
+                                            <ArrowRightIcon className="h-4 w-4" />
+                                        </button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 )}
             </div>
 
@@ -299,18 +306,18 @@ export default function FeedbackHistory({ feedbacks }: Props) {
                     <div className="space-y-8">
                         <div className="flex items-start justify-between">
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900 dark:text-neutral-100">
+                                <h3 className="text-xl font-bold text-ink">
                                     {selectedFeedback.subject}
                                 </h3>
                                 <div className="mt-1 flex items-center gap-3">
-                                    <span className="flex items-center gap-1 text-[10px] font-black tracking-widest text-blue-600 uppercase">
+                                    <span className="flex items-center gap-1 text-[10px] font-black tracking-widest text-accent-ink uppercase">
                                         <TagIcon className="h-3 w-3" />{' '}
                                         {selectedFeedback.category.replace(
                                             '-',
                                             ' ',
                                         )}
                                     </span>
-                                    <span className="text-[10px] font-bold text-gray-400 dark:text-neutral-500">
+                                    <span className="text-[10px] font-bold text-ink-subtle">
                                         ID: #{selectedFeedback.id}
                                     </span>
                                 </div>
@@ -322,39 +329,39 @@ export default function FeedbackHistory({ feedbacks }: Props) {
                         </div>
 
                         <div className="space-y-3">
-                            <h4 className="text-xs font-black tracking-widest text-gray-400 uppercase dark:text-neutral-500">
+                            <h4 className="text-xs font-black tracking-widest text-ink-subtle uppercase">
                                 Your Message
                             </h4>
-                            <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5 text-sm leading-relaxed text-gray-700 dark:border-neutral-700 dark:bg-neutral-700 dark:text-neutral-300">
+                            <div className="rounded-2xl border border-line bg-surface-muted p-5 text-sm leading-relaxed text-ink-muted">
                                 {selectedFeedback.message}
                             </div>
                         </div>
 
                         <div className="space-y-3">
-                            <h4 className="flex items-center gap-2 text-xs font-black tracking-widest text-gray-400 uppercase dark:text-neutral-500">
+                            <h4 className="flex items-center gap-2 text-xs font-black tracking-widest text-ink-subtle uppercase">
                                 <ArrowPathIcon className="h-4 w-4" /> System
                                 Response
                             </h4>
                             {selectedFeedback.response ? (
                                 <div className="flex gap-4">
-                                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-600 font-bold text-white">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent font-bold text-ink-inverse">
                                         {selectedFeedback.responder?.name.charAt(
                                             0,
                                         )}
                                     </div>
-                                    <div className="flex-grow rounded-2xl rounded-tl-none border border-blue-100 bg-blue-50/50 p-5">
-                                        <p className="mb-4 text-sm leading-relaxed text-gray-800 dark:text-neutral-100">
+                                    <div className="flex-grow rounded-2xl rounded-tl-none border border-accent/25 bg-accent-soft/50 p-5">
+                                        <p className="mb-4 text-sm leading-relaxed text-ink">
                                             {selectedFeedback.response}
                                         </p>
-                                        <div className="flex items-center justify-between border-t border-blue-100 pt-3">
-                                            <span className="text-[10px] font-bold text-blue-600">
+                                        <div className="flex items-center justify-between border-t border-accent/25 pt-3">
+                                            <span className="text-[10px] font-bold text-accent-ink">
                                                 Assigned:{' '}
                                                 {
                                                     selectedFeedback.responder
                                                         ?.name
                                                 }
                                             </span>
-                                            <span className="text-[10px] font-medium text-gray-400 dark:text-neutral-500">
+                                            <span className="text-[10px] font-medium text-ink-subtle">
                                                 {new Date(
                                                     selectedFeedback.updated_at,
                                                 ).toLocaleDateString()}
@@ -368,7 +375,7 @@ export default function FeedbackHistory({ feedbacks }: Props) {
                                     <p className="text-sm font-bold text-amber-700">
                                         Under Review
                                     </p>
-                                    <p className="text-xs text-amber-600">
+                                    <p className="text-xs text-warning-ink">
                                         Our team will respond shortly.
                                     </p>
                                 </div>
@@ -378,7 +385,7 @@ export default function FeedbackHistory({ feedbacks }: Props) {
                         <div className="flex justify-end pt-4">
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="rounded-xl bg-gray-100 px-6 py-2 text-xs font-bold transition-colors hover:bg-gray-200"
+                                className="rounded-xl bg-surface-inset px-6 py-2 text-xs font-bold transition-colors hover:bg-surface-inset"
                             >
                                 Close
                             </button>

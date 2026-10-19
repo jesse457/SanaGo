@@ -18,8 +18,10 @@ class UpdateSurgeryRequest extends FormRequest
     {
         return [
             'patient_id' => ['required', 'exists:patients,id'],
-            'surgeon_id' => ['required', 'exists:users,id'],
+            'surgeon_id' => ['nullable', 'exists:users,id'],
+            'surgeon_name' => ['nullable', 'string', 'max:255'],
             'anesthetist_id' => ['nullable', 'exists:users,id'],
+            'anesthetist_name' => ['nullable', 'string', 'max:255'],
             'bed_id' => ['nullable', 'exists:beds,id'],
             'surgery_name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],

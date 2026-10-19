@@ -6,12 +6,13 @@ use Database\Factories\MedicationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-#[Fillable(['name', 'strength', 'dosage_units', 'min_stock_level', 'total_stock', 'description', 'unit_cost', 'is_active'])]
+#[Fillable(['name', 'strength', 'dosage_units', 'min_stock_level', 'total_stock', 'description', 'unit_cost', 'is_active', 'service_id'])]
 class Medication extends Model implements HasMedia
 {
     /** @use HasFactory<MedicationFactory> */
@@ -28,6 +29,13 @@ class Medication extends Model implements HasMedia
     }
 
     protected $appends = ['image_url'];
+
+    /**
+     * The relationships that should always be loaded.
+     *
+     * @var array
+     */
+    protected $with = ['media'];
 
     public function getImageUrlAttribute(): ?string
     {
@@ -49,5 +57,10 @@ class Medication extends Model implements HasMedia
     public function prescriptionItems(): HasMany
     {
         return $this->hasMany(PrescriptionItem::class);
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(Service::class);
     }
 }

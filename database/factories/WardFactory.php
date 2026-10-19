@@ -30,7 +30,7 @@ class WardFactory extends Factory
 
         return [
             'name' => $name,
-            'code' => strtoupper(substr($name, 0, 4)) . '-' . fake()->randomNumber(3, true),
+            'code' => strtoupper(substr($name, 0, 4)).'-'.fake()->randomNumber(3, true),
             'description' => "{$name} — providing quality inpatient care.",
             'department_id' => Department::factory(),
             'floor' => fake()->randomElement(['Ground', '1st', '2nd', '3rd', '4th']),

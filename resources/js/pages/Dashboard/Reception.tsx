@@ -1,12 +1,25 @@
 import {
-    UserGroupIcon,
-    CalendarDaysIcon,
     BuildingOfficeIcon,
+    CalendarDaysIcon,
     PlusCircleIcon,
+    UserGroupIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link } from '@inertiajs/react';
-import React from 'react';
+import { Head } from '@inertiajs/react';
 import { route } from 'ziggy-js';
+import {
+    Badge,
+    Button,
+    Card,
+    PageHeader,
+    StatCard,
+    StatGrid,
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 
@@ -17,22 +30,19 @@ const Dashboard = () => {
             label: t('page.reception_dashboard.patients_today'),
             count: 24,
             icon: UserGroupIcon,
-            color: 'text-blue-600',
-            bg: 'bg-blue-50 dark:bg-blue-900/20',
+            tone: 'accent' as const,
         },
         {
             label: t('page.reception_dashboard.appointments'),
             count: 18,
             icon: CalendarDaysIcon,
-            color: 'text-emerald-600',
-            bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+            tone: 'positive' as const,
         },
         {
             label: t('page.reception_dashboard.admissions_active'),
             count: 42,
             icon: BuildingOfficeIcon,
-            color: 'text-amber-600',
-            bg: 'bg-amber-50 dark:bg-amber-900/20',
+            tone: 'warning' as const,
         },
     ];
 
@@ -44,12 +54,12 @@ const Dashboard = () => {
         },
         {
             label: t('page.reception_dashboard.book_appointment'),
-            href: route('appointments.book'),
+            href: route('appointments.create'),
             icon: CalendarDaysIcon,
         },
         {
             label: t('page.reception_dashboard.patient_checkin'),
-            href: route('patients.checkin'),
+            href: route('admissions.index'),
             icon: UserGroupIcon,
         },
     ];
@@ -61,92 +71,94 @@ const Dashboard = () => {
         >
             <Head title={t('page.reception_dashboard.title')} />
 
-            <div className="space-y-6">
-                {/* KPI Cards */}
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                    {stats.map((stat, idx) => (
-                        <div
-                            key={idx}
-                            className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+            <div className="space-y-5 pb-12">
+                <PageHeader
+                    eyebrow={t('nav.category.patient_care')}
+                    title={t('page.reception_dashboard.title')}
+                    description={t('page.reception_dashboard.subtitle')}
+                    actions={
+                        <Button
+                            href={route('patients.create')}
+                            icon={PlusCircleIcon}
                         >
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500 dark:text-neutral-400">
-                                        {stat.label}
-                                    </p>
-                                    <h3 className="mt-2 text-3xl font-bold text-gray-900 dark:text-neutral-100">
-                                        {stat.count}
-                                    </h3>
-                                </div>
-                                <span
-                                    className={`rounded-lg p-2 ${stat.bg} ${stat.color}`}
-                                >
-                                    <stat.icon className="h-6 w-6" />
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                            {t('page.reception_dashboard.register_patient')}
+                        </Button>
+                    }
+                />
 
-                {/* Quick Actions */}
-                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-                    <h3 className="mb-4 text-base font-bold text-gray-900 dark:text-neutral-100">
-                        {t('page.reception_dashboard.quick_actions')}
-                    </h3>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                        {quickActions.map((action, idx) => (
-                            <Link
-                                key={idx}
+                <StatGrid columns={3}>
+                    {stats.map((stat) => (
+                        <StatCard
+                            key={stat.label}
+                            label={stat.label}
+                            value={stat.count}
+                            icon={stat.icon}
+                            tone={stat.tone}
+                        />
+                    ))}
+                </StatGrid>
+
+                <Card>
+                    <div className="border-b border-line px-5 py-4 sm:px-6">
+                        <h2 className="text-[15px] font-semibold tracking-tight text-ink">
+                            {t('page.reception_dashboard.quick_actions')}
+                        </h2>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 p-4 sm:grid-cols-3 sm:p-5">
+                        {quickActions.map((action) => (
+                            <Button
+                                key={action.href}
                                 href={action.href}
-                                className="group flex items-center gap-3 rounded-xl bg-gray-50 p-4 transition-colors hover:bg-blue-50 dark:bg-neutral-700/30 dark:hover:bg-blue-900/20"
+                                variant="secondary"
+                                icon={action.icon}
+                                fullWidth
+                                className="justify-start"
                             >
-                                <action.icon className="h-6 w-6 text-blue-600 transition-transform group-hover:scale-110 dark:text-blue-400" />
-                                <span className="text-sm font-semibold text-gray-700 dark:text-neutral-200">
-                                    {action.label}
-                                </span>
-                            </Link>
+                                {action.label}
+                            </Button>
                         ))}
                     </div>
-                </div>
+                </Card>
 
-                {/* Waiting Queue */}
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-                    <div className="border-b border-gray-200 px-6 py-4 dark:border-neutral-700">
-                        <h3 className="font-bold text-gray-900 dark:text-neutral-100">
+                <Card>
+                    <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4 sm:px-6">
+                        <h2 className="text-[15px] font-semibold tracking-tight text-ink">
                             {t('page.reception_dashboard.waiting_queue')}
-                        </h3>
+                        </h2>
+                        <Badge tone="muted">0</Badge>
                     </div>
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
-                        <thead className="bg-gray-50 dark:bg-neutral-800">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+
+                    <Table bare>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHeaderCell>
                                     {t('page.reception_dashboard.patient')}
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                                </TableHeaderCell>
+                                <TableHeaderCell>
                                     {t('page.reception_dashboard.doctor')}
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                                </TableHeaderCell>
+                                <TableHeaderCell>
                                     {t('page.reception_dashboard.time')}
-                                </th>
-                                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase">
+                                </TableHeaderCell>
+                                <TableHeaderCell numeric>
                                     {t('page.reception_dashboard.position')}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-neutral-700">
-                            <tr>
-                                <td
+                                </TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell
                                     colSpan={4}
-                                    className="px-6 py-12 text-center text-sm text-gray-500 italic"
+                                    className="px-4 py-10 text-center text-ink-subtle"
                                 >
                                     {t(
                                         'page.reception_dashboard.waiting_queue_empty',
                                     )}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </Card>
             </div>
         </AppLayout>
     );

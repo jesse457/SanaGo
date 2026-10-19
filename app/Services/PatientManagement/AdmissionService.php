@@ -8,6 +8,7 @@ use App\Models\Admission;
 use App\Models\Bed;
 use App\Models\Patient;
 use App\Models\User;
+use App\Services\Billing\BillingService;
 use Illuminate\Support\Facades\DB;
 
 class AdmissionService
@@ -35,6 +36,10 @@ class AdmissionService
                 'discharge_date' => now(),
             ]);
             $admission->bed->update(['status' => BedStatus::Available->value]);
+
+            // Auto-generate invoice at discharge
+            $billingService = app(BillingService::class);
+            $billingService->generateInvoiceFromAdmission($admission);
         });
     }
 

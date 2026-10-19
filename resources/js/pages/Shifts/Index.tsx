@@ -1,22 +1,39 @@
 import {
-    PlusIcon,
-    PencilSquareIcon,
-    TrashIcon,
-    MagnifyingGlassIcon,
-    ClockIcon,
     CalendarDaysIcon,
+    ClockIcon,
+    MoonIcon,
+    PencilSquareIcon,
+    PlusIcon,
+    SunIcon,
+    TrashIcon,
+    UserIcon,
 } from '@heroicons/react/24/outline';
 import { Head, useForm, router } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
-import EmptyState from '@/Components/EmptyState';
-import FormInput from '@/Components/FormInput';
-import FormSelect from '@/Components/FormSelect';
-import Modal from '@/Components/Modal';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
-import PageSection from '@/Components/PageSection';
 import { Pagination } from '@/Components/Pagination';
-import StatCard from '@/Components/StatCard';
-import StatusBadge from '@/Components/StatusBadge';
+import {
+    Badge,
+    Button,
+    Dialog,
+    EmptyState,
+    Field,
+    FieldSet,
+    Input,
+    PageHeader,
+    SegmentedControl,
+    Select,
+    StatCard,
+    StatGrid,
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+    Toolbar,
+    ToolbarSearch,
+} from '@/Components/ui';
+import type { BadgeTone } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 
@@ -50,10 +67,10 @@ const SHIFT_LABELS: Record<string, string> = {
     night: 'Night (10PM-6AM)',
 };
 
-const SHIFT_BADGE_COLORS: Record<string, 'emerald' | 'amber' | 'purple'> = {
-    morning: 'emerald',
-    afternoon: 'amber',
-    night: 'purple',
+const SHIFT_TONES: Record<string, BadgeTone> = {
+    morning: 'positive',
+    afternoon: 'warning',
+    night: 'accent',
 };
 
 export default function ShiftsIndex({ shifts }: Props) {
@@ -146,174 +163,183 @@ export default function ShiftsIndex({ shifts }: Props) {
         >
             <Head title={t('page.shifts_index.head_title')} />
 
-            <div className="mx-auto max-w-7xl space-y-6">
-                <PageBreadcrumb
-                    items={[
-                        { label: t('common.home') },
+            <div className="mx-auto max-w-7xl space-y-5 pb-12">
+                <PageHeader
+                    title={t('page.shifts_index.title')}
+                    description={t('page.shifts_index.subtitle')}
+                    breadcrumbs={[
+                        { label: t('common.home'), href: '/dashboard' },
                         { label: t('page.shifts_index.breadcrumb_shifts') },
                     ]}
+                    actions={
+                        <Button icon={PlusIcon} onClick={openCreate}>
+                            {t('page.shifts_index.add_shift')}
+                        </Button>
+                    }
                 />
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <StatGrid>
                     <StatCard
                         icon={CalendarDaysIcon}
-                        label="Total Shifts"
+                        label="Total shifts"
                         value={stats.total}
+                        tone="accent"
+                        hint="On this page"
                     />
                     <StatCard
-                        icon={ClockIcon}
+                        icon={SunIcon}
                         label="Morning"
                         value={stats.morning}
-                        color="emerald"
+                        tone="positive"
+                        hint="6AM – 2PM"
                     />
                     <StatCard
                         icon={ClockIcon}
                         label="Afternoon"
                         value={stats.afternoon}
-                        color="amber"
+                        tone="warning"
+                        hint="2PM – 10PM"
                     />
                     <StatCard
-                        icon={ClockIcon}
+                        icon={MoonIcon}
                         label="Night"
                         value={stats.night}
-                        color="purple"
+                        tone="neutral"
+                        hint="10PM – 6AM"
                     />
-                </div>
+                </StatGrid>
 
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex rounded-lg bg-gray-100 p-1 dark:bg-neutral-800">
-                        {['all', 'morning', 'afternoon', 'night'].map(
-                            (type) => (
-                                <button
-                                    key={type}
-                                    onClick={() => setFilterType(type)}
-                                    className={`rounded-lg px-4 py-2 text-xs font-bold tracking-wide uppercase transition-all ${filterType === type ? 'bg-white text-blue-600 shadow-sm dark:bg-neutral-700' : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-200'}`}
-                                >
-                                    {type === 'all'
-                                        ? t('page.shifts_index.all')
-                                        : type === 'morning'
-                                          ? t('page.shifts_index.morning')
-                                          : type === 'afternoon'
-                                            ? t('page.shifts_index.afternoon')
-                                            : t('page.shifts_index.night')}
-                                </button>
-                            ),
-                        )}
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <FormInput
-                            name="search"
-                            icon={MagnifyingGlassIcon}
-                            placeholder={t(
-                                'page.shifts_index.search_placeholder',
-                            )}
-                            value={search}
-                            onChange={setSearch}
-                        />
-                        <button
-                            onClick={openCreate}
-                            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
-                        >
-                            <PlusIcon className="h-4 w-4" />
-                            {t('page.shifts_index.add_shift')}
-                        </button>
-                    </div>
-                </div>
+                <Toolbar>
+                    <ToolbarSearch
+                        value={search}
+                        onChange={setSearch}
+                        placeholder={t('page.shifts_index.search_placeholder')}
+                    />
+                    <SegmentedControl
+                        value={filterType}
+                        onChange={setFilterType}
+                        size="sm"
+                        options={[
+                            {
+                                value: 'all',
+                                label: t('page.shifts_index.all'),
+                            },
+                            {
+                                value: 'morning',
+                                label: t('page.shifts_index.morning'),
+                            },
+                            {
+                                value: 'afternoon',
+                                label: t('page.shifts_index.afternoon'),
+                            },
+                            {
+                                value: 'night',
+                                label: t('page.shifts_index.night'),
+                            },
+                        ]}
+                    />
+                </Toolbar>
 
                 {filtered.length > 0 ? (
-                    <PageSection>
-                        <table className="w-full text-left">
-                            <thead className="border-b border-gray-200 bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800">
-                                <tr>
-                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">
-                                        {t('page.shifts_index.table_staff')}
-                                    </th>
-                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">
-                                        {t('page.shifts_index.table_date_type')}
-                                    </th>
-                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">
-                                        {t('page.shifts_index.table_hours')}
-                                    </th>
-                                    <th className="px-6 py-4"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-neutral-700">
-                                {filtered.map((shift) => (
-                                    <tr
-                                        key={shift.id}
-                                        className="hover:bg-gray-50 dark:hover:bg-neutral-700/30"
-                                    >
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-sm font-bold text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
-                                                    {shift.user?.name?.charAt(
-                                                        0,
-                                                    ) || '?'}
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                                        {shift.user?.name}
-                                                    </p>
-                                                    <p className="text-xs text-gray-400">
-                                                        {shift.user?.department
-                                                            ?.name ||
-                                                            t(
-                                                                'page.shifts_index.general',
-                                                            )}
-                                                    </p>
-                                                </div>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHeaderCell>
+                                    {t('page.shifts_index.table_staff')}
+                                </TableHeaderCell>
+                                <TableHeaderCell>
+                                    {t('page.shifts_index.table_date_type')}
+                                </TableHeaderCell>
+                                <TableHeaderCell>
+                                    {t('page.shifts_index.table_hours')}
+                                </TableHeaderCell>
+                                <TableHeaderCell numeric>
+                                    <span className="sr-only">Actions</span>
+                                </TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filtered.map((shift) => (
+                                <TableRow key={shift.id}>
+                                    <TableCell>
+                                        <div className="flex items-center gap-3">
+                                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-muted text-[11px] font-semibold text-ink-muted">
+                                                {shift.user?.name?.charAt(0) ||
+                                                    '?'}
+                                            </span>
+                                            <div className="min-w-0">
+                                                <p className="truncate text-[13px] font-medium text-ink">
+                                                    {shift.user?.name}
+                                                </p>
+                                                <p className="truncate text-[11.5px] text-ink-subtle">
+                                                    {shift.user?.department
+                                                        ?.name ||
+                                                        t(
+                                                            'page.shifts_index.general',
+                                                        )}
+                                                </p>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col items-start gap-1">
+                                            <span className="text-[13px] font-medium text-ink tabular-nums">
                                                 {shift.shift_date}
-                                            </p>
-                                            <StatusBadge
-                                                label={shift.shift_type}
-                                                color={
-                                                    SHIFT_BADGE_COLORS[
+                                            </span>
+                                            <Badge
+                                                tone={
+                                                    SHIFT_TONES[
                                                         shift.shift_type
-                                                    ] || 'gray'
+                                                    ] ?? 'neutral'
                                                 }
-                                                className="mt-1"
+                                            >
+                                                {SHIFT_LABELS[
+                                                    shift.shift_type
+                                                ] ?? shift.shift_type}
+                                            </Badge>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell muted>
+                                        <span className="inline-flex items-center gap-1.5 tabular-nums">
+                                            <ClockIcon className="h-3.5 w-3.5 text-ink-subtle" />
+                                            {shift.start_time} —{' '}
+                                            {shift.end_time}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex justify-end gap-1.5">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                icon={PencilSquareIcon}
+                                                aria-label="Edit shift"
+                                                onClick={() => openEdit(shift)}
                                             />
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1 text-sm font-bold text-gray-700 dark:text-neutral-300">
-                                                <ClockIcon className="h-4 w-4 text-gray-400" />
-                                                {shift.start_time} -{' '}
-                                                {shift.end_time}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() =>
-                                                        openEdit(shift)
-                                                    }
-                                                    className="rounded-lg p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
-                                                >
-                                                    <PencilSquareIcon className="h-4 w-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() =>
-                                                        handleDelete(shift.id)
-                                                    }
-                                                    className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                                                >
-                                                    <TrashIcon className="h-4 w-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </PageSection>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                icon={TrashIcon}
+                                                aria-label="Delete shift"
+                                                className="hover:bg-critical-soft hover:text-critical-ink"
+                                                onClick={() =>
+                                                    handleDelete(shift.id)
+                                                }
+                                            />
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 ) : (
                     <EmptyState
                         icon={ClockIcon}
                         title={t('page.shifts_index.no_shifts')}
+                        action={
+                            <Button icon={PlusIcon} onClick={openCreate}>
+                                {t('page.shifts_index.add_shift')}
+                            </Button>
+                        }
                     />
                 )}
 
@@ -322,103 +348,147 @@ export default function ShiftsIndex({ shifts }: Props) {
                 )}
             </div>
 
-            <Modal
-                isOpen={modalOpen}
+            <Dialog
+                open={modalOpen}
                 onClose={() => setModalOpen(false)}
+                size="lg"
                 title={
                     editingShift
                         ? t('page.shifts_index.edit_shift')
                         : t('page.shifts_index.assign_shift')
                 }
-            >
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        handleSubmit();
-                    }}
-                    className="space-y-4"
-                >
-                    <FormInput
-                        name="user_id"
-                        type="number"
-                        label={t('page.shifts_index.staff_id')}
-                        value={data.user_id}
-                        onChange={(v) => setData('user_id', v)}
-                        required
-                        errors={errors}
-                    />
-                    <FormInput
-                        name="shift_date"
-                        type="date"
-                        label={t('page.shifts_index.date')}
-                        value={data.shift_date}
-                        onChange={(v) => setData('shift_date', v)}
-                        required
-                        errors={errors}
-                    />
-                    <FormSelect
-                        name="shift_type"
-                        label={t('page.shifts_index.shift_type')}
-                        value={data.shift_type}
-                        onChange={(v) => setData('shift_type', v)}
-                        options={[
-                            {
-                                value: 'morning',
-                                label: t('page.shifts_index.morning_option'),
-                            },
-                            {
-                                value: 'afternoon',
-                                label: t('page.shifts_index.afternoon_option'),
-                            },
-                            {
-                                value: 'night',
-                                label: t('page.shifts_index.night_option'),
-                            },
-                        ]}
-                        errors={errors}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormInput
-                            name="start_time"
-                            type="time"
-                            label={t('page.shifts_index.start')}
-                            value={data.start_time}
-                            onChange={(v) => setData('start_time', v)}
-                            required
-                            errors={errors}
-                        />
-                        <FormInput
-                            name="end_time"
-                            type="time"
-                            label={t('page.shifts_index.end')}
-                            value={data.end_time}
-                            onChange={(v) => setData('end_time', v)}
-                            required
-                            errors={errors}
-                        />
-                    </div>
-                    <div className="flex gap-4 pt-2">
-                        <button
-                            type="button"
+                footer={
+                    <>
+                        <Button
+                            variant="secondary"
                             onClick={() => setModalOpen(false)}
-                            className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-bold text-gray-500 dark:border-neutral-700 dark:bg-neutral-800"
                         >
                             {t('common.cancel')}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
-                            disabled={processing}
-                            className="flex-[2] rounded-xl bg-blue-600 py-3 font-bold text-white hover:bg-blue-700 disabled:opacity-50"
+                            form="shift-form"
+                            loading={processing}
                         >
                             {processing
                                 ? t('common.processing')
                                 : editingShift
                                   ? t('page.shifts_index.update_shift')
                                   : t('page.shifts_index.assign_shift')}
-                        </button>
-                    </div>
+                        </Button>
+                    </>
+                }
+            >
+                <form
+                    id="shift-form"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        handleSubmit();
+                    }}
+                    className="space-y-5"
+                >
+                    <FieldSet columns={2}>
+                        <Field
+                            label={t('page.shifts_index.staff_id')}
+                            htmlFor="user_id"
+                            required
+                            error={errors.user_id}
+                        >
+                            <Input
+                                id="user_id"
+                                name="user_id"
+                                type="number"
+                                icon={UserIcon}
+                                value={data.user_id}
+                                onChange={(e) =>
+                                    setData('user_id', e.target.value)
+                                }
+                                invalid={Boolean(errors.user_id)}
+                                required
+                            />
+                        </Field>
+                        <Field
+                            label={t('page.shifts_index.date')}
+                            htmlFor="shift_date"
+                            required
+                            error={errors.shift_date}
+                        >
+                            <Input
+                                id="shift_date"
+                                name="shift_date"
+                                type="date"
+                                value={data.shift_date}
+                                onChange={(e) =>
+                                    setData('shift_date', e.target.value)
+                                }
+                                invalid={Boolean(errors.shift_date)}
+                                required
+                            />
+                        </Field>
+                        <Field
+                            label={t('page.shifts_index.shift_type')}
+                            htmlFor="shift_type"
+                            error={errors.shift_type}
+                        >
+                            <Select
+                                id="shift_type"
+                                name="shift_type"
+                                value={data.shift_type}
+                                onChange={(e) =>
+                                    setData('shift_type', e.target.value)
+                                }
+                                invalid={Boolean(errors.shift_type)}
+                            >
+                                <option value="morning">
+                                    {t('page.shifts_index.morning_option')}
+                                </option>
+                                <option value="afternoon">
+                                    {t('page.shifts_index.afternoon_option')}
+                                </option>
+                                <option value="night">
+                                    {t('page.shifts_index.night_option')}
+                                </option>
+                            </Select>
+                        </Field>
+                        <Field
+                            label={t('page.shifts_index.start')}
+                            htmlFor="start_time"
+                            required
+                            error={errors.start_time}
+                        >
+                            <Input
+                                id="start_time"
+                                name="start_time"
+                                type="time"
+                                value={data.start_time}
+                                onChange={(e) =>
+                                    setData('start_time', e.target.value)
+                                }
+                                invalid={Boolean(errors.start_time)}
+                                required
+                            />
+                        </Field>
+                        <Field
+                            label={t('page.shifts_index.end')}
+                            htmlFor="end_time"
+                            required
+                            error={errors.end_time}
+                        >
+                            <Input
+                                id="end_time"
+                                name="end_time"
+                                type="time"
+                                value={data.end_time}
+                                onChange={(e) =>
+                                    setData('end_time', e.target.value)
+                                }
+                                invalid={Boolean(errors.end_time)}
+                                required
+                            />
+                        </Field>
+                    </FieldSet>
                 </form>
-            </Modal>
+            </Dialog>
         </AppLayout>
     );
 }

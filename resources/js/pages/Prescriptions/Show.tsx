@@ -1,12 +1,25 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeftIcon, DocumentTextIcon, UserIcon, BeakerIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
-import DetailItem from '@/Components/DetailItem';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
-import PageSection from '@/Components/PageSection';
-import StatusBadge from '@/Components/StatusBadge';
-import AppLayout from '@/Layouts/AppLayout';
+import { DocumentTextIcon, UserIcon } from '@heroicons/react/24/outline';
+import { Head, router } from '@inertiajs/react';
+import {
+    Badge,
+    Button,
+    Card,
+    EmptyState,
+    KeyValue,
+    KeyValueGrid,
+    PageHeader,
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+} from '@/Components/ui';
+import type { BadgeTone } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
+import AppLayout from '@/Layouts/AppLayout';
 import type { Prescription } from '@/types';
+import { PrescriptionStatus } from '@/types/enums';
 
 interface Props {
     prescription: Prescription;
@@ -15,18 +28,18 @@ interface Props {
 export default function PrescriptionsShow({ prescription }: Props) {
     const { t } = useTranslation();
 
-    const statusColor = (status: string) => {
+    const statusTone = (status: string): BadgeTone => {
         switch (status) {
             case 'active':
             case 'new':
-                return 'blue';
+                return 'accent';
             case 'dispensed':
             case 'completed':
-                return 'emerald';
+                return 'positive';
             case 'cancelled':
-                return 'red';
+                return 'critical';
             default:
-                return 'gray';
+                return 'neutral';
         }
     };
 
@@ -36,75 +49,164 @@ export default function PrescriptionsShow({ prescription }: Props) {
         }
     };
 
+    const canDispense =
+        prescription.status !== PrescriptionStatus.COMPLETED &&
+        prescription.status !== PrescriptionStatus.CANCELLED;
+
     return (
-        <AppLayout headerTitle={t('Prescription Detail')} headerSubtitle={`${t('Prescribed by')} ${prescription.doctor?.name ?? '—'}`}>
+        <AppLayout
+            headerTitle={t('Prescription Detail')}
+            headerSubtitle={`${t('Prescribed by')} ${prescription.doctor?.name ?? '—'}`}
+        >
             <Head title={t('Prescription Detail')} />
-            <PageBreadcrumb items={[{ label: t('Clinical') }, { label: t('Prescriptions'), href: route('prescriptions.index') }, { label: `#${prescription.id}` }]} />
+            <div className="mx-auto max-w-5xl space-y-5 pb-12">
+                <PageHeader
+                    eyebrow={`#${prescription.id}`}
+                    title={t('Prescription Detail')}
+                    description={`${t('Prescribed by')} ${prescription.doctor?.name ?? '—'}`}
+                    breadcrumbs={[
+                        { label: t('Clinical') },
+                        {
+                            label: t('Prescriptions'),
+                            href: route('prescriptions.index'),
+                        },
+                        { label: `#${prescription.id}` },
+                    ]}
+                    actions={
+                        <>
+                            <Button
+                                href={route('prescriptions.index')}
+                                variant="secondary"
+                                size="sm"
+                            >
+                                {t('Back to Prescriptions')}
+                            </Button>
+                            {canDispense && (
+                                <Button
+                                    variant="accent"
+                                    size="sm"
+                                    onClick={handleDispense}
+                                >
+                                    {t('Dispense')}
+                                </Button>
+                            )}
+                        </>
+                    }
+                    meta={
+                        <Badge
+                            tone={statusTone(prescription.status)}
+                            variant="outline"
+                            dot
+                        >
+                            {t(prescription.status)}
+                        </Badge>
+                    }
+                />
 
-            <div className="max-w-4xl mx-auto space-y-6">
-                <div className="flex items-center justify-between">
-                    <Link href={route('prescriptions.index')} className="inline-flex items-center gap-1.5 text-sm text-gray-600 dark:text-neutral-400 hover:text-blue-600">
-                        <ArrowLeftIcon className="h-4 w-4" />
-                        {t('Back to Prescriptions')}
-                    </Link>
-                    <div className="flex items-center gap-3">
-                        <StatusBadge label={t(prescription.status)} color={statusColor(prescription.status)} />
-                        {prescription.status !== 'dispensed' && prescription.status !== 'completed' && prescription.status !== 'cancelled' && (
-                            <button onClick={handleDispense} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 cursor-pointer">
-                                <CheckCircleIcon className="h-4 w-4" />
-                                {t('Dispense')}
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <PageSection title={t('Patient Information')} icon={UserIcon}>
-                        <div className="space-y-3">
-                            <DetailItem label={t('Patient')} value={prescription.patient ? `${prescription.patient.first_name} ${prescription.patient.last_name}` : '—'} />
-                            <DetailItem label={t('Doctor')} value={prescription.doctor?.name ?? '—'} />
-                            <DetailItem label={t('Date')} value={new Date(prescription.prescription_date).toLocaleDateString()} />
-                            <DetailItem label={t('Total')} value={`${Number(prescription.total_amount).toLocaleString()} XAF`} />
-                        </div>
-                    </PageSection>
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <Card className="p-5 sm:p-6">
+                        <h2 className="flex items-center gap-2 text-[15px] font-semibold tracking-tight text-ink">
+                            <UserIcon className="h-4 w-4 text-ink-subtle" />
+                            {t('Patient Information')}
+                        </h2>
+                        <KeyValueGrid columns={2} className="mt-4">
+                            <KeyValue
+                                label={t('Patient')}
+                                value={
+                                    prescription.patient
+                                        ? `${prescription.patient.first_name} ${prescription.patient.last_name}`
+                                        : '—'
+                                }
+                            />
+                            <KeyValue
+                                label={t('Doctor')}
+                                value={prescription.doctor?.name ?? '—'}
+                            />
+                            <KeyValue
+                                label={t('Date')}
+                                value={new Date(
+                                    prescription.prescription_date,
+                                ).toLocaleDateString()}
+                            />
+                            <KeyValue
+                                label={t('Total')}
+                                value={`${Number(prescription.total_amount).toLocaleString()} XAF`}
+                            />
+                        </KeyValueGrid>
+                    </Card>
 
                     {prescription.notes && (
-                        <PageSection title={t('Notes')} icon={DocumentTextIcon}>
-                            <p className="text-sm text-gray-700 dark:text-neutral-300">{prescription.notes}</p>
-                        </PageSection>
+                        <Card className="p-5 sm:p-6">
+                            <h2 className="flex items-center gap-2 text-[15px] font-semibold tracking-tight text-ink">
+                                <DocumentTextIcon className="h-4 w-4 text-ink-subtle" />
+                                {t('Notes')}
+                            </h2>
+                            <p className="mt-3 text-[13px] leading-relaxed text-ink-muted">
+                                {prescription.notes}
+                            </p>
+                        </Card>
                     )}
                 </div>
 
-                <PageSection title={t('Medications')} icon={BeakerIcon}>
+                <Card>
+                    <div className="border-b border-line px-5 py-4 sm:px-6">
+                        <h2 className="text-[15px] font-semibold tracking-tight text-ink">
+                            {t('Medications')}
+                        </h2>
+                    </div>
+
                     {prescription.items && prescription.items.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead className="bg-gray-50 dark:bg-neutral-900">
-                                    <tr>
-                                        <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-neutral-400">{t('Medication')}</th>
-                                        <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-neutral-400">{t('Dosage')}</th>
-                                        <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-neutral-400">{t('Frequency')}</th>
-                                        <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-neutral-400">{t('Duration')}</th>
-                                        <th className="px-4 py-2 text-right font-medium text-gray-600 dark:text-neutral-400">{t('Qty')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-neutral-700">
-                                    {prescription.items.map((item) => (
-                                        <tr key={item.id}>
-                                            <td className="px-4 py-2 text-gray-900 dark:text-white font-medium">{item.drug_name}</td>
-                                            <td className="px-4 py-2 text-gray-700 dark:text-neutral-300">{item.dosage}</td>
-                                            <td className="px-4 py-2 text-gray-700 dark:text-neutral-300">{item.frequency}</td>
-                                            <td className="px-4 py-2 text-gray-700 dark:text-neutral-300">{item.duration}</td>
-                                            <td className="px-4 py-2 text-right text-gray-700 dark:text-neutral-300">{item.quantity}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <Table bare>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHeaderCell>
+                                        {t('Medication')}
+                                    </TableHeaderCell>
+                                    <TableHeaderCell>
+                                        {t('Dosage')}
+                                    </TableHeaderCell>
+                                    <TableHeaderCell>
+                                        {t('Frequency')}
+                                    </TableHeaderCell>
+                                    <TableHeaderCell>
+                                        {t('Duration')}
+                                    </TableHeaderCell>
+                                    <TableHeaderCell numeric>
+                                        {t('Qty')}
+                                    </TableHeaderCell>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {prescription.items.map((item) => (
+                                    <TableRow key={item.id}>
+                                        <TableCell>{item.drug_name}</TableCell>
+                                        <TableCell muted>
+                                            {item.dosage}
+                                        </TableCell>
+                                        <TableCell muted>
+                                            {item.frequency}
+                                        </TableCell>
+                                        <TableCell muted>
+                                            {item.duration}
+                                        </TableCell>
+                                        <TableCell numeric muted>
+                                            {item.quantity}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     ) : (
-                        <p className="text-sm text-gray-500 dark:text-neutral-400">{t('No medications in this prescription.')}</p>
+                        <div className="p-5 sm:p-6">
+                            <EmptyState
+                                panel={false}
+                                title={t(
+                                    'No medications in this prescription.',
+                                )}
+                            />
+                        </div>
                     )}
-                </PageSection>
+                </Card>
             </div>
         </AppLayout>
     );

@@ -9,9 +9,11 @@ import {
 
 type Translations = Record<string, any>;
 
+type TranslationReplacements = Record<string, string | number> | string;
+
 interface TranslationContextType {
     locale: string;
-    t: (key: string, replacements?: Record<string, string | number>) => string;
+    t: (key: string, replacements?: TranslationReplacements) => string;
     switchLocale: (locale: string) => void;
 }
 
@@ -75,14 +77,16 @@ export function TranslationProvider({
     const { locale, translations } = props as any;
 
     const t = useCallback(
-        (key: string, replacements?: Record<string, string | number>) => {
+        (key: string, replacements?: TranslationReplacements) => {
             const value = resolveNestedKey(key, translations ?? {});
 
+            // Second argument may be a literal fallback used when the key is
+            // missing from the locale files.
             if (value === undefined) {
-                return key;
+                return typeof replacements === 'string' ? replacements : key;
             }
 
-            if (replacements) {
+            if (replacements && typeof replacements === 'object') {
                 return interpolate(value, replacements);
             }
 
@@ -120,14 +124,14 @@ export function useTranslation(): TranslationContextType {
     // Fallback: read directly from Inertia page props (works at page top-level)
     const { locale, translations } = props as any;
 
-    const t = (key: string, replacements?: Record<string, string | number>) => {
+    const t = (key: string, replacements?: TranslationReplacements) => {
         const value = resolveNestedKey(key, translations ?? {});
 
         if (value === undefined) {
-            return key;
+            return typeof replacements === 'string' ? replacements : key;
         }
 
-        if (replacements) {
+        if (replacements && typeof replacements === 'object') {
             return interpolate(value, replacements);
         }
 

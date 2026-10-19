@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react';
+import { CheckIcon } from '@heroicons/react/24/outline';
 import PricingCard from '@/Components/marketing/PricingCard';
 import SectionHeading from '@/Components/marketing/SectionHeading';
 import PublicLayout from '@/Layouts/PublicLayout';
@@ -120,7 +120,7 @@ export default function Pricing() {
             </section>
 
             {/* FAQ */}
-            <section className="bg-slate-50 py-24 dark:bg-neutral-800">
+            <section className="bg-surface-muted py-24">
                 <div className="mx-auto max-w-3xl px-6">
                     <SectionHeading
                         title="Frequently Asked Questions"
@@ -131,16 +131,13 @@ export default function Pricing() {
                         {FAQS.map((faq) => (
                             <details
                                 key={faq.question}
-                                className="group rounded-2xl border border-slate-100 bg-white dark:border-neutral-700 dark:bg-neutral-900"
+                                className="group rounded-2xl border border-line bg-surface"
                             >
-                                <summary className="flex cursor-pointer items-center justify-between px-6 py-5 font-semibold text-slate-900 transition hover:text-blue-600 dark:text-neutral-100 dark:hover:text-blue-400">
+                                <summary className="flex cursor-pointer items-center justify-between px-6 py-5 font-semibold text-ink transition hover:text-accent">
                                     {faq.question}
-                                    <Check
-                                        size={16}
-                                        className="text-slate-300 group-open:hidden dark:text-neutral-600"
-                                    />
+                                    <CheckIcon className="h-4 w-4 text-ink-subtle group-open:hidden" />
                                 </summary>
-                                <p className="px-6 pb-5 text-sm leading-relaxed text-slate-500 dark:text-neutral-400">
+                                <p className="px-6 pb-5 text-sm leading-relaxed text-ink-muted">
                                     {faq.answer}
                                 </p>
                             </details>

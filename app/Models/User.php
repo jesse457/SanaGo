@@ -36,6 +36,13 @@ class User extends Authenticatable implements HasMedia
 
     protected $appends = ['avatar_url'];
 
+    /**
+     * The relationships that should always be loaded.
+     *
+     * @var array
+     */
+    protected $with = ['media'];
+
     public function getAvatarUrlAttribute(): ?string
     {
         return $this->getFirstMediaUrl('profile_picture') ?: null;
@@ -124,6 +131,31 @@ class User extends Authenticatable implements HasMedia
     public function recordedExpenditures(): HasMany
     {
         return $this->hasMany(Expenditure::class, 'recorded_by');
+    }
+
+    public function cashShifts(): HasMany
+    {
+        return $this->hasMany(CashShift::class);
+    }
+
+    public function issuedCertificates(): HasMany
+    {
+        return $this->hasMany(Certificate::class, 'issued_by');
+    }
+
+    public function radiologyRequests(): HasMany
+    {
+        return $this->hasMany(RadiologyRequest::class, 'requested_by');
+    }
+
+    public function radiologyResultsPerformed(): HasMany
+    {
+        return $this->hasMany(RadiologyResult::class, 'performed_by');
+    }
+
+    public function radiologyResultsValidated(): HasMany
+    {
+        return $this->hasMany(RadiologyResult::class, 'validated_by');
     }
 
     public function registerMediaCollections(): void

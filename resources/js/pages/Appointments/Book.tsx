@@ -119,16 +119,16 @@ export default function BookAppointment({ doctors, patients }: Props) {
                 <form onSubmit={handleSubmit} className="space-y-8">
                     <PageSection>
                         {/* SECTION 1: Patient Selection */}
-                        <div className="border-b border-gray-100 bg-gray-50/30 p-8 dark:bg-neutral-700/30">
+                        <div className="border-b border-line bg-surface-muted p-8">
                             <div className="flex items-center gap-5">
-                                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xl shadow-blue-100">
+                                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-accent text-ink-inverse shadow-float shadow-blue-100">
                                     <UserIcon className="h-7 w-7" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="text-2xl font-black tracking-tight text-gray-900 dark:text-neutral-100">
+                                    <h3 className="text-2xl font-black tracking-tight text-ink">
                                         {t('patientAssignment')}
                                     </h3>
-                                    <p className="text-[10px] font-black tracking-widest text-gray-400 uppercase dark:text-neutral-500">
+                                    <p className="text-[10px] font-black tracking-widest text-ink-subtle uppercase">
                                         {t('step01IdentifyPatient')}
                                     </p>
                                 </div>
@@ -151,7 +151,7 @@ export default function BookAppointment({ doctors, patients }: Props) {
                                         />
 
                                         {foundPatients.length > 0 && (
-                                            <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border-2 border-gray-100 bg-white shadow-2xl dark:border-neutral-700 dark:bg-neutral-800">
+                                            <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border-2 border-line bg-surface shadow-float">
                                                 {foundPatients.map((p) => (
                                                     <button
                                                         key={p.id}
@@ -161,18 +161,18 @@ export default function BookAppointment({ doctors, patients }: Props) {
                                                                 p,
                                                             )
                                                         }
-                                                        className="group flex w-full items-center justify-between border-b border-gray-50 px-6 py-4 text-left transition-colors last:border-0 hover:bg-blue-50 dark:border-neutral-700 dark:hover:bg-blue-900/20"
+                                                        className="group flex w-full items-center justify-between border-b border-line px-6 py-4 text-left transition-colors last:border-0 hover:bg-accent-soft"
                                                     >
                                                         <div>
-                                                            <p className="font-black text-gray-900 group-hover:text-blue-600 dark:text-neutral-100 dark:group-hover:text-blue-400">
+                                                            <p className="font-black text-ink group-hover:text-accent">
                                                                 {p.first_name}{' '}
                                                                 {p.last_name}
                                                             </p>
-                                                            <p className="text-[10px] font-bold text-gray-400 uppercase dark:text-neutral-500">
+                                                            <p className="text-[10px] font-bold text-ink-subtle uppercase">
                                                                 {p.patient_uid}
                                                             </p>
                                                         </div>
-                                                        <CheckIcon className="h-5 w-5 text-blue-600 opacity-0 group-hover:opacity-100" />
+                                                        <CheckIcon className="h-5 w-5 text-accent-ink opacity-0 group-hover:opacity-100" />
                                                     </button>
                                                 ))}
                                             </div>
@@ -184,20 +184,20 @@ export default function BookAppointment({ doctors, patients }: Props) {
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="flex items-center justify-between rounded-xl border-2 border-blue-100 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-900/20">
+                                    <div className="flex items-center justify-between rounded-xl border-2 border-accent/30 bg-accent-soft p-6">
                                         <div className="flex items-center gap-4">
-                                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white text-blue-600 shadow-sm dark:bg-neutral-800">
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-surface text-accent-ink shadow-surface">
                                                 <UserIcon className="h-6 w-6" />
                                             </div>
                                             <div>
-                                                <p className="text-[9px] font-black text-blue-400 uppercase">
+                                                <p className="text-[9px] font-black text-accent uppercase">
                                                     {t('targetPatient')}
                                                 </p>
-                                                <h4 className="text-lg font-black text-gray-900 dark:text-neutral-100">
+                                                <h4 className="text-lg font-black text-ink">
                                                     {selectedPatient.first_name}{' '}
                                                     {selectedPatient.last_name}
                                                 </h4>
-                                                <p className="text-xs font-bold tracking-widest text-blue-600">
+                                                <p className="text-xs font-bold tracking-widest text-accent-ink">
                                                     {
                                                         selectedPatient.patient_uid
                                                     }
@@ -210,7 +210,7 @@ export default function BookAppointment({ doctors, patients }: Props) {
                                                 setSelectedPatient(null);
                                                 setData('patient_id', '');
                                             }}
-                                            className="rounded-full p-2 text-blue-400 transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                                            className="rounded-full p-2 text-accent transition-colors hover:bg-accent-soft"
                                         >
                                             <XMarkIcon className="h-6 w-6" />
                                         </button>
@@ -222,8 +222,8 @@ export default function BookAppointment({ doctors, patients }: Props) {
                         {/* SECTION 2: Doctor Selection */}
                         <div className="space-y-6 p-10">
                             <div className="flex items-center gap-3">
-                                <UserGroupIcon className="h-5 w-5 text-blue-500" />
-                                <h4 className="text-[10px] font-black tracking-widest text-blue-500 uppercase">
+                                <UserGroupIcon className="h-5 w-5 text-accent" />
+                                <h4 className="text-[10px] font-black tracking-widest text-accent uppercase">
                                     {t('step02AssignClinician')}
                                 </h4>
                             </div>
@@ -242,14 +242,14 @@ export default function BookAppointment({ doctors, patients }: Props) {
                                             }
                                             className={`relative rounded-xl border-2 p-6 text-left transition-all ${
                                                 isSelected
-                                                    ? 'translate-y-[-4px] border-gray-900 bg-gray-900 text-white shadow-xl dark:bg-neutral-800'
-                                                    : 'border-gray-100 bg-white text-gray-900 hover:border-blue-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:border-blue-700'
+                                                    ? 'translate-y-[-4px] border-ink bg-ink text-ink-inverse shadow-float'
+                                                    : 'border-line bg-surface text-ink hover:border-accent/40'
                                             } `}
                                         >
                                             <div className="flex h-full flex-col justify-between">
                                                 <div>
                                                     <p
-                                                        className={`mb-1 text-[9px] font-black uppercase ${isSelected ? 'text-blue-400' : 'text-gray-400 dark:text-neutral-500'}`}
+                                                        className={`mb-1 text-[9px] font-black uppercase ${isSelected ? 'text-accent' : 'text-ink-subtle'}`}
                                                     >
                                                         {doc.department?.name ||
                                                             t(
@@ -261,8 +261,8 @@ export default function BookAppointment({ doctors, patients }: Props) {
                                                     </h5>
                                                 </div>
                                                 {isSelected && (
-                                                    <div className="absolute top-4 right-4 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500">
-                                                        <CheckIcon className="h-3 w-3 stroke-[4px] text-white" />
+                                                    <div className="bg-accent-soft0 absolute top-4 right-4 flex h-5 w-5 items-center justify-center rounded-full">
+                                                        <CheckIcon className="h-3 w-3 stroke-[4px] text-ink-inverse" />
                                                     </div>
                                                 )}
                                             </div>
@@ -278,10 +278,10 @@ export default function BookAppointment({ doctors, patients }: Props) {
                         </div>
 
                         {/* SECTION 3: Billing & Logistics */}
-                        <div className="space-y-8 border-t border-gray-100 bg-gray-50/50 p-10 dark:bg-neutral-700/50">
+                        <div className="space-y-8 border-t border-line bg-surface-muted p-10">
                             <div className="flex items-center gap-3">
-                                <BanknotesIcon className="h-5 w-5 text-blue-500" />
-                                <h4 className="text-[10px] font-black tracking-widest text-blue-500 uppercase">
+                                <BanknotesIcon className="h-5 w-5 text-accent" />
+                                <h4 className="text-[10px] font-black tracking-widest text-accent uppercase">
                                     {t('step03BillingLogistics')}
                                 </h4>
                             </div>
@@ -351,7 +351,7 @@ export default function BookAppointment({ doctors, patients }: Props) {
                     <div className="flex flex-col items-center justify-end gap-6 sm:flex-row">
                         <Link
                             href={route('appointments.index')}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-8 py-4 font-bold text-gray-500 transition-all hover:bg-gray-50 sm:w-auto dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface px-8 py-4 font-bold text-ink-subtle transition-all hover:bg-surface-hover sm:w-auto"
                         >
                             <ArrowLeftIcon className="h-5 w-5" /> {t('cancel')}
                         </Link>
@@ -359,7 +359,7 @@ export default function BookAppointment({ doctors, patients }: Props) {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-10 py-4 font-bold text-white shadow-lg transition-all hover:bg-blue-700 disabled:opacity-50 sm:w-auto"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-10 py-4 font-bold text-ink-inverse shadow-raised transition-all hover:bg-accent-hover disabled:opacity-50 sm:w-auto"
                         >
                             {processing ? (
                                 <ArrowPathIcon className="h-6 w-6 animate-spin" />

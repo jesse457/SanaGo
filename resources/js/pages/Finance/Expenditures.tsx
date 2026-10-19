@@ -10,6 +10,14 @@ import FormSelect from '@/Components/FormSelect';
 import Modal from '@/Components/Modal';
 import PageBreadcrumb from '@/Components/PageBreadcrumb';
 import StatusBadge from '@/Components/StatusBadge';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 
@@ -127,12 +135,12 @@ export default function ExpendituresIndex({ expenditures }: Props) {
                 />
 
                 <div className="flex items-center justify-between gap-4">
-                    <div className="flex flex-wrap rounded-lg bg-gray-100 p-1 dark:bg-neutral-800">
+                    <div className="flex flex-wrap rounded-lg bg-surface-inset p-1">
                         {['all', ...CATEGORIES].map((c) => (
                             <button
                                 key={c}
                                 onClick={() => setFilter(c)}
-                                className={`rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase transition-all ${filter === c ? 'bg-white text-blue-600 shadow-sm dark:bg-neutral-700' : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100'}`}
+                                className={`rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase transition-all ${filter === c ? 'bg-surface text-accent-ink shadow-surface' : 'text-ink-subtle hover:text-ink'}`}
                             >
                                 {t(`finance.expenditures.filter_${c}`)}
                             </button>
@@ -140,65 +148,67 @@ export default function ExpendituresIndex({ expenditures }: Props) {
                     </div>
                     <button
                         onClick={openCreate}
-                        className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
+                        className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-bold text-ink-inverse shadow-surface hover:bg-accent-hover"
                     >
                         <PlusIcon className="h-4 w-4" />{' '}
                         {t('finance.expenditures.add_expense')}
                     </button>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-                    <table className="w-full text-left">
-                        <thead className="border-b border-gray-200 bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800">
-                            <tr>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
+                <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-surface">
+                    <Table bare>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                                <TableHeaderCell>
                                     {t('finance.expenditures.description')}
-                                </th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
+                                </TableHeaderCell>
+                                <TableHeaderCell>
                                     {t('finance.expenditures.category')}
-                                </th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
+                                </TableHeaderCell>
+                                <TableHeaderCell numeric>
                                     {t('finance.expenditures.amount')}
-                                </th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
+                                </TableHeaderCell>
+                                <TableHeaderCell>
                                     {t('finance.expenditures.date')}
-                                </th>
-                                <th className="px-6 py-4"></th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-neutral-700">
+                                </TableHeaderCell>
+                                <TableHeaderCell numeric>
+                                    <span className="sr-only">Actions</span>
+                                </TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {filtered.map((e) => (
-                                <tr
-                                    key={e.id}
-                                    className="hover:bg-gray-50 dark:hover:bg-neutral-700/30"
-                                >
-                                    <td className="px-6 py-4">
-                                        <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
+                                <TableRow key={e.id}>
+                                    <TableCell>
+                                        <p className="text-[13px] font-semibold text-ink">
                                             {e.description}
                                         </p>
                                         {e.vendor && (
-                                            <p className="text-xs text-gray-400 dark:text-neutral-500">
+                                            <p className="text-xs text-ink-subtle">
                                                 {e.vendor}
                                             </p>
                                         )}
-                                    </td>
-                                    <td className="px-6 py-4">
+                                    </TableCell>
+                                    <TableCell>
                                         <StatusBadge
                                             label={e.category}
                                             color="gray"
                                         />
-                                    </td>
-                                    <td className="px-6 py-4 text-sm font-bold text-red-600">
+                                    </TableCell>
+                                    <TableCell
+                                        numeric
+                                        className="font-semibold text-critical-ink"
+                                    >
                                         {e.amount.toLocaleString()} FCFA
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-neutral-400">
+                                    </TableCell>
+                                    <TableCell muted className="tabular-nums">
                                         {e.expenditure_date}
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
+                                    </TableCell>
+                                    <TableCell numeric>
                                         <div className="flex justify-end gap-2">
                                             <button
                                                 onClick={() => openEdit(e)}
-                                                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20"
+                                                className="rounded-lg p-2 text-ink-subtle transition-colors hover:bg-accent-soft hover:text-accent"
                                             >
                                                 <PencilSquareIcon className="h-4 w-4" />
                                             </button>
@@ -219,16 +229,16 @@ export default function ExpendituresIndex({ expenditures }: Props) {
                                                         );
                                                     }
                                                 }}
-                                                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                                                className="rounded-lg p-2 text-ink-subtle transition-colors hover:bg-critical-soft hover:text-red-600"
                                             >
                                                 <TrashIcon className="h-4 w-4" />
                                             </button>
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
             </div>
 
@@ -291,14 +301,14 @@ export default function ExpendituresIndex({ expenditures }: Props) {
                         <button
                             type="button"
                             onClick={() => setModalOpen(false)}
-                            className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-bold text-gray-500 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                            className="flex-1 rounded-xl border border-line bg-surface py-3 font-bold text-ink-subtle transition-colors hover:bg-surface-hover"
                         >
                             {t('common.cancel')}
                         </button>
                         <button
                             type="submit"
                             disabled={processing}
-                            className="flex-[2] rounded-xl bg-blue-600 py-3 font-bold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                            className="flex-[2] rounded-xl bg-accent py-3 font-bold text-ink-inverse transition-colors hover:bg-accent-hover disabled:opacity-50"
                         >
                             {processing
                                 ? t('common.saving')

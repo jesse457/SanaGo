@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Helpers;
 
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Runs tenant-only table migrations for testing.
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Artisan;
  */
 function migrateTenantTables(): void
 {
-    if (\Illuminate\Support\Facades\Schema::hasTable('patients')) {
+    if (Schema::hasTable('patients')) {
         return;
     }
 

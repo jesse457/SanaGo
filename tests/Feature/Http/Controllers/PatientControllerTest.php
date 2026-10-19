@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 use App\Models\Patient;
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain;
+use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 use function Tests\Helpers\migrateTenantTables;
 
@@ -12,12 +15,12 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     migrateTenantTables();
-    $this->seed(\Database\Seeders\RoleSeeder::class);
+    $this->seed(RoleSeeder::class);
     $this->admin = tap(User::factory()->create())->assignRole('admin');
     // Tenant routes use tenancy middleware. Disable so routes resolve in tests.
     $this->withoutMiddleware([
-        \Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain::class,
-        \Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains::class,
+        InitializeTenancyBySubdomain::class,
+        PreventAccessFromCentralDomains::class,
     ]);
 });
 
@@ -165,7 +168,7 @@ describe('store', function () {
 
         $patient = Patient::where('first_name', 'Chidi')->first();
 
-        expect($patient->patient_uid)->toMatch('/^PT-' . date('Y') . '-[A-Z0-9]{4}$/');
+        expect($patient->patient_uid)->toMatch('/^PT-'.date('Y').'-[A-Z0-9]{4}$/');
     });
 
     it('requires first_name and last_name on store', function () {

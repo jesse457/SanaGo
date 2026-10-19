@@ -76,7 +76,7 @@ export default function TenantsIndex({ tenants }: { tenants: TenantItem[] }) {
                     </div>
                     <Link
                         href="/tenants/create"
-                        className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+                        className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-ink-inverse shadow-surface transition-colors hover:bg-accent-hover"
                     >
                         <PlusIcon className="h-4 w-4" /> New Tenant
                     </Link>
@@ -86,10 +86,10 @@ export default function TenantsIndex({ tenants }: { tenants: TenantItem[] }) {
                     {filtered.map((tenant) => (
                         <div
                             key={tenant.id}
-                            className="group relative flex h-full flex-col rounded-xl border border-gray-200 bg-white p-6 transition-all duration-200 hover:border-blue-400 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                            className="group relative flex h-full flex-col rounded-xl border border-line bg-surface p-6 transition-all duration-200 hover:border-accent hover:shadow-surface"
                         >
                             <div className="mb-4 flex items-start justify-between">
-                                <div className="rounded-lg bg-blue-50 p-3 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                                <div className="rounded-lg bg-accent-soft p-3 text-accent">
                                     <BuildingOfficeIcon className="h-6 w-6" />
                                 </div>
                                 <StatusBadge
@@ -103,14 +103,14 @@ export default function TenantsIndex({ tenants }: { tenants: TenantItem[] }) {
                             </div>
                             <div className="mb-4 flex-grow">
                                 <Link href={`/tenants/${tenant.id}`}>
-                                    <h3 className="truncate text-lg font-bold text-gray-900 hover:text-blue-600 dark:text-neutral-100">
+                                    <h3 className="truncate text-lg font-bold text-ink hover:text-accent">
                                         {tenant.name}
                                     </h3>
                                 </Link>
-                                <span className="mt-1 inline-block rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-400 dark:bg-neutral-700 dark:text-neutral-500">
+                                <span className="mt-1 inline-block rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs text-ink-subtle">
                                     {tenant.slug}
                                 </span>
-                                <div className="mt-3 flex items-center gap-1.5 text-xs text-gray-500 dark:text-neutral-400">
+                                <div className="mt-3 flex items-center gap-1.5 text-xs text-ink-subtle">
                                     <GlobeAltIcon className="h-3.5 w-3.5" />
                                     {tenant.domains[0] || 'No domain'}
                                 </div>
@@ -127,17 +127,17 @@ export default function TenantsIndex({ tenants }: { tenants: TenantItem[] }) {
                                     />
                                 )}
                             </div>
-                            <div className="flex gap-2 border-t border-gray-100 pt-4 opacity-0 transition-opacity group-hover:opacity-100 dark:border-neutral-700">
+                            <div className="flex gap-2 border-t border-line pt-4 opacity-0 transition-opacity group-hover:opacity-100">
                                 <Link
                                     href={`/tenants/${tenant.id}/edit`}
-                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:border-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-line bg-surface py-2 text-xs font-semibold text-ink-muted transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
                                 >
                                     <PencilSquareIcon className="h-4 w-4" />{' '}
                                     Edit
                                 </Link>
                                 <button
                                     onClick={() => setDelModal(tenant)}
-                                    className="rounded-lg border border-gray-200 bg-white p-2 text-gray-400 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-500 dark:hover:border-red-700 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                                    className="rounded-lg border border-line bg-surface p-2 text-ink-subtle transition-colors hover:border-red-200 hover:bg-critical-soft hover:text-critical-ink"
                                 >
                                     <TrashIcon className="h-4 w-4" />
                                 </button>
@@ -159,22 +159,22 @@ export default function TenantsIndex({ tenants }: { tenants: TenantItem[] }) {
                 title="Delete Tenant"
             >
                 <div className="text-center">
-                    <ExclamationTriangleIcon className="mx-auto mb-4 h-12 w-12 text-red-600" />
-                    <p className="text-gray-700 dark:text-neutral-300">
+                    <ExclamationTriangleIcon className="mx-auto mb-4 h-12 w-12 text-critical-ink" />
+                    <p className="text-ink-muted">
                         Delete <strong>{delModal?.name}</strong> permanently?
                     </p>
                 </div>
                 <div className="mt-6 flex justify-end gap-3">
                     <button
                         onClick={() => setDelModal(null)}
-                        className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                        className="rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-ink-muted transition-colors hover:bg-surface-hover"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleDelete}
                         disabled={processing}
-                        className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-lg bg-critical px-4 py-2 text-sm font-semibold text-ink-inverse transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {processing ? 'Deleting...' : 'Delete'}
                     </button>

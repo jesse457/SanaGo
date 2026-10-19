@@ -1,7 +1,6 @@
 import {
     PlusIcon,
     PencilSquareIcon,
-    TrashIcon,
     ArrowUpIcon,
     ArrowDownIcon,
     MagnifyingGlassIcon,
@@ -20,9 +19,17 @@ import Modal from '@/Components/Modal';
 import PageBreadcrumb from '@/Components/PageBreadcrumb';
 import StatCard from '@/Components/StatCard';
 import StatusBadge from '@/Components/StatusBadge';
+import {
+    Table,
+    TableBody,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+} from '@/Components/ui';
 import ViewToggle from '@/Components/ViewToggle';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
+import { SupplyRow } from '@/pages/Supply/components/SupplyRow';
 
 interface Supply {
     id: number;
@@ -218,7 +225,7 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
                         <div className="relative w-full sm:w-80">
-                            <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                            <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-ink-subtle" />
                             <input
                                 type="text"
                                 placeholder={t(
@@ -226,7 +233,7 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                                 )}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full rounded-lg border border-gray-200 bg-white py-2 pr-4 pl-9 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                                className="w-full rounded-lg border border-line bg-surface py-2 pr-4 pl-9 text-ink shadow-surface focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             />
                         </div>
 
@@ -238,7 +245,7 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                                         e.target.value as StockStatus,
                                     )
                                 }
-                                className="cursor-pointer appearance-none rounded-lg border border-gray-200 bg-white py-2 pr-10 pl-4 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                                className="cursor-pointer appearance-none rounded-lg border border-line bg-surface py-2 pr-10 pl-4 text-ink shadow-surface focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             >
                                 <option value="all">
                                     {t('page.supplies.all_status')}
@@ -253,7 +260,7 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                                     {t('page.supplies.out_of_stock')}
                                 </option>
                             </select>
-                            <FunnelIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                            <FunnelIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-ink-subtle" />
                         </div>
                     </div>
 
@@ -261,7 +268,7 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                         <ViewToggle view={viewMode} onChange={setViewMode} />
                         <Link
                             href={route('supplies.create')}
-                            className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
+                            className="flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-bold text-ink-inverse shadow-surface transition-colors hover:bg-accent-hover"
                         >
                             <PlusIcon className="h-4 w-4" />{' '}
                             {t('page.supplies.add_supply')}
@@ -288,11 +295,11 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                                     return (
                                         <div
                                             key={supply.id}
-                                            className="group relative flex h-full flex-col rounded-xl border border-gray-200 bg-white p-6 transition-all hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                                            className="group relative flex h-full flex-col rounded-xl border border-line bg-surface p-6 transition-all hover:shadow-surface"
                                         >
                                             <div className="mb-4 flex items-start justify-between">
                                                 <div
-                                                    className={`overflow-hidden rounded-lg p-3 ${status === 'good' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'bg-gray-100 text-gray-500 dark:bg-neutral-700 dark:text-neutral-400'}`}
+                                                    className={`overflow-hidden rounded-lg p-3 ${status === 'good' ? 'bg-accent-soft text-accent' : 'bg-surface-inset text-ink-subtle'}`}
                                                 >
                                                     {supply.image_url ? (
                                                         <img
@@ -316,22 +323,22 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                                                 />
                                             </div>
                                             <div className="mb-4 flex-grow">
-                                                <h3 className="mb-1 truncate text-lg font-bold text-gray-900 dark:text-neutral-100">
+                                                <h3 className="mb-1 truncate text-lg font-bold text-ink">
                                                     {supply.name}
                                                 </h3>
-                                                <p className="mb-4 text-xs font-bold tracking-wide text-gray-500 uppercase dark:text-neutral-400">
+                                                <p className="mb-4 text-xs font-bold tracking-wide text-ink-subtle uppercase">
                                                     {supply.category}
                                                 </p>
                                                 <div className="space-y-3">
                                                     <div>
                                                         <div className="mb-1 flex justify-between text-xs font-semibold">
-                                                            <span className="text-gray-500 dark:text-neutral-400">
+                                                            <span className="text-ink-subtle">
                                                                 {t(
                                                                     'page.supplies.stock_level',
                                                                 )}
                                                             </span>
                                                             <span
-                                                                className={`font-bold ${status === 'low' || status === 'out' ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-neutral-100'}`}
+                                                                className={`font-bold ${status === 'low' || status === 'out' ? 'text-critical-ink' : 'text-ink'}`}
                                                             >
                                                                 {
                                                                     supply.current_stock
@@ -343,9 +350,9 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                                                                 min
                                                             </span>
                                                         </div>
-                                                        <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-neutral-700">
+                                                        <div className="h-2 w-full rounded-full bg-surface-inset">
                                                             <div
-                                                                className={`h-2 rounded-full ${status === 'good' ? 'bg-emerald-500' : status === 'low' ? 'bg-amber-500' : 'bg-red-500'}`}
+                                                                className={`h-2 rounded-full ${status === 'good' ? 'bg-positive' : status === 'low' ? 'bg-warning' : 'bg-critical'}`}
                                                                 style={{
                                                                     width: `${Math.min((supply.current_stock / (supply.min_stock_level * 2)) * 100, 100)}%`,
                                                                 }}
@@ -353,26 +360,26 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                                                         </div>
                                                     </div>
                                                     <div className="grid grid-cols-2 gap-2 pt-2">
-                                                        <div className="rounded-lg border border-gray-100 bg-gray-50 p-2 dark:border-neutral-700 dark:bg-neutral-700/50">
-                                                            <p className="text-[10px] font-bold text-gray-400 uppercase dark:text-neutral-500">
+                                                        <div className="rounded-lg border border-line bg-surface-muted p-2">
+                                                            <p className="text-[10px] font-bold text-ink-subtle uppercase">
                                                                 {t(
                                                                     'page.supplies.unit_cost',
                                                                 )}
                                                             </p>
-                                                            <p className="text-sm font-bold text-gray-700 dark:text-neutral-300">
+                                                            <p className="text-sm font-bold text-ink-muted">
                                                                 $
                                                                 {Number(
                                                                     supply.cost_per_unit,
                                                                 ).toFixed(2)}
                                                             </p>
                                                         </div>
-                                                        <div className="rounded-lg border border-gray-100 bg-gray-50 p-2 dark:border-neutral-700 dark:bg-neutral-700/50">
-                                                            <p className="text-[10px] font-bold text-gray-400 uppercase dark:text-neutral-500">
+                                                        <div className="rounded-lg border border-line bg-surface-muted p-2">
+                                                            <p className="text-[10px] font-bold text-ink-subtle uppercase">
                                                                 {t(
                                                                     'page.supplies.total_value',
                                                                 )}
                                                             </p>
-                                                            <p className="text-sm font-bold text-gray-700 dark:text-neutral-300">
+                                                            <p className="text-sm font-bold text-ink-muted">
                                                                 $
                                                                 {(
                                                                     supply.current_stock *
@@ -383,7 +390,7 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="mt-4 flex gap-2 border-t border-gray-100 pt-4 dark:border-neutral-700">
+                                            <div className="mt-4 flex gap-2 border-t border-line pt-4">
                                                 <button
                                                     onClick={() =>
                                                         openModal(
@@ -391,7 +398,7 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                                                             supply,
                                                         )
                                                     }
-                                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-50 py-2 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-accent-soft py-2 text-xs font-bold text-accent-ink transition-colors hover:bg-accent-soft"
                                                 >
                                                     <ArrowUpIcon className="h-4 w-4" />{' '}
                                                     {t('page.supplies.restock')}
@@ -401,7 +408,7 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                                                         'supplies.edit',
                                                         supply.id,
                                                     )}
-                                                    className="rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-600 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                                                    className="rounded-lg border border-line p-2 text-ink-muted transition-colors hover:bg-surface-hover"
                                                 >
                                                     <PencilSquareIcon className="h-4 w-4" />
                                                 </Link>
@@ -413,195 +420,51 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                         )}
 
                         {viewMode === 'table' && (
-                            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
-                                        <thead className="bg-gray-50 dark:bg-neutral-800">
-                                            <tr>
-                                                <th
-                                                    scope="col"
-                                                    className="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400"
-                                                >
-                                                    {t(
-                                                        'page.supplies.col_supply_name',
-                                                    )}
-                                                </th>
-                                                <th
-                                                    scope="col"
-                                                    className="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400"
-                                                >
-                                                    {t(
-                                                        'page.supplies.col_category',
-                                                    )}
-                                                </th>
-                                                <th
-                                                    scope="col"
-                                                    className="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400"
-                                                >
-                                                    {t(
-                                                        'page.supplies.col_stock_level',
-                                                    )}
-                                                </th>
-                                                <th
-                                                    scope="col"
-                                                    className="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400"
-                                                >
-                                                    {t(
-                                                        'page.supplies.col_cost_value',
-                                                    )}
-                                                </th>
-                                                <th
-                                                    scope="col"
-                                                    className="px-6 py-3 text-right text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-neutral-400"
-                                                >
-                                                    {t('common.actions')}
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-200 dark:divide-neutral-700">
-                                            {filteredSupplies.map((supply) => {
-                                                const status =
-                                                    getStockStatus(supply);
-
-                                                return (
-                                                    <tr
-                                                        key={supply.id}
-                                                        className="transition-colors hover:bg-gray-50 dark:hover:bg-neutral-700/30"
-                                                    >
-                                                        <td className="px-6 py-4 whitespace-nowrap">
-                                                            <div className="flex items-center">
-                                                                <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg border border-blue-100 dark:border-blue-800">
-                                                                    {supply.image_url ? (
-                                                                        <img
-                                                                            src={
-                                                                                supply.image_url
-                                                                            }
-                                                                            alt=""
-                                                                            className="h-full w-full object-cover"
-                                                                        />
-                                                                    ) : (
-                                                                        <div className="flex h-full w-full items-center justify-center bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
-                                                                            <CubeIcon className="h-5 w-5" />
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                                <div className="ml-4">
-                                                                    <div className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                                                        {
-                                                                            supply.name
-                                                                        }
-                                                                    </div>
-                                                                    <div className="text-xs font-semibold text-gray-500 dark:text-neutral-400">
-                                                                        {t(
-                                                                            'page.supplies.alert_min',
-                                                                        )}
-                                                                        :{' '}
-                                                                        {
-                                                                            supply.min_stock_level
-                                                                        }
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap">
-                                                            <StatusBadge
-                                                                label={
-                                                                    supply.category
-                                                                }
-                                                                color="gray"
-                                                            />
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap">
-                                                            <div className="flex flex-col gap-1.5">
-                                                                <div className="flex items-center gap-2">
-                                                                    <span
-                                                                        className={`text-sm font-bold ${status === 'good' ? 'text-gray-900 dark:text-neutral-100' : 'text-red-600 dark:text-red-400'}`}
-                                                                    >
-                                                                        {
-                                                                            supply.current_stock
-                                                                        }
-                                                                    </span>
-                                                                    <span className="text-[10px] font-bold text-gray-400 uppercase dark:text-neutral-500">
-                                                                        {
-                                                                            supply.unit_of_measure
-                                                                        }
-                                                                    </span>
-                                                                </div>
-                                                                <div className="h-1.5 w-24 rounded-full bg-gray-100 dark:bg-neutral-700">
-                                                                    <div
-                                                                        className={`h-1.5 rounded-full ${status === 'good' ? 'bg-emerald-500' : status === 'low' ? 'bg-amber-500' : 'bg-red-500'}`}
-                                                                        style={{
-                                                                            width: `${Math.min((supply.current_stock / (supply.min_stock_level * 2)) * 100, 100)}%`,
-                                                                        }}
-                                                                    ></div>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap">
-                                                            <div className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                                                $
-                                                                {Number(
-                                                                    supply.cost_per_unit,
-                                                                ).toFixed(2)}
-                                                            </div>
-                                                            <div className="text-xs font-medium text-gray-500 dark:text-neutral-400">
-                                                                Total: $
-                                                                {(
-                                                                    supply.current_stock *
-                                                                    supply.cost_per_unit
-                                                                ).toFixed(2)}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
-                                                            <div className="flex justify-end gap-2">
-                                                                <button
-                                                                    onClick={() =>
-                                                                        openModal(
-                                                                            'restock',
-                                                                            supply,
-                                                                        )
-                                                                    }
-                                                                    className="rounded-md border border-blue-100 bg-blue-50 p-1.5 text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30 dark:hover:text-blue-300"
-                                                                    title={t(
-                                                                        'page.supplies.restock',
-                                                                    )}
-                                                                >
-                                                                    <ArrowUpIcon className="h-4 w-4" />
-                                                                </button>
-                                                                <Link
-                                                                    href={route(
-                                                                        'supplies.edit',
-                                                                        supply.id,
-                                                                    )}
-                                                                    className="rounded-md border border-gray-200 bg-white p-1.5 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-800 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-200"
-                                                                    title={t(
-                                                                        'common.edit',
-                                                                    )}
-                                                                >
-                                                                    <PencilSquareIcon className="h-4 w-4" />
-                                                                </Link>
-                                                                <button
-                                                                    onClick={() =>
-                                                                        openModal(
-                                                                            'delete',
-                                                                            supply,
-                                                                        )
-                                                                    }
-                                                                    className="rounded-md border border-red-100 bg-red-50 p-1.5 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
-                                                                    title={t(
-                                                                        'common.delete',
-                                                                    )}
-                                                                >
-                                                                    <TrashIcon className="h-4 w-4" />
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
+                            <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-surface">
+                                <Table bare>
+                                    <TableHeader>
+                                        <TableRow className="hover:bg-transparent">
+                                            <TableHeaderCell>
+                                                {t(
+                                                    'page.supplies.col_supply_name',
+                                                )}
+                                            </TableHeaderCell>
+                                            <TableHeaderCell>
+                                                {t(
+                                                    'page.supplies.col_category',
+                                                )}
+                                            </TableHeaderCell>
+                                            <TableHeaderCell>
+                                                {t(
+                                                    'page.supplies.col_stock_level',
+                                                )}
+                                            </TableHeaderCell>
+                                            <TableHeaderCell numeric>
+                                                {t(
+                                                    'page.supplies.col_cost_value',
+                                                )}
+                                            </TableHeaderCell>
+                                            <TableHeaderCell numeric>
+                                                {t('common.actions')}
+                                            </TableHeaderCell>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredSupplies.map((supply) => (
+                                            <SupplyRow
+                                                key={supply.id}
+                                                supply={supply}
+                                                status={getStockStatus(supply)}
+                                                onRestock={() =>
+                                                    openModal('restock', supply)
+                                                }
+                                                onDelete={() =>
+                                                    openModal('delete', supply)
+                                                }
+                                            />
+                                        ))}
+                                    </TableBody>
+                                </Table>
                             </div>
                         )}
                     </>
@@ -612,10 +475,10 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {modalMode === 'delete' ? (
                         <div className="text-center">
-                            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-                                <ExclamationTriangleIcon className="h-7 w-7 text-red-600 dark:text-red-400" />
+                            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-critical-soft">
+                                <ExclamationTriangleIcon className="h-7 w-7 text-critical-ink" />
                             </div>
-                            <p className="text-sm text-gray-500 dark:text-neutral-400">
+                            <p className="text-sm text-ink-subtle">
                                 {t('page.supplies.delete_confirm', {
                                     name: selectedItem?.name ?? '',
                                 })}
@@ -623,12 +486,12 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between rounded-lg border border-blue-100 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+                            <div className="flex items-center justify-between rounded-lg border border-accent/30 bg-accent-soft p-4">
                                 <div>
-                                    <p className="text-[10px] font-bold tracking-wide text-blue-700 uppercase dark:text-blue-400">
+                                    <p className="text-[10px] font-bold tracking-wide text-accent-ink uppercase">
                                         Current
                                     </p>
-                                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">
+                                    <p className="text-2xl font-bold text-accent-ink">
                                         {selectedItem?.current_stock}{' '}
                                         <span className="text-sm font-semibold">
                                             {selectedItem?.unit_of_measure}
@@ -637,7 +500,7 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                                 </div>
                             </div>
                             <div>
-                                <label className="mb-1.5 block text-xs font-bold tracking-wide text-gray-600 uppercase dark:text-neutral-400">
+                                <label className="mb-1.5 block text-xs font-bold tracking-wide text-ink-muted uppercase">
                                     Quantity to Add
                                 </label>
                                 <input
@@ -648,7 +511,7 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                                     onChange={(e) =>
                                         setData('add_amount', e.target.value)
                                     }
-                                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100"
+                                    className="w-full rounded-lg border border-line-strong bg-surface-inset px-4 py-2.5 text-ink shadow-surface focus:ring-2 focus:ring-blue-500"
                                     placeholder="Enter amount..."
                                 />
                                 {errors.add_amount && (
@@ -665,14 +528,14 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                             type="button"
                             onClick={closeModal}
                             disabled={processing}
-                            className="flex-1 rounded-lg border border-gray-300 bg-white py-2 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                            className="flex-1 rounded-lg border border-line-strong bg-surface py-2 text-sm font-bold text-ink-muted shadow-surface hover:bg-surface-hover"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={processing}
-                            className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-bold text-white shadow-sm ${modalMode === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-bold text-ink-inverse shadow-surface ${modalMode === 'delete' ? 'bg-critical hover:bg-red-700' : 'bg-accent hover:bg-accent-hover'}`}
                         >
                             {processing && (
                                 <ArrowPathIcon className="h-4 w-4 animate-spin" />

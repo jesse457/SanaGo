@@ -1,6 +1,28 @@
-import { PencilSquareIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { Head, Link } from '@inertiajs/react';
-import React from 'react';
+import {
+    ArrowLeftIcon,
+    CalendarDaysIcon,
+    ClockIcon,
+    ExclamationTriangleIcon,
+    PencilSquareIcon,
+    Squares2X2Icon,
+    BanknotesIcon,
+    UserIcon,
+    BeakerIcon,
+    MapPinIcon,
+    DocumentTextIcon,
+} from '@heroicons/react/24/outline';
+import { Head } from '@inertiajs/react';
+import {
+    Alert,
+    Avatar,
+    Badge,
+    Button,
+    KeyValue,
+    KeyValueGrid,
+    PageHeader,
+    SectionCard,
+} from '@/Components/ui';
+import type { BadgeTone } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 
@@ -26,8 +48,31 @@ interface Props {
     surgery: Surgery;
 }
 
+const URGENCY_TONE: Record<string, BadgeTone> = {
+    emergency: 'critical',
+    urgent: 'warning',
+    routine: 'accent',
+};
+
+const STATUS_TONE: Record<string, BadgeTone> = {
+    completed: 'positive',
+    in_progress: 'warning',
+    cancelled: 'critical',
+    scheduled: 'accent',
+};
+
+/**
+ * Surgeries/Show — the read-only surgical record: identity, theatre team, the
+ * booked slot and the operative notes.
+ */
 export default function SurgeryShow({ surgery }: Props) {
     const { t } = useTranslation();
+    const patientName = [
+        surgery.patient?.first_name,
+        surgery.patient?.last_name,
+    ]
+        .filter(Boolean)
+        .join(' ');
 
     return (
         <AppLayout
@@ -39,124 +84,186 @@ export default function SurgeryShow({ surgery }: Props) {
                     name: surgery.surgery_name,
                 })}
             />
-            <div className="mx-auto max-w-3xl space-y-6">
-                <div className="flex items-center gap-4">
-                    <Link
-                        href={route('surgeries.index')}
-                        className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600"
-                    >
-                        <ArrowLeftIcon className="h-4 w-4" />
-                        {t('common.back')}
-                    </Link>
-                    <Link
-                        href={route('surgeries.edit', surgery.id)}
-                        className="ml-auto flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700"
-                    >
-                        <PencilSquareIcon className="h-4 w-4" />
-                        {t('common.edit')}
-                    </Link>
-                </div>
 
-                <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700/50">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase">
-                                {t('surgeries.show.patient')}
-                            </p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                {surgery.patient?.first_name}{' '}
-                                {surgery.patient?.last_name}
-                            </p>
-                        </div>
-                        <div className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700/50">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase">
-                                {t('surgeries.show.surgeon')}
-                            </p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                {surgery.surgeon?.name}
-                            </p>
-                        </div>
-                        <div className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700/50">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase">
-                                {t('surgeries.show.anesthetist')}
-                            </p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                {surgery.anesthetist?.name || t('common.na')}
-                            </p>
-                        </div>
-                        <div className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700/50">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase">
-                                {t('surgeries.show.bed_ward')}
-                            </p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                {surgery.bed?.name || t('common.na')}{' '}
-                                {surgery.bed?.ward?.name &&
-                                    `(${surgery.bed.ward.name})`}
-                            </p>
-                        </div>
-                        <div className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700/50">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase">
-                                {t('surgeries.show.scheduled')}
-                            </p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                {new Date(
-                                    surgery.scheduled_at,
-                                ).toLocaleString()}
-                            </p>
-                        </div>
-                        <div className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700/50">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase">
-                                {t('surgeries.show.status_urgency')}
-                            </p>
-                            <p className="text-sm font-bold text-gray-900 capitalize dark:text-neutral-100">
-                                {surgery.status.replace('_', ' ')} —{' '}
+            <div className="mx-auto max-w-4xl space-y-5">
+                <PageHeader
+                    title={surgery.surgery_name}
+                    description={t('surgeries.show.subtitle')}
+                    breadcrumbs={[
+                        { label: t('common.home'), href: route('home') },
+                        {
+                            label: t('surgeries.index.surgeries'),
+                            href: route('surgeries.index'),
+                        },
+                        { label: `#${surgery.id}` },
+                    ]}
+                    meta={
+                        <>
+                            <Badge
+                                tone={STATUS_TONE[surgery.status] ?? 'neutral'}
+                                dot
+                            >
+                                {surgery.status.replace('_', ' ')}
+                            </Badge>
+                            <Badge
+                                tone={
+                                    URGENCY_TONE[
+                                        surgery.urgency.toLowerCase()
+                                    ] ?? 'accent'
+                                }
+                                variant="outline"
+                            >
                                 {surgery.urgency}
-                            </p>
-                        </div>
-                        <div className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700/50">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase">
-                                {t('surgeries.show.fee')}
-                            </p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                {surgery.surgery_fee.toLocaleString()} FCFA
-                            </p>
-                        </div>
-                        <div className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700/50">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase">
-                                {t('surgeries.show.duration')}
-                            </p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                {surgery.estimated_duration_minutes
+                            </Badge>
+                            {surgery.estimated_duration_minutes
+                                ? statusDuration(
+                                      surgery.estimated_duration_minutes,
+                                      t,
+                                  )
+                                : null}
+                        </>
+                    }
+                    actions={
+                        <>
+                            <Button
+                                href={route('surgeries.index')}
+                                variant="secondary"
+                                icon={ArrowLeftIcon}
+                            >
+                                {t('common.back')}
+                            </Button>
+                            <Button
+                                href={route('surgeries.edit', surgery.id)}
+                                icon={PencilSquareIcon}
+                            >
+                                {t('common.edit')}
+                            </Button>
+                        </>
+                    }
+                />
+
+                <SectionCard
+                    icon={Squares2X2Icon}
+                    title={t('surgeries.show.subtitle')}
+                >
+                    <KeyValueGrid columns={3}>
+                        <KeyValue
+                            label={t('surgeries.show.patient')}
+                            icon={UserIcon}
+                            value={
+                                surgery.patient ? (
+                                    <span className="flex items-center gap-2">
+                                        <Avatar size="xs" name={patientName} />
+                                        <span className="truncate">
+                                            {patientName}
+                                        </span>
+                                    </span>
+                                ) : null
+                            }
+                        />
+                        <KeyValue
+                            label={t('surgeries.show.surgeon')}
+                            icon={UserIcon}
+                            value={surgery.surgeon?.name}
+                        />
+                        <KeyValue
+                            label={t('surgeries.show.anesthetist')}
+                            icon={BeakerIcon}
+                            value={surgery.anesthetist?.name || t('common.na')}
+                        />
+                        <KeyValue
+                            label={t('surgeries.show.bed_ward')}
+                            icon={MapPinIcon}
+                            value={
+                                <>
+                                    {surgery.bed?.name || t('common.na')}{' '}
+                                    {surgery.bed?.ward?.name &&
+                                        `(${surgery.bed.ward.name})`}
+                                </>
+                            }
+                        />
+                        <KeyValue
+                            label={t('surgeries.show.scheduled')}
+                            icon={CalendarDaysIcon}
+                            value={new Date(
+                                surgery.scheduled_at,
+                            ).toLocaleString()}
+                        />
+                        <KeyValue
+                            label={t('surgeries.show.status_urgency')}
+                            value={
+                                <span className="capitalize">
+                                    {surgery.status.replace('_', ' ')} —{' '}
+                                    {surgery.urgency}
+                                </span>
+                            }
+                        />
+                        <KeyValue
+                            label={t('surgeries.show.fee')}
+                            icon={BanknotesIcon}
+                            value={`${surgery.surgery_fee.toLocaleString()} FCFA`}
+                        />
+                        <KeyValue
+                            label={t('surgeries.show.duration')}
+                            icon={ClockIcon}
+                            value={
+                                surgery.estimated_duration_minutes
                                     ? t('surgeries.show.duration_minutes', {
                                           minutes:
                                               surgery.estimated_duration_minutes,
                                       })
-                                    : t('common.na')}
-                            </p>
-                        </div>
-                    </div>
-                    {surgery.notes && (
-                        <div className="rounded-xl bg-gray-50 p-4 dark:bg-neutral-700/50">
-                            <p className="mb-1 text-[10px] font-bold text-gray-400 uppercase">
-                                {t('surgeries.show.notes')}
-                            </p>
-                            <p className="text-sm text-gray-700 dark:text-neutral-300">
-                                {surgery.notes}
-                            </p>
-                        </div>
-                    )}
-                    {surgery.complications && (
-                        <div className="rounded-xl border border-red-100 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/10">
-                            <p className="mb-1 text-[10px] font-bold text-red-500 uppercase">
-                                {t('surgeries.show.complications')}
-                            </p>
-                            <p className="text-sm text-red-700 dark:text-red-400">
-                                {surgery.complications}
-                            </p>
-                        </div>
-                    )}
-                </div>
+                                    : t('common.na')
+                            }
+                        />
+                    </KeyValueGrid>
+                </SectionCard>
+
+                {surgery.description && (
+                    <SectionCard
+                        icon={DocumentTextIcon}
+                        title={t('surgeries.create.description')}
+                    >
+                        <p className="text-[13px] leading-relaxed text-ink-muted">
+                            {surgery.description}
+                        </p>
+                    </SectionCard>
+                )}
+
+                {surgery.notes && (
+                    <SectionCard
+                        icon={DocumentTextIcon}
+                        title={t('surgeries.show.notes')}
+                    >
+                        <p className="text-[13px] leading-relaxed text-ink-muted">
+                            {surgery.notes}
+                        </p>
+                    </SectionCard>
+                )}
+
+                {surgery.complications && (
+                    <Alert
+                        tone="critical"
+                        title={t('surgeries.show.complications')}
+                    >
+                        <span className="flex items-start gap-2">
+                            <ExclamationTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                            {surgery.complications}
+                        </span>
+                    </Alert>
+                )}
             </div>
         </AppLayout>
+    );
+}
+
+function statusDuration(
+    minutes: number,
+    t: (key: string, replacements?: Record<string, string | number>) => string,
+) {
+    return (
+        <span className="flex items-center gap-1.5">
+            <ClockIcon className="h-3.5 w-3.5" />
+            {t('surgeries.show.duration_minutes', { minutes })}
+        </span>
     );
 }

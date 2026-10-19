@@ -3,10 +3,6 @@ import {
     MagnifyingGlassIcon,
     TrashIcon,
     PencilIcon,
-    BeakerIcon,
-    XRayIcon,
-    HeartIcon,
-    BuildingOfficeIcon,
     TagIcon,
 } from '@heroicons/react/24/outline';
 import { Head, Link, router } from '@inertiajs/react';
@@ -14,6 +10,14 @@ import React, { useState } from 'react';
 import EmptyState from '@/Components/EmptyState';
 import PageBreadcrumb from '@/Components/PageBreadcrumb';
 import { Pagination } from '@/Components/Pagination';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+} from '@/Components/ui';
 import AppLayout from '@/Layouts/AppLayout';
 
 interface ServiceItem {
@@ -53,16 +57,16 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-    consultation: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    procedure: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-    lab: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-    radiology: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-    imaging: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
-    medication: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
-    bed: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    nursing: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
-    emergency: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    other: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
+    consultation: 'bg-accent-soft text-accent-ink ',
+    procedure: 'bg-accent-soft text-accent-ink ',
+    lab: 'bg-positive-soft text-positive-ink ',
+    radiology: 'bg-warning-soft text-warning-ink ',
+    imaging: 'bg-accent-soft text-accent-ink ',
+    medication: 'bg-accent-soft text-accent-ink ',
+    bed: 'bg-warning-soft text-warning-ink ',
+    nursing: 'bg-accent-soft text-accent-ink ',
+    emergency: 'bg-critical-soft text-critical-ink ',
+    other: 'bg-surface-inset text-ink-muted ',
 };
 
 export default function ServicesIndex({ services }: Props) {
@@ -76,6 +80,7 @@ export default function ServicesIndex({ services }: Props) {
             s.code.toLowerCase().includes(search.toLowerCase());
         const matchesCategory =
             categoryFilter === 'all' || s.category === categoryFilter;
+
         return matchesSearch && matchesCategory;
     });
 
@@ -107,12 +112,12 @@ export default function ServicesIndex({ services }: Props) {
                 />
 
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                    <div className="flex overflow-x-auto rounded-lg bg-gray-100 p-1 dark:bg-neutral-800">
+                    <div className="flex overflow-x-auto rounded-lg bg-surface-inset p-1">
                         {categories.map((cat) => (
                             <button
                                 key={cat}
                                 onClick={() => setCategoryFilter(cat)}
-                                className={`rounded-lg px-4 py-2 text-xs font-bold tracking-wide whitespace-nowrap uppercase transition-all ${categoryFilter === cat ? 'bg-white text-blue-600 shadow-sm dark:bg-neutral-700' : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100'}`}
+                                className={`rounded-lg px-4 py-2 text-xs font-bold tracking-wide whitespace-nowrap uppercase transition-all ${categoryFilter === cat ? 'bg-surface text-accent-ink shadow-surface' : 'text-ink-subtle hover:text-ink'}`}
                             >
                                 {cat === 'all'
                                     ? 'Tous'
@@ -123,116 +128,106 @@ export default function ServicesIndex({ services }: Props) {
 
                     <div className="flex items-center gap-3">
                         <div className="relative">
-                            <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-neutral-500" />
+                            <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-ink-subtle" />
                             <input
                                 type="text"
                                 placeholder="Rechercher un service..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="rounded-lg border border-gray-200 bg-white py-2 pr-4 pl-9 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                                className="rounded-lg border border-line bg-surface py-2 pr-4 pl-9 text-ink outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
                         <Link
                             href={route('finance.services.create')}
-                            className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold whitespace-nowrap text-white shadow-sm transition-colors hover:bg-blue-700"
+                            className="flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold whitespace-nowrap text-ink-inverse shadow-surface transition-colors hover:bg-accent-hover"
                         >
                             <PlusIcon className="h-4 w-4" /> Nouveau Service
                         </Link>
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-                    <table className="w-full text-left">
-                        <thead className="border-b border-gray-200 bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800">
-                            <tr>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
-                                    Service
-                                </th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
-                                    Code
-                                </th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
-                                    Catégorie
-                                </th>
-                                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
+                <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-surface">
+                    <Table bare>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                                <TableHeaderCell>Service</TableHeaderCell>
+                                <TableHeaderCell>Code</TableHeaderCell>
+                                <TableHeaderCell>Catégorie</TableHeaderCell>
+                                <TableHeaderCell numeric>
                                     Prix (XAF)
-                                </th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
-                                    Paiement
-                                </th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase dark:text-neutral-400">
-                                    Statut
-                                </th>
-                                <th className="px-6 py-4"></th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-neutral-700">
+                                </TableHeaderCell>
+                                <TableHeaderCell>Paiement</TableHeaderCell>
+                                <TableHeaderCell>Statut</TableHeaderCell>
+                                <TableHeaderCell numeric>
+                                    <span className="sr-only">Actions</span>
+                                </TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {filteredServices.map((svc) => (
-                                <tr
-                                    key={svc.id}
-                                    className="group transition-colors hover:bg-gray-50 dark:hover:bg-neutral-700/30"
-                                >
-                                    <td className="px-6 py-4">
-                                        <p className="text-sm font-bold text-gray-900 dark:text-neutral-100">
+                                <TableRow key={svc.id} className="group">
+                                    <TableCell>
+                                        <p className="text-[13px] font-semibold text-ink">
                                             {svc.name}
                                         </p>
                                         {svc.description && (
-                                            <p className="mt-0.5 text-xs text-gray-400 dark:text-neutral-500 line-clamp-1 max-w-xs">
+                                            <p className="mt-0.5 line-clamp-1 max-w-xs text-xs text-ink-subtle">
                                                 {svc.description}
                                             </p>
                                         )}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <code className="rounded bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-900 dark:bg-neutral-700 dark:text-neutral-100">
+                                    </TableCell>
+                                    <TableCell>
+                                        <code className="rounded bg-surface-inset px-2 py-0.5 text-xs font-bold text-ink">
                                             {svc.code}
                                         </code>
-                                    </td>
-                                    <td className="px-6 py-4">
+                                    </TableCell>
+                                    <TableCell>
                                         <span
                                             className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${CATEGORY_COLORS[svc.category] || CATEGORY_COLORS.other}`}
                                         >
                                             {CATEGORY_LABELS[svc.category] ||
                                                 svc.category}
                                         </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <span className="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                                            {Number(
-                                                svc.default_price,
-                                            ).toLocaleString()}{' '}
-                                            FCFA
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
+                                    </TableCell>
+                                    <TableCell
+                                        numeric
+                                        className="text-[13px] font-semibold text-ink"
+                                    >
+                                        {Number(
+                                            svc.default_price,
+                                        ).toLocaleString()}{' '}
+                                        FCFA
+                                    </TableCell>
+                                    <TableCell>
                                         {svc.requires_upfront_payment ? (
-                                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                            <span className="inline-flex items-center gap-1 rounded-full bg-warning-soft px-2.5 py-0.5 text-xs font-semibold text-warning-ink">
                                                 Avant service
                                             </span>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                            <span className="inline-flex items-center gap-1 rounded-full bg-positive-soft px-2.5 py-0.5 text-xs font-semibold text-positive-ink">
                                                 Après service
                                             </span>
                                         )}
-                                    </td>
-                                    <td className="px-6 py-4">
+                                    </TableCell>
+                                    <TableCell>
                                         {svc.is_active ? (
-                                            <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                            <span className="inline-flex rounded-full bg-positive-soft px-2.5 py-0.5 text-xs font-semibold text-positive-ink">
                                                 Actif
                                             </span>
                                         ) : (
-                                            <span className="inline-flex rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                            <span className="inline-flex rounded-full bg-critical-soft px-2.5 py-0.5 text-xs font-semibold text-critical-ink">
                                                 Inactif
                                             </span>
                                         )}
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                                    </TableCell>
+                                    <TableCell numeric>
+                                        <div className="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                                             <Link
                                                 href={route(
                                                     'finance.services.edit',
                                                     svc.id,
                                                 )}
-                                                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20"
+                                                className="rounded-lg p-2 text-ink-subtle transition-colors hover:bg-warning-soft hover:text-warning-ink"
                                             >
                                                 <PencilIcon className="h-4 w-4" />
                                             </Link>
@@ -254,16 +249,16 @@ export default function ServicesIndex({ services }: Props) {
                                                         );
                                                     }
                                                 }}
-                                                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                                                className="rounded-lg p-2 text-ink-subtle transition-colors hover:bg-critical-soft hover:text-red-600"
                                             >
                                                 <TrashIcon className="h-4 w-4" />
                                             </button>
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                     {filteredServices.length === 0 && (
                         <div className="p-6">
                             <EmptyState

@@ -106,6 +106,7 @@ return new class extends Migration
             $table->text('allergies')->nullable();
             $table->text('address')->nullable();
             $table->timestamp('last_visit_date')->nullable()->index();
+
             $table->index(['first_name', 'last_name']);
             $table->timestamps();
         });
@@ -281,7 +282,7 @@ return new class extends Migration
         // 15. dispensations (FK -> patients, prescriptions, users)
         Schema::create('dispensations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('patient_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('prescription_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('dispensed_by')->constrained('users')->cascadeOnDelete();
             $table->dateTime('dispensed_at')->index();

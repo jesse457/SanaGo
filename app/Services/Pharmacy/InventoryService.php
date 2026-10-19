@@ -15,7 +15,7 @@ class InventoryService
         return DB::transaction(function () use ($validated, $image) {
             $medication = Medication::create([
                 'name' => $validated['name'],
-                'dosage_units' => $validated['dosage_units'],
+                'dosage_units' => $validated['dosage_unit'],
                 'min_stock_level' => $validated['min_stock_level'],
                 'description' => $validated['description'] ?? null,
                 'total_stock' => 0,

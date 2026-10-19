@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('phone', 30)->nullable();
             $table->date('date_of_birth')->nullable();
             $table->enum('gender', ['male', 'female', 'other'])->nullable();
+            $table->boolean('is_admitted_approve')->default(false);
 
             // New fields added to match the model's fillable array
             $table->string('blood_type', 10)->nullable();

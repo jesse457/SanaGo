@@ -27,7 +27,7 @@ class InvoiceSeeder extends Seeder
                 $status = $statuses[array_rand($statuses)];
 
                 $invoice = Invoice::create([
-                    'invoice_number' => 'INV-' . date('ym') . str_pad((string) rand(1, 9999), 4, '0', STR_PAD_LEFT),
+                    'invoice_number' => 'INV-'.date('ym').str_pad((string) rand(1, 9999), 4, '0', STR_PAD_LEFT),
                     'patient_id' => $patient->id,
                     'invoice_date' => $invoiceDate,
                     'due_date' => now()->addDays(30)->format('Y-m-d'),

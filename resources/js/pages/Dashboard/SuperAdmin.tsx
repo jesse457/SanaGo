@@ -1,12 +1,27 @@
 import {
     BuildingOfficeIcon,
+    ClockIcon,
     CurrencyDollarIcon,
+    PlusIcon,
     TicketIcon,
     UserGroupIcon,
-    ArrowTrendingUpIcon,
-    PlusIcon,
 } from '@heroicons/react/24/outline';
 import { Head, Link } from '@inertiajs/react';
+import {
+    Badge,
+    Button,
+    Card,
+    EmptyState,
+    PageHeader,
+    StatCard,
+    StatGrid,
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
+} from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import SuperAdminLayout from '@/Layouts/SuperAdminLayout';
 
@@ -49,41 +64,34 @@ export default function SuperAdminDashboard({
 
     const stats = [
         {
-            label: 'Total Tenants',
+            label: 'Total tenants',
             value: metrics.total_tenants,
             sub: `${metrics.active_tenants} active`,
             icon: BuildingOfficeIcon,
-            color: 'blue',
+            tone: 'accent' as const,
         },
         {
-            label: 'Active Subscriptions',
+            label: 'Active subscriptions',
             value: metrics.active_subscriptions,
             sub: `$${metrics.monthly_revenue}/mo MRR`,
             icon: CurrencyDollarIcon,
-            color: 'emerald',
+            tone: 'positive' as const,
         },
         {
-            label: 'Demo Requests',
+            label: 'Demo requests',
             value: metrics.pending_demo_requests,
-            sub: 'pending review',
+            sub: 'Pending review',
             icon: UserGroupIcon,
-            color: 'purple',
+            tone: 'warning' as const,
         },
         {
-            label: 'Open Tickets',
+            label: 'Open tickets',
             value: metrics.open_tickets,
-            sub: 'needs attention',
+            sub: 'Needs attention',
             icon: TicketIcon,
-            color: 'amber',
+            tone: 'critical' as const,
         },
     ];
-
-    const colorMap: Record<string, string> = {
-        blue: 'bg-blue-50 text-blue-700',
-        emerald: 'bg-emerald-50 text-emerald-700',
-        purple: 'bg-purple-50 text-purple-700',
-        amber: 'bg-amber-50 text-amber-700',
-    };
 
     return (
         <SuperAdminLayout
@@ -92,125 +100,154 @@ export default function SuperAdminDashboard({
         >
             <Head title={t('page.super_admin_dashboard.page_title')} />
 
-            {/* Stats Grid */}
-            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-                {stats.map((stat) => (
-                    <div
-                        key={stat.label}
-                        className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
-                    >
-                        <div className="mb-4 flex items-center justify-between">
-                            <div
-                                className={`rounded-xl p-2.5 ${colorMap[stat.color]}`}
+            <div className="space-y-5 pb-12">
+                <PageHeader
+                    eyebrow={t('nav.category.tenant_management')}
+                    title={t('page.super_admin_dashboard.title')}
+                    description={t('page.super_admin_dashboard.subtitle')}
+                    actions={
+                        <Button href="/tenants/create" icon={PlusIcon}>
+                            New tenant
+                        </Button>
+                    }
+                />
+
+                <StatGrid>
+                    {stats.map((stat) => (
+                        <StatCard
+                            key={stat.label}
+                            label={stat.label}
+                            value={stat.value}
+                            icon={stat.icon}
+                            tone={stat.tone}
+                            hint={stat.sub}
+                        />
+                    ))}
+                </StatGrid>
+
+                <div className="grid gap-5 lg:grid-cols-3">
+                    <Card className="lg:col-span-2">
+                        <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4 sm:px-6">
+                            <h2 className="text-[15px] font-semibold tracking-tight text-ink">
+                                Recent tenants
+                            </h2>
+                            <Button
+                                href="/tenants/create"
+                                variant="ghost"
+                                size="sm"
+                                icon={PlusIcon}
                             >
-                                <stat.icon className="h-6 w-6" />
-                            </div>
+                                New tenant
+                            </Button>
                         </div>
-                        <p className="text-3xl font-bold text-gray-900 dark:text-neutral-100">
-                            {stat.value}
-                        </p>
-                        <p className="mt-1 text-sm font-medium text-gray-500 dark:text-neutral-400">
-                            {stat.label}
-                        </p>
-                        <p className="mt-0.5 text-xs text-gray-400 dark:text-neutral-500">
-                            {stat.sub}
-                        </p>
-                    </div>
-                ))}
-            </div>
 
-            <div className="grid gap-6 lg:grid-cols-3">
-                {/* Recent Tenants */}
-                <div className="rounded-2xl border border-gray-100 bg-white shadow-sm lg:col-span-2 dark:border-neutral-800 dark:bg-neutral-900">
-                    <div className="flex items-center justify-between border-b border-gray-100 p-6 dark:border-neutral-800">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-neutral-100">
-                            Recent Tenants
-                        </h2>
-                        <Link
-                            href="/tenants/create"
-                            className="flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700"
-                        >
-                            <PlusIcon className="h-4 w-4" /> New Tenant
-                        </Link>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-gray-100 text-left text-xs font-bold tracking-wider text-gray-400 uppercase dark:border-neutral-800">
-                                    <th className="px-6 py-3">Hospital</th>
-                                    <th className="px-6 py-3">Domain</th>
-                                    <th className="px-6 py-3">Plan</th>
-                                    <th className="px-6 py-3">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {recentTenants.map((tenant) => (
-                                    <tr
-                                        key={tenant.id}
-                                        className="border-b border-gray-50 hover:bg-gray-50 dark:border-neutral-800/50 dark:hover:bg-neutral-800/30"
-                                    >
-                                        <td className="px-6 py-3.5">
-                                            <Link
-                                                href={`/tenants/${tenant.id}`}
-                                                className="text-sm font-semibold text-gray-900 hover:text-blue-600 dark:text-neutral-100"
-                                            >
-                                                {tenant.name}
-                                            </Link>
-                                        </td>
-                                        <td className="px-6 py-3.5 text-sm text-gray-500 dark:text-neutral-400">
-                                            {tenant.domain || '—'}
-                                        </td>
-                                        <td className="px-6 py-3.5">
-                                            <span className="text-sm font-medium text-gray-700 dark:text-neutral-300">
+                        {recentTenants.length > 0 ? (
+                            <Table bare>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHeaderCell>
+                                            Hospital
+                                        </TableHeaderCell>
+                                        <TableHeaderCell>
+                                            Domain
+                                        </TableHeaderCell>
+                                        <TableHeaderCell>Plan</TableHeaderCell>
+                                        <TableHeaderCell>
+                                            Status
+                                        </TableHeaderCell>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {recentTenants.map((tenant) => (
+                                        <TableRow key={tenant.id}>
+                                            <TableCell>
+                                                <Link
+                                                    href={`/tenants/${tenant.id}`}
+                                                    className="font-medium text-ink transition-colors duration-150 hover:text-accent"
+                                                >
+                                                    {tenant.name}
+                                                </Link>
+                                            </TableCell>
+                                            <TableCell muted>
+                                                {tenant.domain || '—'}
+                                            </TableCell>
+                                            <TableCell muted>
                                                 {tenant.plan_name || 'No plan'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-3.5">
-                                            <span
-                                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ${tenant.is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}
-                                            >
-                                                {tenant.is_active
-                                                    ? 'Active'
-                                                    : 'Suspended'}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* Recent Activity */}
-                <div className="rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                    <div className="border-b border-gray-100 p-6 dark:border-neutral-800">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-neutral-100">
-                            Recent Activity
-                        </h2>
-                    </div>
-                    <div className="space-y-4 p-6">
-                        {recentActivity.map((activity, i) => (
-                            <div key={i} className="flex gap-3">
-                                <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-gray-900 dark:text-neutral-100">
-                                        {activity.label}
-                                    </p>
-                                    <p className="truncate text-xs text-gray-500 dark:text-neutral-400">
-                                        {activity.detail}
-                                    </p>
-                                    <p className="mt-1 text-xs text-gray-400 dark:text-neutral-500">
-                                        {activity.time}
-                                    </p>
-                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    tone={
+                                                        tenant.is_active
+                                                            ? 'positive'
+                                                            : 'critical'
+                                                    }
+                                                    dot
+                                                >
+                                                    {tenant.is_active
+                                                        ? 'Active'
+                                                        : 'Suspended'}
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ) : (
+                            <div className="p-5 sm:p-6">
+                                <EmptyState
+                                    panel={false}
+                                    icon={BuildingOfficeIcon}
+                                    title="No tenants yet"
+                                    description="Tenants you create will appear here."
+                                    action={{
+                                        label: 'New tenant',
+                                        href: '/tenants/create',
+                                    }}
+                                />
                             </div>
-                        ))}
-                        {recentActivity.length === 0 && (
-                            <p className="py-4 text-center text-sm text-gray-400">
-                                No recent activity
-                            </p>
                         )}
-                    </div>
+                    </Card>
+
+                    <Card>
+                        <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
+                            <h2 className="text-[15px] font-semibold tracking-tight text-ink">
+                                Recent activity
+                            </h2>
+                            <Badge tone="muted">{recentActivity.length}</Badge>
+                        </div>
+
+                        <div className="px-5 py-1">
+                            {recentActivity.length === 0 ? (
+                                <EmptyState
+                                    panel={false}
+                                    icon={ClockIcon}
+                                    title="No recent activity"
+                                />
+                            ) : (
+                                <ul className="divide-y divide-line">
+                                    {recentActivity.map((activity, index) => (
+                                        <li
+                                            key={`${activity.time}-${index}`}
+                                            className="flex items-start gap-3 py-3"
+                                        >
+                                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-[13px] font-medium text-ink">
+                                                    {activity.label}
+                                                </p>
+                                                <p className="truncate text-[11.5px] text-ink-subtle">
+                                                    {activity.detail}
+                                                </p>
+                                                <p className="mt-0.5 text-[11px] text-ink-subtle tabular-nums">
+                                                    {activity.time}
+                                                </p>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    </Card>
                 </div>
             </div>
         </SuperAdminLayout>

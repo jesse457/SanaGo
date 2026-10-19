@@ -3,12 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
-use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -16,162 +13,29 @@ use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
+    /**
+     * Display the login view.
+     */
     public function create(): Response
     {
-        return Inertia::render('Auth/Login', [
-            'isCentralDomain' => in_array(request()->getHost(), config('tenancy.central_domains'), true),
-        ]);
+        return Inertia::render('Auth/Login');
     }
 
+    /**
+     * Handle an incoming authentication request.
+     */
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $credentials = $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string',
-            'type' => 'required|in:landlord,tenant',
-            'subdomain' => 'required_if:type,tenant|string|max:255',
         ]);
 
-        if ($validated['type'] === 'tenant') {
-            return $this->authenticateTenant($request, $validated);
-        }
-
-        return $this->authenticateLandlord($request, $validated);
-    }
-
-    /**
-     * Authenticate a landlord user against the central database.
-     */
-    private function authenticateLandlord(Request $request, array $validated): RedirectResponse
-    {
-        if (! Auth::attempt([
-            'email' => $validated['email'],
-            'password' => $validated['password'],
-        ], $request->boolean('remember'))) {
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
         }
-
-        $request->session()->regenerate();
-
-        return $this->redirectByRole(Auth::user());
-    }
-
-    /**
-     * Authenticate a tenant (hospital staff) user against the tenant database.
-     *
-     * When on the central domain, this looks up the tenant, initializes tenancy,
-     * authenticates, and redirects to the tenant subdomain with a transfer token.
-     * When on a tenant subdomain, it authenticates directly.
-     */
-    private function authenticateTenant(Request $request, array $validated): RedirectResponse
-    {
-        $subdomain = $validated['subdomain'];
-
-        // Look up the tenant in the central database
-        $tenant = Tenant::where('id', $subdomain)->first();
-
-        if (! $tenant) {
-            throw ValidationException::withMessages([
-                'subdomain' => __('Hospital not found. Please check your hospital code.'),
-            ]);
-        }
-
-        if (! $tenant->isActive()) {
-            throw ValidationException::withMessages([
-                'subdomain' => __('This hospital account is currently suspended.'),
-            ]);
-        }
-
-        // Initialize tenancy so auth queries the tenant's database
-        tenancy()->initialize($tenant);
-
-        if (! Auth::attempt([
-            'email' => $validated['email'],
-            'password' => $validated['password'],
-        ], $request->boolean('remember'))) {
-            tenancy()->end();
-
-            throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
-            ]);
-        }
-
-        $user = Auth::user();
-        $userId = $user->id;
-        $tenantId = $tenant->id;
-
-        tenancy()->end();
-
-        // Get the tenant's primary domain
-        $domain = $tenant->domains()->first()?->domain;
-
-        if (! $domain) {
-            throw ValidationException::withMessages([
-                'subdomain' => __('This hospital has no domain configured.'),
-            ]);
-        }
-
-        // Check if the user is already on the correct tenant subdomain
-        if ($request->getHost() === $domain) {
-            // Already on the correct domain — just regenerate session and redirect
-            $request->session()->regenerate();
-
-            return $this->redirectByRole($user);
-        }
-
-        // Cross-domain login: create an encrypted transfer token
-        $token = Crypt::encrypt([
-            'user_id' => $userId,
-            'tenant_id' => $tenantId,
-            'expires_at' => now()->addMinute()->timestamp,
-        ]);
-
-        return redirect()->away(
-            'http://'.$domain.'/login/transfer?token='.urlencode($token),
-        );
-    }
-
-    /**
-     * Handle the auto-login transfer from a central-domain tenant login.
-     * Validates the transfer token and logs the user in on the tenant subdomain.
-     */
-    public function transfer(Request $request): RedirectResponse
-    {
-        $token = $request->query('token');
-
-        if (! $token) {
-            abort(403, __('Missing transfer token.'));
-        }
-
-        try {
-            $payload = Crypt::decrypt($token);
-        } catch (DecryptException) {
-            abort(403, __('Invalid transfer token.'));
-        }
-
-        if (! isset($payload['user_id'], $payload['tenant_id'], $payload['expires_at'])) {
-            abort(403, __('Invalid transfer token payload.'));
-        }
-
-        if ($payload['expires_at'] < now()->timestamp) {
-            abort(403, __('Transfer token has expired. Please log in again.'));
-        }
-
-        // Tenancy should already be initialized by InitializeTenancyBySubdomainGraceful,
-        // but ensure it is initialized for the correct tenant
-        if (! tenancy()->initialized()) {
-            $tenant = Tenant::find($payload['tenant_id']);
-
-            if (! $tenant) {
-                abort(403, __('Tenant not found.'));
-            }
-
-            tenancy()->initialize($tenant);
-        }
-
-        Auth::loginUsingId($payload['user_id']);
 
         $request->session()->regenerate();
 
@@ -229,6 +93,9 @@ class AuthenticatedSessionController extends Controller
         ]);
     }
 
+    /**
+     * Destroy an authenticated session.
+     */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
@@ -253,21 +120,21 @@ class AuthenticatedSessionController extends Controller
         }
 
         if ($user->hasRole('doctor')) {
-            return redirect()->route('dashboard.doctor');
+            return redirect()->route('dashboard');
         }
 
         if ($user->hasRole('reception')) {
-            return redirect()->route('dashboard.reception');
+            return redirect()->route('dashboard');
         }
 
         if ($user->hasRole('lab_tech')) {
-            return redirect()->route('dashboard.lab');
+            return redirect()->route('dashboard');
         }
 
         if ($user->hasRole('pharma')) {
-            return redirect()->route('dashboard.pharma');
+            return redirect()->route('dashboard');
         }
 
-        return redirect()->route('dashboard.admin');
+        return redirect()->route('dashboard');
     }
 }
