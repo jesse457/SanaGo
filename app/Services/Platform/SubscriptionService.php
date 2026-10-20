@@ -837,7 +837,11 @@ class SubscriptionService
         }
 
         try {
-            $this->notifications->notifyLandlordAdmins($notification);
+            // Platform operators cannot open the hospital's /billing page, so
+            // their copy points at the tenant record instead.
+            $this->notifications->notifyLandlordAdmins(
+                $notification->withLink('/tenants/'.rawurlencode((string) $tenant->getTenantKey()))
+            );
         } catch (Throwable $exception) {
             report($exception);
         }

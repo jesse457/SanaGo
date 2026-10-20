@@ -201,6 +201,23 @@ describe('notification API', function () {
     });
 });
 
+describe('landlord destinations', function () {
+    it('sends platform operators to the tenant record, not the hospital billing page', function () {
+        Notification::fake();
+
+        $landlord = User::factory()->create();
+        $landlord->assignRole('super-admin');
+
+        app(SubscriptionService::class)->assignPlan($this->tenant, $this->plan);
+
+        Notification::assertSentTo(
+            $landlord,
+            SubscriptionNotification::class,
+            fn (SubscriptionNotification $notification) => $notification->toArray($landlord)['link'] === '/tenants/hopital-notifs',
+        );
+    });
+});
+
 describe('billing notifications', function () {
     it('notifies owners when an invoice is issued', function () {
         Notification::fake();

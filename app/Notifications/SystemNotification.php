@@ -74,6 +74,19 @@ class SystemNotification extends Notification
     }
 
     /**
+     * A copy pointing somewhere else — used when the same event is delivered
+     * to two audiences that need different destinations (a hospital admin
+     * follows /billing, a platform operator follows the tenant record).
+     */
+    public function withLink(?string $link): static
+    {
+        $clone = clone $this;
+        $clone->link = $link;
+
+        return $clone;
+    }
+
+    /**
      * A copy that keeps database + mail but skips broadcasting.
      */
     public function withoutRealtime(): static

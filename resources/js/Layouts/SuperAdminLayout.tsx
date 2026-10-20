@@ -37,6 +37,7 @@ import { BrandMark } from '@/Layouts/components/BrandMark';
 import { DrawerHeader } from '@/Layouts/components/DrawerHeader';
 import { NavLink } from '@/Layouts/components/NavItem';
 import { NotificationsPanel } from '@/Layouts/components/NotificationsPanel';
+import type { ShellNotification } from '@/Layouts/components/NotificationsPanel';
 import { DrawerBackdrop } from '@/Layouts/components/ShellPrimitives';
 import { ThemeToggle } from '@/Layouts/components/ThemeToggle';
 import { UserChip, UserMeta } from '@/Layouts/components/UserChip';
@@ -377,29 +378,152 @@ const SidebarNav = memo(function SidebarNav({
 // ─── Notification Bell ───
 
 /**
- * The landlord console has no real notification feed prop yet, so the panel
- * shows the honest empty state and links to the platform audit log — the real
- * record of everything that happened. Nothing here is invented.
+ * Landlord notifications are real: the platform sends them on the central
+ * notifications table whenever a subscription or tenant changes state.
+ *
+ * The feed is fetched on mount and refreshed every 60 s; failures (offline,
+ * broadcaster down) leave the honest empty state rather than an error.
  */
+function useLandlordNotifications() {
+    const [items, setItems] = useState<ShellNotification[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [loading, setLoading] = useState(true);
+
+    const load = useCallback(async () => {
+        try {
+            const response = await fetch('/platform/notifications/latest', {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+            const tone = (
+                value?: string,
+            ): 'info' | 'success' | 'warning' | 'error' =>
+                value === 'error'
+                    ? 'error'
+                    : value === 'warning'
+                      ? 'warning'
+                      : value === 'success'
+                        ? 'success'
+                        : 'info';
+
+            setItems(
+                (data.notifications ?? []).map((notification: any) => ({
+                    id: notification.id,
+                    message: notification.message ?? notification.title ?? '',
+                    time: notification.created_at ?? '',
+                    read: false,
+                    type: tone(notification.type),
+                    category: notification.category,
+                    href: notification.link ?? '/platform/notifications',
+                })),
+            );
+            setUnreadCount(Number(data.unreadCount ?? 0));
+        } catch {
+            // Keep whatever we had; the panel shows an empty state.
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const csrfToken = () => {
+        const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/);
+
+        return match ? decodeURIComponent(match[1]) : '';
+    };
+
+    const markRead = useCallback(async (id: number | string) => {
+        setItems((current) => current.filter((item) => item.id !== id));
+        setUnreadCount((count) => Math.max(0, count - 1));
+
+        try {
+            await fetch(`/platform/notifications/${id}/read`, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'X-XSRF-TOKEN': csrfToken(),
+                },
+                credentials: 'same-origin',
+            });
+        } catch {
+            // The optimistic update stays; the next poll reconciles.
+        }
+    }, []);
+
+    const markAllRead = useCallback(async () => {
+        setItems([]);
+        setUnreadCount(0);
+
+        try {
+            await fetch('/platform/notifications/mark-all-read', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'X-XSRF-TOKEN': csrfToken(),
+                },
+                credentials: 'same-origin',
+            });
+        } catch {
+            // Ignored, as above.
+        }
+    }, []);
+
+    useEffect(() => {
+        // Defer the first fetch out of the effect body: the hook writes state
+        // from a queued microtask so the effect never triggers a cascade.
+        queueMicrotask(() => void load());
+        const timer = window.setInterval(() => void load(), 60_000);
+
+        return () => window.clearInterval(timer);
+    }, [load]);
+
+    return {
+        items,
+        unreadCount,
+        loading,
+        markRead,
+        markAllRead,
+        refresh: load,
+    };
+}
+
 const NotificationsDropdown = memo(function NotificationsDropdown({
+    feed,
     onClose,
 }: {
+    feed: ReturnType<typeof useLandlordNotifications>;
     onClose: () => void;
 }) {
     const { t } = useTranslation();
 
+    const handleSelect = (notification: ShellNotification) => {
+        void feed.markRead(notification.id);
+
+        if (notification.href) {
+            router.visit(notification.href);
+        }
+
+        onClose();
+    };
+
     return (
         <NotificationsPanel
             title={t('common.notifications')}
-            items={[]}
-            unreadCount={0}
+            items={feed.items}
+            unreadCount={feed.unreadCount}
+            loading={feed.loading}
             emptyLabel={t('notifications.no_platform_feed')}
             footer={{
-                href: '/platform/audit',
-                label: t('notifications.open_audit_log'),
+                href: '/platform/notifications',
+                label: t('notifications.view_all', 'View all notifications'),
                 onNavigate: onClose,
             }}
-            onSelect={onClose}
+            onSelect={handleSelect}
         />
     );
 });
@@ -463,6 +587,7 @@ export default function SuperAdminLayout({
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
+    const notificationFeed = useLandlordNotifications();
 
     // Dynamic ref trackers to track click-outside actions safely
     const userMenuRef = useRef<HTMLDivElement>(null);
@@ -720,10 +845,18 @@ export default function SuperAdminLayout({
                                     className="relative rounded-md p-1.5 text-ink-subtle transition-colors duration-150 ease-premium hover:bg-surface-hover hover:text-ink"
                                 >
                                     <BellIcon className="h-[18px] w-[18px]" />
+                                    {notificationFeed.unreadCount > 0 && (
+                                        <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-accent-ink tabular-nums">
+                                            {notificationFeed.unreadCount > 99
+                                                ? '99+'
+                                                : notificationFeed.unreadCount}
+                                        </span>
+                                    )}
                                 </button>
 
                                 {notifOpen && (
                                     <NotificationsDropdown
+                                        feed={notificationFeed}
                                         onClose={closeAllDropdowns}
                                     />
                                 )}

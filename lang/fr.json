@@ -876,7 +876,8 @@
         "all": "Tout",
         "unread": "Non lues",
         "no_platform_feed": "Aucune notification n'est encore envoyée à la console de la plateforme.",
-        "open_audit_log": "Ouvrir le journal d'audit de la plateforme"
+        "open_audit_log": "Ouvrir le journal d'audit de la plateforme",
+        "view_all": "Voir toutes les notifications"
     },
     "page": {
         "activities": {

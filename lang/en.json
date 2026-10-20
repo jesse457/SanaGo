@@ -773,7 +773,8 @@
         "all": "All",
         "unread": "Unread",
         "no_platform_feed": "No notifications are delivered to the platform console yet.",
-        "open_audit_log": "Open the platform audit log"
+        "open_audit_log": "Open the platform audit log",
+        "view_all": "View all notifications"
     },
     "page": {
         "activities": {
