@@ -21,11 +21,18 @@ class SuperAdminRoleSeeder extends Seeder
             'manage-tenants',
             'view-tenants',
             'view-tenant-health',
+            'impersonate-tenants',
 
             // Plan & Subscription Management
             'manage-plans',
             'manage-subscriptions',
+            'manage-feature-flags',
+            'view-billing',
             'view-finance',
+
+            // Platform operations
+            'manage-platform-settings',
+            'view-audit-logs',
 
             // Support
             'manage-tickets',
@@ -54,6 +61,8 @@ class SuperAdminRoleSeeder extends Seeder
             'manage-tenants',
             'view-tenants',
             'view-tenant-health',
+            'impersonate-tenants',
+            'view-audit-logs',
         ]);
 
         // ─── Billing Manager ───
@@ -62,8 +71,11 @@ class SuperAdminRoleSeeder extends Seeder
             'view-super-admin',
             'manage-plans',
             'manage-subscriptions',
+            'manage-feature-flags',
+            'view-billing',
             'view-finance',
             'view-tenants',
+            'view-audit-logs',
         ]);
 
         // ─── Support Agent ───

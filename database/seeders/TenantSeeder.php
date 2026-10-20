@@ -25,10 +25,14 @@ class TenantSeeder extends Seeder
                 ->exists();
 
             if (! $exists) {
-                // Use DB facade to bypass Eloquent event system in CLI
+                // Bypass the Eloquent event system so the pipeline below is
+                // the only thing that provisions the tenant database.
                 DB::table('tenants')->insert([
                     'id' => $data['id'],
+                    // VirtualColumn storage format: `data` holds the virtual
+                    // attributes (the hospital name lives there).
                     'data' => json_encode(['name' => $data['name']]),
+                    'is_active' => true,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

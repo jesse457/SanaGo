@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Support\PlatformContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Throwable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -48,14 +50,20 @@ class AppServiceProvider extends ServiceProvider
     protected function configureGates(): void
     {
         Gate::before(function ($user) {
-            // Grant full access to any landlord user.
-            // Use hasPermissionTo() instead of can() to avoid infinite recursion:
-            // can() triggers the gate, which calls before(), which calls can()...
-
-            if (tenant('id') == null) {
-                if ($user->hasPermissionTo('view-super-admin')) {
-                    return true;
-                }
+            /*
+             * Only the platform super-admin role bypasses the permission
+             * matrix, and only in the central (landlord) context.
+             *
+             * This used to return `true` for *any* central user holding
+             * `view-super-admin`, which every landlord role has — so a
+             * sales-rep could delete tenants despite the `can:manage-tenants`
+             * route guards. The bypass is now tied to the role named in
+             * config('platform.super_admin_role').
+             *
+             * hasRole() is used (not can()) to avoid gate recursion.
+             */
+            if (tenant('id') === null && $user->hasRole(config('platform.super_admin_role', 'super-admin'))) {
+                return true;
             }
 
             return null;
@@ -71,9 +79,24 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($key);
         });
 
-        // General API: 120 requests per minute per IP
+        /*
+         * General API limiter. The limit follows the tenant's plan
+         * (`plans.api_rate_limit`) so the column stops being decorative.
+         * Central/landlord traffic keeps a fixed, higher ceiling.
+         */
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(120)->by($request->ip());
+            $tenant = tenant();
+            $perMinute = 120;
+
+            if ($tenant !== null) {
+                try {
+                    $perMinute = (int) (PlatformContext::forTenant($tenant)['plan']?->api_rate_limit ?? $perMinute);
+                } catch (Throwable) {
+                    $perMinute = 120;
+                }
+            }
+
+            return Limit::perMinute(max(30, $perMinute))->by($request->ip());
         });
     }
 }
