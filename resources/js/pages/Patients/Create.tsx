@@ -7,7 +7,7 @@ import {
     UserIcon,
     UserPlusIcon,
 } from '@heroicons/react/24/outline';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import React, { useMemo, useState } from 'react';
 import { Alert, Button, PageHeader, SectionCard } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -81,9 +81,17 @@ export default function CreatePatient() {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     // Tracks which submit action is actively being processed ('save' or 'vitals')
-    const [submitType, setSubmitType] = useState<'save' | 'vitals' | null>(
-        null,
-    );
+    // Where to go after registering: the desk that sent us here (cashier,
+    // vitals, plain list) keeps its own flow instead of dumping the patient on
+    // the index page.
+    const { url } = usePage();
+    const redirectTarget = useMemo(() => {
+        const query = url.split('?')[1] ?? '';
+
+        return new URLSearchParams(query).get('redirect_to') ?? 'save';
+    }, [url]);
+
+    const [submitType, setSubmitType] = useState<string | null>(null);
 
     const stepMeta = useMemo(
         () => [
@@ -125,7 +133,7 @@ export default function CreatePatient() {
         setErrorMessage(null);
 
         // Fallback to 'save' if the form was submitted via keyboard 'Enter'
-        const action = submitType || 'save';
+        const action = submitType || redirectTarget;
         setSubmitType(action);
 
         post(route('patients.store', { redirect_to: action }), {
@@ -288,7 +296,13 @@ export default function CreatePatient() {
                                             processing &&
                                             submitType !== 'vitals'
                                         }
-                                        onClick={() => setSubmitType('save')}
+                                        onClick={() =>
+                                            setSubmitType(
+                                                redirectTarget === 'vitals'
+                                                    ? 'save'
+                                                    : redirectTarget,
+                                            )
+                                        }
                                         className="w-full sm:w-auto"
                                     >
                                         {t(

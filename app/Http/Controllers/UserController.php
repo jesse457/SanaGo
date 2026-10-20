@@ -6,7 +6,9 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\Department;
 use App\Models\User;
+use App\Services\Billing\PriceListService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
@@ -121,5 +123,48 @@ class UserController extends Controller
         $user->delete();
 
         return back()->with('success', 'User deleted.');
+    }
+
+    /**
+     * Price list of one doctor: catalogue default vs what this doctor charges.
+     *
+     * Doctors do not share tariffs, so their prices live beside their account
+     * instead of forcing one hospital-wide rate.
+     */
+    public function pricing(User $user, PriceListService $prices)
+    {
+        Gate::authorize('manage-users');
+
+        $user->load('roles');
+
+        return Inertia::render('Users/Pricing', [
+            'doctor' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'roles' => $user->getRoleNames()->values()->toArray(),
+            ],
+            'prices' => $prices->priceListFor($user),
+            'consultationService' => $prices->consultationService()?->only(['id', 'name', 'code']),
+        ]);
+    }
+
+    /**
+     * Save the doctor's overrides. Sending the catalogue price removes the
+     * override, so the list only shows real differences.
+     */
+    public function updatePricing(Request $request, User $user, PriceListService $prices)
+    {
+        Gate::authorize('manage-users');
+
+        $validated = $request->validate([
+            'prices' => ['required', 'array'],
+            'prices.*' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $prices->syncPrices($user, $validated['prices']);
+
+        return redirect()
+            ->route('users.pricing', $user->id)
+            ->with('success', 'Doctor prices updated.');
     }
 }

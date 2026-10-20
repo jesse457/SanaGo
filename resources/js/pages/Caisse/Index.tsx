@@ -1,24 +1,31 @@
 import {
-    BanknotesIcon,
-    ClockIcon,
     ArrowPathIcon,
-    XMarkIcon,
-    CheckCircleIcon,
+    BanknotesIcon,
     CalculatorIcon,
+    CheckCircleIcon,
+    ClockIcon,
+    MagnifyingGlassIcon,
+    PlusIcon,
+    ReceiptPercentIcon,
+    UserPlusIcon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline';
-import { Head, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import debounce from 'lodash/debounce';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import {
     Alert,
+    Badge,
     Button,
+    Checkbox,
     Dialog,
     EmptyState,
     Field,
     Input,
     PageHeader,
-    Select,
     SectionCard,
+    Select,
     StatCard,
     StatGrid,
     Table,
@@ -28,15 +35,56 @@ import {
     TableHeaderCell,
     TableRow,
 } from '@/Components/ui';
+import type { BadgeTone } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 import { ShiftHistoryCard } from '@/pages/Caisse/components';
 import type { CashShift, CashPayment } from '@/types';
 
+interface CashPointOption {
+    id: number;
+    name: string;
+    code: string;
+    module: string | null;
+}
+
+interface PatientOption {
+    id: number;
+    first_name: string;
+    last_name: string;
+    patient_uid?: string | null;
+    phone?: string | null;
+    gender?: string | null;
+}
+
+/** One unpaid line on a patient's running bill. */
+interface Charge {
+    id: number;
+    invoice_id: number;
+    invoice_number?: string | null;
+    module: string;
+    description: string;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+}
+
+interface CatalogueService {
+    id: number;
+    name: string;
+    code?: string | null;
+    category?: string | null;
+    price: number;
+    requires_upfront_payment: boolean;
+}
+
 interface Props {
-    activeShift: CashShift | null;
+    activeShift: (CashShift & { cash_point?: CashPointOption }) | null;
     todayPayments: CashPayment[];
     shiftHistory: CashShift[];
+    cashPoints: CashPointOption[];
+    defaultCashPointId: number;
+    selectedPatient: PatientOption | null;
 }
 
 const PAYMENT_METHODS = [
@@ -45,13 +93,50 @@ const PAYMENT_METHODS = [
     { value: 'bank_transfer', label: 'Bank Transfer (Virement)' },
 ];
 
+const MODULE_TONES: Record<string, BadgeTone> = {
+    laboratory: 'accent',
+    pharmacy: 'positive',
+    radiology: 'warning',
+    consultation: 'neutral',
+    admission: 'muted',
+    surgery: 'critical',
+    emergency: 'critical',
+    other: 'muted',
+};
+
+function money(value: number): string {
+    return `${Math.round(value).toLocaleString('fr-FR')} FCFA`;
+}
+
+function rows<T>(data: unknown, key: string): T[] {
+    if (Array.isArray(data)) {
+        return data as T[];
+    }
+
+    const record = data as Record<string, unknown> | null;
+
+    return (record?.[key] as T[]) ?? [];
+}
+
+/**
+ * Cash desk.
+ *
+ * The counter flow the hospital actually runs: open a shift on a till, find or
+ * register the patient, tick the services they are paying for, take the money
+ * and print a receipt. Amounts always come from the bill or the priced
+ * catalogue — the cashier never types an arbitrary amount.
+ */
 export default function CaisseIndex({
     activeShift,
     todayPayments,
     shiftHistory,
+    cashPoints,
+    defaultCashPointId,
+    selectedPatient,
 }: Props) {
     const { t } = useTranslation();
 
+    // ── Shift ───────────────────────────────────────────────────────────────
     const {
         data: shiftData,
         setData: setShiftData,
@@ -60,22 +145,8 @@ export default function CaisseIndex({
         errors: shiftErrors,
         reset: resetShift,
     } = useForm({
-        payment_point: 'Caisse Principale',
+        cash_point_id: String(defaultCashPointId),
         opening_balance: '0',
-    });
-
-    const {
-        data: payData,
-        setData: setPayData,
-        post: postPay,
-        processing: payProcessing,
-        errors: payErrors,
-        reset: resetPay,
-    } = useForm({
-        invoice_id: '' as string,
-        patient_id: '' as string,
-        amount_paid: '',
-        payment_method: 'cash' as string,
     });
 
     const {
@@ -90,10 +161,161 @@ export default function CaisseIndex({
 
     const [showOpenModal, setShowOpenModal] = useState(false);
     const [showCloseModal, setShowCloseModal] = useState(false);
-    const [showPayModal, setShowPayModal] = useState(false);
 
-    const handleOpenShift = (e: FormEvent) => {
-        e.preventDefault();
+    // ── Counter: patient → charges → payment ────────────────────────────────
+    const [patient, setPatient] = useState<PatientOption | null>(
+        selectedPatient ?? null,
+    );
+    const [query, setQuery] = useState('');
+    const [results, setResults] = useState<PatientOption[]>([]);
+    const [searching, setSearching] = useState(false);
+    // `null` means "not loaded yet" so the loading state needs no effect.
+    const [charges, setCharges] = useState<Charge[] | null>(null);
+    const [services, setServices] = useState<CatalogueService[]>([]);
+    const [selectedCharges, setSelectedCharges] = useState<number[]>([]);
+    const [pickedServices, setPickedServices] = useState<number[]>([]);
+    const [serviceToAdd, setServiceToAdd] = useState('');
+    const [amountTendered, setAmountTendered] = useState('');
+    const [method, setMethod] = useState('cash');
+    const [paying, setPaying] = useState(false);
+    const [payError, setPayError] = useState<string | null>(null);
+
+    // One counter attempt keeps its id across retries, so a double click or a
+    // dropped response can never charge the patient twice.
+    const clientUuid = useRef<string>(crypto.randomUUID());
+
+    const searchPatients = useMemo(
+        () =>
+            debounce((value: string) => {
+                if (value.trim().length < 2) {
+                    setResults([]);
+                    setSearching(false);
+
+                    return;
+                }
+
+                setSearching(true);
+
+                fetch(
+                    `${route('caisse.patients')}?search=${encodeURIComponent(value)}`,
+                    {
+                        headers: {
+                            Accept: 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        credentials: 'same-origin',
+                    },
+                )
+                    .then((response) => (response.ok ? response.json() : null))
+                    .then((data) =>
+                        setResults(rows<PatientOption>(data, 'patients')),
+                    )
+                    .catch(() => setResults([]))
+                    .finally(() => setSearching(false));
+            }, 300),
+        [],
+    );
+
+    useEffect(() => {
+        searchPatients(query);
+    }, [query, searchPatients]);
+
+    useEffect(() => () => searchPatients.cancel(), [searchPatients]);
+
+    const loadCharges = useCallback((target: PatientOption) => {
+        fetch(route('caisse.outstanding', target.id), {
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin',
+        })
+            .then((response) => (response.ok ? response.json() : null))
+            .then((data) => {
+                const loaded = rows<Charge>(data, 'charges');
+
+                setCharges(loaded);
+                setServices(rows<CatalogueService>(data, 'services'));
+                // Everything the patient already owes is ticked by default.
+                setSelectedCharges(loaded.map((charge) => charge.id));
+            })
+            .catch(() => {
+                setCharges([]);
+                setSelectedCharges([]);
+            });
+    }, []);
+
+    useEffect(() => {
+        if (patient !== null) {
+            loadCharges(patient);
+        }
+    }, [patient, loadCharges]);
+
+    const selectPatient = (next: PatientOption) => {
+        clientUuid.current = crypto.randomUUID();
+        setPatient(next);
+        setCharges(null);
+        setSelectedCharges([]);
+        setQuery('');
+        setResults([]);
+        setPickedServices([]);
+        setAmountTendered('');
+        setPayError(null);
+        loadCharges(next);
+    };
+
+    const clearPatient = () => {
+        setPatient(null);
+        setCharges(null);
+        setSelectedCharges([]);
+        setPickedServices([]);
+        setAmountTendered('');
+        setPayError(null);
+    };
+
+    const addedServices = useMemo(
+        () => services.filter((service) => pickedServices.includes(service.id)),
+        [services, pickedServices],
+    );
+
+    const chargesTotal = (charges ?? [])
+        .filter((charge) => selectedCharges.includes(charge.id))
+        .reduce((sum, charge) => sum + charge.total_price, 0);
+
+    const servicesTotal = addedServices.reduce(
+        (sum, service) => sum + service.price,
+        0,
+    );
+
+    const total = chargesTotal + servicesTotal;
+    const tendered = Number(amountTendered || 0);
+    const change = Math.max(0, Math.round(tendered - total));
+
+    const toggleCharge = (id: number, checked: boolean) => {
+        setSelectedCharges((current) =>
+            checked
+                ? [...current, id]
+                : current.filter((value) => value !== id),
+        );
+    };
+
+    const addService = () => {
+        const id = Number(serviceToAdd);
+
+        if (!id || pickedServices.includes(id)) {
+            return;
+        }
+
+        setPickedServices((current) => [...current, id]);
+        setServiceToAdd('');
+    };
+
+    const removeService = (id: number) => {
+        setPickedServices((current) => current.filter((value) => value !== id));
+    };
+
+    const handleOpenShift = (event: FormEvent) => {
+        event.preventDefault();
         postShift(route('caisse.open'), {
             onSuccess: () => {
                 setShowOpenModal(false);
@@ -102,8 +324,8 @@ export default function CaisseIndex({
         });
     };
 
-    const handleCloseShift = (e: FormEvent) => {
-        e.preventDefault();
+    const handleCloseShift = (event: FormEvent) => {
+        event.preventDefault();
         postClose(route('caisse.close'), {
             onSuccess: () => {
                 setShowCloseModal(false);
@@ -112,67 +334,129 @@ export default function CaisseIndex({
         });
     };
 
-    const handlePayment = (e: FormEvent) => {
-        e.preventDefault();
-        postPay(route('caisse.pay'), {
-            onSuccess: () => {
-                setShowPayModal(false);
-                resetPay();
+    const handleSettle = (event: FormEvent) => {
+        event.preventDefault();
+
+        if (patient === null) {
+            return;
+        }
+
+        setPayError(null);
+        setPaying(true);
+
+        router.post(
+            route('caisse.settle'),
+            {
+                patient_id: patient.id,
+                item_ids: selectedCharges,
+                service_ids: pickedServices,
+                payment_method: method,
+                amount_tendered: tendered,
+                client_uuid: clientUuid.current,
             },
-        });
+            {
+                preserveScroll: true,
+                onError: (errors) => {
+                    setPayError(
+                        errors.amount_tendered ??
+                            errors.item_ids ??
+                            errors.service_ids ??
+                            t(
+                                'page.caisse.payment_failed',
+                                'The payment could not be recorded.',
+                            ),
+                    );
+                },
+                onSuccess: () => {
+                    clientUuid.current = crypto.randomUUID();
+                },
+                onFinish: () => setPaying(false),
+            },
+        );
     };
 
     const todayTotal = todayPayments.reduce(
-        (sum, p) => sum + Number(p.amount_paid),
+        (sum, payment) => sum + Number(payment.amount_paid),
         0,
     );
     const shiftTotal =
         activeShift?.payments?.reduce(
-            (sum, p) => sum + Number(p.amount_paid),
+            (sum, payment) => sum + Number(payment.amount_paid),
             0,
         ) ?? 0;
 
+    const canPay =
+        activeShift !== null &&
+        patient !== null &&
+        total > 0 &&
+        tendered >= total &&
+        !paying;
+
     return (
         <AppLayout
-            headerTitle={t('Caisse — Cash Register')}
+            headerTitle={t('page.caisse.title', 'Caisse — Cash register')}
             headerSubtitle={t(
-                'Manage cash shifts, payments and daily reconciliation',
+                'page.caisse.subtitle',
+                'Collect payments, issue receipts and reconcile the till.',
             )}
         >
-            <Head title={t('Caisse')} />
+            <Head title={t('page.caisse.title', 'Caisse')} />
 
             <div className="flex flex-col gap-6">
                 <PageHeader
-                    title={t('Caisse — Cash Register')}
+                    eyebrow={t('page.caisse.eyebrow', 'Cash desk')}
+                    title={t('page.caisse.heading', 'Cash register')}
                     description={t(
-                        'Manage cash shifts, payments and daily reconciliation',
+                        'page.caisse.description',
+                        'Find the patient, tick what they are paying for, take the money and print the receipt.',
                     )}
-                    breadcrumbs={[{ label: t('Caisse') }]}
+                    breadcrumbs={[{ label: t('page.caisse.title', 'Caisse') }]}
+                    meta={
+                        activeShift ? (
+                            <span className="inline-flex items-center gap-2">
+                                <Badge tone="positive" dot>
+                                    {t('page.caisse.shift_open', 'Shift open')}
+                                </Badge>
+                                <span>
+                                    {activeShift.cash_point?.name ??
+                                        activeShift.payment_point}
+                                </span>
+                            </span>
+                        ) : (
+                            <Badge tone="critical" dot>
+                                {t('page.caisse.shift_closed', 'No open shift')}
+                            </Badge>
+                        )
+                    }
                 />
 
                 <StatGrid columns={4}>
                     <StatCard
                         icon={ClockIcon}
-                        label={t('Shift Status')}
-                        value={activeShift ? t('Open') : t('Closed')}
+                        label={t('page.caisse.stat_shift', 'Shift status')}
+                        value={
+                            activeShift
+                                ? t('page.caisse.open', 'Open')
+                                : t('page.caisse.closed', 'Closed')
+                        }
                         tone={activeShift ? 'positive' : 'critical'}
                     />
                     <StatCard
                         icon={BanknotesIcon}
-                        label={t('Opening Balance')}
-                        value={`${Number(activeShift?.opening_balance ?? 0).toLocaleString()} XAF`}
+                        label={t('page.caisse.stat_opening', 'Opening balance')}
+                        value={money(Number(activeShift?.opening_balance ?? 0))}
                         tone="accent"
                     />
                     <StatCard
                         icon={ArrowPathIcon}
-                        label={t('Shift Payments')}
-                        value={`${shiftTotal.toLocaleString()} XAF`}
+                        label={t('page.caisse.stat_collected', 'Collected')}
+                        value={money(shiftTotal)}
                         tone="accent"
                     />
                     <StatCard
                         icon={CalculatorIcon}
-                        label={t("Today's Total")}
-                        value={`${todayTotal.toLocaleString()} XAF`}
+                        label={t('page.caisse.stat_today', "Today's total")}
+                        value={money(todayTotal)}
                         tone="warning"
                     />
                 </StatGrid>
@@ -180,105 +464,546 @@ export default function CaisseIndex({
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     <div className="space-y-6 lg:col-span-2">
                         <SectionCard
-                            title={t('Shift Actions')}
-                            icon={ClockIcon}
-                        >
-                            <div className="flex flex-wrap gap-2">
-                                {!activeShift ? (
+                            title={t(
+                                'page.caisse.collect_title',
+                                'Collect payment',
+                            )}
+                            description={t(
+                                'page.caisse.collect_description',
+                                'Amounts come from the bill and the price list, never typed by hand.',
+                            )}
+                            icon={ReceiptPercentIcon}
+                            actions={
+                                !activeShift ? (
                                     <Button
                                         icon={CheckCircleIcon}
                                         onClick={() => setShowOpenModal(true)}
                                     >
-                                        {t('Open Shift')}
+                                        {t(
+                                            'page.caisse.open_shift',
+                                            'Open shift',
+                                        )}
                                     </Button>
                                 ) : (
-                                    <>
+                                    <Button
+                                        variant="danger"
+                                        icon={XMarkIcon}
+                                        onClick={() => setShowCloseModal(true)}
+                                    >
+                                        {t(
+                                            'page.caisse.close_shift',
+                                            'Close shift',
+                                        )}
+                                    </Button>
+                                )
+                            }
+                        >
+                            {activeShift === null ? (
+                                <Alert tone="warning">
+                                    {t(
+                                        'page.caisse.open_shift_first',
+                                        'Open a shift on a till before taking payments.',
+                                    )}
+                                </Alert>
+                            ) : patient === null ? (
+                                <div className="space-y-4">
+                                    <Field
+                                        label={t(
+                                            'page.caisse.find_patient',
+                                            'Find patient',
+                                        )}
+                                        htmlFor="patient-search"
+                                        hint={t(
+                                            'page.caisse.find_patient_hint',
+                                            'Name, patient ID or phone number.',
+                                        )}
+                                    >
+                                        <Input
+                                            id="patient-search"
+                                            icon={MagnifyingGlassIcon}
+                                            value={query}
+                                            onChange={(event) =>
+                                                setQuery(event.target.value)
+                                            }
+                                            placeholder={t(
+                                                'page.caisse.find_patient_placeholder',
+                                                'Search a patient...',
+                                            )}
+                                            autoComplete="off"
+                                        />
+                                    </Field>
+
+                                    {searching && (
+                                        <p className="text-[12.5px] text-ink-subtle">
+                                            {t(
+                                                'page.caisse.searching',
+                                                'Searching...',
+                                            )}
+                                        </p>
+                                    )}
+
+                                    {results.length > 0 && (
+                                        <ul className="divide-y divide-line overflow-hidden rounded-lg border border-line">
+                                            {results.map((option) => (
+                                                <li key={option.id}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            selectPatient(
+                                                                option,
+                                                            )
+                                                        }
+                                                        className="flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left transition-colors duration-150 hover:bg-surface-hover"
+                                                    >
+                                                        <span className="min-w-0">
+                                                            <span className="block truncate text-[13px] font-medium text-ink">
+                                                                {
+                                                                    option.first_name
+                                                                }{' '}
+                                                                {
+                                                                    option.last_name
+                                                                }
+                                                            </span>
+                                                            <span className="block truncate font-mono text-[11px] text-ink-subtle">
+                                                                {option.patient_uid ??
+                                                                    '—'}
+                                                                {option.phone
+                                                                    ? ` · ${option.phone}`
+                                                                    : ''}
+                                                            </span>
+                                                        </span>
+                                                        <Badge tone="accent">
+                                                            {t(
+                                                                'page.caisse.select',
+                                                                'Select',
+                                                            )}
+                                                        </Badge>
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+
+                                    <Link
+                                        href={`${route('patients.create')}?redirect_to=caisse`}
+                                        className="inline-flex items-center gap-2 text-[12.5px] font-medium text-accent-ink hover:underline"
+                                    >
+                                        <UserPlusIcon className="h-4 w-4" />
+                                        {t(
+                                            'page.caisse.register_patient',
+                                            'Register a new patient',
+                                        )}
+                                    </Link>
+                                </div>
+                            ) : (
+                                <form
+                                    onSubmit={handleSettle}
+                                    className="space-y-5"
+                                >
+                                    <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface-muted px-3.5 py-3">
+                                        <div className="min-w-0">
+                                            <p className="truncate text-[13px] font-semibold text-ink">
+                                                {patient.first_name}{' '}
+                                                {patient.last_name}
+                                            </p>
+                                            <p className="truncate font-mono text-[11px] text-ink-subtle">
+                                                {patient.patient_uid ?? '—'}
+                                                {patient.phone
+                                                    ? ` · ${patient.phone}`
+                                                    : ''}
+                                            </p>
+                                        </div>
                                         <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={clearPatient}
+                                        >
+                                            {t(
+                                                'page.caisse.change_patient',
+                                                'Change patient',
+                                            )}
+                                        </Button>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-2 text-[10.5px] font-semibold tracking-[0.13em] text-ink-subtle uppercase">
+                                            {t(
+                                                'page.caisse.outstanding',
+                                                'To pay',
+                                            )}
+                                        </p>
+
+                                        {charges === null ? (
+                                            <p className="text-[12.5px] text-ink-subtle">
+                                                {t(
+                                                    'page.caisse.loading_charges',
+                                                    'Loading the bill...',
+                                                )}
+                                            </p>
+                                        ) : charges.length === 0 ? (
+                                            <EmptyState
+                                                panel={false}
+                                                title={t(
+                                                    'page.caisse.no_charges',
+                                                    'Nothing on the bill',
+                                                )}
+                                                description={t(
+                                                    'page.caisse.no_charges_desc',
+                                                    'Add a service below, or send the patient to the doctor first.',
+                                                )}
+                                                className="py-8"
+                                            />
+                                        ) : (
+                                            <ul className="divide-y divide-line overflow-hidden rounded-lg border border-line">
+                                                {charges.map((charge) => (
+                                                    <li
+                                                        key={charge.id}
+                                                        className="flex items-center gap-3 px-3.5 py-2.5"
+                                                    >
+                                                        <Checkbox
+                                                            id={`charge-${charge.id}`}
+                                                            checked={selectedCharges.includes(
+                                                                charge.id,
+                                                            )}
+                                                            onChange={(event) =>
+                                                                toggleCharge(
+                                                                    charge.id,
+                                                                    event.target
+                                                                        .checked,
+                                                                )
+                                                            }
+                                                        />
+                                                        <label
+                                                            htmlFor={`charge-${charge.id}`}
+                                                            className="min-w-0 flex-1 cursor-pointer"
+                                                        >
+                                                            <span className="block truncate text-[12.5px] font-medium text-ink">
+                                                                {
+                                                                    charge.description
+                                                                }
+                                                            </span>
+                                                            <span className="mt-0.5 flex items-center gap-2">
+                                                                <Badge
+                                                                    tone={
+                                                                        MODULE_TONES[
+                                                                            charge
+                                                                                .module
+                                                                        ] ??
+                                                                        'muted'
+                                                                    }
+                                                                    size="sm"
+                                                                >
+                                                                    {
+                                                                        charge.module
+                                                                    }
+                                                                </Badge>
+                                                                {charge.invoice_number && (
+                                                                    <span className="font-mono text-[10.5px] text-ink-subtle">
+                                                                        {
+                                                                            charge.invoice_number
+                                                                        }
+                                                                    </span>
+                                                                )}
+                                                            </span>
+                                                        </label>
+                                                        <span className="shrink-0 text-[12.5px] font-semibold text-ink tabular-nums">
+                                                            {money(
+                                                                charge.total_price,
+                                                            )}
+                                                        </span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-2 text-[10.5px] font-semibold tracking-[0.13em] text-ink-subtle uppercase">
+                                            {t(
+                                                'page.caisse.add_service',
+                                                'Add a service',
+                                            )}
+                                        </p>
+                                        <div className="flex gap-2">
+                                            <Select
+                                                id="add-service"
+                                                value={serviceToAdd}
+                                                onChange={(event) =>
+                                                    setServiceToAdd(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                className="flex-1"
+                                            >
+                                                <option value="">
+                                                    {t(
+                                                        'page.caisse.pick_service',
+                                                        'Pick a service from the price list...',
+                                                    )}
+                                                </option>
+                                                {services.map((service) => (
+                                                    <option
+                                                        key={service.id}
+                                                        value={service.id}
+                                                    >
+                                                        {service.name} —{' '}
+                                                        {money(service.price)}
+                                                    </option>
+                                                ))}
+                                            </Select>
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                icon={PlusIcon}
+                                                onClick={addService}
+                                                disabled={!serviceToAdd}
+                                            >
+                                                {t('page.caisse.add', 'Add')}
+                                            </Button>
+                                        </div>
+
+                                        {addedServices.length > 0 && (
+                                            <ul className="mt-2 space-y-1.5">
+                                                {addedServices.map(
+                                                    (service) => (
+                                                        <li
+                                                            key={service.id}
+                                                            className="flex items-center justify-between gap-3 rounded-md bg-surface-muted px-3 py-2"
+                                                        >
+                                                            <span className="min-w-0 truncate text-[12.5px] text-ink">
+                                                                {service.name}
+                                                            </span>
+                                                            <span className="flex shrink-0 items-center gap-2">
+                                                                <span className="text-[12.5px] font-semibold text-ink tabular-nums">
+                                                                    {money(
+                                                                        service.price,
+                                                                    )}
+                                                                </span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        removeService(
+                                                                            service.id,
+                                                                        )
+                                                                    }
+                                                                    className="rounded p-1 text-ink-subtle transition-colors hover:text-critical-ink"
+                                                                    aria-label={t(
+                                                                        'page.caisse.remove',
+                                                                        'Remove',
+                                                                    )}
+                                                                >
+                                                                    <XMarkIcon className="h-3.5 w-3.5" />
+                                                                </button>
+                                                            </span>
+                                                        </li>
+                                                    ),
+                                                )}
+                                            </ul>
+                                        )}
+                                    </div>
+
+                                    <div className="grid gap-3 border-t border-line pt-4 sm:grid-cols-3">
+                                        <Field
+                                            label={t(
+                                                'page.caisse.total',
+                                                'Total to pay',
+                                            )}
+                                            htmlFor="counter-total"
+                                        >
+                                            <div
+                                                id="counter-total"
+                                                className="flex h-10 items-center text-[18px] font-semibold text-ink tabular-nums"
+                                            >
+                                                {money(total)}
+                                            </div>
+                                        </Field>
+
+                                        <Field
+                                            label={t(
+                                                'page.caisse.tendered',
+                                                'Amount received',
+                                            )}
+                                            htmlFor="amount_tendered"
+                                            required
+                                        >
+                                            <Input
+                                                id="amount_tendered"
+                                                type="number"
+                                                min={0}
+                                                step={1}
+                                                value={amountTendered}
+                                                onChange={(event) =>
+                                                    setAmountTendered(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder={String(total)}
+                                            />
+                                        </Field>
+
+                                        <Field
+                                            label={t(
+                                                'page.caisse.method',
+                                                'Method',
+                                            )}
+                                            htmlFor="payment_method"
+                                            required
+                                        >
+                                            <Select
+                                                id="payment_method"
+                                                value={method}
+                                                onChange={(event) =>
+                                                    setMethod(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                            >
+                                                {PAYMENT_METHODS.map(
+                                                    (option) => (
+                                                        <option
+                                                            key={option.value}
+                                                            value={option.value}
+                                                        >
+                                                            {option.label}
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </Select>
+                                        </Field>
+                                    </div>
+
+                                    {tendered > 0 && (
+                                        <div className="flex items-center justify-between rounded-lg bg-surface-inset px-3.5 py-2.5">
+                                            <span className="text-[12px] text-ink-muted">
+                                                {t(
+                                                    'page.caisse.change',
+                                                    'Change to hand back',
+                                                )}
+                                            </span>
+                                            <span className="text-[15px] font-semibold text-ink tabular-nums">
+                                                {money(change)}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {payError && (
+                                        <Alert tone="critical">
+                                            {payError}
+                                        </Alert>
+                                    )}
+
+                                    <div className="flex items-center justify-end gap-2 border-t border-line pt-4">
+                                        <p className="mr-auto text-[11.5px] text-ink-subtle">
+                                            {t(
+                                                'page.caisse.receipt_note',
+                                                'A receipt is issued automatically.',
+                                            )}
+                                        </p>
+                                        <Button
+                                            type="submit"
                                             icon={BanknotesIcon}
-                                            onClick={() =>
-                                                setShowPayModal(true)
-                                            }
+                                            loading={paying}
+                                            disabled={!canPay}
                                         >
-                                            {t('Record Payment')}
+                                            {t(
+                                                'page.caisse.pay',
+                                                'Pay service',
+                                            )}
                                         </Button>
-                                        <Button
-                                            variant="danger"
-                                            icon={XMarkIcon}
-                                            onClick={() =>
-                                                setShowCloseModal(true)
-                                            }
-                                        >
-                                            {t('Close Shift')}
-                                        </Button>
-                                    </>
-                                )}
-                            </div>
+                                    </div>
+                                </form>
+                            )}
                         </SectionCard>
 
                         {activeShift &&
                             activeShift.payments &&
                             activeShift.payments.length > 0 && (
                                 <SectionCard
-                                    title={t('Current Shift Payments')}
+                                    title={t(
+                                        'page.caisse.shift_payments',
+                                        'This shift',
+                                    )}
                                     icon={BanknotesIcon}
                                 >
                                     <Table bare>
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHeaderCell>
-                                                    {t('Patient')}
+                                                    {t(
+                                                        'page.caisse.col_patient',
+                                                        'Patient',
+                                                    )}
                                                 </TableHeaderCell>
                                                 <TableHeaderCell>
-                                                    {t('Invoice')}
+                                                    {t(
+                                                        'page.caisse.col_invoice',
+                                                        'Invoice',
+                                                    )}
                                                 </TableHeaderCell>
                                                 <TableHeaderCell numeric>
-                                                    {t('Amount')}
+                                                    {t(
+                                                        'page.caisse.col_amount',
+                                                        'Amount',
+                                                    )}
                                                 </TableHeaderCell>
                                                 <TableHeaderCell numeric>
-                                                    {t('Method')}
+                                                    {t(
+                                                        'page.caisse.col_method',
+                                                        'Method',
+                                                    )}
                                                 </TableHeaderCell>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {activeShift.payments.map((p) => (
-                                                <TableRow key={p.id}>
-                                                    <TableCell muted>
-                                                        {p.patient
-                                                            ? `${p.patient.first_name} ${p.patient.last_name}`
-                                                            : '—'}
-                                                    </TableCell>
-                                                    <TableCell muted>
-                                                        {p.invoice
-                                                            ?.invoice_number ??
-                                                            '—'}
-                                                    </TableCell>
-                                                    <TableCell numeric>
-                                                        {Number(
-                                                            p.amount_paid,
-                                                        ).toLocaleString()}{' '}
-                                                        XAF
-                                                    </TableCell>
-                                                    <TableCell numeric>
-                                                        <span className="text-[11px] font-medium tracking-[0.1em] text-ink-muted uppercase">
-                                                            {p.payment_method ===
-                                                            'mobile_money'
-                                                                ? 'MoMo'
-                                                                : p.payment_method}
-                                                        </span>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
+                                            {activeShift.payments.map(
+                                                (payment) => (
+                                                    <TableRow key={payment.id}>
+                                                        <TableCell muted>
+                                                            {payment.patient
+                                                                ? `${payment.patient.first_name} ${payment.patient.last_name}`
+                                                                : '—'}
+                                                        </TableCell>
+                                                        <TableCell muted>
+                                                            {payment.invoice
+                                                                ?.invoice_number ??
+                                                                '—'}
+                                                        </TableCell>
+                                                        <TableCell numeric>
+                                                            {money(
+                                                                Number(
+                                                                    payment.amount_paid,
+                                                                ),
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell numeric>
+                                                            <span className="text-[11px] font-medium tracking-[0.1em] text-ink-muted uppercase">
+                                                                {payment.payment_method ===
+                                                                'mobile_money'
+                                                                    ? 'MoMo'
+                                                                    : payment.payment_method}
+                                                            </span>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ),
+                                            )}
                                         </TableBody>
                                     </Table>
                                 </SectionCard>
                             )}
                     </div>
 
-                    <SectionCard title={t('Shift History')} icon={ClockIcon}>
+                    <SectionCard
+                        title={t('page.caisse.shift_history', 'Shift history')}
+                        icon={ClockIcon}
+                    >
                         {shiftHistory.length === 0 ? (
                             <EmptyState
                                 panel={false}
-                                title={t('No previous shifts.')}
+                                title={t(
+                                    'page.caisse.no_shifts',
+                                    'No previous shifts.',
+                                )}
                                 className="px-0 py-8"
                             />
                         ) : (
@@ -288,11 +1013,23 @@ export default function CaisseIndex({
                                         key={shift.id}
                                         shift={shift}
                                         labels={{
-                                            open: t('Open'),
-                                            closed: t('Closed'),
-                                            opening: t('Opening'),
-                                            closing: t('Closing'),
-                                            payments: t('Payments'),
+                                            open: t('page.caisse.open', 'Open'),
+                                            closed: t(
+                                                'page.caisse.closed',
+                                                'Closed',
+                                            ),
+                                            opening: t(
+                                                'page.caisse.opening',
+                                                'Opening',
+                                            ),
+                                            closing: t(
+                                                'page.caisse.closing',
+                                                'Closing',
+                                            ),
+                                            payments: t(
+                                                'page.caisse.payments',
+                                                'Payments',
+                                            ),
                                         }}
                                     />
                                 ))}
@@ -305,29 +1042,40 @@ export default function CaisseIndex({
             <Dialog
                 open={showOpenModal}
                 onClose={() => setShowOpenModal(false)}
-                title={t('Open Cash Shift')}
+                title={t('page.caisse.open_shift_title', 'Open cash shift')}
                 size="md"
             >
                 <form onSubmit={handleOpenShift} className="space-y-4">
                     <Field
-                        label={t('Payment Point')}
-                        htmlFor="payment_point"
+                        label={t('page.caisse.till', 'Till (cash point)')}
+                        htmlFor="cash_point_id"
                         required
-                        error={shiftErrors.payment_point}
+                        error={shiftErrors.cash_point_id}
                     >
-                        <Input
-                            id="payment_point"
-                            type="text"
-                            value={shiftData.payment_point}
-                            onChange={(e) =>
-                                setShiftData('payment_point', e.target.value)
+                        <Select
+                            id="cash_point_id"
+                            value={shiftData.cash_point_id}
+                            onChange={(event) =>
+                                setShiftData(
+                                    'cash_point_id',
+                                    event.target.value,
+                                )
                             }
-                            invalid={Boolean(shiftErrors.payment_point)}
-                        />
+                            invalid={Boolean(shiftErrors.cash_point_id)}
+                        >
+                            {cashPoints.map((point) => (
+                                <option key={point.id} value={point.id}>
+                                    {point.name}
+                                </option>
+                            ))}
+                        </Select>
                     </Field>
 
                     <Field
-                        label={t('Opening Balance (XAF)')}
+                        label={t(
+                            'page.caisse.opening_balance',
+                            'Opening balance (XAF)',
+                        )}
                         htmlFor="opening_balance"
                         required
                         error={shiftErrors.opening_balance}
@@ -336,10 +1084,13 @@ export default function CaisseIndex({
                             id="opening_balance"
                             type="number"
                             min="0"
-                            step="0.01"
+                            step="1"
                             value={shiftData.opening_balance}
-                            onChange={(e) =>
-                                setShiftData('opening_balance', e.target.value)
+                            onChange={(event) =>
+                                setShiftData(
+                                    'opening_balance',
+                                    event.target.value,
+                                )
                             }
                             invalid={Boolean(shiftErrors.opening_balance)}
                         />
@@ -351,113 +1102,14 @@ export default function CaisseIndex({
                             variant="secondary"
                             onClick={() => setShowOpenModal(false)}
                         >
-                            {t('Cancel')}
+                            {t('page.caisse.cancel', 'Cancel')}
                         </Button>
                         <Button
                             type="submit"
                             loading={shiftProcessing}
                             disabled={shiftProcessing}
                         >
-                            {t('Open Shift')}
-                        </Button>
-                    </div>
-                </form>
-            </Dialog>
-
-            <Dialog
-                open={showPayModal}
-                onClose={() => setShowPayModal(false)}
-                title={t('Record Payment')}
-                size="md"
-            >
-                <form onSubmit={handlePayment} className="space-y-4">
-                    <Field
-                        label={t('Invoice ID (optional)')}
-                        htmlFor="invoice_id"
-                        error={payErrors.invoice_id}
-                    >
-                        <Input
-                            id="invoice_id"
-                            type="number"
-                            value={payData.invoice_id}
-                            onChange={(e) =>
-                                setPayData('invoice_id', e.target.value)
-                            }
-                            invalid={Boolean(payErrors.invoice_id)}
-                        />
-                    </Field>
-
-                    <Field
-                        label={t('Patient ID (optional)')}
-                        htmlFor="patient_id"
-                        error={payErrors.patient_id}
-                    >
-                        <Input
-                            id="patient_id"
-                            type="number"
-                            value={payData.patient_id}
-                            onChange={(e) =>
-                                setPayData('patient_id', e.target.value)
-                            }
-                            invalid={Boolean(payErrors.patient_id)}
-                        />
-                    </Field>
-
-                    <Field
-                        label={t('Amount (XAF)')}
-                        htmlFor="amount_paid"
-                        required
-                        error={payErrors.amount_paid}
-                    >
-                        <Input
-                            id="amount_paid"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={payData.amount_paid}
-                            onChange={(e) =>
-                                setPayData('amount_paid', e.target.value)
-                            }
-                            invalid={Boolean(payErrors.amount_paid)}
-                        />
-                    </Field>
-
-                    <Field
-                        label={t('Payment Method')}
-                        htmlFor="payment_method"
-                        required
-                        error={payErrors.payment_method}
-                    >
-                        <Select
-                            id="payment_method"
-                            value={payData.payment_method}
-                            onChange={(e) =>
-                                setPayData('payment_method', e.target.value)
-                            }
-                            invalid={Boolean(payErrors.payment_method)}
-                        >
-                            {PAYMENT_METHODS.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                </option>
-                            ))}
-                        </Select>
-                    </Field>
-
-                    <div className="flex justify-end gap-2 border-t border-line pt-4">
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => setShowPayModal(false)}
-                        >
-                            {t('Cancel')}
-                        </Button>
-                        <Button
-                            type="submit"
-                            loading={payProcessing}
-                            disabled={payProcessing}
-                        >
-                            {t('Record Payment')}
+                            {t('page.caisse.open_shift', 'Open shift')}
                         </Button>
                     </div>
                 </form>
@@ -466,54 +1118,35 @@ export default function CaisseIndex({
             <Dialog
                 open={showCloseModal}
                 onClose={() => setShowCloseModal(false)}
-                title={t('Close Cash Shift')}
+                title={t('page.caisse.close_shift_title', 'Close cash shift')}
                 size="md"
             >
                 <form onSubmit={handleCloseShift} className="space-y-4">
-                    <Alert tone="warning" title={t('Close Shift')}>
-                        <div className="space-y-1 tabular-nums">
-                            <p>
-                                {t('Opening Balance')}:{' '}
-                                <strong>
-                                    {Number(
-                                        activeShift?.opening_balance ?? 0,
-                                    ).toLocaleString()}{' '}
-                                    XAF
-                                </strong>
-                            </p>
-                            <p>
-                                {t('Payments Received')}:{' '}
-                                <strong>
-                                    {shiftTotal.toLocaleString()} XAF
-                                </strong>
-                            </p>
-                            <p>
-                                {t('Expected Total')}:{' '}
-                                <strong>
-                                    {(
-                                        Number(
-                                            activeShift?.opening_balance ?? 0,
-                                        ) + shiftTotal
-                                    ).toLocaleString()}{' '}
-                                    XAF
-                                </strong>
-                            </p>
-                        </div>
-                    </Alert>
+                    <p className="text-[12.5px] text-ink-muted">
+                        {t(
+                            'page.caisse.close_shift_hint',
+                            'Count the cash in the drawer. Leave the field empty to accept the expected total.',
+                        )}
+                    </p>
 
                     <Field
-                        label={t('Actual Closing Balance (XAF)')}
+                        label={t(
+                            'page.caisse.counted_balance',
+                            'Counted balance (XAF)',
+                        )}
                         htmlFor="closing_balance"
-                        required
                     >
                         <Input
                             id="closing_balance"
                             type="number"
                             min="0"
-                            step="0.01"
+                            step="1"
                             value={closeData.closing_balance}
-                            onChange={(e) =>
-                                setCloseData('closing_balance', e.target.value)
+                            onChange={(event) =>
+                                setCloseData(
+                                    'closing_balance',
+                                    event.target.value,
+                                )
                             }
                         />
                     </Field>
@@ -524,7 +1157,7 @@ export default function CaisseIndex({
                             variant="secondary"
                             onClick={() => setShowCloseModal(false)}
                         >
-                            {t('Cancel')}
+                            {t('page.caisse.cancel', 'Cancel')}
                         </Button>
                         <Button
                             type="submit"
@@ -532,7 +1165,7 @@ export default function CaisseIndex({
                             loading={closeProcessing}
                             disabled={closeProcessing}
                         >
-                            {t('Close Shift')}
+                            {t('page.caisse.close_shift', 'Close shift')}
                         </Button>
                     </div>
                 </form>

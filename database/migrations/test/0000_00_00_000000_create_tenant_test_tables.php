@@ -269,6 +269,7 @@ return new class extends Migration
             $table->integer('quantity')->default(1);
             $table->decimal('unit_price', 10, 2);
             $table->decimal('total_price', 10, 2);
+            $table->dateTime('settled_at')->nullable()->index();
             $table->timestamps();
         });
         Schema::create('supply_usages', function (Blueprint $table) {
@@ -402,9 +403,20 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('cash_points', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('code', 50)->unique();
+            $table->string('module', 50)->nullable()->index();
+            $table->string('receipt_prefix', 10)->default('REC');
+            $table->boolean('is_active')->default(true)->index();
+            $table->timestamps();
+        });
+
         Schema::create('cash_shifts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('cash_point_id')->nullable()->constrained('cash_points')->nullOnDelete();
             $table->string('payment_point');
             $table->decimal('opening_balance', 12, 2);
             $table->decimal('closing_balance', 12, 2)->nullable();
@@ -419,11 +431,22 @@ return new class extends Migration
         Schema::create('cash_payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('cash_shift_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('cash_point_id')->nullable()->constrained('cash_points')->nullOnDelete();
             $table->foreignId('invoice_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('patient_id')->nullable()->constrained()->nullOnDelete();
             $table->decimal('amount_paid', 12, 2);
             $table->string('payment_method')->default('cash');
+            $table->string('client_uuid', 64)->nullable()->unique();
             $table->timestamps();
+        });
+
+        Schema::create('doctor_service_prices', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('service_id')->constrained()->cascadeOnDelete();
+            $table->decimal('price', 10, 2)->default(0);
+            $table->timestamps();
+            $table->unique(['user_id', 'service_id']);
         });
 
         Schema::create('claims', function (Blueprint $table) {

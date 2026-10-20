@@ -63,8 +63,10 @@ class ServiceSeeder extends Seeder
             ['name' => 'Triage', 'code' => 'EMG-TRI', 'category' => ServiceCategory::Emergency, 'default_price' => 0, 'requires_upfront_payment' => false, 'description' => 'Évaluation de triage à l\'arrivée (gratuit)'],
         ];
 
+        // Idempotent: re-running the seeder fills gaps and never overwrites a
+        // price the hospital has already adjusted.
         foreach ($services as $service) {
-            Service::create($service);
+            Service::firstOrCreate(['code' => $service['code']], $service);
         }
 
         // Link existing entities to services

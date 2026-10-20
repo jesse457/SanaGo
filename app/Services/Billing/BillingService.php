@@ -6,6 +6,7 @@ use App\Enums\ClaimStatus;
 use App\Enums\InvoiceStatus;
 use App\Models\Admission;
 use App\Models\CashPayment;
+use App\Models\CashShift;
 use App\Models\Claim;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -172,8 +173,11 @@ class BillingService
     public function recordPayment(Invoice $invoice, float $amount, int $cashShiftId, string $paymentMethod = 'cash'): CashPayment
     {
         return DB::transaction(function () use ($invoice, $amount, $cashShiftId, $paymentMethod) {
+            $shift = CashShift::find($cashShiftId);
+
             $payment = CashPayment::create([
                 'cash_shift_id' => $cashShiftId,
+                'cash_point_id' => $shift?->cash_point_id,
                 'invoice_id' => $invoice->id,
                 'patient_id' => $invoice->patient_id,
                 'amount_paid' => $amount,

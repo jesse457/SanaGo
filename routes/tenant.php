@@ -292,6 +292,9 @@ Route::middleware([
         // Cash Register / Caisse (Needs strict permission separation from viewing finance)
         Route::middleware(['can:manage-caisse', 'feature:cash_register'])->group(function () {
             Route::get('/caisse', [CaisseController::class, 'index'])->name('caisse.index');
+            Route::get('/caisse/patients', [CaisseController::class, 'searchPatients'])->name('caisse.patients');
+            Route::get('/caisse/outstanding/{patient}', [CaisseController::class, 'outstanding'])->name('caisse.outstanding');
+            Route::post('/caisse/settle', [CaisseController::class, 'settle'])->name('caisse.settle');
             Route::post('/caisse/open-shift', [CaisseController::class, 'openShift'])->name('caisse.open');
             Route::post('/caisse/close-shift', [CaisseController::class, 'closeShift'])->name('caisse.close');
             Route::post('/caisse/pay', [CaisseController::class, 'pay'])->name('caisse.pay');
@@ -305,6 +308,8 @@ Route::middleware([
             Route::resource('users', UserController::class)
                 ->except(['show', 'edit'])
                 ->middlewareFor(['store'], 'plan.limit:users');
+            Route::get('/users/{user}/pricing', [UserController::class, 'pricing'])->name('users.pricing');
+            Route::put('/users/{user}/pricing', [UserController::class, 'updatePricing'])->name('users.pricing.update');
             Route::resource('shifts', UserShiftController::class)->only(['index', 'store', 'update', 'destroy']);
         });
 

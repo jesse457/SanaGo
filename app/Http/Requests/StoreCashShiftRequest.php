@@ -14,7 +14,9 @@ class StoreCashShiftRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_point' => ['required', 'string', 'max:255'],
+            // A shift belongs to a till; `payment_point` is derived from it so
+            // existing receipts keep printing the same label.
+            'cash_point_id' => ['required', 'exists:cash_points,id'],
             'opening_balance' => ['required', 'numeric', 'min:0'],
         ];
     }

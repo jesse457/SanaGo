@@ -87,8 +87,12 @@ class InvoiceController extends Controller
             'payment_method' => ['required', 'in:cash,mobile_money,bank_transfer'],
         ]);
 
-        // Find or use active cash shift
-        $shift = CashShift::where('status', 'open')->latest()->first();
+        // The payment belongs to the cashier who took it: an any-user lookup
+        // would put money on another cashier's till and break the shift report.
+        $shift = CashShift::where('status', 'open')
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->first();
 
         if (! $shift) {
             return back()->with('error', 'No open cash shift. Please open a shift first.');

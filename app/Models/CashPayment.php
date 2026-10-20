@@ -12,8 +12,8 @@ class CashPayment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'cash_shift_id', 'invoice_id', 'patient_id', 'amount_paid',
-        'payment_method',
+        'cash_shift_id', 'cash_point_id', 'invoice_id', 'patient_id',
+        'amount_paid', 'payment_method', 'client_uuid',
     ];
 
     protected function casts(): array
@@ -27,6 +27,11 @@ class CashPayment extends Model
     public function cashShift(): BelongsTo
     {
         return $this->belongsTo(CashShift::class);
+    }
+
+    public function cashPoint(): BelongsTo
+    {
+        return $this->belongsTo(CashPoint::class);
     }
 
     public function invoice(): BelongsTo

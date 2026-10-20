@@ -69,6 +69,14 @@ class PatientController extends Controller
         // Check redirect choice from either the request body or query parameters
         $redirectTo = $request->input('redirect_to') ?? $request->query('redirect_to');
 
+        // Registering at the cash desk must return to the desk with the new
+        // patient selected, otherwise the cashier loses the queue position.
+        if ($redirectTo === 'caisse') {
+            return redirect()
+                ->route('caisse.index', ['patient_id' => $patient->id])
+                ->with('success', 'Patient registered. Collect payment to continue.');
+        }
+
         if ($redirectTo === 'vitals') {
             return redirect()
                 ->route('vitals.create', $patient->id)

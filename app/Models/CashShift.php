@@ -13,7 +13,7 @@ class CashShift extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'payment_point', 'opening_balance',
+        'user_id', 'cash_point_id', 'payment_point', 'opening_balance',
         'closing_balance', 'expected_total', 'variance',
         'status', 'opened_at', 'closed_at',
     ];
@@ -34,6 +34,11 @@ class CashShift extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function cashPoint(): BelongsTo
+    {
+        return $this->belongsTo(CashPoint::class);
     }
 
     public function payments(): HasMany

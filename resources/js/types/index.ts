@@ -333,6 +333,9 @@ export interface RadiologyResult {
 export interface CashShift {
     id: number;
     user_id: number;
+    /** The till this shift belongs to (reception, laboratory, pharmacy...). */
+    cash_point_id?: number | null;
+    cash_point?: { id: number; name: string; receipt_prefix?: string } | null;
     payment_point: string;
     opening_balance: number;
     closing_balance?: number;
@@ -352,6 +355,8 @@ export interface CashShift {
 export interface CashPayment {
     id: number;
     cash_shift_id: number;
+    cash_point_id?: number | null;
+    cash_point?: { id: number; name: string } | null;
     invoice_id?: number;
     patient_id?: number;
     amount_paid: number;

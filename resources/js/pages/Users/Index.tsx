@@ -3,6 +3,7 @@ import {
     MagnifyingGlassIcon,
     TrashIcon,
     PencilSquareIcon,
+    BanknotesIcon,
     ExclamationTriangleIcon,
     UserGroupIcon,
     CheckBadgeIcon,
@@ -419,9 +420,20 @@ export default function UserManagement({
                                                         openEdit(user)
                                                     }
                                                     className="rounded-lg p-2 text-ink-subtle transition-colors hover:bg-accent-soft hover:text-accent"
+                                                    title="Edit users details and shifts"
                                                 >
                                                     <PencilSquareIcon className="h-4 w-4" />
                                                 </button>
+                                                <Link
+                                                    href={route(
+                                                        'users.pricing',
+                                                        user.id,
+                                                    )}
+                                                    className="rounded-lg p-2 text-ink-subtle transition-colors hover:bg-accent-soft hover:text-accent"
+                                                    title="This doctor's prices"
+                                                >
+                                                    <BanknotesIcon className="h-4 w-4" />
+                                                </Link>
                                                 <button
                                                     onClick={() =>
                                                         openDelete(user)
