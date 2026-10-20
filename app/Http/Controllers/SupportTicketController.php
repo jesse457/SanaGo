@@ -87,7 +87,6 @@ class SupportTicketController extends Controller
                 'messages' => $supportTicket->messages->map(fn ($m) => [
                     'id' => $m->id,
                     'message' => $m->message,
-                    'is_internal' => $m->is_internal,
                     'user_name' => $m->user?->name ?? 'System',
                     'created_at' => $m->created_at?->toDateTimeString(),
                 ]),
@@ -169,12 +168,17 @@ class SupportTicketController extends Controller
             'message' => $validated['message'],
         ]);
 
-        return Redirect::route('tenant.tickets.show', $ticket)->with('flash', 'Ticket submitted.');
+        return Redirect::route('tenant.tickets.show', $ticket)->with('success', 'Ticket submitted.');
     }
 
     public function tenantShow(SupportTicket $supportTicket): Response
     {
-        $supportTicket->load(['messages.user']);
+        // Tickets live on the central connection shared by every tenant, so
+        // the id alone must never be trusted: a hospital may only read its
+        // own ticket (and never the internal notes on it).
+        $this->ensureTicketBelongsToTenant($supportTicket);
+
+        $supportTicket->load(['messages' => fn ($query) => $query->where('is_internal', false), 'messages.user']);
 
         return Inertia::render('Support/Show', [
             'ticket' => [
@@ -186,7 +190,6 @@ class SupportTicketController extends Controller
                 'messages' => $supportTicket->messages->map(fn ($m) => [
                     'id' => $m->id,
                     'message' => $m->message,
-                    'is_internal' => $m->is_internal,
                     'user_name' => $m->user?->name ?? 'System',
                     'created_at' => $m->created_at?->toDateTimeString(),
                 ]),
@@ -196,6 +199,8 @@ class SupportTicketController extends Controller
 
     public function tenantReply(Request $request, SupportTicket $supportTicket): RedirectResponse
     {
+        $this->ensureTicketBelongsToTenant($supportTicket);
+
         $validated = $request->validate([
             'message' => ['required', 'string', 'max:5000'],
         ]);
@@ -205,6 +210,18 @@ class SupportTicketController extends Controller
             'message' => $validated['message'],
         ]);
 
-        return Redirect::back()->with('flash', 'Reply sent.');
+        return Redirect::back()->with('success', 'Reply sent.');
+    }
+
+    /**
+     * Abort unless the ticket belongs to the active tenant.
+     */
+    private function ensureTicketBelongsToTenant(SupportTicket $supportTicket): void
+    {
+        $tenantId = tenant()?->getTenantKey();
+
+        if ($tenantId === null || (string) $supportTicket->tenant_id !== (string) $tenantId) {
+            abort(404);
+        }
     }
 }

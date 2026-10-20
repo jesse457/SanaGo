@@ -28,18 +28,25 @@ class AdmissionService
         });
     }
 
+    /**
+     * Discharge an admission and generate its invoice exactly once.
+     *
+     * The discharge invoice is generated BEFORE the status flip so that
+     * AdmissionObserver's `updated` hook can see it already exists and stand
+     * down; otherwise both paths charge the observation fee.
+     */
     public function discharge(Admission $admission): void
     {
         DB::transaction(function () use ($admission) {
+            // Auto-generate invoice at discharge
+            $billingService = app(BillingService::class);
+            $billingService->generateInvoiceFromAdmission($admission);
+
             $admission->update([
                 'status' => AdmissionStatus::Discharged->value,
                 'discharge_date' => now(),
             ]);
-            $admission->bed->update(['status' => BedStatus::Available->value]);
-
-            // Auto-generate invoice at discharge
-            $billingService = app(BillingService::class);
-            $billingService->generateInvoiceFromAdmission($admission);
+            $admission->bed?->update(['status' => BedStatus::Available->value]);
         });
     }
 

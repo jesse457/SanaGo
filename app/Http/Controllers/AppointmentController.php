@@ -33,18 +33,21 @@ class AppointmentController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $parts = preg_split('/\s+/', trim($request->search));
+        $parts = preg_split('/\s+/', trim((string) $request->search));
         $appointments = Appointment::query()
             ->with(['patient', 'doctor'])
             ->tap(fn ($q) => $this->scopeAppointments($q))
             ->when($request->search, function ($query, $search) use ($parts) {
+                // Grouped so the OR name/UID conditions stay inside the patient
+                // match and cannot leak past the status/doctor/date filters.
                 $query->whereHas('patient', function ($q) use ($parts, $search) {
-                    foreach ($parts as $part) {
-
-                        $q->where('first_name', 'like', "%{$part}%")
-                            ->orWhere('last_name', 'like', "%{$part}%");
-                    }
-                    $q->orWhere('patient_uid', 'like', "%{$search}%");
+                    $q->where(function ($nameQuery) use ($parts, $search) {
+                        foreach ($parts as $part) {
+                            $nameQuery->where('first_name', 'like', "%{$part}%")
+                                ->orWhere('last_name', 'like', "%{$part}%");
+                        }
+                        $nameQuery->orWhere('patient_uid', 'like', "%{$search}%");
+                    });
                 });
             })
             ->when($request->status, fn ($q, $status) => $q->where('status', $status))

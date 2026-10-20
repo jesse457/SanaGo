@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CashShiftStatus;
+use App\Http\Requests\CloseCashShiftRequest;
 use App\Http\Requests\StoreCashPaymentRequest;
 use App\Http\Requests\StoreCashShiftRequest;
 use App\Models\CashPayment;
@@ -60,7 +61,7 @@ class CaisseController extends Controller
         return back()->with('success', 'Shift opened successfully.');
     }
 
-    public function closeShift(): RedirectResponse
+    public function closeShift(CloseCashShiftRequest $request): RedirectResponse
     {
         $shift = CashShift::where('status', CashShiftStatus::Open)
             ->where('user_id', auth()->id())
@@ -73,12 +74,15 @@ class CaisseController extends Controller
         $totalPayments = $shift->payments()->sum('amount_paid');
         $expectedTotal = (float) $shift->opening_balance + (float) $totalPayments;
 
+        $counted = $request->validated('closing_balance');
+        $closingBalance = $counted === null ? $expectedTotal : (float) $counted;
+
         $shift->update([
             'status' => CashShiftStatus::Closed->value,
             'closed_at' => now(),
             'expected_total' => $expectedTotal,
-            'closing_balance' => request()->input('closing_balance', $expectedTotal),
-            'variance' => (float) request()->input('closing_balance', $expectedTotal) - $expectedTotal,
+            'closing_balance' => $closingBalance,
+            'variance' => $closingBalance - $expectedTotal,
         ]);
 
         return back()->with('success', 'Shift closed successfully.');
@@ -94,7 +98,19 @@ class CaisseController extends Controller
             return back()->with('error', 'No open shift found. Please open a shift first.');
         }
 
-        $shift->payments()->create($request->validated());
+        $validated = $request->validated();
+
+        // A payment must be worth something and must be traceable to a patient
+        // or an invoice, otherwise the receipt and the shift total are useless.
+        if ((float) $validated['amount_paid'] <= 0) {
+            return back()->withErrors(['amount_paid' => 'The payment amount must be greater than zero.']);
+        }
+
+        if (empty($validated['invoice_id']) && empty($validated['patient_id'])) {
+            return back()->withErrors(['patient_id' => 'Select a patient or an invoice for this payment.']);
+        }
+
+        $shift->payments()->create($validated);
 
         return back()->with('success', 'Payment recorded successfully.');
     }

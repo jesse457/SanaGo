@@ -15,7 +15,7 @@ class StoreMedicationRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'dosage_unit' => 'required|string',
+            'dosage_units' => 'required|string',
             'min_stock_level' => 'required|integer|min:0',
             'description' => 'nullable|string',
             'image' => 'nullable|image|max:2048',

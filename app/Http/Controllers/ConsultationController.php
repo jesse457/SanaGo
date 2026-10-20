@@ -8,6 +8,7 @@ use App\Models\MedicalRecord;
 use App\Models\Medication;
 use App\Models\Patient;
 use App\Services\Clinical\MedicalRecordService;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 
 class ConsultationController extends Controller
@@ -81,11 +82,12 @@ class ConsultationController extends Controller
         }
     }
 
-    public function show(MedicalRecord $consultation)
+    /**
+     * A consultation is a row of the patient's clinical record, so the detail
+     * screen lives on the patient dossier rather than on a page of its own.
+     */
+    public function show(MedicalRecord $consultation): RedirectResponse
     {
-
-        return Inertia::render('Consultations/Detail', [
-            'consultation' => $consultation->load(['patient', 'doctor']),
-        ]);
+        return redirect()->route('patients.show', $consultation->patient_id);
     }
 }

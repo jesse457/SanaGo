@@ -15,6 +15,10 @@ class TenantDatabaseSeeder extends Seeder
         // 2. Reference data (departments, bed types, lab tests, medications, supplies)
         $this->call(ReferenceDataSeeder::class);
 
+        // 3. Service catalogue — billing depends on it, so it must be seeded
+        //    before any clinical or financial record is generated.
+        $this->call(ServiceSeeder::class);
+
         // 4. Hospital staff users (must exist before clinical data)
         $this->createStaffUsers();
 
@@ -50,41 +54,27 @@ class TenantDatabaseSeeder extends Seeder
         $this->call(UserShiftSeeder::class);
     }
 
+    /**
+     * Create one demo user per staff role. Re-running the seeder updates the
+     * existing account instead of tripping the unique `email` constraint.
+     */
     private function createStaffUsers(): void
     {
-        $admin = User::factory()->create([
-            'name' => 'Hospital Admin',
-            'email' => 'admin@hospital.local',
-            'password' => 'password',
-        ]);
-        $admin->assignRole('admin');
+        $staff = [
+            ['name' => 'Hospital Admin', 'email' => 'admin@hospital.local', 'role' => 'admin'],
+            ['name' => 'Reception Staff', 'email' => 'reception@hospital.local', 'role' => 'reception'],
+            ['name' => 'Dr. Smith', 'email' => 'doctor@hospital.local', 'role' => 'doctor'],
+            ['name' => 'Lab Technician', 'email' => 'lab@hospital.local', 'role' => 'lab_tech'],
+            ['name' => 'Pharmacist', 'email' => 'pharma@hospital.local', 'role' => 'pharma'],
+        ];
 
-        $reception = User::factory()->create([
-            'name' => 'Reception Staff',
-            'email' => 'reception@hospital.local',
-            'password' => 'password',
-        ]);
-        $reception->assignRole('reception');
+        foreach ($staff as $member) {
+            $user = User::updateOrCreate(
+                ['email' => $member['email']],
+                ['name' => $member['name'], 'password' => 'password'],
+            );
 
-        $doctor = User::factory()->create([
-            'name' => 'Dr. Smith',
-            'email' => 'doctor@hospital.local',
-            'password' => 'password',
-        ]);
-        $doctor->assignRole('doctor');
-
-        $labTech = User::factory()->create([
-            'name' => 'Lab Technician',
-            'email' => 'lab@hospital.local',
-            'password' => 'password',
-        ]);
-        $labTech->assignRole('lab_tech');
-
-        $pharma = User::factory()->create([
-            'name' => 'Pharmacist',
-            'email' => 'pharma@hospital.local',
-            'password' => 'password',
-        ]);
-        $pharma->assignRole('pharma');
+            $user->syncRoles([$member['role']]);
+        }
     }
 }

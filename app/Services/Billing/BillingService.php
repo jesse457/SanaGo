@@ -30,6 +30,15 @@ class BillingService
         return $prefix.str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * The note carried by the invoice generated for an admission at discharge.
+     * AdmissionObserver uses it to detect an already billed discharge.
+     */
+    public static function admissionInvoiceNote(Admission $admission): string
+    {
+        return "Invoice generated at discharge for admission #{$admission->id}";
+    }
+
     public function createInvoiceWithItems(array $invoiceData, array $items): Invoice
     {
         return DB::transaction(function () use ($invoiceData, $items) {
@@ -154,7 +163,11 @@ class BillingService
 
     /**
      * Record a partial cash payment against an invoice.
-     * Auto-updates invoice status to PAID when fully paid.
+     * Auto-updates invoice status to PAID when the cash portion covers the bill.
+     *
+     * `is_fully_paid` counts settled insurance claims as money received, so it
+     * would mark an invoice PAID while the patient still owes the cash share.
+     * The decision here compares the cash collected against the amount due.
      */
     public function recordPayment(Invoice $invoice, float $amount, int $cashShiftId, string $paymentMethod = 'cash'): CashPayment
     {
@@ -170,8 +183,16 @@ class BillingService
             // Refresh invoice to recalculate total_paid
             $invoice->refresh();
 
-            // Auto-mark as PAID if fully paid
-            if ($invoice->is_fully_paid) {
+            $cashPaid = (float) $invoice->cashPayments()->sum('amount_paid');
+            $amountDue = (float) $invoice->total_amount;
+
+            // `is_fully_paid` counts settled insurance claims as money received,
+            // so on its own it would close an invoice whose cash share is still
+            // outstanding — and mark it PAID off a zero-value cash payment.
+            // Require an actual cash payment before trusting the settled total.
+            $settledInFull = $invoice->is_fully_paid && $cashPaid > 0;
+
+            if ($settledInFull || $cashPaid >= $amountDue) {
                 $this->updateStatus($invoice, InvoiceStatus::PAID);
             } elseif ($invoice->status === InvoiceStatus::DRAFT) {
                 $this->updateStatus($invoice, InvoiceStatus::PENDING);
@@ -201,7 +222,7 @@ class BillingService
                 'tax_amount' => 0,
                 'total_amount' => 0,
                 'status' => InvoiceStatus::PENDING->value,
-                'notes' => "Invoice generated at discharge for admission #{$admission->id}",
+                'notes' => self::admissionInvoiceNote($admission),
             ]);
 
             // Add admission services as invoice items

@@ -7,7 +7,9 @@ use App\Http\Requests\StoreInvoiceRequest;
 use App\Models\CashShift;
 use App\Models\Invoice;
 use App\Models\Patient;
+use App\Models\Payer;
 use App\Services\Billing\BillingService;
+use App\Services\Billing\ClaimService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -102,8 +104,48 @@ class InvoiceController extends Controller
         return back()->with('success', 'Payment recorded successfully.');
     }
 
+    /**
+     * Submit an insurance claim (tiers payant) for an invoice.
+     */
+    public function submitClaim(Request $request, Invoice $invoice, ClaimService $claims)
+    {
+        $validated = $request->validate([
+            'payer_id' => ['required', 'integer', 'exists:payers,id'],
+            'patient_insurance_id' => ['required', 'integer', 'exists:patient_insurances,id'],
+        ]);
+
+        if ($invoice->claims()->exists()) {
+            return back()->with('error', 'A claim has already been submitted for this invoice.');
+        }
+
+        $payer = Payer::query()->findOrFail($validated['payer_id']);
+
+        $claims->submitClaim($invoice, $payer, (int) $validated['patient_insurance_id']);
+
+        return back()->with('success', 'Claim submitted to '.$payer->name.'.');
+    }
+
     public function destroy(Invoice $invoice)
     {
+        /*
+         * `claims` cascade on invoice_id, so deleting an invoice used to wipe
+         * submitted and paid insurance claims with no warning. Claims are
+         * money-relevant records: refuse the delete instead.
+         */
+        if ($invoice->claims()->exists()) {
+            return back()->with(
+                'error',
+                'This invoice has insurance claims attached and cannot be deleted. Void the claims first.',
+            );
+        }
+
+        if ($invoice->cashPayments()->exists()) {
+            return back()->with(
+                'error',
+                'This invoice has recorded payments and cannot be deleted.',
+            );
+        }
+
         $invoice->items()->delete();
         $invoice->delete();
 

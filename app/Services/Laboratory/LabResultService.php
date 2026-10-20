@@ -31,7 +31,13 @@ class LabResultService
     {
         return DB::transaction(function () use ($labResult, $validated, $attachments) {
             $labResult->update($validated);
-            $labResult->labRequest->update(['status' => $validated['status']]);
+
+            // `lab_results.status` is a LabResultStatus value (normal|abnormal|critical),
+            // while `lab_requests.status` casts to LabRequestStatus and has no such
+            // values. Writing the result status across used to throw a ValueError on
+            // the next read and skip the completion billing hook; a reported result
+            // always completes its request.
+            $labResult->labRequest->update(['status' => LabRequestStatus::COMPLETED->value]);
 
             if ($attachments) {
                 foreach ($attachments as $file) {

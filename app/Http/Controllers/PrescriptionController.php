@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PrescriptionStatus;
 use App\Http\Requests\StorePrescriptionRequest;
 use App\Models\Medication;
 use App\Models\Patient;
@@ -46,7 +47,7 @@ class PrescriptionController extends Controller
                 'patient_id' => $validated['patient_id'],
                 'doctor_id' => auth()->id(),
                 'prescription_date' => now(),
-                'status' => 'active',
+                'status' => PrescriptionStatus::PARTIAL->value,
                 'notes' => $validated['notes'] ?? null,
                 'total_amount' => 0,
             ]);
@@ -101,7 +102,7 @@ class PrescriptionController extends Controller
 
     public function dispense(Prescription $prescription): RedirectResponse
     {
-        if ($prescription->status === 'dispensed') {
+        if ($prescription->status === PrescriptionStatus::COMPLETED) {
             return back()->with('error', 'Prescription already dispensed.');
         }
 
@@ -121,7 +122,7 @@ class PrescriptionController extends Controller
                 ]);
             }
 
-            $prescription->update(['status' => 'dispensed']);
+            $prescription->update(['status' => PrescriptionStatus::COMPLETED->value]);
         });
 
         return redirect()->route('prescriptions.index')

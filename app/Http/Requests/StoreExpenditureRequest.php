@@ -23,6 +23,16 @@ class StoreExpenditureRequest extends FormRequest
             'vendor' => ['nullable', 'string', 'max:255'],
             'reference_number' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string'],
+            'recorded_by' => ['required', 'integer', 'exists:users,id'],
         ];
+    }
+
+    /**
+     * `recorded_by` is NOT NULL with a FK to `users`, and an expenditure is
+     * always attributed to the authenticated user, never to the client.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge(['recorded_by' => auth()->id()]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\InvoiceStatus;
 use App\Http\Requests\StorePatientRequest;
 use App\Http\Requests\UpdatePatientRequest;
 use App\Models\Patient;
@@ -13,15 +14,21 @@ class PatientController extends Controller
 {
     public function index(Request $request)
     {
-        $parts = preg_split('/\s+/', trim($request->search));
+        $search = trim((string) $request->search);
+        $parts = $search === '' ? [] : preg_split('/\s+/', $search);
+
         $patients = Patient::query()
-            ->when($request->search, function ($query, $search) use ($parts) {
-                foreach ($parts as $part) {
-                    // dump($part);
-                    $query->where('first_name', 'like', "%{$part}%")
-                        ->orWhere('last_name', 'like', "%{$part}%");
-                }
-                $query->orWhere('patient_uid', 'like', "%{$search}%");
+            ->when($parts !== [], function ($query) use ($parts, $search) {
+                // Group the OR chain: an ungrouped chain lets later filters
+                // (or the uid match) escape the search constraint.
+                $query->where(function ($inner) use ($parts, $search) {
+                    foreach ($parts as $part) {
+                        $inner->where('first_name', 'like', "%{$part}%")
+                            ->orWhere('last_name', 'like', "%{$part}%");
+                    }
+
+                    $inner->orWhere('patient_uid', 'like', "%{$search}%");
+                });
             })
             ->latest()
             ->paginate(12) // Limits to 12 patients per page
@@ -41,7 +48,9 @@ class PatientController extends Controller
     public function store(StorePatientRequest $request)
     {
         $validated = $request->validated();
-        $validated['patient_uid'] = 'PT-'.date('Y').'-'.strtoupper(Str::random(4));
+        // `patient_uid` is unique: a collision used to surface as a 500 on
+        // registration. A ULID keeps it unique without a retry loop.
+        $validated['patient_uid'] = 'PT-'.date('Y').'-'.strtoupper(substr((string) Str::ulid(), -6));
 
         // Create the patient
         $patient = Patient::create($validated);
@@ -71,6 +80,43 @@ class PatientController extends Controller
         return redirect()
             ->route('patients.index')
             ->with('success', 'Patient registered successfully.');
+    }
+
+    /**
+     * Patient dossier: identity, clinical history and financial summary.
+     *
+     * A patient used to be reachable only through list rows; five screens
+     * link to `patients.show`, which had no implementation at all.
+     */
+    public function show(Patient $patient)
+    {
+        $patient->load([
+            'latestAdmission.bed.ward',
+            'admissions' => fn ($query) => $query->with('bed.ward')->latest('admission_date')->limit(10),
+            'vitals' => fn ($query) => $query->with('recordedBy:id,name')->latest('recorded_at')->limit(20),
+            'medicalRecords' => fn ($query) => $query->latest('record_date')->limit(10),
+            'appointments' => fn ($query) => $query->latest('appointment_date')->limit(10),
+            'invoices' => fn ($query) => $query->latest('invoice_date')->limit(10),
+            'prescriptions' => fn ($query) => $query->latest()->limit(10),
+        ]);
+
+        return Inertia::render('Patients/Profile', [
+            'patient' => $patient,
+            'stats' => [
+                'admissions' => $patient->admissions->count(),
+                'vitals' => $patient->vitals->count(),
+                'consultations' => $patient->medicalRecords->count(),
+                'outstanding' => (float) $patient->invoices
+                    ->whereNotIn('status', [InvoiceStatus::PAID->value, InvoiceStatus::CANCELLED->value])
+                    ->sum('total_amount'),
+            ],
+            'admissions' => $patient->admissions,
+            'vitals' => $patient->vitals,
+            'medicalRecords' => $patient->medicalRecords,
+            'appointments' => $patient->appointments,
+            'invoices' => $patient->invoices,
+            'prescriptions' => $patient->prescriptions,
+        ]);
     }
 
     public function update(UpdatePatientRequest $request, Patient $patient)

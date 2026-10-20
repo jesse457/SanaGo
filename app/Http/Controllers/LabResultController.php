@@ -69,17 +69,17 @@ class LabResultController extends Controller
         ]);
     }
 
-    public function update(UpdateLabResultRequest $request, LabResult $labResult, LabResultService $service)
+    public function update(UpdateLabResultRequest $request, LabResult $result, LabResultService $service)
     {
         $attachments = $request->hasFile('attachments') ? $request->file('attachments') : null;
-        $service->updateResult($labResult, $request->validated(), $attachments);
+        $service->updateResult($result, $request->validated(), $attachments);
 
         return redirect()->route('results.index')->with('success', 'Lab result updated successfully.');
     }
 
-    public function destroy(LabResult $labResult)
+    public function destroy(LabResult $result)
     {
-        $labResult->delete();
+        $result->delete();
 
         return redirect()->back()->with('success', 'Result record removed.');
     }

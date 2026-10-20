@@ -13,8 +13,6 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DispensationController;
 use App\Http\Controllers\EmergencyCaseController;
 use App\Http\Controllers\ExpenditureController;
-use App\Http\Controllers\FeedBackController;
-use App\Http\Controllers\InfastructureController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LabRequestController;
 use App\Http\Controllers\LabResultController;
@@ -41,7 +39,7 @@ use App\Http\Controllers\UserShiftController;
 use App\Http\Controllers\VitalController;
 use App\Http\Controllers\WardController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
+use Stancl\Tenancy\Features\UserImpersonation;
 use Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
@@ -67,10 +65,21 @@ Route::middleware([
 
     /*
     |--------------------------------------------------------------------------
+    | SUPPORT ACCESS (impersonation) ACCEPT
+    |--------------------------------------------------------------------------
+    | The super admin generates a one-time token on the central domain; the
+    | browser is redirected here where the tenant context already exists.
+    */
+    Route::get('/impersonate/{token}', function (string $token) {
+        return UserImpersonation::makeResponse($token);
+    })->name('impersonate.accept')->middleware('throttle:10,1');
+
+    /*
+    |--------------------------------------------------------------------------
     | AUTHENTICATED HOSPITAL ROUTES
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth'])->group(function () {
+    Route::middleware(['auth', 'tenant.active', 'subscription.active'])->group(function () {
 
         /*
          | Dashboards (Role & Permission-Based Views)
@@ -89,32 +98,33 @@ Route::middleware([
 | Patient Management & Admissions
 */
         Route::middleware('can:view-patients')->group(function () {
-            Route::resource('patients', PatientController::class);
+            Route::resource('patients', PatientController::class)
+                ->except(['edit', 'destroy'])
+                ->middlewareFor(['store'], 'plan.limit:patients');
             Route::get('vitals/create/{patient}', [VitalController::class, 'create'])->name('vitals.create');
 
-            Route::resource('vitals', VitalController::class)->except(['create']);
-            Route::resource('admissions', AdmissionController::class)->except('create');
+            Route::resource('vitals', VitalController::class)->except(['create', 'index', 'show', 'edit'])
+                ->parameters(['vitals' => 'vital']);
+            // Vitals are always read in the context of one patient, so the
+            // list is a patient sub-resource instead of a bare index.
+            Route::get('patients/{patient}/vitals', [VitalController::class, 'index'])->name('vitals.index');
+            Route::resource('admissions', AdmissionController::class)
+                ->only(['index', 'show', 'store'])
+                ->parameters(['admissions' => 'admission']);
             Route::get('admissions/create/{patient}', [AdmissionController::class, 'create'])->name('admissions.create');
             Route::post('request-admission/{patient}', [AdmissionController::class, 'requestPatientAdmission'])->name('request-admission');
             Route::post('/patients/{admission}/discharge', [AdmissionController::class, 'discharge'])
                 ->name('admissions.discharge')
                 ->middleware('can:discharge-admissions');
-
-            // Patient Feedback
-            Route::resource('feedback', FeedBackController::class);
         });
 
         /*
         | Medical Records, Consultations, Prescriptions & Certificates
         */
         Route::middleware('can:view-consultations')->group(function () {
-            Route::resource('consultations', ConsultationController::class)->except('index');
-            Route::get('/consultation-detail/{id}', fn ($id) => Inertia::render('Consultations/Detail', ['id' => $id]))
-                ->name('consultation.detail');
+            Route::resource('consultations', ConsultationController::class)->only(['create', 'store', 'show']);
             Route::get('patients/{patient}/consultations', [ConsultationController::class, 'patientProfile'])
                 ->name('patients.consultations.index');
-            Route::get('/medical-records', fn () => Inertia::render('MedicalRecords/index'))
-                ->name('medical.records');
         });
 
         // Doctors creating prescriptions & certificates
@@ -145,36 +155,36 @@ Route::middleware([
         /*
         | Appointment System
         */
-        Route::middleware('can:view-appointments')->group(function () {
+        Route::middleware(['can:view-appointments', 'feature:appointments'])->group(function () {
             Route::get('/appointments/calendar', [AppointmentController::class, 'calendar'])->name('appointments.calendar');
-            Route::resource('appointments', AppointmentController::class);
+            Route::resource('appointments', AppointmentController::class)->only(['index', 'create', 'store', 'update']);
         });
 
         /*
         | Lab & Radiology Diagnostics
         */
-        Route::prefix('lab')->group(function () {
+        Route::prefix('lab')->middleware('feature:laboratory')->group(function () {
             Route::middleware('can:view-lab-tests')->group(function () {
-                Route::resource('tests', LabTestDefinitionController::class);
-                Route::resource('requests', LabRequestController::class);
+                Route::resource('tests', LabTestDefinitionController::class)->except(['show', 'edit']);
+                Route::resource('requests', LabRequestController::class)->only(['index']);
             });
 
             Route::middleware('can:view-lab-results')->group(function () {
-                Route::resource('results', LabResultController::class);
+                Route::resource('results', LabResultController::class)->except(['show']);
             });
         });
 
         // Radiology / Imaging
-        Route::prefix('radiology')->group(function () {
+        Route::prefix('radiology')->middleware('feature:radiology')->group(function () {
             Route::middleware('can:view-radiology')->group(function () {
                 Route::resource('requests', RadiologyRequestController::class)->except(['edit', 'update'])->names([
-                        'index' => 'radiology.requests.index',
-                        'create' => 'radiology.requests.create',
-                        'store' => 'radiology.requests.store',
-                        'update' => 'radiology.requests.update',
-                        'destroy' => 'radiology.requests.destroy',
-                        'show' => 'radiology.requests.show',
-                    ]);;
+                    'index' => 'radiology.requests.index',
+                    'create' => 'radiology.requests.create',
+                    'store' => 'radiology.requests.store',
+                    'update' => 'radiology.requests.update',
+                    'destroy' => 'radiology.requests.destroy',
+                    'show' => 'radiology.requests.show',
+                ]);
                 Route::get('/requests/{request}/print', [RadiologyRequestController::class, 'print'])->name('radiology.requests.print');
             });
 
@@ -186,44 +196,43 @@ Route::middleware([
         /*
         | Emergency
         */
-        Route::middleware('can:create-admissions')->group(function () {
-            Route::resource('emergencies', EmergencyCaseController::class);
+        Route::middleware(['can:create-admissions', 'feature:emergency'])->group(function () {
+            Route::resource('emergencies', EmergencyCaseController::class)->except(['edit']);
         });
 
         /*
         | Pharmacy & Inventory
         */
-        Route::prefix('pharmacy')->group(function () {
+        Route::prefix('pharmacy')->middleware('feature:pharmacy')->group(function () {
             Route::middleware('can:view-drugs')->group(function () {
-                Route::resource('drugs', MedicationController::class);
+                Route::resource('drugs', MedicationController::class)->except(['show', 'edit']);
                 Route::put('batches/{batch}/deplete', [MedicationController::class, 'deplete'])->name('batches.deplete');
             });
 
             Route::middleware('can:dispense-drugs')->group(function () {
-                Route::resource('dispensation', DispensationController::class);
+                Route::resource('dispensation', DispensationController::class)->only(['index', 'store']);
             });
         });
 
         /*
         | Infrastructure & Supplies
         */
-        Route::middleware('can:manage-infrastructure')->group(function () {
-            Route::resource('infrastructure', InfastructureController::class);
-            Route::resource('wards', WardController::class);
-            Route::resource('beds', BedController::class);
-            Route::resource('bed-types', BedTypeController::class);
+        Route::middleware(['can:manage-infrastructure', 'feature:admissions'])->group(function () {
+            Route::resource('wards', WardController::class)->only(['index', 'store', 'update', 'destroy']);
+            Route::resource('beds', BedController::class)->only(['index', 'store', 'update', 'destroy']);
+            Route::resource('bed-types', BedTypeController::class)->only(['index', 'store', 'update', 'destroy']);
             Route::post('beds/{bed}/transfer', [BedController::class, 'transfer'])->name('beds.transfer');
         });
 
-        Route::middleware('can:view-supplies')->group(function () {
-            Route::resource('supplies', SupplyController::class);
+        Route::middleware(['can:view-supplies', 'feature:inventory'])->group(function () {
+            Route::resource('supplies', SupplyController::class)->except(['show']);
             Route::put('supplies/{supply}/restock', [SupplyController::class, 'restock'])
                 ->name('supplies.restock')
                 ->middleware('can:manage-supplies');
         });
 
         Route::middleware('can:manage-departments')->group(function () {
-            Route::resource('departments', DepartmentController::class);
+            Route::resource('departments', DepartmentController::class)->only(['index', 'store', 'update', 'destroy']);
         });
 
         /*
@@ -232,7 +241,9 @@ Route::middleware([
         Route::middleware('can:view-finance')->group(function () {
             Route::prefix('finance')->group(function () {
                 // Standard Invoicing
-                Route::get('/revenue', [RevenueAnalyticsController::class, 'index'])->name('finance.revenue');
+                Route::get('/revenue', [RevenueAnalyticsController::class, 'index'])
+                    ->middleware('feature:reports')
+                    ->name('finance.revenue');
                 Route::get('/expenditures', [ExpenditureController::class, 'index'])->name('finance.expenditures');
                 Route::get('/invoices', [InvoiceController::class, 'index'])->name('finance.invoices.index');
                 Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('finance.invoices.create');
@@ -243,13 +254,15 @@ Route::middleware([
                 Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('finance.invoices.destroy');
 
                 // Tiers Payant (Cameroon Insurance/CNPS/Mutualites)
-                Route::resource('payers', PayerController::class)->only(['index', 'store', 'update']);
-                Route::resource('patient-insurances', PatientInsuranceController::class);
-                Route::post('invoices/{invoice}/submit-claim', [InvoiceController::class, 'submitClaim'])->name('invoices.claim');
-                Route::get('claims', [ClaimController::class, 'index'])->name('finance.claims.index');
-                Route::get('claims/{claim}', [ClaimController::class, 'show'])->name('finance.claims.show');
-                Route::post('claims', [ClaimController::class, 'store'])->name('finance.claims.store');
-                Route::patch('claims/{claim}', [ClaimController::class, 'update'])->name('finance.claims.update');
+                Route::middleware('feature:insurance_claims')->group(function () {
+                    Route::resource('payers', PayerController::class)->only(['index', 'store', 'update']);
+                    Route::resource('patient-insurances', PatientInsuranceController::class)->except(['show']);
+                    Route::post('invoices/{invoice}/submit-claim', [InvoiceController::class, 'submitClaim'])->name('invoices.claim');
+                    Route::get('claims', [ClaimController::class, 'index'])->name('finance.claims.index');
+                    Route::get('claims/{claim}', [ClaimController::class, 'show'])->name('finance.claims.show');
+                    Route::post('claims', [ClaimController::class, 'store'])->name('finance.claims.store');
+                    Route::patch('claims/{claim}', [ClaimController::class, 'update'])->name('finance.claims.update');
+                });
 
                 // Services catalog
                 Route::resource('services', ServiceController::class)
@@ -264,7 +277,9 @@ Route::middleware([
                     ]);
 
                 // MINSANTE Reporting (Legally required in Cameroon)
-                Route::get('/reports/rpm', [ReportController::class, 'rpm'])->name('finance.reports.rpm');
+                Route::middleware('feature:reports')->group(function () {
+                    Route::get('/reports/rpm', [ReportController::class, 'rpm'])->name('finance.reports.rpm');
+                });
             });
 
             Route::prefix('api/finance')->group(function () {
@@ -275,7 +290,7 @@ Route::middleware([
         });
 
         // Cash Register / Caisse (Needs strict permission separation from viewing finance)
-        Route::middleware('can:manage-caisse')->group(function () {
+        Route::middleware(['can:manage-caisse', 'feature:cash_register'])->group(function () {
             Route::get('/caisse', [CaisseController::class, 'index'])->name('caisse.index');
             Route::post('/caisse/open-shift', [CaisseController::class, 'openShift'])->name('caisse.open');
             Route::post('/caisse/close-shift', [CaisseController::class, 'closeShift'])->name('caisse.close');
@@ -287,15 +302,17 @@ Route::middleware([
         | System Administration (Users, Roles, Shifts, Logs)
         */
         Route::middleware('can:manage-users')->group(function () {
-            Route::resource('users', UserController::class);
-            Route::resource('shifts', UserShiftController::class);
+            Route::resource('users', UserController::class)
+                ->except(['show', 'edit'])
+                ->middlewareFor(['store'], 'plan.limit:users');
+            Route::resource('shifts', UserShiftController::class)->only(['index', 'store', 'update', 'destroy']);
         });
 
         Route::middleware('can:manage-roles')->group(function () {
-            Route::resource('roles', RoleController::class);
+            Route::resource('roles', RoleController::class)->except(['create', 'show', 'edit']);
         });
 
-        Route::middleware('can:view-audit-logs')->group(function () {
+        Route::middleware(['can:view-audit-logs', 'feature:audit_logs'])->group(function () {
             Route::get('/audit-logs', [UserActivityController::class, 'index'])->name('audit.logs');
         });
 

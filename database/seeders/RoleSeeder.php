@@ -75,14 +75,14 @@ class RoleSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::findOrCreate($permission, 'web');
         }
 
-        $admin = Role::create(['name' => 'admin']);
-        $admin->givePermissionTo(Permission::all());
+        $admin = Role::findOrCreate('admin', 'web');
+        $admin->syncPermissions(Permission::all());
 
-        $reception = Role::create(['name' => 'reception']);
-        $reception->givePermissionTo([
+        $reception = Role::findOrCreate('reception', 'web');
+        $reception->syncPermissions([
             'view-patients',
             'create-patients',
             'edit-patients',
@@ -95,8 +95,8 @@ class RoleSeeder extends Seeder
             'manage-caisse',
         ]);
 
-        $doctor = Role::create(['name' => 'doctor']);
-        $doctor->givePermissionTo([
+        $doctor = Role::findOrCreate('doctor', 'web');
+        $doctor->syncPermissions([
             'view-patients',
             'create-patients',
             'edit-patients',
@@ -115,8 +115,8 @@ class RoleSeeder extends Seeder
             'view-drugs',
         ]);
 
-        $labTech = Role::create(['name' => 'lab_tech']);
-        $labTech->givePermissionTo([
+        $labTech = Role::findOrCreate('lab_tech', 'web');
+        $labTech->syncPermissions([
             'view-patients',
             'view-lab-tests',
             'manage-lab-tests',
@@ -126,8 +126,8 @@ class RoleSeeder extends Seeder
             'validate-radiology',
         ]);
 
-        $pharma = Role::create(['name' => 'pharma']);
-        $pharma->givePermissionTo([
+        $pharma = Role::findOrCreate('pharma', 'web');
+        $pharma->syncPermissions([
             'view-drugs',
             'manage-drugs',
             'dispense-drugs',

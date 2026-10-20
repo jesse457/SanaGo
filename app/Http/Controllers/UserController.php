@@ -89,15 +89,16 @@ class UserController extends Controller
             $user->syncRoles($role);
         }
 
-        // Sync shifts: delete existing, create new
+        // Sync shifts: replace the stored set with the submitted one. The
+        // submitted shift keys are optional, so read them defensively.
         $user->shifts()->delete();
         foreach ($shifts as $shift) {
             if (! empty($shift['shift_date']) && ! empty($shift['shift_type'])) {
                 $user->shifts()->create([
                     'shift_date' => $shift['shift_date'],
                     'shift_type' => $shift['shift_type'],
-                    'start_time' => $shift['start_time'] ?: '08:00',
-                    'end_time' => $shift['end_time'] ?: '17:00',
+                    'start_time' => ($shift['start_time'] ?? null) ?: '08:00',
+                    'end_time' => ($shift['end_time'] ?? null) ?: '17:00',
                 ]);
             }
         }

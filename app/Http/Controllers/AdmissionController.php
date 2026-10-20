@@ -11,6 +11,7 @@ use App\Models\Patient;
 use App\Models\User;
 use App\Services\PatientManagement\AdmissionService;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -21,15 +22,20 @@ class AdmissionController extends Controller
     {
         $query = Admission::query()
             ->with(['patient:id,first_name,last_name,patient_uid', 'bed.ward', 'attendingDoctor:id,name']);
-        $parts = preg_split('/\s+/', trim($request->search));
+
         if ($request->search) {
+            $parts = preg_split('/\s+/', trim($request->search));
+
+            // Grouped so the OR conditions cannot leak past the patient match
+            // into the status filter applied below.
             $query->whereHas('patient', function ($q) use ($parts, $request) {
-                foreach ($parts as $part) {
-                    // dump($part);
-                    $q->where('first_name', 'like', "%{$part}%")
-                        ->orWhere('last_name', 'like', "%{$part}%");
-                }
-                $q->orWhere('patient_uid', 'like', "%{$request->search}%");
+                $q->where(function ($nameQuery) use ($parts, $request) {
+                    foreach ($parts as $part) {
+                        $nameQuery->where('first_name', 'like', "%{$part}%")
+                            ->orWhere('last_name', 'like', "%{$part}%");
+                    }
+                    $nameQuery->orWhere('patient_uid', 'like', "%{$request->search}%");
+                });
             });
         }
 
@@ -85,9 +91,11 @@ class AdmissionController extends Controller
         return redirect()->route('admissions.index')->with('success', 'Patient discharged and bed freed.');
     }
 
-    public function requestPatientAdmission(Patient $patient, AdmissionService $service)
+    public function requestPatientAdmission(Patient $patient, AdmissionService $service): RedirectResponse
     {
         $service->requestAdmission($patient, Auth::user());
+
+        return back()->with('success', 'Admission request sent to nursing staff.');
     }
 
     public function create(Patient $patient)
