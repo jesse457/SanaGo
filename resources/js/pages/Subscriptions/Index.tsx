@@ -1,214 +1,328 @@
 import {
-    PlusIcon,
-    PencilSquareIcon,
-    TrashIcon,
-    CreditCardIcon,
+    ArrowTopRightOnSquareIcon,
+    BanknotesIcon,
     CalendarDaysIcon,
+    MagnifyingGlassIcon,
+    QueueListIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { useState, useMemo } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useCallback, useEffect, useState } from 'react';
+import { Pagination } from '@/Components/Pagination';
 import {
-    Alert,
-    Badge,
     Button,
-    Card,
-    Dialog,
     EmptyState,
     PageHeader,
+    Select,
+    StatCard,
+    StatGrid,
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableHeaderCell,
+    TableRow,
     Toolbar,
     ToolbarSearch,
     ToolbarSpacer,
 } from '@/Components/ui';
-import type { BadgeTone } from '@/Components/ui';
-import { useTranslation } from '@/hooks/useTranslation';
 import SuperAdminLayout from '@/Layouts/SuperAdminLayout';
+import {
+    formatCurrency,
+    formatCurrencyCompact,
+    formatDate,
+} from '@/pages/Platform/components/format';
+import type {
+    Paginated,
+    RevenueSummary,
+    SubscriptionListRow,
+} from '@/pages/Platform/components/types';
+import { SubscriptionStatusBadge } from '@/pages/Platform/components/UsageMeter';
 
-interface SubscriptionItem {
-    id: number;
-    plan_name: string;
-    tenant_name: string;
-    billing_cycle: string;
-    price: string;
-    start_date: string;
-    end_date: string;
-    status: string;
-    features_json: { feature_label: string }[];
+interface SubscriptionsIndexProps {
+    subscriptions: Paginated<SubscriptionListRow>;
+    filters: { search: string; status: string };
+    summary: RevenueSummary;
+    plans: { id: number; name: string }[];
+    statuses: string[];
 }
 
-const statusTone: Record<string, BadgeTone> = {
-    active: 'positive',
-    inactive: 'neutral',
-    cancelled: 'critical',
-};
+/** Readable label for a status enum value (`past_due` → `Past due`). */
+function statusLabel(value: string): string {
+    return value
+        .replace(/_/g, ' ')
+        .replace(/^\w/, (character) => character.toUpperCase());
+}
 
 export default function SubscriptionsIndex({
     subscriptions,
-}: {
-    subscriptions: SubscriptionItem[];
-}) {
-    const { t } = useTranslation();
-    const [search, setSearch] = useState('');
-    const [delModal, setDelModal] = useState<SubscriptionItem | null>(null);
-    const { delete: destroy, processing } = useForm();
+    filters,
+    summary,
+    statuses,
+}: SubscriptionsIndexProps) {
+    const { props } = usePage();
+    const platformCurrency =
+        (props as any)?.platform?.currency ?? summary?.currency ?? 'XAF';
 
-    const filtered = useMemo(
-        () =>
-            subscriptions.filter(
-                (s) =>
-                    s.tenant_name
-                        ?.toLowerCase()
-                        .includes(search.toLowerCase()) ||
-                    s.plan_name.toLowerCase().includes(search.toLowerCase()),
-            ),
-        [subscriptions, search],
+    const [search, setSearch] = useState(filters?.search ?? '');
+    const [status, setStatus] = useState(filters?.status ?? 'all');
+    const [loading, setLoading] = useState(false);
+
+    const applyFilters = useCallback(
+        (nextSearch: string, nextStatus: string) => {
+            const query: Record<string, string> = {};
+
+            if (nextSearch.trim() !== '') {
+                query.search = nextSearch.trim();
+            }
+
+            if (nextStatus !== 'all') {
+                query.status = nextStatus;
+            }
+
+            router.get('/subscriptions', query, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                onStart: () => setLoading(true),
+                onFinish: () => setLoading(false),
+            });
+        },
+        [],
     );
 
-    const confirmDelete = () => {
-        if (delModal) {
-            destroy(`/subscriptions/${delModal.id}`, {
-                onSuccess: () => setDelModal(null),
-            });
+    useEffect(() => {
+        if (search.trim() === (filters?.search ?? '').trim()) {
+            return;
         }
+
+        const handle = setTimeout(() => applyFilters(search, status), 350);
+
+        return () => clearTimeout(handle);
+        // `status` is read at submit time on purpose.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [search]);
+
+    const changeStatus = (next: string) => {
+        setStatus(next);
+        applyFilters(search, next);
     };
+
+    const rows = subscriptions?.data ?? [];
+    const currency = summary?.currency ?? platformCurrency;
+    const hasFilters =
+        (filters?.search ?? '') !== '' || (filters?.status ?? 'all') !== 'all';
 
     return (
         <SuperAdminLayout
             headerTitle="Subscriptions"
-            headerSubtitle="Manage tenant subscriptions"
+            headerSubtitle="Platform-wide contracts"
         >
             <Head title="Subscriptions" />
-            <div className="mx-auto max-w-7xl space-y-5 pb-12">
+            <div className="space-y-5 pb-12">
                 <PageHeader
                     title="Subscriptions"
-                    description="Manage tenant subscriptions"
-                    breadcrumbs={[{ label: 'Subscriptions' }]}
-                    actions={
-                        <Button href="/subscriptions/create" icon={PlusIcon}>
-                            New subscription
-                        </Button>
-                    }
+                    description="Every plan contract across the platform, with recurring revenue and expiry pressure in one view."
+                    icon={QueueListIcon}
+                    breadcrumbs={[
+                        { label: 'Billing' },
+                        { label: 'Subscriptions' },
+                    ]}
                 />
+
+                <StatGrid columns={4}>
+                    <StatCard
+                        label="MRR"
+                        value={formatCurrencyCompact(summary?.mrr, currency)}
+                        icon={BanknotesIcon}
+                        tone="positive"
+                        hint={`ARR ${formatCurrencyCompact(summary?.arr, currency)}`}
+                    />
+                    <StatCard
+                        label="Active"
+                        value={summary?.active ?? 0}
+                        icon={QueueListIcon}
+                        tone="accent"
+                        hint="Paying subscriptions"
+                    />
+                    <StatCard
+                        label="Trialing"
+                        value={summary?.trialing ?? 0}
+                        icon={CalendarDaysIcon}
+                        tone="neutral"
+                        hint="Not yet invoiced"
+                    />
+                    <StatCard
+                        label="Past due"
+                        value={summary?.past_due ?? 0}
+                        icon={BanknotesIcon}
+                        tone={
+                            (summary?.past_due ?? 0) > 0
+                                ? 'critical'
+                                : 'neutral'
+                        }
+                        hint={
+                            (summary?.past_due ?? 0) > 0
+                                ? 'Needs collection'
+                                : 'Nothing to collect'
+                        }
+                    />
+                </StatGrid>
 
                 <Toolbar>
                     <ToolbarSearch
                         value={search}
                         onChange={setSearch}
-                        placeholder="Search subscriptions…"
+                        placeholder="Search by tenant or plan…"
+                        busy={loading}
                     />
-                    <ToolbarSpacer />
-                    <Button
-                        href="/subscriptions/create"
-                        variant="secondary"
-                        icon={PlusIcon}
+                    <Select
+                        aria-label="Filter by subscription status"
+                        value={status}
+                        onChange={(event) => changeStatus(event.target.value)}
+                        className="h-9 w-auto min-w-40 text-[13px]"
                     >
-                        New subscription
-                    </Button>
+                        <option value="all">All statuses</option>
+                        {(statuses ?? []).map((value) => (
+                            <option key={value} value={value}>
+                                {statusLabel(value)}
+                            </option>
+                        ))}
+                    </Select>
+                    <ToolbarSpacer />
+                    <span className="text-[12px] text-ink-subtle tabular-nums">
+                        {subscriptions?.total ?? rows.length} subscription
+                        {(subscriptions?.total ?? rows.length) === 1 ? '' : 's'}
+                    </span>
                 </Toolbar>
 
-                {filtered.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        {filtered.map((sub) => (
-                            <Card
-                                key={sub.id}
-                                className="group flex h-full flex-col transition-colors duration-200 ease-premium hover:border-line-strong"
-                            >
-                                <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
-                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-muted text-accent">
-                                        <CreditCardIcon className="h-[18px] w-[18px]" />
-                                    </span>
-                                    <Badge
-                                        tone={
-                                            statusTone[sub.status] ?? 'neutral'
-                                        }
-                                        dot
-                                    >
-                                        {sub.status}
-                                    </Badge>
-                                </div>
-
-                                <div className="flex-1 px-5 py-4">
-                                    <Link
-                                        href={`/subscriptions/${sub.id}`}
-                                        className="block truncate text-[15px] font-semibold tracking-tight text-ink transition-colors duration-150 hover:text-accent"
-                                    >
-                                        {sub.plan_name}
-                                    </Link>
-                                    <p className="mt-0.5 truncate text-[12.5px] text-ink-muted">
-                                        {sub.tenant_name}
-                                    </p>
-                                    <p className="mt-3 text-[20px] leading-none font-semibold tracking-[-0.02em] text-ink tabular-nums">
-                                        ${sub.price}
-                                        <span className="ml-0.5 text-[12px] font-normal text-ink-subtle">
-                                            /{sub.billing_cycle}
-                                        </span>
-                                    </p>
-                                    <p className="mt-3 flex items-center gap-1.5 text-[11.5px] text-ink-subtle tabular-nums">
-                                        <CalendarDaysIcon className="h-3.5 w-3.5" />
-                                        {sub.start_date} — {sub.end_date}
-                                    </p>
-                                </div>
-
-                                <div className="flex items-center justify-end gap-1.5 border-t border-line px-4 py-3">
-                                    <Button
-                                        href={`/subscriptions/${sub.id}/edit`}
-                                        variant="ghost"
-                                        size="sm"
-                                        icon={PencilSquareIcon}
-                                    >
-                                        Edit
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        icon={TrashIcon}
-                                        aria-label={`Delete ${sub.plan_name}`}
-                                        onClick={() => setDelModal(sub)}
-                                        className="text-critical-ink hover:bg-critical-soft"
-                                    />
-                                </div>
-                            </Card>
-                        ))}
-                    </div>
+                {rows.length === 0 ? (
+                    hasFilters ? (
+                        <EmptyState
+                            icon={MagnifyingGlassIcon}
+                            title="No subscription matches these filters"
+                            description="Try another tenant, plan or status."
+                            secondaryAction={
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => {
+                                        setSearch('');
+                                        setStatus('all');
+                                        router.get(
+                                            '/subscriptions',
+                                            {},
+                                            { preserveScroll: true },
+                                        );
+                                    }}
+                                >
+                                    Clear filters
+                                </Button>
+                            }
+                        />
+                    ) : (
+                        <EmptyState
+                            icon={QueueListIcon}
+                            title="No subscriptions yet"
+                            description="Subscriptions are assigned from a hospital page once a plan exists."
+                            action={{
+                                label: 'Browse hospitals',
+                                href: '/tenants',
+                            }}
+                        />
+                    )
                 ) : (
-                    <EmptyState
-                        icon={CreditCardIcon}
-                        title="No subscriptions found"
-                        description={
-                            search
-                                ? 'Try adjusting your search terms.'
-                                : undefined
-                        }
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHeaderCell>Hospital</TableHeaderCell>
+                                <TableHeaderCell>Plan</TableHeaderCell>
+                                <TableHeaderCell numeric>Price</TableHeaderCell>
+                                <TableHeaderCell>Period</TableHeaderCell>
+                                <TableHeaderCell>Status</TableHeaderCell>
+                                <TableHeaderCell align="right">
+                                    Actions
+                                </TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {rows.map((subscription) => (
+                                <TableRow key={subscription.id}>
+                                    <TableCell>
+                                        <Link
+                                            href={`/tenants/${subscription.tenant_id}`}
+                                            className="font-medium text-ink transition-colors duration-150 hover:text-accent"
+                                        >
+                                            {subscription.tenant_name}
+                                        </Link>
+                                        <span className="block font-mono text-[11.5px] text-ink-subtle">
+                                            {subscription.tenant_id}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span className="font-medium text-ink">
+                                            {subscription.plan_name}
+                                        </span>
+                                        <span className="block text-[11.5px] text-ink-subtle">
+                                            {subscription.billing_cycle}
+                                            {subscription.auto_renew
+                                                ? ' · auto-renews'
+                                                : ''}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell numeric>
+                                        {formatCurrency(
+                                            subscription.price,
+                                            subscription.currency,
+                                        )}
+                                    </TableCell>
+                                    <TableCell muted className="tabular-nums">
+                                        {formatDate(subscription.start_date)} →{' '}
+                                        {formatDate(subscription.end_date)}
+                                    </TableCell>
+                                    <TableCell>
+                                        <SubscriptionStatusBadge
+                                            label={subscription.status_label}
+                                            tone={subscription.status_tone}
+                                            daysRemaining={
+                                                subscription.days_remaining
+                                            }
+                                        />
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <div className="flex items-center justify-end gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                icon={ArrowTopRightOnSquareIcon}
+                                                href={`/subscriptions/${subscription.id}`}
+                                            >
+                                                Details
+                                            </Button>
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                href={`/tenants/${subscription.tenant_id}`}
+                                            >
+                                                Hospital
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
+
+                {rows.length > 0 && (
+                    <Pagination
+                        links={subscriptions?.links ?? []}
+                        meta={{
+                            from: subscriptions?.from ?? 0,
+                            to: subscriptions?.to ?? 0,
+                            total: subscriptions?.total ?? rows.length,
+                        }}
                     />
                 )}
             </div>
-
-            <Dialog
-                open={delModal !== null}
-                onClose={() => setDelModal(null)}
-                size="md"
-                title="Delete subscription"
-                footer={
-                    <>
-                        <Button
-                            variant="secondary"
-                            onClick={() => setDelModal(null)}
-                        >
-                            {t('common.cancel')}
-                        </Button>
-                        <Button
-                            variant="danger"
-                            loading={processing}
-                            onClick={confirmDelete}
-                        >
-                            {processing ? 'Deleting…' : 'Delete'}
-                        </Button>
-                    </>
-                }
-            >
-                <Alert tone="critical" title="This cannot be undone">
-                    Delete <strong>{delModal?.plan_name}</strong> subscription?
-                </Alert>
-            </Dialog>
         </SuperAdminLayout>
     );
 }

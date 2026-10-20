@@ -7,9 +7,14 @@ use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\LandlordRoleController;
 use App\Http\Controllers\LandlordUserController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\PlatformAuditController;
+use App\Http\Controllers\PlatformBillingController;
+use App\Http\Controllers\PlatformHealthController;
+use App\Http\Controllers\PlatformSettingsController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TenantController;
+use App\Http\Controllers\TenantSubscriptionController;
 use App\Http\Middleware\InitializeTenancyBySubdomainGraceful;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -52,9 +57,14 @@ Route::middleware([InitializeTenancyBySubdomainGraceful::class])->group(function
     Route::get('/confirm-password', fn () => Inertia::render('Auth/ConfirmPassword'))->name('password.confirm');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    // // Auto-login transfer for cross-domain tenant login
-    // Route::get('/login/transfer', [AuthenticatedSessionController::class, 'transfer'])
-    //     ->name('login.transfer');
+    /*
+     * Cross-domain login transfer: the platform login page authenticates a
+     * hospital user against their own database and redirects here with a
+     * one-time token so the session is created on the hospital subdomain.
+     */
+    Route::get('/login/transfer/{token?}', [AuthenticatedSessionController::class, 'transfer'])
+        ->middleware('throttle:10,1')
+        ->name('login.transfer');
 
     // Locale switcher (works for both guest and authenticated users)
     Route::post('/locale', function (Request $request) {
@@ -96,7 +106,7 @@ Route::middleware(['auth', 'central.domain', 'web', 'throttle:api'])->group(func
     Route::get('/tenants', [TenantController::class, 'index'])
         ->name('tenants.index')
         ->middleware('can:view-tenants');
-    Route::get('/tenants/create', fn () => Inertia::render('Tenants/Create'))
+    Route::get('/tenants/create', [TenantController::class, 'create'])
         ->name('tenants.create')
         ->middleware('can:manage-tenants');
     Route::post('/tenants', [TenantController::class, 'store'])
@@ -142,18 +152,9 @@ Route::middleware(['auth', 'central.domain', 'web', 'throttle:api'])->group(func
     Route::get('/subscriptions', [SubscriptionController::class, 'index'])
         ->name('subscriptions.index')
         ->middleware('can:view-tenants');
-    Route::get('/subscriptions/create', [SubscriptionController::class, 'create'])
-        ->name('subscriptions.create')
-        ->middleware('can:manage-subscriptions');
-    Route::post('/subscriptions', [SubscriptionController::class, 'store'])
-        ->name('subscriptions.store')
-        ->middleware('can:manage-subscriptions');
     Route::get('/subscriptions/{subscription}', [SubscriptionController::class, 'show'])
         ->name('subscriptions.show')
         ->middleware('can:view-tenants');
-    Route::get('/subscriptions/{subscription}/edit', [SubscriptionController::class, 'edit'])
-        ->name('subscriptions.edit')
-        ->middleware('can:manage-subscriptions');
     Route::put('/subscriptions/{subscription}', [SubscriptionController::class, 'update'])
         ->name('subscriptions.update')
         ->middleware('can:manage-subscriptions');
@@ -205,6 +206,9 @@ Route::middleware(['auth', 'central.domain', 'web', 'throttle:api'])->group(func
     Route::post('/announcements', [AnnouncementController::class, 'store'])
         ->name('announcements.store')
         ->middleware('can:manage-announcements');
+    Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update'])
+        ->name('announcements.update')
+        ->middleware('can:manage-announcements');
     Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])
         ->name('announcements.destroy')
         ->middleware('can:manage-announcements');
@@ -248,6 +252,62 @@ Route::middleware(['auth', 'central.domain', 'web', 'throttle:api'])->group(func
     Route::delete('/landlord-roles/{role}', [LandlordRoleController::class, 'destroy'])
         ->name('landlord-roles.destroy')
         ->middleware('can:manage-landlord-users');
+
+    /*
+    |----------------------------------------------------------------------
+    | Tenant lifecycle (suspend / reactivate / archive / restore / purge)
+    |----------------------------------------------------------------------
+    */
+    Route::post('/tenants/{tenant}/suspend', [TenantController::class, 'suspend'])
+        ->name('tenants.suspend')->middleware('can:manage-tenants');
+    Route::post('/tenants/{tenant}/reactivate', [TenantController::class, 'reactivate'])
+        ->name('tenants.reactivate')->middleware('can:manage-tenants');
+    Route::post('/tenants/{tenant}/archive', [TenantController::class, 'archive'])
+        ->name('tenants.archive')->middleware('can:manage-tenants');
+    Route::post('/tenants/{tenant}/restore', [TenantController::class, 'restore'])
+        ->name('tenants.restore')->middleware('can:manage-tenants');
+    Route::post('/tenants/{tenant}/notes', [TenantController::class, 'addNote'])
+        ->name('tenants.add-note')->middleware('can:manage-tenants');
+    Route::post('/tenants/{tenant}/impersonate', [TenantController::class, 'impersonate'])
+        ->name('tenants.impersonate')->middleware('can:impersonate-tenants');
+
+    /*
+    |----------------------------------------------------------------------
+    | Per-tenant plan & subscription management
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('tenants/{tenant}/subscription')
+        ->name('tenants.subscription.')
+        ->middleware('can:manage-subscriptions')
+        ->group(function () {
+            Route::post('/', [TenantSubscriptionController::class, 'assign'])->name('assign');
+            Route::post('/plan', [TenantSubscriptionController::class, 'changePlan'])->name('change-plan');
+            Route::post('/renew', [TenantSubscriptionController::class, 'renew'])->name('renew');
+            Route::post('/extend', [TenantSubscriptionController::class, 'extend'])->name('extend');
+            Route::post('/cancel', [TenantSubscriptionController::class, 'cancel'])->name('cancel');
+            Route::post('/resume', [TenantSubscriptionController::class, 'resume'])->name('resume');
+            Route::post('/expire', [TenantSubscriptionController::class, 'expire'])->name('expire');
+            Route::put('/overrides', [TenantSubscriptionController::class, 'overrides'])->name('overrides');
+            Route::get('/preview', [TenantSubscriptionController::class, 'preview'])->name('preview');
+            Route::post('/invoices/{invoice}/pay', [TenantSubscriptionController::class, 'payInvoice'])->name('pay-invoice');
+        });
+
+    /*
+    |----------------------------------------------------------------------
+    | Platform control: settings, billing, audit trail, health
+    |----------------------------------------------------------------------
+    */
+    Route::get('/platform/settings', [PlatformSettingsController::class, 'edit'])
+        ->name('platform.settings')->middleware('can:manage-platform-settings');
+    Route::put('/platform/settings', [PlatformSettingsController::class, 'update'])
+        ->name('platform.settings.update')->middleware('can:manage-platform-settings');
+
+    Route::get('/platform/billing', [PlatformBillingController::class, 'index'])
+        ->name('platform.billing')->middleware('can:view-billing');
+    Route::get('/platform/audit', [PlatformAuditController::class, 'index'])
+        ->name('platform.audit')->middleware('can:view-audit-logs');
+    Route::get('/platform/health', [PlatformHealthController::class, 'index'])
+        ->name('platform.health')->middleware('can:view-system-health');
 
     // System analytics (requires at least view-system-health)
     Route::get('/analytics', fn () => Inertia::render('Settings/Analytics'))

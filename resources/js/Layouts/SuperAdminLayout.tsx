@@ -3,11 +3,15 @@ import {
     Bars3Icon,
     BellIcon,
     BuildingOfficeIcon,
-    ChartBarIcon,
     ChevronDownIcon,
     Cog6ToothIcon,
     CreditCardIcon,
+    HeartIcon,
+    KeyIcon,
     MegaphoneIcon,
+    MegaphoneIcon as GrowthIcon,
+    QueueListIcon,
+    ServerStackIcon,
     ShieldCheckIcon,
     Squares2X2Icon,
     TicketIcon,
@@ -27,6 +31,7 @@ import React, {
 import { AppToaster } from '@/Components/AppToaster';
 import { FlashHandler } from '@/Components/FlashHandler';
 import { LocaleSwitcher } from '@/Components/LocaleSwitcher';
+import { Badge } from '@/Components/ui';
 import { useTranslation, TranslationProvider } from '@/hooks/useTranslation';
 import { BrandMark } from '@/Layouts/components/BrandMark';
 import { DrawerHeader } from '@/Layouts/components/DrawerHeader';
@@ -66,6 +71,17 @@ interface NavGroup {
     items: NavItem[];
 }
 
+/**
+ * The landlord console is grouped by what an operator is trying to do, not by
+ * which controller answers the route:
+ *
+ *   Overview — the pulse of the platform
+ *   Tenants  — the hospitals themselves
+ *   Billing  — money: usage, catalogue and contracts
+ *   Platform — the machine room: settings, audit trail, health
+ *   Growth   — demand and customer conversations
+ *   Access   — who may operate the console
+ */
 const NAV_CONFIG: NavGroup[] = [
     {
         category: 'Overview',
@@ -81,15 +97,28 @@ const NAV_CONFIG: NavGroup[] = [
         ],
     },
     {
-        category: 'Tenant Management',
-        categoryKey: 'nav.category.tenant_management',
+        category: 'Tenants',
+        categoryKey: 'nav.category.tenants',
         icon: <BuildingOfficeIcon className="h-4 w-4 shrink-0" />,
         items: [
             {
-                label: 'Tenants',
+                label: 'Hospitals',
                 labelKey: 'nav.tenants',
                 href: '/tenants',
                 icon: <BuildingOfficeIcon className="h-4 w-4" />,
+            },
+        ],
+    },
+    {
+        category: 'Billing',
+        categoryKey: 'nav.category.billing',
+        icon: <BanknotesIcon className="h-4 w-4 shrink-0" />,
+        items: [
+            {
+                label: 'Billing & usage',
+                labelKey: 'nav.billing_usage',
+                href: '/platform/billing',
+                icon: <BanknotesIcon className="h-4 w-4" />,
             },
             {
                 label: 'Plans',
@@ -101,52 +130,51 @@ const NAV_CONFIG: NavGroup[] = [
                 label: 'Subscriptions',
                 labelKey: 'nav.subscriptions',
                 href: '/subscriptions',
-                icon: <BanknotesIcon className="h-4 w-4" />,
+                icon: <QueueListIcon className="h-4 w-4" />,
             },
         ],
     },
     {
-        category: 'Sales',
-        categoryKey: 'nav.category.sales',
-        icon: <UserGroupIcon className="h-4 w-4 shrink-0" />,
+        category: 'Platform',
+        categoryKey: 'nav.category.platform',
+        icon: <ServerStackIcon className="h-4 w-4 shrink-0" />,
         items: [
             {
-                label: 'Demo Requests',
+                label: 'Settings',
+                labelKey: 'nav.platform_settings',
+                href: '/platform/settings',
+                icon: <Cog6ToothIcon className="h-4 w-4" />,
+            },
+            {
+                label: 'Audit log',
+                labelKey: 'nav.audit_log',
+                href: '/platform/audit',
+                icon: <ShieldCheckIcon className="h-4 w-4" />,
+            },
+            {
+                label: 'Health & monitoring',
+                labelKey: 'nav.health',
+                href: '/platform/health',
+                icon: <HeartIcon className="h-4 w-4" />,
+            },
+        ],
+    },
+    {
+        category: 'Growth',
+        categoryKey: 'nav.category.growth',
+        icon: <GrowthIcon className="h-4 w-4 shrink-0" />,
+        items: [
+            {
+                label: 'Demo requests',
                 labelKey: 'nav.demo_requests',
                 href: '/demo-requests',
                 icon: <UserGroupIcon className="h-4 w-4" />,
             },
-        ],
-    },
-    {
-        category: 'Support',
-        categoryKey: 'nav.category.support',
-        icon: <TicketIcon className="h-4 w-4 shrink-0" />,
-        items: [
             {
-                label: 'Support Tickets',
+                label: 'Support tickets',
                 labelKey: 'nav.support_tickets',
                 href: '/support-tickets',
                 icon: <TicketIcon className="h-4 w-4" />,
-            },
-        ],
-    },
-    {
-        category: 'Administration',
-        categoryKey: 'nav.category.administration',
-        icon: <ShieldCheckIcon className="h-4 w-4 shrink-0" />,
-        items: [
-            {
-                label: 'Staff Users',
-                labelKey: 'nav.landlord_users',
-                href: '/landlord-users',
-                icon: <UserCircleIcon className="h-4 w-4" />,
-            },
-            {
-                label: 'Roles & Permissions',
-                labelKey: 'nav.landlord_roles',
-                href: '/landlord-roles',
-                icon: <ShieldCheckIcon className="h-4 w-4" />,
             },
             {
                 label: 'Announcements',
@@ -157,15 +185,21 @@ const NAV_CONFIG: NavGroup[] = [
         ],
     },
     {
-        category: 'Insights',
-        categoryKey: 'nav.category.insights',
-        icon: <ChartBarIcon className="h-4 w-4 shrink-0" />,
+        category: 'Access',
+        categoryKey: 'nav.category.access',
+        icon: <KeyIcon className="h-4 w-4 shrink-0" />,
         items: [
             {
-                label: 'Analytics',
-                labelKey: 'nav.analytics',
-                href: '/analytics',
-                icon: <ChartBarIcon className="h-4 w-4" />,
+                label: 'Staff users',
+                labelKey: 'nav.landlord_users',
+                href: '/landlord-users',
+                icon: <UserCircleIcon className="h-4 w-4" />,
+            },
+            {
+                label: 'Roles & permissions',
+                labelKey: 'nav.landlord_roles',
+                href: '/landlord-roles',
+                icon: <ShieldCheckIcon className="h-4 w-4" />,
             },
         ],
     },
@@ -178,11 +212,15 @@ const SidebarNav = memo(function SidebarNav({
     isActive,
     openCategories,
     onToggleCategory,
+    platformName,
+    currency,
 }: {
     isOpen: boolean;
     isActive: (href: string) => boolean;
     openCategories: Record<string, boolean>;
     onToggleCategory: (category: string) => void;
+    platformName: string;
+    currency: string;
 }) {
     const { t } = useTranslation();
     const isCategoryOpen = (cat: string) => !!openCategories[cat];
@@ -192,13 +230,20 @@ const SidebarNav = memo(function SidebarNav({
             <div className="flex h-14 shrink-0 items-center border-b border-line px-3.5">
                 <BrandMark
                     icon={ShieldCheckIcon}
-                    caption={t('nav.super_admin')}
+                    caption={
+                        isOpen
+                            ? `${platformName} · ${t('nav.super_admin')}`
+                            : undefined
+                    }
                     href="/dashboard/super-admin"
                     compact={!isOpen}
                 />
             </div>
 
-            <nav className="flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-2.5 py-3">
+            <nav
+                aria-label={t('nav.super_admin')}
+                className="flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-2.5 py-3"
+            >
                 {NAV_CONFIG.map((group) => {
                     const hasActiveChild = group.items.some((item) =>
                         isActive(item.href),
@@ -278,6 +323,20 @@ const SidebarNav = memo(function SidebarNav({
                 })}
             </nav>
 
+            {/* Plan / currency context: the operator always knows which
+                platform they are operating and what money means here. */}
+            {isOpen && (
+                <div className="mx-2.5 mb-2 rounded-lg border border-line bg-surface-muted px-2.5 py-2">
+                    <p className="truncate text-[11px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">
+                        {platformName}
+                    </p>
+                    <p className="mt-0.5 flex items-center gap-1.5 text-[11.5px] text-ink-muted">
+                        <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                        {t('nav.billing_currency')}: {currency}
+                    </p>
+                </div>
+            )}
+
             <div className="space-y-0.5 border-t border-line p-2.5">
                 <NavLink
                     href="/settings"
@@ -317,35 +376,29 @@ const SidebarNav = memo(function SidebarNav({
 
 // ─── Notification Bell ───
 
-const SHELL_NOTIFICATIONS = [
-    {
-        id: 1,
-        message: 'New tenant registration',
-        time: '2 days ago',
-        read: false,
-    },
-    {
-        id: 2,
-        message: 'System update available',
-        time: '1 week ago',
-        read: true,
-    },
-];
-
+/**
+ * The landlord console has no real notification feed prop yet, so the panel
+ * shows the honest empty state and links to the platform audit log — the real
+ * record of everything that happened. Nothing here is invented.
+ */
 const NotificationsDropdown = memo(function NotificationsDropdown({
     onClose,
 }: {
     onClose: () => void;
 }) {
     const { t } = useTranslation();
-    const unreadCount = SHELL_NOTIFICATIONS.filter((n) => !n.read).length;
 
     return (
         <NotificationsPanel
             title={t('common.notifications')}
-            items={SHELL_NOTIFICATIONS}
-            unreadCount={unreadCount}
-            emptyLabel={t('common.no_notifications')}
+            items={[]}
+            unreadCount={0}
+            emptyLabel={t('notifications.no_platform_feed')}
+            footer={{
+                href: '/platform/audit',
+                label: t('notifications.open_audit_log'),
+                onNavigate: onClose,
+            }}
             onSelect={onClose}
         />
     );
@@ -358,7 +411,6 @@ const UserMenuDropdown = memo(function UserMenuDropdown({
     onClose,
 }: {
     user: User | null;
-    userRole?: string;
     onClose: () => void;
 }) {
     const { t } = useTranslation();
@@ -392,8 +444,20 @@ export default function SuperAdminLayout({
     const { url, props } = usePage();
     const { t } = useTranslation();
     const resolvedTitle = headerTitle ?? t('nav.dashboard');
-    const resolvedSubtitle = headerSubtitle ?? t('nav.super_admin');
     const user = (props.auth as any)?.user as User | null;
+
+    // `platform` is the shared platform-context prop. It is not part of
+    // HandleInertiaRequests yet, so the fallbacks below keep the shell honest
+    // (the name comes from the app, never a hardcoded "$").
+    const platform = (props as any).platform ?? null;
+    const platformName: string = platform?.name ?? 'SanaGo';
+    const currency: string = platform?.currency ?? 'XAF';
+
+    const resolvedSubtitle =
+        headerSubtitle ??
+        (platform?.maintenance_mode
+            ? t('nav.maintenance_mode_active')
+            : t('nav.super_admin'));
 
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -527,8 +591,6 @@ export default function SuperAdminLayout({
         setNotifOpen(false);
     }, []);
 
-    const unreadCount = SHELL_NOTIFICATIONS.filter((n) => !n.read).length;
-
     return (
         <TranslationProvider>
             <FlashHandler />
@@ -549,7 +611,7 @@ export default function SuperAdminLayout({
                     <DrawerHeader onClose={() => setMobileMenuOpen(false)}>
                         <BrandMark
                             icon={ShieldCheckIcon}
-                            caption={t('nav.super_admin')}
+                            caption={`${platformName} · ${t('nav.super_admin')}`}
                             href="/dashboard/super-admin"
                         />
                     </DrawerHeader>
@@ -558,6 +620,8 @@ export default function SuperAdminLayout({
                         isActive={isActiveLink}
                         openCategories={openCategories}
                         onToggleCategory={toggleCategory}
+                        platformName={platformName}
+                        currency={currency}
                     />
                 </aside>
 
@@ -572,6 +636,8 @@ export default function SuperAdminLayout({
                         isActive={isActiveLink}
                         openCategories={openCategories}
                         onToggleCategory={toggleCategory}
+                        platformName={platformName}
+                        currency={currency}
                     />
                     <button
                         type="button"
@@ -615,6 +681,25 @@ export default function SuperAdminLayout({
                         </div>
 
                         <div className="flex items-center gap-1.5 lg:gap-2">
+                            <Badge
+                                tone="muted"
+                                variant="outline"
+                                className="hidden font-mono md:inline-flex"
+                                title={t('nav.billing_currency')}
+                            >
+                                {currency}
+                            </Badge>
+
+                            {platform?.maintenance_mode && (
+                                <Badge
+                                    tone="warning"
+                                    dot
+                                    className="hidden sm:inline-flex"
+                                >
+                                    {t('nav.maintenance_mode')}
+                                </Badge>
+                            )}
+
                             <LocaleSwitcher variant="full" />
 
                             <ThemeToggle
@@ -635,9 +720,6 @@ export default function SuperAdminLayout({
                                     className="relative rounded-md p-1.5 text-ink-subtle transition-colors duration-150 ease-premium hover:bg-surface-hover hover:text-ink"
                                 >
                                     <BellIcon className="h-[18px] w-[18px]" />
-                                    {unreadCount > 0 && (
-                                        <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-critical ring-2 ring-canvas" />
-                                    )}
                                 </button>
 
                                 {notifOpen && (

@@ -77,8 +77,18 @@ class LandlordRoleController extends Controller
 
     public function destroy(Role $role): RedirectResponse
     {
+        if ($role->name === config('platform.super_admin_role', 'super-admin')) {
+            return Redirect::route('landlord-roles.index')
+                ->with('error', 'The super admin role cannot be deleted.');
+        }
+
+        if ($role->users()->exists()) {
+            return Redirect::route('landlord-roles.index')
+                ->with('error', 'Move the users off this role before deleting it.');
+        }
+
         $role->delete();
 
-        return Redirect::route('landlord-roles.index')->with('flash', 'Role deleted.');
+        return Redirect::route('landlord-roles.index')->with('success', 'Role deleted.');
     }
 }

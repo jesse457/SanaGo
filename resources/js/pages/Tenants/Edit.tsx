@@ -1,107 +1,169 @@
 import {
     BuildingOfficeIcon,
-    GlobeAltIcon,
-    DocumentTextIcon,
-    ArrowPathIcon,
     CheckIcon,
+    GlobeAltIcon,
+    InformationCircleIcon,
+    TagIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import FormInput from '@/Components/FormInput';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
-import PageSection from '@/Components/PageSection';
+import {
+    Alert,
+    Button,
+    Field,
+    FieldSet,
+    Input,
+    PageHeader,
+    SectionCard,
+} from '@/Components/ui';
 import SuperAdminLayout from '@/Layouts/SuperAdminLayout';
 
 interface TenantEditProps {
     tenant: { id: string; slug: string; name: string; domains: string[] };
 }
 
+/**
+ * Tenants/Edit — the two things an operator can correct about a hospital:
+ * its display name and its primary domain.
+ *
+ * `UpdateTenantRequest` currently validates `name` only, but
+ * `TenantController::update()` also rewrites the first domain when one is
+ * submitted, so the field is wired for that contract.
+ */
 export default function TenantsEdit({ tenant }: TenantEditProps) {
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, put, processing, errors, isDirty } = useForm({
         name: tenant.name,
+        domain: tenant.domains[0] ?? '',
     });
 
-    const submit = (e: FormEvent) => {
-        e.preventDefault();
-        put(`/tenants/${tenant.id}`);
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+        put(`/tenants/${tenant.id}`, { preserveScroll: true });
     };
 
     return (
         <SuperAdminLayout
             headerTitle={`Edit ${tenant.name}`}
-            headerSubtitle="Update tenant information"
+            headerSubtitle="Hospital details"
         >
             <Head title={`Edit ${tenant.name}`} />
-            <div className="mx-auto max-w-6xl space-y-6 px-6">
-                <PageBreadcrumb
-                    items={[
-                        { label: 'Home', href: '/' },
-                        { label: 'Tenants', href: '/tenants' },
-                        { label: tenant.name },
+
+            <div className="mx-auto max-w-3xl space-y-5 pb-12">
+                <PageHeader
+                    title="Edit hospital"
+                    description="The display name and primary domain. The slug is the tenant key and cannot change."
+                    icon={BuildingOfficeIcon}
+                    breadcrumbs={[
+                        { label: 'Hospitals', href: '/tenants' },
+                        { label: tenant.name, href: `/tenants/${tenant.id}` },
+                        { label: 'Edit' },
                     ]}
                 />
 
-                <PageSection
-                    title="Hospital Information"
-                    icon={BuildingOfficeIcon}
-                >
-                    <form onSubmit={submit} className="space-y-6 p-6">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="col-span-2">
-                                <FormInput
+                <form onSubmit={submit} className="space-y-5">
+                    <SectionCard
+                        title="Identity"
+                        description="Shown across the console and on invoices."
+                        icon={BuildingOfficeIcon}
+                    >
+                        <FieldSet columns={2}>
+                            <Field
+                                label="Hospital name"
+                                htmlFor="name"
+                                required
+                                error={errors.name}
+                                className="sm:col-span-2"
+                            >
+                                <Input
+                                    id="name"
                                     name="name"
-                                    label="Hospital Name"
-                                    icon={DocumentTextIcon}
-                                    required
-                                    errors={errors}
                                     value={data.name}
-                                    onChange={(v) => setData('name', v)}
+                                    onChange={(event) =>
+                                        setData('name', event.target.value)
+                                    }
+                                    invalid={Boolean(errors.name)}
+                                    autoFocus
                                 />
-                            </div>
-                            <FormInput
-                                name="slug"
-                                label="Slug"
-                                value={tenant.slug}
-                                disabled
-                                onChange={() => {}}
-                            />
-                            <FormInput
-                                name="domain"
-                                label="Domain"
-                                icon={GlobeAltIcon}
-                                value={tenant.domains[0] || ''}
-                                disabled
-                                onChange={() => {}}
-                            />
-                        </div>
+                            </Field>
 
-                        <div className="flex items-center justify-end gap-3 border-t border-line pt-4">
-                            <Link
-                                href="/tenants"
-                                className="rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-ink-muted transition-colors hover:bg-surface-hover"
+                            <Field
+                                label="Slug"
+                                htmlFor="slug"
+                                hint="Immutable tenant key."
+                            >
+                                <Input
+                                    id="slug"
+                                    icon={TagIcon}
+                                    value={tenant.slug}
+                                    readOnly
+                                    disabled
+                                    className="font-mono"
+                                />
+                            </Field>
+
+                            <Field
+                                label="Primary domain"
+                                htmlFor="domain"
+                                error={errors.domain}
+                                hint="Full host, no protocol."
+                            >
+                                <Input
+                                    id="domain"
+                                    name="domain"
+                                    icon={GlobeAltIcon}
+                                    value={data.domain}
+                                    placeholder="hospital.sanago.cm"
+                                    onChange={(event) =>
+                                        setData('domain', event.target.value)
+                                    }
+                                    invalid={Boolean(errors.domain)}
+                                    spellCheck={false}
+                                />
+                            </Field>
+                        </FieldSet>
+
+                        {tenant.domains.length > 1 && (
+                            <Alert
+                                tone="info"
+                                title="Additional domains"
+                                className="mt-4"
+                            >
+                                This hospital also answers on{' '}
+                                {tenant.domains.slice(1).join(', ')}. Only the
+                                primary domain is editable here.
+                            </Alert>
+                        )}
+                    </SectionCard>
+
+                    {Object.keys(errors).length > 0 && (
+                        <Alert tone="critical" title="Could not save">
+                            {Object.values(errors).join(' ')}
+                        </Alert>
+                    )}
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4">
+                        <p className="flex items-center gap-1.5 text-[12px] text-ink-subtle">
+                            <InformationCircleIcon className="h-3.5 w-3.5" />
+                            Changes are recorded in the platform audit log.
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="secondary"
+                                href={`/tenants/${tenant.id}`}
                             >
                                 Cancel
-                            </Link>
-                            <button
+                            </Button>
+                            <Button
                                 type="submit"
-                                disabled={processing}
-                                className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-ink-inverse shadow-surface transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+                                icon={CheckIcon}
+                                loading={processing}
+                                disabled={!isDirty}
                             >
-                                {processing ? (
-                                    <span className="flex items-center gap-2">
-                                        <ArrowPathIcon className="h-4 w-4 animate-spin" />{' '}
-                                        Saving...
-                                    </span>
-                                ) : (
-                                    <span className="flex items-center gap-2">
-                                        <CheckIcon className="h-4 w-4" /> Update
-                                        Tenant
-                                    </span>
-                                )}
-                            </button>
+                                Save changes
+                            </Button>
                         </div>
-                    </form>
-                </PageSection>
+                    </div>
+                </form>
             </div>
         </SuperAdminLayout>
     );

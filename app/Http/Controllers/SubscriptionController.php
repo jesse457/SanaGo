@@ -1,141 +1,153 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreSubscriptionRequest;
-use App\Http\Requests\UpdateSubscriptionRequest;
+use App\Enums\SubscriptionStatus;
 use App\Models\Plan;
 use App\Models\Subscription;
+use App\Models\SubscriptionInvoice;
 use App\Models\Tenant;
+use App\Services\Platform\SubscriptionService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Platform-wide subscription overview.
+ *
+ * Creation, plan changes and renewal are performed on the tenant page
+ * (TenantSubscriptionController) because a subscription always belongs to
+ * exactly one tenant. This controller lists and inspects them.
+ */
 class SubscriptionController extends Controller
 {
-    public function index(): Response
+    public function __construct(private readonly SubscriptionService $subscriptions) {}
+
+    public function index(Request $request): Response
     {
-        $subscriptions = Subscription::with('tenant')
+        $search = trim((string) $request->query('search', ''));
+        $status = (string) $request->query('status', 'all');
+
+        $subscriptions = Subscription::query()
+            ->with(['tenant.domains', 'plan'])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('plan_name', 'like', "%{$search}%")
+                        ->orWhere('tenant_id', 'like', "%{$search}%");
+                });
+            })
+            ->when($status !== 'all', fn ($query) => $query->where('status', $status))
             ->latest()
-            ->get()
-            ->map(fn ($sub) => [
-                'id' => $sub->id,
-                'plan_name' => $sub->plan_name,
-                'tenant_id' => $sub->tenant_id,
-                'tenant_name' => $sub->tenant?->getAttribute('data')['name'] ?? $sub->tenant_id,
-                'billing_cycle' => $sub->billing_cycle,
-                'price' => (float) $sub->price,
-                'start_date' => $sub->start_date?->toISOString(),
-                'end_date' => $sub->end_date?->toISOString(),
-                'status' => $sub->status->value,
-                'features' => $sub->features_json,
-                'created_at' => $sub->created_at?->toISOString(),
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn (Subscription $subscription) => [
+                'id' => $subscription->id,
+                'plan_name' => $subscription->plan_name,
+                'tenant_id' => $subscription->tenant_id,
+                'tenant_name' => $subscription->tenant?->displayName() ?? $subscription->tenant_id,
+                'billing_cycle' => $subscription->billing_cycle,
+                'price' => (float) $subscription->price,
+                'currency' => $subscription->currency,
+                'start_date' => $subscription->start_date?->toDateString(),
+                'end_date' => $subscription->end_date?->toDateString(),
+                'status' => $subscription->effectiveStatus()->value,
+                'status_label' => $subscription->effectiveStatus()->label(),
+                'status_tone' => $subscription->effectiveStatus()->tone(),
+                'days_remaining' => $subscription->daysRemaining(),
+                'auto_renew' => $subscription->auto_renew,
+                'cancel_at_period_end' => $subscription->cancel_at_period_end,
+                'created_at' => $subscription->created_at?->toISOString(),
             ]);
 
         return Inertia::render('Subscriptions/Index', [
             'subscriptions' => $subscriptions,
+            'filters' => ['search' => $search, 'status' => $status],
+            'summary' => $this->subscriptions->revenueSummary(),
+            'plans' => Plan::query()->orderBy('sort_order')->get(['id', 'name']),
+            'statuses' => SubscriptionStatus::values(),
         ]);
-    }
-
-    public function create(): Response
-    {
-        $tenants = Tenant::all()->map(fn ($t) => [
-            'id' => $t->id,
-            'name' => $t->getAttribute('data')['name'] ?? $t->getTenantKey(),
-        ]);
-
-        $plans = Plan::where('is_active', true)->orderBy('sort_order')->get()->map(fn (Plan $p) => [
-            'id' => $p->id,
-            'name' => $p->name,
-            'monthly_price' => $p->monthly_price,
-            'yearly_price' => $p->yearly_price,
-            'features_json' => $p->features_json,
-        ]);
-
-        return Inertia::render('Subscriptions/Create', [
-            'tenants' => $tenants,
-            'plans' => $plans,
-        ]);
-    }
-
-    public function store(StoreSubscriptionRequest $request): RedirectResponse
-    {
-        $data = $request->validated();
-
-        // If plan_id is provided, pull pricing and features from the plan
-        if (! empty($data['plan_id'])) {
-            $plan = Plan::find($data['plan_id']);
-            if ($plan) {
-                $data['plan_name'] = $data['plan_name'] ?? $plan->name;
-                $data['price'] = $data['price'] ?? ($plan->monthly_price ?? $plan->yearly_price);
-                $data['billing_cycle'] = $data['billing_cycle'] ?? ($plan->monthly_price ? 'monthly' : 'yearly');
-                $data['features_json'] = $plan->features_json;
-            }
-        }
-
-        Subscription::create($data);
-
-        return redirect()->route('subscriptions.index')
-            ->with('success', 'Subscription created successfully.');
     }
 
     public function show(Subscription $subscription): Response
     {
+        $subscription->load(['tenant.domains', 'plan']);
+
         return Inertia::render('Subscriptions/Show', [
             'subscription' => [
                 'id' => $subscription->id,
                 'plan_name' => $subscription->plan_name,
                 'tenant_id' => $subscription->tenant_id,
-                'tenant_name' => $subscription->tenant?->getAttribute('data')['name'] ?? $subscription->tenant_id,
+                'tenant_name' => $subscription->tenant?->displayName() ?? $subscription->tenant_id,
+                'tenant_domain' => $subscription->tenant?->primaryDomain(),
                 'billing_cycle' => $subscription->billing_cycle,
                 'price' => (float) $subscription->price,
-                'start_date' => $subscription->start_date?->toISOString(),
-                'end_date' => $subscription->end_date?->toISOString(),
-                'status' => $subscription->status->value,
+                'currency' => $subscription->currency,
+                'start_date' => $subscription->start_date?->toDateString(),
+                'end_date' => $subscription->end_date?->toDateString(),
+                'status' => $subscription->effectiveStatus()->value,
+                'status_label' => $subscription->effectiveStatus()->label(),
+                'status_tone' => $subscription->effectiveStatus()->tone(),
+                'days_remaining' => $subscription->daysRemaining(),
                 'auto_renew' => $subscription->auto_renew,
+                'cancel_at_period_end' => $subscription->cancel_at_period_end,
                 'features_json' => $subscription->features_json ?? [],
+                'features' => $subscription->featureFlags(),
+                'limits' => $subscription->limits(),
+                'notes' => $subscription->notes,
                 'created_at' => $subscription->created_at?->toISOString(),
                 'updated_at' => $subscription->updated_at?->toISOString(),
             ],
+            'invoices' => $subscription->invoices()
+                ->latest()
+                ->get()
+                ->map(fn (SubscriptionInvoice $invoice) => [
+                    'id' => $invoice->id,
+                    'number' => $invoice->number,
+                    'total' => (float) $invoice->total,
+                    'currency' => $invoice->currency,
+                    'status' => $invoice->status->value,
+                    'period_start' => $invoice->period_start?->toDateString(),
+                    'period_end' => $invoice->period_end?->toDateString(),
+                    'paid_at' => $invoice->paid_at?->toDateTimeString(),
+                ]),
         ]);
     }
 
-    public function edit(Subscription $subscription): Response
+    /**
+     * Update the internal note on a subscription (terms are changed through
+     * the tenant panel so proration and notifications always run).
+     */
+    public function update(Request $request, Subscription $subscription): RedirectResponse
     {
-        $tenants = Tenant::all()->map(fn ($t) => [
-            'id' => $t->id,
-            'name' => $t->getAttribute('data')['name'] ?? $t->getTenantKey(),
+        $validated = $request->validate([
+            'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        return Inertia::render('Subscriptions/Edit', [
-            'subscription' => [
-                'id' => $subscription->id,
-                'tenant_id' => $subscription->tenant_id,
-                'plan_name' => $subscription->plan_name,
-                'billing_cycle' => $subscription->billing_cycle,
-                'price' => (float) $subscription->price,
-                'start_date' => $subscription->start_date?->format('Y-m-d'),
-                'end_date' => $subscription->end_date?->format('Y-m-d'),
-                'status' => $subscription->status->value,
-                'features_json' => $subscription->features_json ?? [],
-            ],
-            'tenants' => $tenants,
-        ]);
+        $subscription->update(['notes' => $validated['notes'] ?? null]);
+
+        return redirect()->back()->with('success', 'Subscription note saved.');
     }
 
-    public function update(UpdateSubscriptionRequest $request, Subscription $subscription): RedirectResponse
+    /**
+     * Deleting a subscription would orphan the tenant: route it through a
+     * cancellation instead.
+     */
+    public function destroy(Subscription $subscription, SubscriptionService $service): RedirectResponse
     {
-        $subscription->update($request->validated());
+        $tenant = Tenant::query()->find($subscription->tenant_id);
+
+        if ($tenant === null) {
+            $subscription->delete();
+
+            return redirect()->route('subscriptions.index')->with('success', 'Subscription deleted.');
+        }
+
+        $service->cancel($tenant, immediately: true, reason: 'Deleted from the platform panel');
 
         return redirect()->route('subscriptions.index')
-            ->with('success', 'Subscription updated successfully.');
-    }
-
-    public function destroy(Subscription $subscription): RedirectResponse
-    {
-        $subscription->delete();
-
-        return redirect()->route('subscriptions.index')
-            ->with('success', 'Subscription deleted successfully.');
+            ->with('success', 'Subscription cancelled (history kept).');
     }
 }

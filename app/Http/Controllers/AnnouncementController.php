@@ -48,13 +48,54 @@ class AnnouncementController extends Controller
 
         Announcement::create($validated);
 
-        return Redirect::route('announcements.index')->with('flash', 'Announcement created.');
+        return Redirect::route('announcements.index')->with('success', 'Announcement created.');
+    }
+
+    public function edit(Announcement $announcement): Response
+    {
+        return Inertia::render('Announcements/Edit', [
+            'announcement' => [
+                'id' => $announcement->id,
+                'title' => $announcement->title,
+                'body' => $announcement->body,
+                'type' => $announcement->type,
+                'is_published' => $announcement->is_published,
+                'expires_at' => $announcement->expires_at?->toDateString(),
+            ],
+        ]);
+    }
+
+    /**
+     * Edit an announcement, or toggle its publication state.
+     *
+     * Previously an announcement could only be created or deleted, so a
+     * published notice could never be corrected or withdrawn.
+     */
+    public function update(Request $request, Announcement $announcement): RedirectResponse
+    {
+        $validated = $request->validate([
+            'title' => ['sometimes', 'required', 'string', 'max:255'],
+            'body' => ['sometimes', 'required', 'string', 'max:5000'],
+            'type' => ['sometimes', 'required', 'string', 'in:info,warning,success'],
+            'is_published' => ['sometimes', 'boolean'],
+            'expires_at' => ['nullable', 'date'],
+        ]);
+
+        if (array_key_exists('is_published', $validated)) {
+            $validated['published_at'] = $validated['is_published']
+                ? ($announcement->published_at ?? now())
+                : null;
+        }
+
+        $announcement->update($validated);
+
+        return Redirect::route('announcements.index')->with('success', 'Announcement updated.');
     }
 
     public function destroy(Announcement $announcement): RedirectResponse
     {
         $announcement->delete();
 
-        return Redirect::route('announcements.index')->with('flash', 'Announcement deleted.');
+        return Redirect::route('announcements.index')->with('success', 'Announcement deleted.');
     }
 }
