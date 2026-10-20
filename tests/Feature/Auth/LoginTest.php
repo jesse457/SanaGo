@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Models\Tenant;
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
 use Inertia\Testing\AssertableInertia;
@@ -120,11 +122,11 @@ describe('Landlord Login', function () {
 
 describe('Hospital Login', function () {
     beforeEach(function () {
-        $this->seed(\Database\Seeders\RoleSeeder::class);
+        $this->seed(RoleSeeder::class);
     });
 
     it('signs a hospital user in on their own subdomain', function () {
-        $tenant = \App\Models\Tenant::factory()->create(['id' => 'city-hospital', 'name' => 'City Hospital']);
+        $tenant = Tenant::factory()->create(['id' => 'city-hospital', 'name' => 'City Hospital']);
 
         $user = User::factory()->create([
             'email' => 'admin@healthnet.test',
@@ -161,7 +163,7 @@ describe('Hospital Login', function () {
     });
 
     it('refuses a deactivated account', function () {
-        $tenant = \App\Models\Tenant::factory()->create(['id' => 'green-valley', 'name' => 'Green Valley']);
+        $tenant = Tenant::factory()->create(['id' => 'green-valley', 'name' => 'Green Valley']);
 
         User::factory()->create([
             'email' => 'former@healthnet.test',

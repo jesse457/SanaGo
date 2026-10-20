@@ -185,7 +185,9 @@ return new class extends Migration
         Schema::create('prescription_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('prescription_id')->constrained()->cascadeOnDelete()->index();
-            $table->foreignId('medication_id')->constrained()->cascadeOnDelete()->index();
+            // Mirrors the shipped tenant migration: externally prescribed drugs
+            // have no inventory record, so the link is optional.
+            $table->foreignId('medication_id')->nullable()->constrained()->nullOnDelete()->index();
             $table->string('dosage', 50);
             $table->string('frequency', 50);
             $table->string('duration', 50);

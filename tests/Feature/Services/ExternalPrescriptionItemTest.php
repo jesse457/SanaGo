@@ -28,6 +28,11 @@ beforeEach(function () {
  * the nullable `medication_id` migration. Apply the same relaxation here so the
  * service behaviour under test matches a real tenant database.
  */
+/**
+ * The shared test schema now declares `medication_id` nullable exactly like
+ * the shipped tenant migration, so nothing has to be relaxed. The helper is
+ * kept so the intent stays visible in these tests.
+ */
 function relaxPrescriptionItemMedicationId(): void
 {
     $columns = collect(Schema::getColumns('prescription_items'))->keyBy('name');
