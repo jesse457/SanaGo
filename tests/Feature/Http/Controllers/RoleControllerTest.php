@@ -24,7 +24,7 @@ beforeEach(function () {
 
 it('renders the roles index', function () {
     $this->actingAs($this->admin)->get(route('roles.index'))
-        ->assertOk()->assertInertia(fn ($p) => $p->component('Roles/index'));
+        ->assertOk()->assertInertia(fn ($p) => $p->component('Roles/Index'));
 });
 
 it('creates a role with permissions', function () {

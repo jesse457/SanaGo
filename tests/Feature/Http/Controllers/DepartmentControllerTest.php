@@ -26,7 +26,7 @@ beforeEach(function () {
 it('renders the departments index', function () {
     Department::factory()->count(3)->create();
     $this->actingAs($this->admin)->get(route('departments.index'))
-        ->assertOk()->assertInertia(fn ($p) => $p->component('Departments/index'));
+        ->assertOk()->assertInertia(fn ($p) => $p->component('Departments/Index'));
 });
 
 it('creates a department', function () {

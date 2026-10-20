@@ -34,7 +34,7 @@ describe('index', function () {
         $this->actingAs($this->admin)
             ->get(route('patients.index'))
             ->assertOk()
-            ->assertInertia(fn ($p) => $p->component('Patients/index'));
+            ->assertInertia(fn ($p) => $p->component('Patients/Index'));
     });
 
     it('lists patients on the index page', function () {
@@ -42,8 +42,8 @@ describe('index', function () {
 
         $this->actingAs($this->admin)
             ->get(route('patients.index'))
-            ->assertInertia(fn ($p) => $p->component('Patients/index')
-                ->has('patients', 3)
+            ->assertInertia(fn ($p) => $p->component('Patients/Index')
+                ->has('patients.data', 3)
             );
     });
 
@@ -53,8 +53,8 @@ describe('index', function () {
 
         $this->actingAs($this->admin)
             ->get(route('patients.index', ['search' => 'ZZZSearchUnique']))
-            ->assertInertia(fn ($p) => $p->component('Patients/index')
-                ->has('patients', 1)
+            ->assertInertia(fn ($p) => $p->component('Patients/Index')
+                ->has('patients.data', 1)
                 ->where('filters.search', 'ZZZSearchUnique')
             );
     });
@@ -65,8 +65,8 @@ describe('index', function () {
 
         $this->actingAs($this->admin)
             ->get(route('patients.index', ['search' => 'ZzUniqueSearchName']))
-            ->assertInertia(fn ($p) => $p->component('Patients/index')
-                ->has('patients', 1)
+            ->assertInertia(fn ($p) => $p->component('Patients/Index')
+                ->has('patients.data', 1)
             );
     });
 
@@ -75,8 +75,8 @@ describe('index', function () {
 
         $this->actingAs($this->admin)
             ->get(route('patients.index', ['search' => $patient->patient_uid]))
-            ->assertInertia(fn ($p) => $p->component('Patients/index')
-                ->has('patients', 1)
+            ->assertInertia(fn ($p) => $p->component('Patients/Index')
+                ->has('patients.data', 1)
             );
     });
 
@@ -85,8 +85,8 @@ describe('index', function () {
 
         $this->actingAs($this->admin)
             ->get(route('patients.index', ['search' => 'zzzznonexistent']))
-            ->assertInertia(fn ($p) => $p->component('Patients/index')
-                ->has('patients', 0)
+            ->assertInertia(fn ($p) => $p->component('Patients/Index')
+                ->has('patients.data', 0)
             );
     });
 
@@ -96,9 +96,9 @@ describe('index', function () {
 
         $this->actingAs($this->admin)
             ->get(route('patients.index'))
-            ->assertInertia(fn ($p) => $p->component('Patients/index')
-                ->where('patients.0.id', $new->id)
-                ->where('patients.1.id', $old->id)
+            ->assertInertia(fn ($p) => $p->component('Patients/Index')
+                ->where('patients.data.0.id', $new->id)
+                ->where('patients.data.1.id', $old->id)
             );
     });
 
@@ -168,7 +168,7 @@ describe('store', function () {
 
         $patient = Patient::where('first_name', 'Chidi')->first();
 
-        expect($patient->patient_uid)->toMatch('/^PT-'.date('Y').'-[A-Z0-9]{4}$/');
+        expect($patient->patient_uid)->toMatch('/^PT-'.date('Y').'-[A-Z0-9]{6}$/');
     });
 
     it('requires first_name and last_name on store', function () {

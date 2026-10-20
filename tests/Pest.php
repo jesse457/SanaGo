@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
+use Stancl\Tenancy\Tenancy;
 use Tests\TestCase;
 
 /*
@@ -37,9 +39,11 @@ expect()->extend('toBeInertiaComponent', function (string $_component) {
 |--------------------------------------------------------------------------
 */
 
-// Global afterEach: ensure model connection resolvers don't leak between tests
+// Global afterEach: ensure tenancy + connection state doesn't leak between tests
 afterEach(function () {
-    // Reset connection resolver to Laravel's default database manager
+    app(Tenancy::class)->tenant = null;
+    app(Tenancy::class)->initialized = false;
+
     Model::setConnectionResolver(app('db'));
 });
 
@@ -69,4 +73,26 @@ function userWithPermission(string $permission): User
 function unauthorizedUser(): User
 {
     return User::factory()->create();
+}
+
+/**
+ * Run the test in a tenant context without switching database connections.
+ *
+ * Full tenancy initialisation is deliberately avoided: stancl/tenancy
+ * bootstrappers swap the default database connection, which does not survive
+ * the in-memory SQLite database used by the test suite. Setting the tenant on
+ * the Tenancy container is enough for the plan context, feature gates and
+ * subscription/tenant status middleware, which is what these tests exercise.
+ */
+function actAsTenant(Tenant $tenant): void
+{
+    app(Tenancy::class)->tenant = $tenant;
+}
+
+/**
+ * Clear the tenant context again.
+ */
+function forgetTenant(): void
+{
+    app(Tenancy::class)->tenant = null;
 }

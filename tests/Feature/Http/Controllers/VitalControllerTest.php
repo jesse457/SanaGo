@@ -46,5 +46,7 @@ it('validates required fields on store', function () {
 });
 
 it('blocks unauthorized users', function () {
-    $this->actingAs(User::factory()->create())->get(route('vitals.index'))->assertForbidden();
+    $patient = Patient::factory()->create();
+
+    $this->actingAs(User::factory()->create())->get(route('vitals.index', $patient))->assertForbidden();
 });
