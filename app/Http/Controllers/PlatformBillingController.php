@@ -61,8 +61,14 @@ class PlatformBillingController extends Controller
             ->filter(fn (array $row) => $status === 'all' || $row['status'] === $status)
             ->values();
 
+        $invoiceStatus = (string) $request->query('invoice_status', 'all');
+
         $invoices = SubscriptionInvoice::query()
             ->with('tenant.domains')
+            ->when(
+                $invoiceStatus !== 'all',
+                fn ($query) => $query->where('status', $invoiceStatus),
+            )
             ->latest()
             ->paginate(25)
             ->withQueryString()
@@ -91,7 +97,11 @@ class PlatformBillingController extends Controller
                     ->sum('total'),
                 'tenants' => Tenant::query()->where('is_active', true)->whereNull('archived_at')->count(),
             ],
-            'filters' => ['status' => $status],
+            'filters' => [
+                'status' => $status,
+                'invoice_status' => $invoiceStatus,
+            ],
+            'invoiceStatuses' => SubscriptionInvoiceStatus::values(),
         ]);
     }
 }

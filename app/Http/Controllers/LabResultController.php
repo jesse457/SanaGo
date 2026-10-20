@@ -41,8 +41,19 @@ class LabResultController extends Controller
 
     public function create(Request $request)
     {
+        // Results are always entered for a specific request; opening the form
+        // without one used to return a bare 404. Point the user back to the
+        // request queue instead.
+        $requestId = $request->get('request_id');
+
+        if ($requestId === null) {
+            return redirect()
+                ->route('requests.index')
+                ->with('error', 'Open a lab request and choose "enter results" to record a result.');
+        }
+
         $labRequest = LabRequest::with(['patient', 'testDefinition'])
-            ->findOrFail($request->get('request_id'));
+            ->findOrFail($requestId);
 
         return Inertia::render('LabTests/Results/Enter', [
             'labRequest' => $labRequest,

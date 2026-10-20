@@ -219,10 +219,15 @@ class TenantController extends Controller
             'plans' => Plan::query()->orderBy('sort_order')->get()->map(fn (Plan $plan) => [
                 'id' => $plan->id,
                 'name' => $plan->name,
+                'slug' => $plan->slug,
                 'monthly_price' => (float) $plan->monthly_price,
                 'yearly_price' => (float) $plan->yearly_price,
+                'currency' => $plan->currency,
                 'sort_order' => $plan->sort_order,
                 'limits' => $plan->limits(),
+                // The change-plan dialog needs to show what buying this plan
+                // actually adds, not just its list price.
+                'features' => $plan->featureFlags(),
             ]),
         ]);
     }

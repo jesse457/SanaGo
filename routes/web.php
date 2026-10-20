@@ -6,6 +6,7 @@ use App\Http\Controllers\DemoRequestController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\LandlordRoleController;
 use App\Http\Controllers\LandlordUserController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\PlatformAuditController;
 use App\Http\Controllers\PlatformBillingController;
@@ -180,12 +181,14 @@ Route::middleware(['auth', 'central.domain', 'web', 'throttle:api'])->group(func
     Route::get('/support-tickets', [SupportTicketController::class, 'index'])
         ->name('support-tickets.index')
         ->middleware('can:view-tickets');
-    Route::get('/support-tickets/{supportTicket}', [SupportTicketController::class, 'show'])
-        ->name('support-tickets.show')
-        ->middleware('can:view-tickets');
+    // Static segments must be registered before the dynamic one, otherwise
+    // /support-tickets/create is captured as {supportTicket} and 404s.
     Route::get('/support-tickets/create', [SupportTicketController::class, 'create'])
         ->name('support-tickets.create')
         ->middleware('can:manage-tickets');
+    Route::get('/support-tickets/{supportTicket}', [SupportTicketController::class, 'show'])
+        ->name('support-tickets.show')
+        ->middleware('can:view-tickets');
     Route::post('/support-tickets', [SupportTicketController::class, 'store'])
         ->name('support-tickets.store')
         ->middleware('can:manage-tickets');
@@ -308,6 +311,23 @@ Route::middleware(['auth', 'central.domain', 'web', 'throttle:api'])->group(func
         ->name('platform.audit')->middleware('can:view-audit-logs');
     Route::get('/platform/health', [PlatformHealthController::class, 'index'])
         ->name('platform.health')->middleware('can:view-system-health');
+
+    /*
+    |----------------------------------------------------------------------
+    | Platform notifications (the landlord bell)
+    |----------------------------------------------------------------------
+    | Landlord users receive subscription and tenant-lifecycle notifications
+    | on the central notifications table; without these routes the bell had
+    | nothing to read.
+    */
+    Route::get('/platform/notifications', [NotificationController::class, 'index'])
+        ->name('landlord.notifications.index');
+    Route::get('/platform/notifications/latest', [NotificationController::class, 'latest'])
+        ->name('landlord.notifications.latest');
+    Route::post('/platform/notifications/{id}/read', [NotificationController::class, 'markRead'])
+        ->name('landlord.notifications.read');
+    Route::post('/platform/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
+        ->name('landlord.notifications.mark-all-read');
 
     // System analytics (requires at least view-system-health)
     Route::get('/analytics', fn () => Inertia::render('Settings/Analytics'))

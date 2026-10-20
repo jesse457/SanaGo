@@ -48,7 +48,8 @@ interface PlatformBillingProps {
     invoices: Paginated<BillingInvoice>;
     revenue: RevenueSummary;
     totals: BillingTotals;
-    filters: { status: string };
+    filters: { status: string; invoice_status?: string };
+    invoiceStatuses?: string[];
 }
 
 const STATUS_OPTIONS = [
@@ -59,6 +60,15 @@ const STATUS_OPTIONS = [
     { value: 'expired', label: 'Expired' },
     { value: 'cancelled', label: 'Cancelled' },
     { value: 'inactive', label: 'Inactive' },
+];
+
+const INVOICE_STATUS_OPTIONS = [
+    { value: 'all', label: 'All invoices' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'paid', label: 'Paid' },
+    { value: 'overdue', label: 'Overdue' },
+    { value: 'void', label: 'Void' },
+    { value: 'draft', label: 'Draft' },
 ];
 
 /** Invoice statuses that represent money actually received. */
@@ -75,18 +85,35 @@ export default function PlatformBilling({
 }: PlatformBillingProps) {
     const currency = revenue?.currency ?? rows[0]?.currency ?? 'XAF';
     const status = filters?.status ?? 'all';
+    const invoiceStatus = filters?.invoice_status ?? 'all';
 
-    const changeStatus = (next: string) => {
-        router.get(
-            '/platform/billing',
-            next === 'all' ? {} : { status: next },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-                only: ['rows', 'filters'],
-            },
-        );
+    /**
+     * Subscription filters and invoice filters are independent: one narrows
+     * the tenant usage table, the other the invoice ledger. Both are carried
+     * on every request so switching one never resets the other.
+     */
+    const changeFilters = (next: {
+        status?: string;
+        invoiceStatus?: string;
+    }) => {
+        const nextStatus = next.status ?? status;
+        const nextInvoiceStatus = next.invoiceStatus ?? invoiceStatus;
+        const params: Record<string, string> = {};
+
+        if (nextStatus !== 'all') {
+            params.status = nextStatus;
+        }
+
+        if (nextInvoiceStatus !== 'all') {
+            params.invoice_status = nextInvoiceStatus;
+        }
+
+        router.get('/platform/billing', params, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            only: ['rows', 'invoices', 'filters', 'totals'],
+        });
     };
 
     const invoiceRows = invoices?.data ?? [];
@@ -175,7 +202,9 @@ export default function PlatformBilling({
                                 aria-label="Filter subscriptions by status"
                                 value={status}
                                 onChange={(event) =>
-                                    changeStatus(event.target.value)
+                                    changeFilters({
+                                        status: event.target.value,
+                                    })
                                 }
                                 className="h-9 w-auto min-w-40 text-[13px]"
                             >
@@ -205,7 +234,9 @@ export default function PlatformBilling({
                                 status !== 'all' ? (
                                     <Button
                                         variant="secondary"
-                                        onClick={() => changeStatus('all')}
+                                        onClick={() =>
+                                            changeFilters({ status: 'all' })
+                                        }
                                     >
                                         Clear filter
                                     </Button>
@@ -317,13 +348,15 @@ export default function PlatformBilling({
                         <Toolbar className="border-0 bg-transparent px-0 py-0">
                             <Select
                                 aria-label="Filter invoices by status"
-                                value={status}
+                                value={invoiceStatus}
                                 onChange={(event) =>
-                                    changeStatus(event.target.value)
+                                    changeFilters({
+                                        invoiceStatus: event.target.value,
+                                    })
                                 }
                                 className="h-9 w-auto min-w-40 text-[13px]"
                             >
-                                {STATUS_OPTIONS.map((option) => (
+                                {INVOICE_STATUS_OPTIONS.map((option) => (
                                     <option
                                         key={option.value}
                                         value={option.value}
