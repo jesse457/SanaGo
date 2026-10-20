@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,7 +10,6 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use Stancl\Tenancy\Database\Models\ImpersonationToken;
 use Stancl\Tenancy\Features\UserImpersonation;
 use Throwable;
 
@@ -31,47 +29,75 @@ class AuthenticatedSessionController extends Controller
 
     /**
      * Display the login view.
+     *
+     * One screen for everybody. The context comes from the host: a hospital
+     * subdomain signs that hospital's staff in, the platform domain signs
+     * SanaGo staff in. Nobody types a domain.
      */
     public function create(Request $request): Response
     {
         return Inertia::render('Auth/Login', [
-            'isCentralDomain' => $this->isCentralDomain($request),
             'tenantName' => tenant()?->displayName(),
+            'isCentralDomain' => $this->isCentralDomain($request),
         ]);
     }
 
     /**
      * Handle an incoming authentication request.
      *
-     * Two flows share this endpoint:
-     *  - `type=landlord`: authenticate against the platform database.
-     *  - `type=tenant` + `subdomain`: authenticate against that hospital's
-     *    database and hand the browser a one-time transfer token so the
-     *    hospital session lives on its own subdomain.
+     * The active tenancy decides which database is authenticated against:
+     *  - hospital subdomain → that hospital's own users table;
+     *  - platform domain   → the landlord users table.
      */
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $credentials = $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string',
-            'type' => 'required|in:landlord,tenant',
-            'subdomain' => 'required_if:type,tenant|nullable|string|max:100',
-        ], [
-            'type.required' => 'Choose platform sign-in or hospital sign-in.',
-            'type.in' => 'Choose platform sign-in or hospital sign-in.',
-            'subdomain.required_if' => 'Enter your hospital subdomain.',
         ]);
 
-        if ($validated['type'] === 'tenant') {
-            return $this->authenticateTenant(
-                $request,
-                $validated['email'],
-                $validated['password'],
-                (string) $validated['subdomain'],
-            );
+        $remember = $request->boolean('remember');
+        $tenant = tenant();
+
+        if (! Auth::attempt($credentials, $remember)) {
+            throw ValidationException::withMessages([
+                'email' => __('auth.failed'),
+            ]);
         }
 
-        return $this->authenticateLandlord($request, $validated['email'], $validated['password']);
+        $user = Auth::user();
+
+        // Deactivated staff must not get a session (previously they could).
+        if (property_exists($user, 'is_active') || array_key_exists('is_active', $user->getAttributes())) {
+            if ($user->is_active === false) {
+                Auth::guard('web')->logout();
+
+                throw ValidationException::withMessages([
+                    'email' => 'This account has been deactivated. Contact your administrator.',
+                ]);
+            }
+        }
+
+        if ($tenant === null) {
+            // A hospital account on the platform domain: there is no tenant to
+            // sign it into, and its hospital address is the right door.
+            $isLandlord = $user->getAllPermissions()
+                ->pluck('name')
+                ->intersect(self::LANDLORD_PERMISSIONS)
+                ->isNotEmpty();
+
+            if (! $isLandlord) {
+                Auth::guard('web')->logout();
+
+                throw ValidationException::withMessages([
+                    'email' => 'This is a hospital account. Sign in from your hospital address instead.',
+                ]);
+            }
+        }
+
+        $request->session()->regenerate();
+
+        return $this->redirectByRole($user, $tenant !== null);
     }
 
     /**
@@ -155,104 +181,14 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Authenticate a hospital user and transfer the session to their domain.
-     */
-    private function authenticateTenant(Request $request, string $email, string $password, string $subdomain): RedirectResponse
-    {
-        $subdomain = strtolower(trim($subdomain));
-
-        $tenant = Tenant::query()
-            ->where('id', $subdomain)
-            ->orWhereHas('domains', function ($query) use ($subdomain) {
-                $query->where('domain', $subdomain)
-                    ->orWhere('domain', 'like', $subdomain.'.%');
-            })
-            ->first();
-
-        if ($tenant === null || ! $tenant->isActive()) {
-            throw ValidationException::withMessages([
-                'subdomain' => 'No active hospital matches that subdomain.',
-            ]);
-        }
-
-        try {
-            tenancy()->initialize($tenant);
-        } catch (Throwable) {
-            throw ValidationException::withMessages([
-                'subdomain' => 'That hospital is not available right now.',
-            ]);
-        }
-
-        try {
-            if (! Auth::attempt(['email' => $email, 'password' => $password], false)) {
-                throw ValidationException::withMessages([
-                    'email' => __('auth.failed'),
-                ]);
-            }
-
-            $user = Auth::user();
-
-            $token = ImpersonationToken::create([
-                'tenant_id' => $tenant->getTenantKey(),
-                'user_id' => (string) $user->getKey(),
-                'redirect_url' => url('/dashboard'),
-                'auth_guard' => config('auth.defaults.guard'),
-            ]);
-
-            Auth::logout();
-        } finally {
-            if (tenancy()->initialized) {
-                tenancy()->end();
-            }
-        }
-
-        $request->session()->regenerate();
-
-        $domain = $tenant->primaryDomain() ?? $tenant->getTenantKey();
-        $port = $request->getPort();
-        $portSuffix = in_array($port, [80, 443], true) ? '' : ':'.$port;
-
-        return redirect()->away(sprintf(
-            '%s://%s%s/login/transfer/%s',
-            $request->getScheme(),
-            $domain,
-            $portSuffix,
-            $token->token,
-        ));
-    }
-
-    /**
-     * Authenticate a platform (landlord) user.
-     */
-    private function authenticateLandlord(Request $request, string $email, string $password): RedirectResponse
-    {
-        if (! Auth::attempt(['email' => $email, 'password' => $password], $request->boolean('remember'))) {
-            throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
-            ]);
-        }
-
-        $user = Auth::user();
-
-        if ($user->getAllPermissions()->pluck('name')->intersect(self::LANDLORD_PERMISSIONS)->isEmpty()) {
-            Auth::guard('web')->logout();
-
-            throw ValidationException::withMessages([
-                'email' => 'This account belongs to a hospital. Sign in with your hospital subdomain instead.',
-            ]);
-        }
-
-        $request->session()->regenerate();
-
-        return $this->redirectByRole($user);
-    }
-
-    /**
      * Redirect the authenticated user to their role-appropriate dashboard.
+     *
+     * Hospital dashboards only exist on a hospital domain; a platform user
+     * always lands on the landlord dashboard.
      */
-    private function redirectByRole($user): RedirectResponse
+    private function redirectByRole($user, bool $inTenant): RedirectResponse
     {
-        if ($user->hasRole('super-admin')) {
+        if ($user->hasRole('super-admin') || ! $inTenant) {
             return redirect()->route('dashboard.super-admin');
         }
 

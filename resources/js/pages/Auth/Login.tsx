@@ -6,61 +6,45 @@ import { AuthShell } from '@/pages/Auth/components/AuthShell';
 import { PasswordInput } from '@/pages/Auth/components/PasswordInput';
 
 interface LoginProps {
-    /**
-     * True when the login page is served from the platform domain rather than
-     * a hospital subdomain. Platform visitors must say which hospital they
-     * belong to (or sign in as SanaGo staff).
-     */
-    isCentralDomain: boolean;
+    /** Name of the hospital when the page is served from a hospital domain. */
     tenantName?: string | null;
+    isCentralDomain?: boolean;
 }
 
-const Login = ({ isCentralDomain = false, tenantName = null }: LoginProps) => {
+/**
+ * One sign-in screen for both audiences.
+ *
+ * The host already says who you are: a hospital subdomain signs that
+ * hospital's staff in, the platform domain signs SanaGo staff in. Nobody is
+ * asked to type their own domain.
+ */
+const Login = ({ tenantName = null, isCentralDomain = false }: LoginProps) => {
     const { t } = useTranslation();
     const { props } = usePage<{ platform?: { name?: string } }>();
     const platformName = props.platform?.name ?? 'SanaGo';
 
-    const { data, setData, post, processing, errors, transform } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
         email: '',
         password: '',
         remember: false,
-        type: isCentralDomain ? 'landlord' : 'tenant',
-        subdomain: '',
     });
 
     const handleSubmit = (event: FormEvent) => {
         event.preventDefault();
-
-        // A subdomain typed on the platform domain switches the request to the
-        // hospital flow; hospital subdomains are always tenant sign-ins.
-        transform((form) => ({
-            ...form,
-            type:
-                isCentralDomain && form.subdomain.trim() === ''
-                    ? 'landlord'
-                    : 'tenant',
-            subdomain: isCentralDomain ? form.subdomain.trim() : '',
-        }));
-
         post('/login');
     };
 
-    const errorMessage =
-        errors.email ?? errors.password ?? errors.subdomain ?? errors.type;
+    const errorMessage = errors.email ?? errors.password;
 
     return (
         <>
-            <Head title={`Sign in · ${platformName}`} />
+            <Head title={`Sign in · ${tenantName ?? platformName}`} />
 
             <AuthShell
-                title={
-                    isCentralDomain
-                        ? `Sign in to ${platformName}`
-                        : (tenantName ?? t('auth.login.title'))
-                }
+                title={tenantName ?? `Sign in to ${platformName}`}
                 description={
                     isCentralDomain
-                        ? 'Hospital staff enter their subdomain. SanaGo staff sign in without one.'
+                        ? 'Platform staff sign in here. Hospital staff sign in from their own hospital address.'
                         : t('auth.login.subtitle')
                 }
                 footer={
@@ -73,27 +57,6 @@ const Login = ({ isCentralDomain = false, tenantName = null }: LoginProps) => {
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                     {errorMessage && (
                         <Alert tone="critical" title={errorMessage} />
-                    )}
-
-                    {isCentralDomain && (
-                        <Field
-                            label="Hospital subdomain"
-                            htmlFor="subdomain"
-                            hint="Leave empty to sign in as SanaGo staff."
-                            error={errors.subdomain}
-                        >
-                            <Input
-                                id="subdomain"
-                                name="subdomain"
-                                autoComplete="organization"
-                                value={data.subdomain}
-                                onChange={(event) =>
-                                    setData('subdomain', event.target.value)
-                                }
-                                placeholder="city-hospital"
-                                invalid={Boolean(errors.subdomain)}
-                            />
-                        </Field>
                     )}
 
                     <Field
@@ -114,6 +77,7 @@ const Login = ({ isCentralDomain = false, tenantName = null }: LoginProps) => {
                             placeholder="name@example.com"
                             invalid={Boolean(errors.email)}
                             required
+                            autoFocus
                         />
                     </Field>
 

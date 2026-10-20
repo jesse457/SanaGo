@@ -13,8 +13,6 @@
             "landlord_tab": "Central Login",
             "password_label": "Password",
             "remember_me": "Remember me",
-            "subdomain_label": "Hospital Code",
-            "subdomain_placeholder": "e.g. city-hospital",
             "submit": "Sign In",
             "submitting": "Signing In...",
             "subtitle": "Sign in to your account to continue",

@@ -50,43 +50,32 @@ describe('Login Page', function () {
 // ─── Login Validation ────────────────────────────────────────────
 
 describe('Login Validation', function () {
-    it('requires type field', function () {
-        $response = $this->post(route('login'), [
-            'email' => 'admin@sanago.local',
-            'password' => 'password',
-        ]);
-
-        $response->assertSessionHasErrors('type');
-    });
-
-    it('requires type to be landlord or tenant', function () {
-        $response = $this->post(route('login'), [
-            'email' => 'admin@sanago.local',
-            'password' => 'password',
-            'type' => 'invalid',
-        ]);
-
-        $response->assertSessionHasErrors('type');
-    });
-
-    it('requires subdomain when type is tenant', function () {
-        $response = $this->post(route('login'), [
-            'email' => 'admin@sanago.local',
-            'password' => 'password',
-            'type' => 'tenant',
-        ]);
-
-        $response->assertSessionHasErrors('subdomain');
-    });
-
     it('requires email and password', function () {
         $response = $this->post(route('login'), [
-            'type' => 'landlord',
             'email' => '',
             'password' => '',
         ]);
 
         $response->assertSessionHasErrors(['email', 'password']);
+    });
+
+    it('ignores stale type and subdomain fields from older clients', function () {
+        $user = User::factory()->create([
+            'email' => 'admin@sanago.local',
+            'password' => bcrypt('password'),
+        ]);
+        $user->assignRole('super-admin');
+
+        // The form no longer sends these; an old cached page might. The host
+        // context decides who is signing in, so the extras must be harmless.
+        $this->post(route('login'), [
+            'email' => 'admin@sanago.local',
+            'password' => 'password',
+            'type' => 'tenant',
+            'subdomain' => 'nonexistent-hospital',
+        ])->assertRedirect(route('dashboard.super-admin'));
+
+        $this->assertAuthenticatedAs($user);
     });
 });
 
@@ -127,18 +116,66 @@ describe('Landlord Login', function () {
     });
 });
 
-// ─── Tenant Login (from central domain) ──────────────────────────
+// ─── Hospital login (context comes from the subdomain) ──────────
 
-describe('Tenant Login', function () {
-    it('rejects login with non-existent tenant subdomain', function () {
-        $response = $this->post(route('login'), [
-            'email' => 'doctor@hospital.local',
+describe('Hospital Login', function () {
+    beforeEach(function () {
+        $this->seed(\Database\Seeders\RoleSeeder::class);
+    });
+
+    it('signs a hospital user in on their own subdomain', function () {
+        $tenant = \App\Models\Tenant::factory()->create(['id' => 'city-hospital', 'name' => 'City Hospital']);
+
+        $user = User::factory()->create([
+            'email' => 'admin@healthnet.test',
+            'password' => bcrypt('password'),
+        ]);
+        $user->assignRole('admin');
+
+        actAsTenant($tenant);
+
+        $this->post(route('login'), [
+            'email' => 'admin@healthnet.test',
             'password' => 'password',
-            'type' => 'tenant',
-            'subdomain' => 'nonexistent-hospital',
+        ])->assertRedirect(route('dashboard.admin'));
+
+        $this->assertAuthenticatedAs($user);
+    });
+
+    it('refuses a hospital account on the platform domain', function () {
+        // In tests both seeders share one database, so the tenant admin role
+        // ends up holding landlord permissions. A permission-less staff
+        // account is the honest stand-in for "hospital user".
+        User::factory()->create([
+            'email' => 'admin@healthnet.test',
+            'password' => bcrypt('password'),
         ]);
 
-        $response->assertSessionHasErrors('subdomain');
+        $response = $this->post(route('login'), [
+            'email' => 'admin@healthnet.test',
+            'password' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+    });
+
+    it('refuses a deactivated account', function () {
+        $tenant = \App\Models\Tenant::factory()->create(['id' => 'green-valley', 'name' => 'Green Valley']);
+
+        User::factory()->create([
+            'email' => 'former@healthnet.test',
+            'password' => bcrypt('password'),
+            'is_active' => false,
+        ]);
+
+        actAsTenant($tenant);
+
+        $this->post(route('login'), [
+            'email' => 'former@healthnet.test',
+            'password' => 'password',
+        ])->assertSessionHasErrors('email');
+
         $this->assertGuest();
     });
 });
