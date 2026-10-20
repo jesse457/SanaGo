@@ -80,7 +80,6 @@ export default function CreateLabTest() {
                     title={t('lab_tests.create.title')}
                     description={t('lab_tests.create.subtitle')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: route('dashboard') },
                         {
                             label: t('lab_tests.create.lab_definitions'),
                             href: route('tests.index'),

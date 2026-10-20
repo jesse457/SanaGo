@@ -237,10 +237,7 @@ export default function PatientManagement({ patients, filters }: Props) {
                 <PageHeader
                     eyebrow={t('page.patients_index.subtitle')}
                     title={t('page.patients_index.title')}
-                    breadcrumbs={[
-                        { label: t('common.home'), href: '/dashboard' },
-                        { label: t('page.patients_index.title') },
-                    ]}
+                    breadcrumbs={[{ label: t('page.patients_index.title') }]}
                     actions={
                         <Button
                             href={route('patients.create')}

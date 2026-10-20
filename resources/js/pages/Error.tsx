@@ -1,6 +1,7 @@
 import {
     ArrowLeftIcon,
     ArrowPathIcon,
+    CreditCardIcon,
     HeartIcon,
     LifebuoyIcon,
     LockClosedIcon,
@@ -12,6 +13,15 @@ import { Button } from '@/Components/ui';
 
 interface Props {
     status: number;
+    /**
+     * Backend-supplied overrides, sent for subscription and plan-feature
+     * blocks (`EnsureSubscriptionIsActive` → 402, `EnsurePlanFeature` → 403):
+     * the server knows *why* access was refused, so it says so.
+     */
+    title?: string;
+    message?: string;
+    /** The plan feature key that is missing, e.g. `radiology`. */
+    feature?: string;
 }
 
 type ErrorCopy = {
@@ -21,6 +31,12 @@ type ErrorCopy = {
 };
 
 const COPY: Record<number, ErrorCopy> = {
+    402: {
+        title: 'Your subscription needs attention',
+        description:
+            "This hospital's plan no longer grants access to this part of SanaGo. Renew from the billing page to continue — your data is safe.",
+        icon: CreditCardIcon,
+    },
     403: {
         title: 'You do not have access to this page',
         description:
@@ -71,13 +87,21 @@ const FALLBACK: ErrorCopy = {
  * the Inertia exception handler in `bootstrap/app.php`, so users never land on
  * a bare Laravel error page.
  */
-export default function Error({ status }: Props) {
+export default function Error({ status, title, message, feature }: Props) {
     const copy = COPY[status] ?? FALLBACK;
+
+    // Backend copy wins where present: a 402 knows which plan lapsed, and a 403
+    // from a plan-feature gate knows which capability was not purchased.
+    const heading = title?.trim() || copy.title;
+    const body = message?.trim() || copy.description;
     const Icon = copy.icon;
+
+    // Only the money-shaped failures get a billing call to action.
+    const isSubscriptionIssue = status === 402;
 
     return (
         <>
-            <Head title={`${status}`} />
+            <Head title={heading} />
 
             <div className="flex min-h-dvh flex-col bg-canvas">
                 <header className="flex items-center justify-between px-5 py-4 sm:px-8">
@@ -115,16 +139,29 @@ export default function Error({ status }: Props) {
                                 <Icon className="h-5 w-5" />
                             </span>
                             <h1 className="mt-4 text-[19px] leading-tight font-semibold tracking-tight text-ink">
-                                {copy.title}
+                                {heading}
                             </h1>
                             <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
-                                {copy.description}
+                                {body}
                             </p>
 
+                            {feature && (
+                                <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-surface-inset px-2.5 py-1 font-mono text-[11px] text-ink-subtle">
+                                    <LockClosedIcon className="h-3 w-3" />
+                                    {feature}
+                                </p>
+                            )}
+
                             <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-line pt-5">
-                                <Button href="/" size="sm">
-                                    Go to dashboard
-                                </Button>
+                                {isSubscriptionIssue ? (
+                                    <Button href="/billing" size="sm">
+                                        Review billing
+                                    </Button>
+                                ) : (
+                                    <Button href="/" size="sm">
+                                        Go to dashboard
+                                    </Button>
+                                )}
                                 <Button
                                     variant="secondary"
                                     size="sm"
@@ -133,6 +170,16 @@ export default function Error({ status }: Props) {
                                 >
                                     Go back
                                 </Button>
+                                {isSubscriptionIssue && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        href="/support"
+                                        icon={LifebuoyIcon}
+                                    >
+                                        Contact support
+                                    </Button>
+                                )}
                             </div>
                         </div>
 

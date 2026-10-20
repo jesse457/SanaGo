@@ -166,7 +166,6 @@ export default function AdmissionsIndex({ admissions, stats, filters }: Props) {
                     title={t('page.checkin.title')}
                     description={t('page.checkin.subtitle')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/dashboard' },
                         { label: t('page.checkin.breadcrumb_admissions') },
                     ]}
                     actions={

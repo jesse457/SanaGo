@@ -150,10 +150,7 @@ export default function AppointmentCalendar({ appointments, stats }: Props) {
             <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 {/* Breadcrumbs */}
                 <PageBreadcrumb
-                    items={[
-                        { label: t('common.home') },
-                        { label: t('page.appointment_calendar.title') },
-                    ]}
+                    items={[{ label: t('page.appointment_calendar.title') }]}
                 />
 
                 {/* Stats */}

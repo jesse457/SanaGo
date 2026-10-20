@@ -177,10 +177,7 @@ export default function RoleManagement({
             <Head title={t('page.roles_index.head_title')} />
             <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
                 <PageBreadcrumb
-                    items={[
-                        { label: t('common.home'), href: '/' },
-                        { label: t('page.roles_index.breadcrumb_roles') },
-                    ]}
+                    items={[{ label: t('page.roles_index.breadcrumb_roles') }]}
                 />
 
                 {/* Header Controls */}

@@ -99,7 +99,6 @@ export default function CertificatesCreate({ type, patients }: Props) {
                     title={typeLabel}
                     description={t('Issue a medical certificate')}
                     breadcrumbs={[
-                        { label: t('home'), href: route('dashboard') },
                         { label: t('clinical') },
                         { label: typeLabel },
                     ]}

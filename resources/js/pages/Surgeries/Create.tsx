@@ -246,7 +246,6 @@ export default function SurgeryForm({
                             : t('surgeries.create.subtitle')
                     }
                     breadcrumbs={[
-                        { label: t('common.home'), href: route('home') },
                         {
                             label: t('surgeries.create.surgeries'),
                             href: route('surgeries.index'),

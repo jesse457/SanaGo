@@ -51,7 +51,6 @@ export default function SupportTicketsCreate({
                     description="Raise a ticket on behalf of a tenant."
                     icon={TicketIcon}
                     breadcrumbs={[
-                        { label: 'Home', href: '/' },
                         { label: 'Support tickets', href: '/support-tickets' },
                         { label: 'New' },
                     ]}

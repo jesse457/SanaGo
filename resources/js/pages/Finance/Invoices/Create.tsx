@@ -121,7 +121,6 @@ export default function InvoiceCreate({ patients }: Props) {
                     title={t('finance.invoices.create.title')}
                     description={t('finance.invoices.create.subtitle')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: route('dashboard') },
                         {
                             label: t('finance.invoices.create.finance'),
                             href: route('finance.invoices.index'),

@@ -93,7 +93,6 @@ export default function EmergencyCreate({ patients }: Props) {
                     title={t('newEmergency')}
                     description={t('registerEmergencyCase')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: route('dashboard') },
                         {
                             label: t('emergencies'),
                             href: route('emergencies.index'),

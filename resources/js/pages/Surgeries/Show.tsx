@@ -90,7 +90,6 @@ export default function SurgeryShow({ surgery }: Props) {
                     title={surgery.surgery_name}
                     description={t('surgeries.show.subtitle')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: route('home') },
                         {
                             label: t('surgeries.index.surgeries'),
                             href: route('surgeries.index'),

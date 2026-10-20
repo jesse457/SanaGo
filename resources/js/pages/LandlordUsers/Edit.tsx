@@ -48,7 +48,6 @@ export default function LandlordUsersEdit({
                     description="Update this staff account's identity and role."
                     icon={UserGroupIcon}
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/' },
                         { label: 'Staff users', href: '/landlord-users' },
                         { label: user.name },
                     ]}

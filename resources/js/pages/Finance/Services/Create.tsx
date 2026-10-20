@@ -69,7 +69,6 @@ export default function ServicesCreate() {
                     title={t('newService')}
                     description={t('addServiceToCatalogue')}
                     breadcrumbs={[
-                        { label: t('home'), href: route('dashboard') },
                         { label: t('services') },
                         { label: t('newService') },
                     ]}

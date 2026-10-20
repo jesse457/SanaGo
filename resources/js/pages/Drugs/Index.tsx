@@ -295,10 +295,7 @@ export default function DrugInventory({ drugs = [], filters }: Props) {
                     eyebrow={t('general.pharmacy')}
                     title={t('general.manageDrugs')}
                     description={t('general.inventoryManagementBatchTracking')}
-                    breadcrumbs={[
-                        { label: t('common.home'), href: '/dashboard' },
-                        { label: t('general.drugInventory') },
-                    ]}
+                    breadcrumbs={[{ label: t('general.drugInventory') }]}
                     actions={
                         <Button href={route('drugs.create')} icon={PlusIcon}>
                             {t('general.addDrug')}

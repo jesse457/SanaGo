@@ -99,7 +99,6 @@ export default function LabRequests({ requests, filters, stats }: Props) {
                     title={t('lab_tests.requests.title')}
                     description={t('lab_tests.requests.subtitle')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: route('dashboard') },
                         { label: t('lab_tests.requests.lab_requests') },
                     ]}
                 />

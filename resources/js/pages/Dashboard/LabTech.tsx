@@ -60,10 +60,7 @@ export default function Dashboard({
                     eyebrow={t('nav.category.lab_diagnostics')}
                     title={t('page.lab_dashboard.title')}
                     description={t('page.lab_dashboard.subtitle')}
-                    breadcrumbs={[
-                        { label: t('common.home'), href: '/dashboard' },
-                        { label: t('page.lab_dashboard.title') },
-                    ]}
+                    breadcrumbs={[{ label: t('page.lab_dashboard.title') }]}
                     actions={
                         <Button
                             href={route('requests.index')}

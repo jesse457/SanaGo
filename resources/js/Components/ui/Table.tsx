@@ -12,6 +12,13 @@ interface TableProps extends HTMLAttributes<HTMLTableElement> {
     /** Wrap even a `bare` table in a horizontal scroll container. */
     scroll?: boolean;
     containerClassName?: string;
+    /**
+     * Pin the header row while the body scrolls. Needs a bounded scroll
+     * container, which the default wrapper provides (`maxHeight`).
+     */
+    stickyHeader?: boolean;
+    /** Inline max-height for the scroll container; enables sticky accurately. */
+    maxHeight?: number | string;
     children: ReactNode;
 }
 
@@ -23,6 +30,8 @@ export function Table({
     bare = false,
     scroll = false,
     containerClassName,
+    stickyHeader = false,
+    maxHeight,
     className,
     children,
     ...props
@@ -30,7 +39,7 @@ export function Table({
     const table = (
         <table
             className={cn(
-                'w-full border-collapse text-left text-[13px]',
+                'w-full border-collapse text-left text-[13px] tabular-nums',
                 className,
             )}
             {...props}
@@ -39,24 +48,36 @@ export function Table({
         </table>
     );
 
+    const scrollBox = (
+        <div
+            className={cn(
+                'overflow-x-auto',
+                stickyHeader && 'overflow-y-auto',
+                containerClassName,
+            )}
+            style={maxHeight ? { maxHeight } : undefined}
+        >
+            {table}
+        </div>
+    );
+
     if (bare) {
-        return scroll ? (
-            <div className={cn('overflow-x-auto', containerClassName)}>
-                {table}
-            </div>
-        ) : (
-            table
-        );
+        return scroll || stickyHeader ? scrollBox : table;
     }
 
     return (
-        <div
-            className={cn(
-                'overflow-hidden rounded-xl border border-line bg-surface',
-                containerClassName,
-            )}
-        >
-            <div className="overflow-x-auto">{table}</div>
+        <div className="overflow-hidden rounded-xl border border-line bg-surface">
+            {/* Scroll container is the class hook sticky headers need. */}
+            <div
+                className={cn(
+                    'group/table overflow-x-auto',
+                    stickyHeader && 'overflow-y-auto',
+                    containerClassName,
+                )}
+                style={maxHeight ? { maxHeight } : undefined}
+            >
+                {table}
+            </div>
         </div>
     );
 }
@@ -64,10 +85,21 @@ export function Table({
 export function TableHeader({
     className,
     children,
+    sticky,
     ...props
-}: HTMLAttributes<HTMLTableSectionElement>) {
+}: HTMLAttributes<HTMLTableSectionElement> & { sticky?: boolean }) {
     return (
-        <thead className={cn('bg-surface-muted', className)} {...props}>
+        <thead
+            className={cn(
+                'bg-surface-muted',
+                // Sticky only works on th, so hand the flag down via a data
+                // attribute the header cells read.
+                sticky && '[&_th]:sticky [&_th]:top-0 [&_th]:z-10',
+                className,
+            )}
+            data-sticky={sticky ? 'true' : undefined}
+            {...props}
+        >
             {children}
         </thead>
     );
@@ -79,7 +111,12 @@ export function TableBody({
     ...props
 }: HTMLAttributes<HTMLTableSectionElement>) {
     return (
-        <tbody className={cn('divide-y divide-line', className)} {...props}>
+        <tbody
+            // Hairline dividers instead of zebra striping: rows stay legible in
+            // both themes and the eye follows the hover target, not the banding.
+            className={cn('divide-y divide-line', className)}
+            {...props}
+        >
             {children}
         </tbody>
     );
@@ -93,7 +130,8 @@ export function TableRow({
     return (
         <tr
             className={cn(
-                'transition-colors duration-150 ease-premium hover:bg-surface-hover',
+                'transition-colors duration-150 ease-premium',
+                'focus-within:bg-surface-hover hover:bg-surface-hover',
                 className,
             )}
             {...props}
@@ -126,7 +164,9 @@ export function TableHeaderCell({
         <th
             scope="col"
             className={cn(
-                'border-b border-line px-4 py-2.5 text-[10px] font-semibold tracking-[0.11em] whitespace-nowrap text-ink-subtle uppercase',
+                // `bg-surface-muted` is repeated on the cell (not just thead)
+                // so a sticky header paints over the rows scrolling beneath it.
+                'border-b border-line bg-surface-muted px-4 py-2.5 text-[10px] font-semibold tracking-[0.11em] whitespace-nowrap text-ink-subtle uppercase',
                 numeric ? 'text-right' : 'text-left',
                 className,
             )}

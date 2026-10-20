@@ -20,7 +20,9 @@ export function Textarea({
             rows={rows}
             className={cn(
                 controlBase,
-                'resize-y py-2.5 leading-relaxed',
+                // Multi-line controls have no fixed height: they inherit the
+                // same border/inset/focus treatment and only pad vertically.
+                'min-h-20 resize-y py-2.5 leading-relaxed',
                 Icon && 'pl-9',
                 invalid ? controlState.invalid : controlState.default,
                 className,
@@ -36,7 +38,7 @@ export function Textarea({
 
     return (
         <div className="relative">
-            <Icon className="pointer-events-none absolute top-3 left-3 h-4 w-4 text-ink-subtle" />
+            <Icon className="pointer-events-none absolute top-3.5 left-3 h-4 w-4 text-ink-subtle" />
             {field}
         </div>
     );

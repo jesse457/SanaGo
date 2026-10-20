@@ -56,22 +56,25 @@ export type ButtonProps = Omit<
 } & Pick<ComponentProps<typeof Link>, 'prefetch' | 'cacheFor'>;
 
 const base =
-    'group relative inline-flex items-center justify-center gap-2 rounded-md font-semibold tracking-tight whitespace-nowrap select-none ' +
+    'group relative inline-flex items-center justify-center gap-2 rounded-md font-semibold tracking-[-0.006em] whitespace-nowrap select-none ' +
     'transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-premium ' +
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-1 focus-visible:ring-offset-canvas ' +
-    'active:scale-[0.985] disabled:pointer-events-none disabled:opacity-45';
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas ' +
+    'active:scale-[0.98] active:duration-100 disabled:pointer-events-none disabled:opacity-45 ' +
+    'motion-reduce:transform-none';
 
 const variantClasses: Record<ButtonVariant, string> = {
     /* Primary CTAs are ink-solid: the one considered accent is the surface shift. */
     primary:
-        'bg-ink text-ink-inverse shadow-surface hover:bg-ink/88 active:bg-ink',
-    accent: 'bg-accent text-white shadow-surface hover:bg-accent-hover',
+        'bg-ink text-ink-inverse shadow-surface hover:bg-ink/88 hover:shadow-raised active:bg-ink',
+    accent: 'bg-accent text-ink-inverse shadow-surface hover:bg-accent-hover hover:shadow-raised active:bg-accent',
     secondary:
-        'border border-line bg-surface text-ink shadow-surface hover:border-line-strong hover:bg-surface-hover',
+        'border border-line bg-surface text-ink shadow-surface hover:border-line-strong hover:bg-surface-hover active:bg-surface-inset',
     outline:
-        'border border-line-strong bg-transparent text-ink hover:bg-surface-hover',
-    ghost: 'bg-transparent text-ink-muted hover:bg-surface-hover hover:text-ink',
-    danger: 'bg-critical text-white shadow-surface hover:bg-critical/88 focus-visible:ring-critical/45',
+        'border border-line-strong bg-transparent text-ink hover:bg-surface-hover active:bg-surface-inset',
+    ghost: 'bg-transparent text-ink-muted hover:bg-surface-hover hover:text-ink active:bg-surface-inset',
+    danger:
+        'bg-critical text-white shadow-surface hover:bg-critical/88 hover:shadow-raised active:bg-critical ' +
+        'focus-visible:ring-critical/45',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -164,6 +167,15 @@ export function Button(props: ButtonProps) {
         </>
     );
 
+    // An icon-only button has no accessible name from its content, so derive
+    // one from what the caller gave us rather than shipping a nameless control.
+    const fallbackLabel =
+        size === 'icon' && !children
+            ? ((rest['aria-label'] as string | undefined) ??
+              (rest.title as string | undefined) ??
+              (loading ? 'Loading' : undefined))
+            : undefined;
+
     if (typeof rest.href === 'string') {
         const { href, method, ...linkProps } = rest;
 
@@ -172,6 +184,7 @@ export function Button(props: ButtonProps) {
                 href={href}
                 method={method}
                 className={classes}
+                aria-label={fallbackLabel}
                 // Link and button share the geometry; the prop bags overlap
                 // enough that a single cast keeps call sites clean.
                 {...(linkProps as Record<string, unknown>)}
@@ -188,6 +201,8 @@ export function Button(props: ButtonProps) {
             type={type}
             disabled={disabled || loading}
             className={classes}
+            aria-label={fallbackLabel}
+            aria-busy={loading || undefined}
             {...(buttonProps as Record<string, unknown>)}
         >
             {content}

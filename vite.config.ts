@@ -12,8 +12,16 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
             refresh: true,
             fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
+                /*
+                 * Inter is the UI face: the approved free substitute for X's
+                 * proprietary Chirp. The four weights map to the roles the
+                 * design system actually uses — 400 body, 500 labels/UI,
+                 * 600 headings and buttons, 700 emphasis.
+                 */
+                bunny('Inter', {
+                    weights: [400, 500, 600, 700],
+                    subsets: ['latin', 'latin-ext'],
+                    display: 'swap',
                 }),
             ],
         }),

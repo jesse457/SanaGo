@@ -120,7 +120,6 @@ export default function CreateDrug() {
                     title={t('addNewDrug')}
                     description={t('createNewMedicationEntry')}
                     breadcrumbs={[
-                        { label: t('home'), href: route('dashboard') },
                         { label: t('manageDrugs'), href: route('drugs.index') },
                         { label: t('addNewDrug') },
                     ]}

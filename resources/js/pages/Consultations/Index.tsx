@@ -150,7 +150,6 @@ const PatientProfilePage = ({ patient }: Props) => {
                 description={patient.patient_uid}
                 icon={UserIcon}
                 breadcrumbs={[
-                    { label: t('home'), href: '/' },
                     { label: t('patients'), href: route('patients.index') },
                     { label: `${patient.first_name} ${patient.last_name}` },
                 ]}

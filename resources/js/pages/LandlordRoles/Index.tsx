@@ -25,7 +25,6 @@ import {
     ToolbarSearch,
     ToolbarSpacer,
 } from '@/Components/ui';
-import { useTranslation } from '@/hooks/useTranslation';
 import SuperAdminLayout from '@/Layouts/SuperAdminLayout';
 import { DeleteRoleDialog } from './components/DeleteRoleDialog';
 import type { DeletableRole } from './components/DeleteRoleDialog';
@@ -38,7 +37,6 @@ interface Role {
 }
 
 export default function LandlordRolesIndex({ roles }: { roles: Role[] }) {
-    const { t } = useTranslation();
     const [search, setSearch] = useState('');
     const [delModal, setDelModal] = useState<DeletableRole | null>(null);
 
@@ -77,10 +75,7 @@ export default function LandlordRolesIndex({ roles }: { roles: Role[] }) {
                     title="Roles & permissions"
                     description="Each role is a named bundle of permissions granted to landlord staff accounts."
                     icon={ShieldCheckIcon}
-                    breadcrumbs={[
-                        { label: t('common.home'), href: '/' },
-                        { label: 'Roles & permissions' },
-                    ]}
+                    breadcrumbs={[{ label: 'Roles & permissions' }]}
                     actions={
                         <Button href="/landlord-roles/create" icon={PlusIcon}>
                             Create role

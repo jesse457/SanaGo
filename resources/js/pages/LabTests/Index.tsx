@@ -167,7 +167,6 @@ export default function LabTestManagement({ tests, filters }: Props) {
                     title={t('lab_tests.index.title')}
                     description={t('lab_tests.index.subtitle')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: route('dashboard') },
                         { label: t('lab_tests.index.test_definitions') },
                     ]}
                     actions={

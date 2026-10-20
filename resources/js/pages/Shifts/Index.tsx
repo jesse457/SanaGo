@@ -168,7 +168,6 @@ export default function ShiftsIndex({ shifts }: Props) {
                     title={t('page.shifts_index.title')}
                     description={t('page.shifts_index.subtitle')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/dashboard' },
                         { label: t('page.shifts_index.breadcrumb_shifts') },
                     ]}
                     actions={

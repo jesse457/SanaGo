@@ -130,7 +130,6 @@ export default function CreateUser({ departments, roles }: Props) {
                     title={t('page.users_create.new_registration')}
                     description={t('page.users_create.subtitle')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/' },
                         {
                             label: t('page.users_create.user_management'),
                             href: route('users.index'),

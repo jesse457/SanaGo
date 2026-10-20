@@ -106,7 +106,6 @@ export default function InvoiceIndex({ invoices, filters }: Props) {
                     title={t('finance.invoices.index.title')}
                     description={t('finance.invoices.index.subtitle')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: route('dashboard') },
                         { label: t('finance.invoices.index.finance') },
                         { label: t('finance.invoices.index.invoices') },
                     ]}

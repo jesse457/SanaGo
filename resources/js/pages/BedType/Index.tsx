@@ -88,10 +88,7 @@ export default function BedTypeIndex({ bedTypes }: Props) {
                     eyebrow={t('page.bed_type.title')}
                     title={t('page.bed_type.heading')}
                     description={t('page.bed_type.subtitle')}
-                    breadcrumbs={[
-                        { label: t('common.home'), href: '/' },
-                        { label: t('page.bed_type.head_title') },
-                    ]}
+                    breadcrumbs={[{ label: t('page.bed_type.head_title') }]}
                     meta={
                         <span className="tabular-nums">
                             {bedTypes.length} definitions

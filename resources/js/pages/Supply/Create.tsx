@@ -115,7 +115,6 @@ export default function SupplyForm({ supply }: { supply?: Supply }) {
                     }
                     description={t('page.supply_create.subtitle')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: route('dashboard') },
                         {
                             label: t('page.supply_create.inventory'),
                             href: route('supplies.index'),

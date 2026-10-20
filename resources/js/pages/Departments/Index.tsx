@@ -158,7 +158,6 @@ export default function Departments({ departments, users }: Props) {
                     title="Hospital departments"
                     description="Configure hospital units and service categories."
                     breadcrumbs={[
-                        { label: 'Home', href: '/' },
                         { label: 'Infrastructure' },
                         { label: 'Departments' },
                     ]}

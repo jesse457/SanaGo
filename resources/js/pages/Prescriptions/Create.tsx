@@ -130,7 +130,6 @@ export default function PrescriptionsCreate({ patients, medications }: Props) {
                         'Create a medical prescription for a patient',
                     )}
                     breadcrumbs={[
-                        { label: t('home'), href: route('dashboard') },
                         { label: t('clinical') },
                         {
                             label: t('prescriptions'),

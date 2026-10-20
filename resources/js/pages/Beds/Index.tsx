@@ -140,10 +140,7 @@ export default function BedIndex({ beds, wards, bedTypes }: Props) {
                     eyebrow={t('page.beds.title')}
                     title={t('page.beds.beds_heading')}
                     description={t('page.beds.subtitle')}
-                    breadcrumbs={[
-                        { label: t('common.home'), href: '/' },
-                        { label: t('page.beds.head_title') },
-                    ]}
+                    breadcrumbs={[{ label: t('page.beds.head_title') }]}
                     meta={
                         <>
                             <span className="tabular-nums">

@@ -107,7 +107,6 @@ export default function BookAppointment({ doctors, patients }: Props) {
                 {/* Breadcrumbs */}
                 <PageBreadcrumb
                     items={[
-                        { label: t('home') },
                         {
                             label: t('appointments'),
                             href: route('appointments.index'),

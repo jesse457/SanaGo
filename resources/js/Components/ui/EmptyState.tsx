@@ -59,7 +59,7 @@ export function EmptyState({
             return (
                 <Link
                     href={item.href}
-                    className="inline-flex h-10 items-center gap-2 rounded-md bg-ink px-4 text-[13px] font-semibold text-ink-inverse shadow-surface transition-[background-color,transform] duration-200 ease-premium hover:bg-ink/88 active:scale-[0.985]"
+                    className="inline-flex h-10 items-center gap-2 rounded-md bg-ink px-4 text-[13px] font-semibold text-ink-inverse shadow-surface transition-[background-color,box-shadow,transform] duration-200 ease-premium hover:bg-ink/88 hover:shadow-raised focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas focus-visible:outline-none active:scale-[0.98] motion-reduce:transform-none"
                 >
                     {Icon && <Icon className="h-4 w-4" />}
                     {item.label}
@@ -75,12 +75,12 @@ export function EmptyState({
             className={cn(
                 'animate-fade-in flex flex-col items-center justify-center px-6 py-14 text-center',
                 panel &&
-                    'rounded-xl border border-dashed border-line-strong bg-surface',
+                    'rounded-xl border border-dashed border-line-strong bg-surface-muted/40',
                 className,
             )}
         >
             {iconNode && (
-                <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface-muted text-ink-subtle">
+                <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface text-ink-subtle shadow-surface">
                     {iconNode}
                 </span>
             )}

@@ -124,10 +124,7 @@ export default function EmergenciesIndex({ emergencies }: Props) {
                     eyebrow={t('emergencies')}
                     title={t('emergencyCases')}
                     description={t('urgentClinicalCareRegistry')}
-                    breadcrumbs={[
-                        { label: t('common.home'), href: route('dashboard') },
-                        { label: t('emergencies') },
-                    ]}
+                    breadcrumbs={[{ label: t('emergencies') }]}
                     meta={
                         <>
                             <span className="tabular-nums">

@@ -267,10 +267,7 @@ export default function RevenueAnalytics() {
                     eyebrow={t('nav.category.insights')}
                     title={t('page.analytics.title')}
                     description={t('page.analytics.subtitle')}
-                    breadcrumbs={[
-                        { label: t('common.home'), href: '/' },
-                        { label: t('page.analytics.head_title') },
-                    ]}
+                    breadcrumbs={[{ label: t('page.analytics.head_title') }]}
                     actions={
                         <Button
                             variant="secondary"

@@ -84,7 +84,6 @@ export default function VitalsForm({ patient }: { patient: Patient }) {
                         lastName: patient.last_name,
                     })}
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/' },
                         {
                             label: `${patient.first_name} ${patient.last_name}`,
                             href: route('patients.show', patient.id),

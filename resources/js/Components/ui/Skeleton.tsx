@@ -5,7 +5,11 @@ interface SkeletonProps extends HTMLAttributes<HTMLDivElement> {
     rounded?: 'sm' | 'md' | 'lg' | 'full';
 }
 
-/** Skeleton — shaped loading placeholders. Never a bare spinner. */
+/**
+ * Skeleton — shaped loading placeholders that mirror the real layout. The sheen
+ * is a transform-only keyframe declared in app.css (`.skeleton::after`), so it
+ * never triggers layout or paint on the main thread. Never a bare spinner.
+ */
 export function Skeleton({
     className,
     rounded = 'md',
@@ -57,7 +61,10 @@ export function SkeletonRows({
     columns?: number;
 }) {
     return (
-        <div className="flex flex-col gap-px overflow-hidden rounded-xl border border-line bg-line">
+        <div
+            aria-busy="true"
+            className="flex flex-col gap-px overflow-hidden rounded-xl border border-line bg-line"
+        >
             <div
                 className="grid gap-4 bg-surface-muted px-4 py-3"
                 style={gridStyle(columns)}
@@ -100,11 +107,14 @@ function gridStyle(columns: number) {
 
 export function SkeletonCards({ count = 4 }: { count?: number }) {
     return (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div
+            aria-busy="true"
+            className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
+        >
             {Array.from({ length: count }).map((_, index) => (
                 <div
                     key={index}
-                    className="rounded-xl border border-line bg-surface p-5"
+                    className="rounded-xl border border-line bg-surface p-4"
                 >
                     <Skeleton className="h-8 w-8" rounded="lg" />
                     <Skeleton className="mt-4 h-6 w-1/2" />

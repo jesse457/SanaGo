@@ -88,7 +88,6 @@ export default function SystemSettings() {
                     title={t('page.settings.system_settings')}
                     description={t('page.settings.subtitle')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/' },
                         { label: t('page.settings.system_settings') },
                     ]}
                 />

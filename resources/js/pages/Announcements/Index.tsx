@@ -60,10 +60,7 @@ export default function AnnouncementsIndex({
                     title="Announcements"
                     description="System-wide messages shown to every tenant on their dashboard."
                     icon={MegaphoneIcon}
-                    breadcrumbs={[
-                        { label: t('common.home'), href: '/dashboard' },
-                        { label: 'Announcements' },
-                    ]}
+                    breadcrumbs={[{ label: 'Announcements' }]}
                     actions={
                         <Button href="/announcements/create" icon={PlusIcon}>
                             New announcement

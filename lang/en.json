@@ -549,6 +549,13 @@
     "all_feedback": "All Feedback",
     "analytics": "Analytics",
     "announcements": "Announcements",
+    "billing_usage": "Billing & usage",
+    "platform_settings": "Settings",
+    "audit_log": "Audit log",
+    "health": "Health & monitoring",
+    "billing_currency": "Billing currency",
+    "maintenance_mode": "Maintenance",
+    "maintenance_mode_active": "Maintenance mode is on — hospitals are locked out",
     "appointments": "Appointments",
     "audit_logs": "Audit Logs",
     "bed_types": "Bed Types",
@@ -568,6 +575,11 @@
       "sales": "Sales",
       "tenant_management": "Tenant Management",
       "patient_mgmt": "Patient Management",
+      "tenants": "Tenants",
+      "billing": "Billing",
+      "platform": "Platform",
+      "growth": "Growth",
+      "access": "Access",
       "nursing": "Nursing",
       "radiology": "Radiology",
       "supplies": "Supplies",
@@ -761,7 +773,9 @@
     "notifications_appear_here": "Notifications about patient care and system events will appear here.",
     "mark_all_read": "Mark all as read",
     "all": "All",
-    "unread": "Unread"
+    "unread": "Unread",
+    "no_platform_feed": "No notifications are delivered to the platform console yet.",
+    "open_audit_log": "Open the platform audit log"
   },
   "page": {
     "activities": {
@@ -2359,5 +2373,46 @@
   "domain": "Domain",
   "domainPlaceholder": "Domain Placeholder",
   "createTenant": "Create Tenant",
-  "batches": "Batches"
+  "batches": "Batches",
+  "hospitals": "Hospitals",
+  "platform": {
+    "dashboard": {
+      "title": "Overview",
+      "description": "The state of the platform: how many hospitals are live, what they are worth and what needs an operator today."
+    },
+    "tenants_index": {
+      "title": "Hospitals",
+      "description": "Every tenant running on this platform: lifecycle state, plan and billing health.",
+      "new": "New hospital"
+    },
+    "tenant_create": {
+      "title": "New hospital",
+      "description": "Provision a hospital: its slug and domain route all of its traffic, and the administrator account is created inside its own database."
+    },
+    "plans": {
+      "title": "Plans",
+      "description": "Subscription tiers: pricing, the quotas each tenant gets and the modules each plan unlocks."
+    },
+    "subscriptions": {
+      "title": "Subscriptions",
+      "description": "Every plan contract across the platform, with recurring revenue and expiry pressure in one view."
+    },
+    "settings": {
+      "title": "Platform settings",
+      "description": "The platform's identity, its billing currency and the defaults applied to every new hospital.",
+      "currency_helper": "Prices on plans, subscriptions, invoices and every usage figure are rendered in this currency."
+    },
+    "billing": {
+      "title": "Billing & usage",
+      "description": "Recurring revenue, what each hospital consumes against its plan, and every invoice the platform has raised."
+    },
+    "audit": {
+      "title": "Audit log",
+      "description": "Every privileged action on the platform: who did it, to which hospital, from which address, and with what payload."
+    },
+    "health": {
+      "title": "Health & monitoring",
+      "description": "Live reachability of every hospital database, the platform's own services, and the subscriptions that need an operator's attention."
+    }
+  }
 }

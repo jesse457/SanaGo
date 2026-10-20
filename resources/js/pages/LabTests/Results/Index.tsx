@@ -199,7 +199,6 @@ export default function ResultsIndex({ results, filters }: Props) {
                     title={t('lab_tests.results.index.title')}
                     description={t('lab_tests.results.index.subtitle')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/lab/dashboard' },
                         { label: t('lab_tests.results.index.results_archive') },
                     ]}
                     meta={

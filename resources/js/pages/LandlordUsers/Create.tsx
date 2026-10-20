@@ -50,7 +50,6 @@ export default function LandlordUsersCreate({ roles }: { roles: string[] }) {
                     description={t('createNewLandlordMember')}
                     icon={UserGroupIcon}
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/' },
                         { label: 'Staff users', href: '/landlord-users' },
                         { label: t('addStaffUser') },
                     ]}

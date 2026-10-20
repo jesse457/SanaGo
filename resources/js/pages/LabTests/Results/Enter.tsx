@@ -170,7 +170,6 @@ export default function EnterResults({ labRequest, labResult, isEdit }: Props) {
                     title={title}
                     description={t('lab_tests.results.enter.subtitle')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/lab/dashboard' },
                         { label: t('lab_tests.results.enter.breadcrumb') },
                     ]}
                     meta={

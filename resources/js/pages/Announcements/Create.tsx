@@ -44,7 +44,6 @@ export default function AnnouncementsCreate() {
                     description="Compose a message that appears on every tenant's dashboard."
                     icon={MegaphoneIcon}
                     breadcrumbs={[
-                        { label: 'Home', href: '/dashboard' },
                         { label: 'Announcements', href: '/announcements' },
                         { label: 'New announcement' },
                     ]}

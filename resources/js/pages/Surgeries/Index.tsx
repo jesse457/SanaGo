@@ -152,10 +152,7 @@ export default function SurgeriesIndex({ surgeries }: Props) {
                 <PageHeader
                     title={t('surgeries.index.title')}
                     description={t('surgeries.index.subtitle')}
-                    breadcrumbs={[
-                        { label: t('common.home'), href: route('home') },
-                        { label: t('surgeries.index.surgeries') },
-                    ]}
+                    breadcrumbs={[{ label: t('surgeries.index.surgeries') }]}
                     actions={
                         <Button
                             href={route('surgeries.create')}

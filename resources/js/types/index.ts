@@ -399,3 +399,131 @@ export interface Medication {
     dosage_units?: string;
     unit_cost: number;
 }
+
+/**
+ * Paginated Laravel collection envelope (`->paginate()`).
+ */
+export interface Paginated<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+    links: { url: string | null; label: string; active: boolean }[];
+}
+
+/**
+ * A vitals row as the API serialises it: decimals arrive as strings, and the
+ * recorder is exposed through the `recordedBy` relation.
+ */
+export interface VitalRecord {
+    id: number;
+    patient_id: number;
+    recorded_by: number | null;
+    recorded_at: string;
+    temperature: string | number | null;
+    systolic_bp: number | null;
+    diastolic_bp: number | null;
+    heart_rate: number | null;
+    oxygen_saturation: number | null;
+    respiratory_rate: number | null;
+    is_abnormal: boolean;
+    notes: string | null;
+    created_at: string;
+    recordedBy?: { id: number; name: string } | null;
+}
+
+/**
+ * Admission row (list/dossier form) with the bed and ward it occupies.
+ */
+export interface AdmissionRecord {
+    id: number;
+    patient_id: number;
+    bed_id: number | null;
+    attending_doctor_id: number | null;
+    admission_date: string | null;
+    discharge_date: string | null;
+    status: string;
+    reason_for_admission: string | null;
+    observation_fee: string | number | null;
+    bed?: {
+        id: number;
+        code: string;
+        ward?: { id: number; name: string } | null;
+    } | null;
+    attending_doctor?: { id: number; name: string } | null;
+}
+
+/**
+ * Shared hospital identity from `HandleInertiaRequests` (`tenant` prop).
+ */
+export interface TenantIdentity {
+    id: string;
+    name: string;
+    slug: string;
+}
+
+/**
+ * A radiology request as the Print view receives it (`patient` +
+ * `requestedBy` loaded).
+ */
+export interface RadiologyRequestRecord {
+    id: number;
+    patient_id: number;
+    consultation_id: number | null;
+    requested_by: number | null;
+    imaging_type: string;
+    body_part: string;
+    clinical_notes: string | null;
+    status: string;
+    created_at: string;
+    updated_at: string;
+    patient?: {
+        id: number;
+        patient_uid: string;
+        first_name: string;
+        last_name: string;
+        date_of_birth?: string | null;
+        gender?: string | null;
+        age?: number | null;
+        phone?: string | null;
+        blood_type?: string | null;
+    } | null;
+    requestedBy?: { id: number; name: string } | null;
+}
+
+/**
+ * A cash payment as the Receipt view receives it (shift, patient and invoice
+ * loaded).
+ */
+export interface CashPaymentRecord {
+    id: number;
+    cash_shift_id: number;
+    invoice_id: number | null;
+    patient_id: number | null;
+    amount_paid: string | number;
+    payment_method: string;
+    created_at: string;
+    updated_at: string;
+    cashShift?: {
+        id: number;
+        payment_point: string;
+        opened_at: string | null;
+        closed_at: string | null;
+        status: string;
+        user?: { id: number; name: string } | null;
+    } | null;
+    patient?: {
+        id: number;
+        patient_uid: string;
+        first_name: string;
+        last_name: string;
+    } | null;
+    invoice?: {
+        id: number;
+        invoice_number: string;
+        total_amount: string | number;
+    } | null;
+}

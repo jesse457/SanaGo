@@ -56,7 +56,6 @@ export default function SupportShow({ ticket }: { ticket: Ticket }) {
                     eyebrow={`Ticket #${ticket.id}`}
                     icon={TicketIcon}
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/dashboard' },
                         { label: 'Support', href: '/support' },
                         { label: ticket.subject },
                     ]}

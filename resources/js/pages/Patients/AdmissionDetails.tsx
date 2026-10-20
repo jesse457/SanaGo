@@ -154,7 +154,6 @@ export default function AdmissionDetails({
                         'Detailed view of patient admission history and current status.'
                     }
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/dashboard' },
                         {
                             label:
                                 t('page.checkin.breadcrumb_admissions') ||

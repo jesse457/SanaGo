@@ -168,7 +168,6 @@ export default function CreatePatient() {
                     description={t('page.patients_create.subtitle')}
                     icon={UserPlusIcon}
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/dashboard' },
                         {
                             label: t('page.patients_create.patient_management'),
                             href: route('patients.index'),

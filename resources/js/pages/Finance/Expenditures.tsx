@@ -128,10 +128,7 @@ export default function ExpendituresIndex({ expenditures }: Props) {
             <Head title={t('finance.expenditures.head_title')} />
             <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 <PageBreadcrumb
-                    items={[
-                        { label: t('common.home'), href: route('dashboard') },
-                        { label: t('finance.expenditures.breadcrumb') },
-                    ]}
+                    items={[{ label: t('finance.expenditures.breadcrumb') }]}
                 />
 
                 <div className="flex items-center justify-between gap-4">

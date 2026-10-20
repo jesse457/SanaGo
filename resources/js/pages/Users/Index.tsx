@@ -255,10 +255,7 @@ export default function UserManagement({
 
             <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
                 <PageBreadcrumb
-                    items={[
-                        { label: t('common.home') },
-                        { label: t('page.users_index.breadcrumb_users') },
-                    ]}
+                    items={[{ label: t('page.users_index.breadcrumb_users') }]}
                 />
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

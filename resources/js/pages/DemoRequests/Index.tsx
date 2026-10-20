@@ -55,9 +55,7 @@ export default function DemoRequestsIndex({
         >
             <Head title="Demo Requests" />
             <div className="mx-auto max-w-7xl space-y-6 px-6">
-                <PageBreadcrumb
-                    items={[{ label: 'Home' }, { label: 'Demo Requests' }]}
-                />
+                <PageBreadcrumb items={[{ label: 'Demo Requests' }]} />
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-6">
                     {STAGES.map((stage) => {

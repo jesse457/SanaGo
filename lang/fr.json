@@ -650,6 +650,13 @@
     "all_feedback": "Tous les avis",
     "analytics": "Analytique",
     "announcements": "Annonces",
+    "billing_usage": "Facturation et usage",
+    "platform_settings": "Paramètres",
+    "audit_log": "Journal d'audit",
+    "health": "Santé et supervision",
+    "billing_currency": "Devise de facturation",
+    "maintenance_mode": "Maintenance",
+    "maintenance_mode_active": "Mode maintenance actif — les hôpitaux sont bloqués",
     "appointments": "Rendez-vous",
     "audit_logs": "Journaux d'audit",
     "bed_types": "Types de lits",
@@ -669,6 +676,11 @@
       "sales": "Ventes",
       "tenant_management": "Gestion des locataires",
       "patient_mgmt": "Gestion des patients",
+      "tenants": "Locataires",
+      "billing": "Facturation",
+      "platform": "Plateforme",
+      "growth": "Croissance",
+      "access": "Accès",
       "nursing": "Soins infirmiers",
       "radiology": "Radiologie",
       "supplies": "Fournitures",
@@ -862,7 +874,9 @@
     "notifications_appear_here": "Les notifications concernant les soins et le système apparaîtront ici.",
     "mark_all_read": "Tout marquer comme lu",
     "all": "Tout",
-    "unread": "Non lues"
+    "unread": "Non lues",
+    "no_platform_feed": "Aucune notification n'est encore envoyée à la console de la plateforme.",
+    "open_audit_log": "Ouvrir le journal d'audit de la plateforme"
   },
   "page": {
     "activities": {
@@ -1844,5 +1858,46 @@
   "e.g. General: Alert, no acute distress": "Ex: Général: Alerte, pas de détresse aiguë. CV: Régulier. Resp: Clair. Abdomen: Souple.",
   "e.g. Return in 2 weeks for review": "Ex: Revenir dans 2 semaines pour contrôle. Revenir plus tôt si les symptômes s'aggravent.",
   "Loading...": "Chargement...",
-  "Notification": "Notification"
+  "Notification": "Notification",
+  "hospitals": "Hôpitaux",
+  "platform": {
+    "dashboard": {
+      "title": "Vue d'ensemble",
+      "description": "L'état de la plateforme : combien d'hôpitaux sont actifs, ce qu'ils représentent et ce qui demande l'attention d'un opérateur aujourd'hui."
+    },
+    "tenants_index": {
+      "title": "Hôpitaux",
+      "description": "Tous les locataires de cette plateforme : cycle de vie, forfait et santé de la facturation.",
+      "new": "Nouvel hôpital"
+    },
+    "tenant_create": {
+      "title": "Nouvel hôpital",
+      "description": "Provisionner un hôpital : son slug et son domaine routent tout son trafic, et le compte administrateur est créé dans sa propre base de données."
+    },
+    "plans": {
+      "title": "Forfaits",
+      "description": "Paliers d'abonnement : tarifs, quotas accordés à chaque locataire et modules débloqués."
+    },
+    "subscriptions": {
+      "title": "Abonnements",
+      "description": "Tous les contrats de la plateforme, avec les revenus récurrents et les échéances proches."
+    },
+    "settings": {
+      "title": "Paramètres de la plateforme",
+      "description": "L'identité de la plateforme, sa devise de facturation et les valeurs par défaut appliquées à chaque nouvel hôpital.",
+      "currency_helper": "Les prix des forfaits, abonnements, factures et chaque indicateur d'usage sont affichés dans cette devise."
+    },
+    "billing": {
+      "title": "Facturation et usage",
+      "description": "Revenus récurrents, consommation de chaque hôpital par rapport à son forfait, et toutes les factures émises."
+    },
+    "audit": {
+      "title": "Journal d'audit",
+      "description": "Chaque action privilégiée sur la plateforme : qui l'a faite, sur quel hôpital, depuis quelle adresse et avec quelles données."
+    },
+    "health": {
+      "title": "Santé et supervision",
+      "description": "Accessibilité de chaque base de données d'hôpital, les services de la plateforme et les abonnements qui demandent une intervention."
+    }
+  }
 }

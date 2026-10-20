@@ -33,11 +33,22 @@ const sizeClasses: Record<DialogSize, string> = {
     '2xl': 'sm:max-w-4xl',
 };
 
+/* Damped spring: fast entry, no bounce visible past the frame. */
 const ease = [0.16, 1, 0.3, 1] as const;
+const spring = {
+    type: 'spring',
+    stiffness: 380,
+    damping: 32,
+    mass: 0.9,
+} as const;
 
 /**
  * Dialog — the app's modal primitive. Hairline panel, diffused float shadow,
- * spring-ish entry, scrollable body with sticky header and footer actions.
+ * spring entry, scrollable body with sticky header and footer actions.
+ *
+ * The backdrop blurs rather than darkens alone, so the clinical content behind
+ * a modal stays recognisable without competing for attention. Motion is
+ * transform + opacity only.
  */
 export function Dialog({
     open,
@@ -66,7 +77,8 @@ export function Dialog({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.22, ease }}
-                        className="fixed inset-0 bg-ink/25 backdrop-blur-[3px]"
+                        className="fixed inset-0 bg-ink/30 backdrop-blur-[6px] backdrop-saturate-[115%]"
+                        aria-hidden="true"
                     />
 
                     <div className="fixed inset-0 overflow-y-auto">
@@ -79,15 +91,18 @@ export function Dialog({
                             )}
                         >
                             <motion.div
-                                initial={{ opacity: 0, y: 18, scale: 0.98 }}
+                                initial={{ opacity: 0, y: 16, scale: 0.97 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: 12, scale: 0.985 }}
-                                transition={{ duration: 0.3, ease }}
-                                className={cn('w-full', sizeClasses[size])}
+                                exit={{ opacity: 0, y: 10, scale: 0.985 }}
+                                transition={spring}
+                                className={cn(
+                                    'w-full motion-reduce:transition-none',
+                                    sizeClasses[size],
+                                )}
                             >
                                 <DialogPanel
                                     className={cn(
-                                        'flex max-h-[calc(100dvh-1.5rem)] w-full flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-float sm:max-h-[calc(100dvh-3rem)]',
+                                        'flex max-h-[calc(100dvh-1.5rem)] w-full flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-float sm:max-h-[calc(100dvh-3rem)]',
                                         className,
                                     )}
                                 >
@@ -112,7 +127,7 @@ export function Dialog({
                                                     aria-label="Close dialog"
                                                     className="-mt-1 -mr-1 shrink-0 rounded-md p-1.5 text-ink-subtle transition-colors duration-150 hover:bg-surface-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none"
                                                 >
-                                                    <XMarkIcon className="h-4.5 w-4.5" />
+                                                    <XMarkIcon className="h-[18px] w-[18px]" />
                                                 </button>
                                             )}
                                         </div>

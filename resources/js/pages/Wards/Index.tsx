@@ -89,10 +89,7 @@ export default function WardIndex({ wards }: Props) {
                     eyebrow={t('page.wards.title')}
                     title={t('page.wards.heading')}
                     description={t('page.wards.subtitle')}
-                    breadcrumbs={[
-                        { label: t('common.home'), href: '/' },
-                        { label: t('page.wards.head_title') },
-                    ]}
+                    breadcrumbs={[{ label: t('page.wards.head_title') }]}
                     meta={
                         <>
                             <span className="tabular-nums">

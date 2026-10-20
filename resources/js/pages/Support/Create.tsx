@@ -60,7 +60,6 @@ export default function SupportCreate() {
                     description={t('support.reportIssue')}
                     icon={TicketIcon}
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/dashboard' },
                         { label: t('support.title'), href: '/support' },
                         { label: t('support.newTicket') },
                     ]}

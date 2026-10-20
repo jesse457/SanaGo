@@ -5,7 +5,9 @@ type DivProps = HTMLAttributes<HTMLDivElement>;
 
 /**
  * Card = one surface with a hairline. No drop shadow by default: elevation is
- * reserved for overlays and floating chrome.
+ * reserved for overlays and floating chrome. The rule is hairline OR elevation,
+ * never both — `interactive` is the single place a card lifts, because a hover
+ * response needs the depth cue.
  */
 export function Card({
     className,
@@ -18,7 +20,7 @@ export function Card({
             className={cn(
                 'relative rounded-xl border border-line bg-surface',
                 interactive &&
-                    'transition-[border-color,box-shadow,transform] duration-300 ease-premium hover:-translate-y-0.5 hover:border-line-strong hover:shadow-raised',
+                    'transition-[border-color,box-shadow,transform] duration-300 ease-premium hover:-translate-y-0.5 hover:border-line-strong hover:shadow-raised motion-reduce:transform-none',
                 className,
             )}
             {...props}

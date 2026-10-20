@@ -82,7 +82,6 @@ export default function AdmissionShow({ admission }: { admission: Admission }) {
                         lastName: admission.patient.last_name,
                     })}
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/dashboard' },
                         {
                             label: t('page.show.admissions_registry'),
                             href: route('admissions.index'),

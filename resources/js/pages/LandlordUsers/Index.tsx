@@ -25,7 +25,6 @@ import {
     ToolbarSearch,
     ToolbarSpacer,
 } from '@/Components/ui';
-import { useTranslation } from '@/hooks/useTranslation';
 import SuperAdminLayout from '@/Layouts/SuperAdminLayout';
 import { DeleteUserDialog } from './components/DeleteUserDialog';
 import type { DeletableUser } from './components/DeleteUserDialog';
@@ -50,7 +49,6 @@ function initials(name: string): string {
 }
 
 export default function LandlordUsersIndex({ users }: { users: UserItem[] }) {
-    const { t } = useTranslation();
     const [search, setSearch] = useState('');
     const [delModal, setDelModal] = useState<DeletableUser | null>(null);
 
@@ -82,10 +80,7 @@ export default function LandlordUsersIndex({ users }: { users: UserItem[] }) {
                     title="Staff users"
                     description="Everyone with a landlord-level account, and the role that scopes what they can reach."
                     icon={UserGroupIcon}
-                    breadcrumbs={[
-                        { label: t('common.home'), href: '/' },
-                        { label: 'Staff users' },
-                    ]}
+                    breadcrumbs={[{ label: 'Staff users' }]}
                     actions={
                         <Button href="/landlord-users/create" icon={PlusIcon}>
                             Add user

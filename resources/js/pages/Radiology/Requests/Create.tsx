@@ -84,7 +84,6 @@ export default function RadiologyRequestsCreate({ patients }: Props) {
                     title={t('radiology.newRequest')}
                     description={t('radiology.requestImaging')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: route('dashboard') },
                         { label: t('radiology.title') },
                         { label: t('radiology.newRequest') },
                     ]}

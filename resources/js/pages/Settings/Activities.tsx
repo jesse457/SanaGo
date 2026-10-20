@@ -137,10 +137,7 @@ export default function UserActivities({ activities, filters }: Props) {
                     eyebrow={t('nav.category.administration')}
                     title={t('page.activities.title')}
                     description={t('page.activities.subtitle')}
-                    breadcrumbs={[
-                        { label: t('common.home'), href: '/' },
-                        { label: t('page.activities.head_title') },
-                    ]}
+                    breadcrumbs={[{ label: t('page.activities.head_title') }]}
                     meta={
                         <span className="tabular-nums">
                             {t('page.activities.showing_results', {

@@ -73,10 +73,7 @@ export default function ProfileShow() {
                     title={t('page.profile_show.title')}
                     description={t('page.profile_show.subtitle')}
                     icon={UserCircleIcon}
-                    breadcrumbs={[
-                        { label: t('common.home'), href: '/dashboard' },
-                        { label: t('page.profile_show.title') },
-                    ]}
+                    breadcrumbs={[{ label: t('page.profile_show.title') }]}
                     actions={
                         <Button
                             variant="secondary"

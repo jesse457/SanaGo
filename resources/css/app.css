@@ -10,31 +10,53 @@
 | SanaGo design tokens
 |--------------------------------------------------------------------------
 |
-| Premium utilitarian minimalism for a dense clinical workspace:
-| a warm monochrome canvas, hairline structure, one desaturated accent,
-| crisp radii and motion that is felt rather than seen.
+| Premium utilitarian minimalism for a dense clinical workspace: a warm
+| off-white canvas, true surface layers over it, hairline structure, ONE
+| desaturated clinical teal, honest status hues, crisp radii and motion
+| that is felt rather than seen.
 |
-| Two layers live here:
+| Three layers live here:
 |
-| 1. `@theme` — remaps the stock Tailwind ramps. The neutral families
-|    (gray / neutral / slate / zinc / stone) collapse into a single warm
-|    ramp and `blue` becomes the one accented color family. Pages written
-|    before this token layer instantly inherit the new palette.
+| 1. `@theme` — the raw scale. The neutral families (gray / neutral / slate /
+|    zinc / stone) collapse into a single warm ramp; `teal` is the one accent
+|    family, `blue` is aliased onto it, and `emerald` / `amber` / `red` /
+|    `rose` collapse onto the positive / warning / critical ramps. Pages
+|    written before this token layer instantly inherit the new palette.
 |
 | 2. `@theme inline` — semantic tokens (canvas, surface, ink, line, accent…)
-|    that resolve to runtime CSS variables so a single class works in both
-|    light and dark mode, removing the need for `dark:` literals.
+|    that resolve to runtime CSS variables, so a single class works in both
+|    light and dark mode. This is the API pages should use; `dark:` literals
+|    are never needed.
+|
+| 3. `:root` / `.dark` — the actual theme values. Dark is tuned separately
+|    (not an inversion of light): lower-chroma surfaces, lifted ink, and
+|    accents that gain lightness to stay legible on a dark canvas.
+|
+| Contrast (WCAG, verified):
+|   light — ink/surface 17.8:1, ink-muted/surface 6.4:1, ink-subtle/surface
+|           5.0:1, accent-ink/accent-soft 7.0:1, positive-ink/positive-soft
+|           6.7:1, warning-ink/warning-soft 6.3:1, critical-ink/critical-soft
+|           7.2:1, ink-inverse/accent 5.8:1
+|   dark  — ink/surface 14.8:1, ink-muted/surface 7.4:1, ink-subtle/surface
+|           4.7:1, accent-ink/accent-soft 8.9:1, positive-ink/positive-soft
+|           9.3:1, warning-ink/warning-soft 9.0:1, critical-ink/critical-soft
+|           8.5:1, ink-inverse/accent 8.0:1
+|
+| Every solid accent/status fill also clears 4.5:1 against white (light) and
+| against the dark surface, so filled chips and buttons keep readable labels.
 |
 */
 
 @theme {
-    /* ---- Typography ---- */
+    /* ---- Typography ----------------------------------------------------
+     | Inter is the UI face (the approved free substitute for X's proprietary
+     | Chirp). Loading is handled by the `bunny()` font plugin in
+     | vite.config.ts, which emits the preload links.
+     */
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
-        sans-serif;
+        'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-display:
-        'Instrument Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
-        sans-serif;
+        'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-mono:
         'Geist Mono', 'JetBrains Mono', 'SF Mono', ui-monospace, SFMono-Regular,
         Menlo, monospace;
@@ -54,134 +76,165 @@
     --ease-swift: cubic-bezier(0.22, 1, 0.36, 1);
     --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 
-    /* ---- Neutral ramp: one warm family, shared by every "gray" ---- */
-    --color-gray-50: #fafaf8;
-    --color-gray-100: #f4f4f1;
-    --color-gray-200: #e8e7e2;
-    --color-gray-300: #d6d4cd;
-    --color-gray-400: #a8a69e;
-    --color-gray-500: #7f7d75;
-    --color-gray-600: #62615a;
-    --color-gray-700: #4b4a45;
-    --color-gray-800: #333230;
-    --color-gray-900: #23221f;
-    --color-gray-950: #14140f;
+    /* ---- Neutral ramp: one warm family, shared by every "gray" ---------- */
+    --color-gray-50: #faf9f7;
+    --color-gray-100: #f3f2ee;
+    --color-gray-200: #e6e4de;
+    --color-gray-300: #d4d1c9;
+    --color-gray-400: #a3a49f;
+    --color-gray-500: #7b7d80;
+    --color-gray-600: #5c5f66;
+    --color-gray-700: #464a50;
+    --color-gray-800: #2f3338;
+    --color-gray-900: #1e2126;
+    --color-gray-950: #0e1012;
 
-    --color-neutral-50: #fafaf8;
-    --color-neutral-100: #f4f4f1;
-    --color-neutral-200: #e8e7e2;
-    --color-neutral-300: #d6d4cd;
-    --color-neutral-400: #a8a69e;
-    --color-neutral-500: #7f7d75;
-    --color-neutral-600: #62615a;
-    --color-neutral-700: #4b4a45;
-    --color-neutral-800: #333230;
-    --color-neutral-900: #23221f;
-    --color-neutral-950: #14140f;
+    --color-neutral-50: #faf9f7;
+    --color-neutral-100: #f3f2ee;
+    --color-neutral-200: #e6e4de;
+    --color-neutral-300: #d4d1c9;
+    --color-neutral-400: #a3a49f;
+    --color-neutral-500: #7b7d80;
+    --color-neutral-600: #5c5f66;
+    --color-neutral-700: #464a50;
+    --color-neutral-800: #2f3338;
+    --color-neutral-900: #1e2126;
+    --color-neutral-950: #0e1012;
 
-    --color-slate-50: #fafaf8;
-    --color-slate-100: #f4f4f1;
-    --color-slate-200: #e8e7e2;
-    --color-slate-300: #d6d4cd;
-    --color-slate-400: #a8a69e;
-    --color-slate-500: #7f7d75;
-    --color-slate-600: #62615a;
-    --color-slate-700: #4b4a45;
-    --color-slate-800: #333230;
-    --color-slate-900: #23221f;
-    --color-slate-950: #14140f;
+    --color-slate-50: #faf9f7;
+    --color-slate-100: #f3f2ee;
+    --color-slate-200: #e6e4de;
+    --color-slate-300: #d4d1c9;
+    --color-slate-400: #a3a49f;
+    --color-slate-500: #7b7d80;
+    --color-slate-600: #5c5f66;
+    --color-slate-700: #464a50;
+    --color-slate-800: #2f3338;
+    --color-slate-900: #1e2126;
+    --color-slate-950: #0e1012;
 
-    --color-zinc-50: #fafaf8;
-    --color-zinc-100: #f4f4f1;
-    --color-zinc-200: #e8e7e2;
-    --color-zinc-300: #d6d4cd;
-    --color-zinc-400: #a8a69e;
-    --color-zinc-500: #7f7d75;
-    --color-zinc-600: #62615a;
-    --color-zinc-700: #4b4a45;
-    --color-zinc-800: #333230;
-    --color-zinc-900: #23221f;
-    --color-zinc-950: #14140f;
+    --color-zinc-50: #faf9f7;
+    --color-zinc-100: #f3f2ee;
+    --color-zinc-200: #e6e4de;
+    --color-zinc-300: #d4d1c9;
+    --color-zinc-400: #a3a49f;
+    --color-zinc-500: #7b7d80;
+    --color-zinc-600: #5c5f66;
+    --color-zinc-700: #464a50;
+    --color-zinc-800: #2f3338;
+    --color-zinc-900: #1e2126;
+    --color-zinc-950: #0e1012;
 
-    --color-stone-50: #fafaf8;
-    --color-stone-100: #f4f4f1;
-    --color-stone-200: #e8e7e2;
-    --color-stone-300: #d6d4cd;
-    --color-stone-400: #a8a69e;
-    --color-stone-500: #7f7d75;
-    --color-stone-600: #62615a;
-    --color-stone-700: #4b4a45;
-    --color-stone-800: #333230;
-    --color-stone-900: #23221f;
-    --color-stone-950: #14140f;
+    --color-stone-50: #faf9f7;
+    --color-stone-100: #f3f2ee;
+    --color-stone-200: #e6e4de;
+    --color-stone-300: #d4d1c9;
+    --color-stone-400: #a3a49f;
+    --color-stone-500: #7b7d80;
+    --color-stone-600: #5c5f66;
+    --color-stone-700: #464a50;
+    --color-stone-800: #2f3338;
+    --color-stone-900: #1e2126;
+    --color-stone-950: #0e1012;
 
-    /* ---- Accent: desaturated clinical blue, the only accent ---- */
-    --color-blue-50: #eef4f8;
-    --color-blue-100: #dde9f1;
-    --color-blue-200: #c2d7e5;
-    --color-blue-300: #9bbbd0;
-    --color-blue-400: #6e9ab5;
-    --color-blue-500: #4a7c99;
-    --color-blue-600: #2e6280;
-    --color-blue-700: #27546d;
-    --color-blue-800: #22475c;
-    --color-blue-900: #1f3c4d;
-    --color-blue-950: #14262f;
+    /* ---- Accent: ONE desaturated clinical teal (60% saturation) --------- */
+    --color-teal-50: #eef7f7;
+    --color-teal-100: #d7eded;
+    --color-teal-200: #b0dbdc;
+    --color-teal-300: #7fc2c4;
+    --color-teal-400: #4da5a8;
+    --color-teal-500: #1c6d70;
+    --color-teal-600: #185b5e;
+    --color-teal-700: #154b4e;
+    --color-teal-800: #133e41;
+    --color-teal-900: #123335;
+    --color-teal-950: #0a1e20;
 
-    /* ---- Status hues: kept semantic, pulled back from neon ---- */
-    --color-emerald-50: #edf3ec;
-    --color-emerald-100: #ddeade;
-    --color-emerald-200: #c3dbc7;
-    --color-emerald-300: #9dc3a5;
-    --color-emerald-400: #6fa47c;
-    --color-emerald-500: #4c8759;
-    --color-emerald-600: #3a6b45;
-    --color-emerald-700: #2f5639;
-    --color-emerald-800: #294630;
-    --color-emerald-900: #223a28;
-    --color-emerald-950: #101f15;
+    /* `blue` is aliased onto the accent so legacy pages stay on-palette
+       instead of reintroducing a second hue. */
+    --color-blue-50: #eef7f7;
+    --color-blue-100: #d7eded;
+    --color-blue-200: #b0dbdc;
+    --color-blue-300: #7fc2c4;
+    --color-blue-400: #4da5a8;
+    --color-blue-500: #1c6d70;
+    --color-blue-600: #185b5e;
+    --color-blue-700: #154b4e;
+    --color-blue-800: #133e41;
+    --color-blue-900: #123335;
+    --color-blue-950: #0a1e20;
 
-    --color-amber-50: #fbf3db;
-    --color-amber-100: #f7ebc6;
-    --color-amber-200: #ecd79b;
-    --color-amber-300: #ddbc6b;
-    --color-amber-400: #c99f42;
-    --color-amber-500: #ab8127;
-    --color-amber-600: #8a6414;
-    --color-amber-700: #6f4f14;
-    --color-amber-800: #5b4118;
-    --color-amber-900: #4a3616;
-    --color-amber-950: #2a1e0a;
+    /* ---- Positive: clinical green, never neon ---- */
+    --color-emerald-50: #eef7f1;
+    --color-emerald-100: #d9eee1;
+    --color-emerald-200: #b3ddc4;
+    --color-emerald-300: #84c5a1;
+    --color-emerald-400: #52a778;
+    --color-emerald-500: #2f7d4f;
+    --color-emerald-600: #276741;
+    --color-emerald-700: #205435;
+    --color-emerald-800: #1b442c;
+    --color-emerald-900: #173725;
+    --color-emerald-950: #0b2015;
 
-    --color-red-50: #fdebec;
-    --color-red-100: #fad9db;
-    --color-red-200: #f3babc;
-    --color-red-300: #e58f93;
-    --color-red-400: #d16a6f;
-    --color-red-500: #b34e53;
-    --color-red-600: #9f2f2d;
-    --color-red-700: #84292a;
-    --color-red-800: #6e2627;
-    --color-red-900: #5c2424;
-    --color-red-950: #330f0f;
+    --color-green-50: #eef7f1;
+    --color-green-100: #d9eee1;
+    --color-green-200: #b3ddc4;
+    --color-green-300: #84c5a1;
+    --color-green-400: #52a778;
+    --color-green-500: #2f7d4f;
+    --color-green-600: #276741;
+    --color-green-700: #205435;
+    --color-green-800: #1b442c;
+    --color-green-900: #173725;
+    --color-green-950: #0b2015;
 
-    --color-rose-50: #fdf0f1;
-    --color-rose-100: #fadfe2;
-    --color-rose-200: #f3c4c9;
-    --color-rose-300: #e59ba4;
-    --color-rose-400: #d1717d;
-    --color-rose-500: #b25460;
-    --color-rose-600: #9a3c49;
-    --color-rose-700: #81323d;
-    --color-rose-800: #6b2c35;
-    --color-rose-900: #5a282f;
-    --color-rose-950: #311015;
+    /* ---- Warning: ochre/amber, legible on its own soft wash ---- */
+    --color-amber-50: #fdf6e6;
+    --color-amber-100: #faecc8;
+    --color-amber-200: #f2d894;
+    --color-amber-300: #e4bd57;
+    --color-amber-400: #c99f2b;
+    --color-amber-500: #8a5a08;
+    --color-amber-600: #754c07;
+    --color-amber-700: #603e07;
+    --color-amber-800: #4f3308;
+    --color-amber-900: #3f2908;
+    --color-amber-950: #241704;
 
-    /* ---- Elevation: diffused, tinted with the canvas hue ---- */
+    /* ---- Critical: brick red, distinguishable from warning for deuteranopes */
+    --color-red-50: #fdeeed;
+    --color-red-100: #fad9d7;
+    --color-red-200: #f2b4b0;
+    --color-red-300: #e58882;
+    --color-red-400: #d25b53;
+    --color-red-500: #a8322c;
+    --color-red-600: #8f2924;
+    --color-red-700: #77221e;
+    --color-red-800: #611d1a;
+    --color-red-900: #501916;
+    --color-red-950: #2c0c0a;
+
+    --color-rose-50: #fdeeed;
+    --color-rose-100: #fad9d7;
+    --color-rose-200: #f2b4b0;
+    --color-rose-300: #e58882;
+    --color-rose-400: #d25b53;
+    --color-rose-500: #a8322c;
+    --color-rose-600: #8f2924;
+    --color-rose-700: #77221e;
+    --color-rose-800: #611d1a;
+    --color-rose-900: #501916;
+    --color-rose-950: #2c0c0a;
+
+    /* ---- Elevation: diffused and tinted with the accent hue -------------
+     | Never pure black — shadows carry the teal so surfaces read as warm
+     | paper, not as cut-outs.
+     */
     --shadow-surface: var(--sg-shadow-surface);
     --shadow-raised: var(--sg-shadow-raised);
     --shadow-float: var(--sg-shadow-float);
-    --shadow-accent: 0 1px 2px rgb(46 98 128 / 0.16);
+    --shadow-accent: 0 1px 2px rgb(28 109 112 / 0.18);
 
     /* ---- z-index scale: systemic layers only ---- */
     --z-index-base: 0;
@@ -198,6 +251,9 @@
 |--------------------------------------------------------------------------
 | `@theme inline` keeps the utilities pointing at the CSS variable instead of
 | baking a literal color, so `bg-surface` / `text-ink` flip with `.dark`.
+|
+| These names are the app's public UI API — pages depend on them, so they are
+| never renamed, only re-valued.
 |
 */
 @theme inline {
@@ -230,73 +286,101 @@
     --color-info-ink: var(--sg-info-ink);
 }
 
+/* ---------------------------------------------------------------------------
+| Light: warm paper canvas, true white surfaces, an ink ramp with real depth.
+|
+|   canvas  #faf9f7  (warm off-white — the "paper")
+|   surface #ffffff  (the sheet that sits on it)
+|   inset   #eeede8  (recessed wells, table headers)
+| ------------------------------------------------------------------------- */
 :root {
-    --sg-canvas: #fbfbfa;
-    --sg-canvas-sunken: #f2f2ef;
+    --sg-canvas: #faf9f7;
+    --sg-canvas-sunken: #f2f1ed;
     --sg-surface: #ffffff;
-    --sg-surface-muted: #f7f7f4;
-    --sg-surface-inset: #efeeea;
-    --sg-surface-hover: #f4f4f1;
-    --sg-line: #e7e6e1;
-    --sg-line-strong: #d8d6d0;
-    --sg-ink: #191a18;
-    --sg-ink-muted: #6b6c67;
-    --sg-ink-subtle: #8b8c85;
+    --sg-surface-muted: #f6f5f2;
+    --sg-surface-inset: #eeede8;
+    --sg-surface-hover: #f3f2ee;
+    --sg-line: #e6e4de;
+    --sg-line-strong: #d4d1c9;
+    --sg-ink: #17181a;
+    --sg-ink-muted: #5c5f66;
+    --sg-ink-subtle: #6c7077;
     --sg-ink-inverse: #fbfbfa;
-    --sg-accent: #2e6280;
-    --sg-accent-hover: #27546d;
-    --sg-accent-soft: #eef4f8;
-    --sg-accent-ink: #2e6280;
-    --sg-positive: #3a6b45;
-    --sg-positive-soft: #edf3ec;
-    --sg-positive-ink: #346538;
-    --sg-warning: #8a6414;
-    --sg-warning-soft: #fbf3db;
-    --sg-warning-ink: #8a5c00;
-    --sg-critical: #9f2f2d;
-    --sg-critical-soft: #fdebec;
-    --sg-critical-ink: #9f2f2d;
-    --sg-info-soft: #eef4f8;
-    --sg-info-ink: #2e6280;
+    --sg-accent: #1c6d70;
+    --sg-accent-hover: #175a5d;
+    --sg-accent-soft: #e8f3f3;
+    --sg-accent-ink: #155a5c;
+    --sg-positive: #2f7d4f;
+    --sg-positive-soft: #e9f4ec;
+    --sg-positive-ink: #20603a;
+    --sg-warning: #8a5a08;
+    --sg-warning-soft: #fcf2dc;
+    --sg-warning-ink: #7d5006;
+    --sg-critical: #a8322c;
+    --sg-critical-soft: #fdecea;
+    --sg-critical-ink: #952420;
+    --sg-info-soft: #e8f3f3;
+    --sg-info-ink: #155a5c;
+    --sg-focus: var(--sg-accent);
     --sg-shadow-surface:
-        0 1px 2px rgb(25 26 24 / 0.04), 0 10px 24px -18px rgb(25 26 24 / 0.16);
+        0 1px 2px rgb(28 109 112 / 0.05),
+        0 10px 24px -18px rgb(28 109 112 / 0.22);
     --sg-shadow-raised:
-        0 1px 2px rgb(25 26 24 / 0.05), 0 16px 36px -22px rgb(25 26 24 / 0.2);
+        0 1px 2px rgb(28 109 112 / 0.06),
+        0 16px 36px -22px rgb(28 109 112 / 0.26);
     --sg-shadow-float:
-        0 2px 6px rgb(25 26 24 / 0.05), 0 32px 64px -28px rgb(25 26 24 / 0.24);
+        0 2px 6px rgb(28 109 112 / 0.06),
+        0 32px 64px -28px rgb(28 109 112 / 0.32);
+    /* Barely-there inner shadow that makes controls feel recessed. */
+    --sg-control-inset: inset 0 1px 1.5px rgb(23 24 26 / 0.045);
+    /* Native <select> arrow, swapped per theme (see ui/Select.tsx). */
+    --sg-select-chevron: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236c7077' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")";
 }
 
+/* ---------------------------------------------------------------------------
+| Dark: genuinely tuned, not inverted. Blue-black canvas (not grey), surfaces
+| that step up by luminance instead of contrast, a lifted ink ramp, and
+| accents that GAIN lightness so they stay legible on the dark canvas.
+|
+|   canvas  #0e1012      surface #15181b      inset #202528
+| ------------------------------------------------------------------------- */
 .dark {
-    --sg-canvas: #121211;
-    --sg-canvas-sunken: #0c0c0b;
-    --sg-surface: #191918;
-    --sg-surface-muted: #1e1e1c;
-    --sg-surface-inset: #242422;
-    --sg-surface-hover: #222220;
-    --sg-line: #2e2e2b;
-    --sg-line-strong: #3d3d39;
-    --sg-ink: #edece7;
-    --sg-ink-muted: #a3a199;
-    --sg-ink-subtle: #7c7d75;
-    --sg-ink-inverse: #14140f;
-    --sg-accent: #7fa8c2;
-    --sg-accent-hover: #9bbfd6;
-    --sg-accent-soft: #16262f;
-    --sg-accent-ink: #9dbfd4;
-    --sg-positive: #8fc49b;
-    --sg-positive-soft: #17251b;
-    --sg-positive-ink: #8fc49b;
-    --sg-warning: #e0be72;
-    --sg-warning-soft: #2b2617;
-    --sg-warning-ink: #e0be72;
-    --sg-critical: #e79b98;
-    --sg-critical-soft: #2e1b1c;
-    --sg-critical-ink: #e79b98;
-    --sg-info-soft: #16262f;
-    --sg-info-ink: #9dbfd4;
-    --sg-shadow-surface: 0 1px 0 rgb(255 255 255 / 0.03);
-    --sg-shadow-raised: 0 1px 0 rgb(255 255 255 / 0.04);
-    --sg-shadow-float: 0 24px 64px -32px rgb(0 0 0 / 0.8);
+    --sg-canvas: #0e1012;
+    --sg-canvas-sunken: #08090a;
+    --sg-surface: #15181b;
+    --sg-surface-muted: #1a1e21;
+    --sg-surface-inset: #202528;
+    --sg-surface-hover: #1d2225;
+    --sg-line: #282d31;
+    --sg-line-strong: #3a4046;
+    --sg-ink: #e9eaec;
+    --sg-ink-muted: #a2a7ad;
+    --sg-ink-subtle: #7d838a;
+    --sg-ink-inverse: #101214;
+    --sg-accent: #62b6b8;
+    --sg-accent-hover: #84c9cb;
+    --sg-accent-soft: #0f2729;
+    --sg-accent-ink: #8dcfd1;
+    --sg-positive: #5fbe86;
+    --sg-positive-soft: #0e2418;
+    --sg-positive-ink: #8ad3a6;
+    --sg-warning: #d9a441;
+    --sg-warning-soft: #2a2110;
+    --sg-warning-ink: #e6bd6a;
+    --sg-critical: #e5827c;
+    --sg-critical-soft: #2b1513;
+    --sg-critical-ink: #f0a29d;
+    --sg-info-soft: #0f2729;
+    --sg-info-ink: #8dcfd1;
+    --sg-focus: var(--sg-accent);
+    --sg-shadow-surface:
+        0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -16px rgb(0 0 0 / 0.55);
+    --sg-shadow-raised:
+        0 1px 2px rgb(0 0 0 / 0.45), 0 16px 40px -22px rgb(0 0 0 / 0.65);
+    --sg-shadow-float:
+        0 2px 8px rgb(0 0 0 / 0.5), 0 32px 70px -30px rgb(0 0 0 / 0.8);
+    --sg-control-inset: inset 0 1px 1.5px rgb(0 0 0 / 0.35);
+    --sg-select-chevron: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237d838a' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")";
 }
 
 @layer base {
@@ -314,9 +398,22 @@
     body {
         background-color: var(--sg-canvas);
         color: var(--sg-ink);
-        font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss01';
+        font-family: var(--font-sans);
+        /* Inter's open digits/letters plus the stylistic alternates that give
+           it the tighter, more editorial feel X uses. */
+        font-feature-settings:
+            'cv02' 1,
+            'cv03' 1,
+            'cv04' 1,
+            'cv11' 1,
+            'ss01' 1;
+        font-optical-sizing: auto;
+        line-height: 1.5;
+        letter-spacing: -0.006em;
         text-rendering: optimizeLegibility;
         -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-synthesis-weight: none;
     }
 
     /* Film grain: fixed, non-interactive, one layer for the whole app. */
@@ -334,6 +431,8 @@
         opacity: 0.03;
     }
 
+    /* X-like display type: large titles carry tighter tracking, small text
+       keeps a normal rhythm. Never tighter than -0.025em or Inter clogs. */
     h1,
     h2,
     h3,
@@ -341,11 +440,29 @@
         font-family: var(--font-display);
         color: var(--sg-ink);
         text-wrap: balance;
-        letter-spacing: -0.021em;
+        letter-spacing: -0.02em;
     }
 
+    h1 {
+        letter-spacing: -0.025em;
+        line-height: 1.15;
+    }
+
+    h2 {
+        letter-spacing: -0.022em;
+        line-height: 1.25;
+    }
+
+    h3,
+    h4 {
+        letter-spacing: -0.014em;
+        line-height: 1.3;
+    }
+
+    /* Comfortable body copy without loosening dense clinical tables. */
     p {
         text-wrap: pretty;
+        line-height: 1.6;
     }
 
     /* Numbers in dense clinical tables must line up. */
@@ -359,9 +476,36 @@
         color: var(--sg-accent-ink);
     }
 
+    /* One global focus treatment: the accent, 2px, offset 2px. Components may
+       restyle it but must keep the geometry. */
     :focus-visible {
-        outline: 2px solid var(--sg-accent);
+        outline: 2px solid var(--sg-focus);
         outline-offset: 2px;
+        border-radius: 2px;
+    }
+
+    /* Skip link — keyboard users land here first (rendered by AppLayout). */
+    .sg-skip-link {
+        position: fixed;
+        top: 0.5rem;
+        left: 0.5rem;
+        z-index: 80;
+        display: inline-flex;
+        align-items: center;
+        height: 2.25rem;
+        padding-inline: 0.875rem;
+        border-radius: var(--radius-md);
+        background-color: var(--sg-accent);
+        color: var(--sg-ink-inverse);
+        font-size: 0.8125rem;
+        font-weight: 600;
+        transform: translateY(-200%);
+        transition: transform 180ms var(--ease-premium);
+    }
+
+    .sg-skip-link:focus-visible {
+        transform: translateY(0);
+        outline-color: var(--sg-ink);
     }
 
     * {
@@ -412,6 +556,17 @@
         }
     }
 
+    @keyframes sg-scale-in {
+        from {
+            opacity: 0;
+            transform: translateY(-4px) scale(0.985);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
     @keyframes sg-sheen {
         from {
             transform: translateX(-100%);
@@ -427,6 +582,12 @@
 
     .animate-fade-in {
         animation: sg-fade-in 480ms var(--ease-premium) both;
+    }
+
+    /* Dropdown / popover entry — transform + opacity only. */
+    .animate-pop-in {
+        animation: sg-scale-in 180ms var(--ease-premium) both;
+        transform-origin: top right;
     }
 
     /* Staggered lists: set `--i` on children. */
@@ -483,6 +644,11 @@
 
     .text-pretty {
         text-wrap: pretty;
+    }
+
+    /* Tabular figures for anything numeric: money, dosages, counts. */
+    .tabular-nums {
+        font-variant-numeric: tabular-nums;
     }
 }
 

@@ -50,7 +50,6 @@ export default function LandlordRolesCreate({
                     description={t('defineNewLandlordRole')}
                     icon={ShieldCheckIcon}
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/' },
                         { label: 'Roles', href: '/landlord-roles' },
                         { label: t('createRole') },
                     ]}

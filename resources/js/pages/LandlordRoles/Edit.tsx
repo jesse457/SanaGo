@@ -59,7 +59,6 @@ export default function LandlordRolesEdit({
                     description="Rename this role or adjust the permissions its members inherit."
                     icon={ShieldCheckIcon}
                     breadcrumbs={[
-                        { label: t('common.home'), href: '/' },
                         { label: 'Roles', href: '/landlord-roles' },
                         { label: role.name },
                     ]}

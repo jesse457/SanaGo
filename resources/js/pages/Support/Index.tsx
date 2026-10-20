@@ -1,7 +1,6 @@
 import { PlusIcon, TicketIcon } from '@heroicons/react/24/outline';
 import { Head } from '@inertiajs/react';
 import { Button, EmptyState, PageHeader } from '@/Components/ui';
-import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 import { TicketTable } from './components/TicketTable';
 
@@ -15,8 +14,6 @@ interface Ticket {
 }
 
 export default function SupportIndex({ tickets }: { tickets: Ticket[] }) {
-    const { t } = useTranslation();
-
     return (
         <AppLayout
             headerTitle="Support"
@@ -29,10 +26,7 @@ export default function SupportIndex({ tickets }: { tickets: Ticket[] }) {
                     eyebrow="Help desk"
                     description="Every ticket you have raised, and the conversation attached to it."
                     icon={TicketIcon}
-                    breadcrumbs={[
-                        { label: t('common.home'), href: '/dashboard' },
-                        { label: 'Support' },
-                    ]}
+                    breadcrumbs={[{ label: 'Support' }]}
                     actions={
                         <Button href="/support/create" icon={PlusIcon}>
                             New ticket

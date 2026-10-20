@@ -68,7 +68,6 @@ export default function EmergencyShow({ emergency }: Props) {
                     title={title}
                     description={t('caseDetails')}
                     breadcrumbs={[
-                        { label: t('common.home'), href: route('dashboard') },
                         {
                             label: t('emergencies'),
                             href: route('emergencies.index'),
