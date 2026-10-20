@@ -3,6 +3,7 @@ import {
     ArrowUpRightIcon,
 } from '@heroicons/react/24/outline';
 import type { ComponentType, ReactNode, SVGProps } from 'react';
+import { resolveIconNode } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 
 export type StatTone =
@@ -23,7 +24,8 @@ export interface StatTrend {
 export interface StatCardProps {
     label: string;
     value: ReactNode;
-    icon?: ComponentType<SVGProps<SVGSVGElement>>;
+    /** An icon component, or an already-built icon node. */
+    icon?: ComponentType<SVGProps<SVGSVGElement>> | ReactNode;
     tone?: StatTone;
     trend?: StatTrend;
     hint?: ReactNode;
@@ -46,7 +48,7 @@ const toneIcon: Record<StatTone, string> = {
 export function StatCard({
     label,
     value,
-    icon: Icon,
+    icon,
     tone = 'neutral',
     trend,
     hint,
@@ -63,6 +65,8 @@ export function StatCard({
     const TrendIcon =
         trend?.direction === 'down' ? ArrowDownRightIcon : ArrowUpRightIcon;
 
+    const iconNode = resolveIconNode(icon, 'h-4 w-4');
+
     return (
         <div
             className={cn(
@@ -74,14 +78,14 @@ export function StatCard({
                 <p className="text-[10.5px] font-semibold tracking-[0.13em] text-ink-subtle uppercase">
                     {label}
                 </p>
-                {Icon && (
+                {iconNode && (
                     <span
                         className={cn(
                             'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
                             toneIcon[tone],
                         )}
                     >
-                        <Icon className="h-4 w-4" />
+                        {iconNode}
                     </span>
                 )}
             </div>

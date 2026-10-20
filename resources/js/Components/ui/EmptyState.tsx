@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import type { ComponentType, ReactNode, SVGProps } from 'react';
+import { resolveIconNode } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 
 export interface EmptyStateAction {
@@ -33,19 +34,7 @@ export function EmptyState({
     className,
     panel = true,
 }: EmptyStateProps) {
-    const iconNode = (() => {
-        if (!icon) {
-            return null;
-        }
-
-        if (typeof icon === 'function') {
-            const Icon = icon as ComponentType<SVGProps<SVGSVGElement>>;
-
-            return <Icon className="h-5 w-5" />;
-        }
-
-        return icon;
-    })();
+    const iconNode = resolveIconNode(icon, 'h-5 w-5');
 
     const actionNode = (() => {
         if (!action) {

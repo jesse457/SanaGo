@@ -32,7 +32,7 @@ export default function PageSection({
         <SectionCard
             title={title}
             description={description}
-            icon={icon as ComponentType<SVGProps<SVGSVGElement>>}
+            icon={icon}
             actions={actions}
             footer={footer}
             className={className}

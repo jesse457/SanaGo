@@ -9,15 +9,17 @@ export interface LabRequestRow {
     status: string;
     request_date?: string;
     result_date?: string;
+    /** Null when the patient record was removed after the request was filed. */
     patient: {
         first_name: string;
         last_name: string;
         patient_uid?: string;
-    };
+    } | null;
+    /** Null when the test definition was deleted from the catalogue. */
     test_definition: {
         test_name: string;
         code?: string;
-    };
+    } | null;
 }
 
 export function formatLabDate(value?: string | null): string {
@@ -25,7 +27,21 @@ export function formatLabDate(value?: string | null): string {
 }
 
 export function labPatientName(request: LabRequestRow): string {
-    return `${request.patient.first_name} ${request.patient.last_name}`;
+    const patient = request.patient;
+
+    if (!patient) {
+        return '—';
+    }
+
+    return `${patient.first_name} ${patient.last_name}`.trim() || '—';
+}
+
+export function labPatientUid(request: LabRequestRow): string | undefined {
+    return request.patient?.patient_uid ?? undefined;
+}
+
+export function labTestName(request: LabRequestRow): string {
+    return request.test_definition?.test_name ?? '—';
 }
 
 /** Patient identity block — name over a monospaced health id. */
@@ -42,7 +58,7 @@ export function LabPatientIdentity({
                 {labPatientName(request)}
             </div>
             <div className="truncate font-mono text-[10.5px] text-ink-subtle">
-                {request.patient.patient_uid ?? '—'}
+                {labPatientUid(request) ?? '—'}
             </div>
         </div>
     );
@@ -61,14 +77,16 @@ export function LabPatientIdentity({
 
 /** Test definition block — name plus its quiet code. */
 export function LabTestIdentity({ request }: { request: LabRequestRow }) {
+    const code = request.test_definition?.code;
+
     return (
         <div className="min-w-0">
             <div className="truncate text-[13px] font-medium text-ink">
-                {request.test_definition.test_name}
+                {labTestName(request)}
             </div>
-            {request.test_definition.code && (
+            {code && (
                 <div className="truncate text-[10.5px] tracking-[0.08em] text-ink-subtle uppercase">
-                    {request.test_definition.code}
+                    {code}
                 </div>
             )}
         </div>
@@ -109,14 +127,14 @@ export function LabRequestCard({
                 {labPatientName(request)}
             </h3>
             <p className="mt-0.5 truncate font-mono text-[10.5px] text-ink-subtle">
-                {request.patient.patient_uid ?? '—'}
+                {labPatientUid(request) ?? '—'}
             </p>
 
             <div className="mt-3.5 rounded-lg bg-surface-muted px-3.5 py-2.5">
                 <div className="truncate text-[13px] font-medium text-ink">
-                    {request.test_definition.test_name}
+                    {labTestName(request)}
                 </div>
-                {request.test_definition.code && (
+                {request.test_definition?.code && (
                     <div className="mt-0.5 text-[10px] tracking-[0.1em] text-ink-subtle uppercase">
                         {request.test_definition.code}
                     </div>

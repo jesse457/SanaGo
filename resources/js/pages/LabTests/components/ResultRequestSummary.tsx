@@ -37,11 +37,12 @@ export function CollectionStatusBadge({
 }
 
 interface ResultRequestSummaryProps {
+    /** Null when the patient record was removed after the request was filed. */
     patient: {
         first_name: string;
         last_name: string;
         patient_uid?: string;
-    };
+    } | null;
     testName: string;
     status: string;
     labels: {
@@ -62,7 +63,9 @@ export function ResultRequestSummary({
     status,
     labels,
 }: ResultRequestSummaryProps) {
-    const patientName = `${patient.first_name} ${patient.last_name}`;
+    const patientName = patient
+        ? `${patient.first_name} ${patient.last_name}`.trim() || '—'
+        : '—';
 
     return (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -76,7 +79,7 @@ export function ResultRequestSummary({
                         {patientName}
                     </p>
                     <p className="truncate font-mono text-[10.5px] text-ink-subtle">
-                        {patient.patient_uid ?? '—'}
+                        {patient?.patient_uid ?? '—'}
                     </p>
                 </div>
             </div>

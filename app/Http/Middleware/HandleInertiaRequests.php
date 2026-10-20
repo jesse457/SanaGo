@@ -71,11 +71,29 @@ class HandleInertiaRequests extends Middleware
     /**
      * Translation dictionary for the active locale.
      *
-     * @return array<string, string>
+     * English is the fallback layer: a key that is not translated yet keeps its
+     * English copy instead of surfacing as `page.some.dotted.key` in the UI.
+     *
+     * @return array<string, mixed>
      */
     private function translations(): array
     {
-        $path = lang_path(app()->getLocale().'.json');
+        $locale = app()->getLocale();
+        $english = $this->readTranslations('en');
+
+        if ($locale === 'en') {
+            return $english;
+        }
+
+        return array_replace_recursive($english, $this->readTranslations($locale));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function readTranslations(string $locale): array
+    {
+        $path = lang_path("{$locale}.json");
 
         if (! File::exists($path)) {
             return [];

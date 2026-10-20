@@ -23,7 +23,9 @@ function resolveNestedKey(
     key: string,
     translations: Translations,
 ): string | undefined {
-    // Try exact path first
+    // Try exact path first. Only a string is a usable translation: a namespace
+    // that happens to share the key's name (e.g. `finance` is a label in one
+    // locale and an object in another) must never be rendered as a child.
     const result = key.split('.').reduce((obj, segment) => {
         if (obj && typeof obj === 'object' && segment in obj) {
             return obj[segment];
@@ -32,7 +34,7 @@ function resolveNestedKey(
         return undefined;
     }, translations as any);
 
-    if (result !== undefined) {
+    if (typeof result === 'string') {
         return result;
     }
 
@@ -40,13 +42,13 @@ function resolveNestedKey(
     if (!key.includes('.')) {
         const g = (translations as any)?.general;
 
-        if (g && key in g) {
+        if (g && typeof g[key] === 'string') {
             return g[key];
         }
 
         const c = (translations as any)?.common;
 
-        if (c && key in c) {
+        if (c && typeof c[key] === 'string') {
             return c[key];
         }
     }

@@ -35,7 +35,7 @@ export default function StatCard({
 }: StatCardProps) {
     return (
         <UiStatCard
-            icon={icon as ComponentType<SVGProps<SVGSVGElement>>}
+            icon={icon}
             label={label}
             value={value}
             tone={toneByColor[color]}

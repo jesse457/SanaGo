@@ -33,6 +33,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 import {
     formatLabDate,
+    labTestName,
     LabPatientIdentity,
     LabRequestTableRow,
 } from '@/pages/LabTests/components/LabRequestCard';
@@ -79,9 +80,9 @@ function ResultsArchiveCard({
                 <BeakerIcon className="h-4 w-4 shrink-0 text-accent" />
                 <div className="min-w-0">
                     <div className="truncate text-[13px] font-medium text-ink">
-                        {result.test_definition.test_name}
+                        {labTestName(result)}
                     </div>
-                    {result.test_definition.code && (
+                    {result.test_definition?.code && (
                         <div className="mt-0.5 text-[10px] tracking-[0.1em] text-ink-subtle uppercase">
                             {result.test_definition.code}
                         </div>

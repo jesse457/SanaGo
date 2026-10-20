@@ -125,7 +125,7 @@ export default function PatientInsurancesCreate({
                     title={pageTitle}
                     description={t('connectPatientToInsurancePolicy')}
                     breadcrumbs={[
-                        { label: t('finance') },
+                        { label: t('finance.breadcrumb', 'Finance') },
                         { label: t('patientInsurances') },
                         { label: isEdit ? t('edit') : t('new') },
                     ]}

@@ -181,8 +181,8 @@ export default function EnterResults({ labRequest, labResult, isEdit }: Props) {
                 />
 
                 <ResultRequestSummary
-                    patient={labRequest.patient}
-                    testName={labRequest.test_definition.test_name}
+                    patient={labRequest.patient ?? null}
+                    testName={labRequest.test_definition?.test_name ?? '—'}
                     status={labRequest.status}
                     labels={{
                         patient: t('lab_tests.results.enter.subject_patient'),

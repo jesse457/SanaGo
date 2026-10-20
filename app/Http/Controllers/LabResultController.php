@@ -31,7 +31,8 @@ class LabResultController extends Controller
             $query->where('status', $request->status);
         }
 
-        $results = $query->latest('result_date')->paginate(10)->withQueryString();
+        $results = $query->latest('result_date')->paginate(10)->withQueryString()
+            ->through(fn (LabResult $result): array => $this->toRow($result));
 
         return Inertia::render('LabTests/Results/Index', [
             'results' => $results,
@@ -93,5 +94,42 @@ class LabResultController extends Controller
         $result->delete();
 
         return redirect()->back()->with('success', 'Result record removed.');
+    }
+
+    /**
+     * Flatten a result into the row the archive renders.
+     *
+     * The page speaks in the same vocabulary as the request queue
+     * (`patient` / `test_definition` at the top level), so the nested
+     * `lab_request` relation is projected here rather than in the React tree.
+     * Both relations are nullable: a removed patient must not break the
+     * archive, it just renders a placeholder.
+     *
+     * @return array<string, mixed>
+     */
+    private function toRow(LabResult $result): array
+    {
+        $labRequest = $result->labRequest;
+        $patient = $labRequest?->patient;
+        $test = $labRequest?->testDefinition;
+
+        return [
+            'id' => $result->id,
+            'lab_request_id' => $result->lab_request_id,
+            'status' => $result->status?->value,
+            'request_date' => $labRequest?->request_date?->toDateString(),
+            'result_date' => $result->result_date?->toDateString(),
+            'patient' => $patient === null ? null : [
+                'id' => $patient->id,
+                'first_name' => $patient->first_name,
+                'last_name' => $patient->last_name,
+                'patient_uid' => $patient->patient_uid,
+            ],
+            'test_definition' => $test === null ? null : [
+                'id' => $test->id,
+                'test_name' => $test->test_name,
+                'code' => $test->code,
+            ],
+        ];
     }
 }

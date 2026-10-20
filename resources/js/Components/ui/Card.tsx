@@ -1,4 +1,5 @@
 import type { ComponentType, HTMLAttributes, ReactNode } from 'react';
+import { resolveIconNode } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 
 type DivProps = HTMLAttributes<HTMLDivElement>;
@@ -123,7 +124,8 @@ export function CardFooter({
 interface SectionCardProps {
     title?: string;
     description?: string;
-    icon?: ComponentType<React.SVGProps<SVGSVGElement>>;
+    /** An icon component, or an already-built icon node. */
+    icon?: ComponentType<React.SVGProps<SVGSVGElement>> | ReactNode;
     actions?: ReactNode;
     footer?: ReactNode;
     children: ReactNode;
@@ -138,13 +140,15 @@ interface SectionCardProps {
 export function SectionCard({
     title,
     description,
-    icon: Icon,
+    icon,
     actions,
     footer,
     children,
     className,
     contentClassName,
 }: SectionCardProps) {
+    const iconNode = resolveIconNode(icon, 'h-[18px] w-[18px]');
+
     return (
         <Card className={className}>
             {title && (
@@ -153,9 +157,9 @@ export function SectionCard({
                     className="gap-3 px-5 py-4 sm:px-6"
                 >
                     <div className="flex items-center gap-3">
-                        {Icon && (
+                        {iconNode && (
                             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-muted text-accent">
-                                <Icon className="h-[18px] w-[18px]" />
+                                {iconNode}
                             </span>
                         )}
                         <div className="min-w-0">

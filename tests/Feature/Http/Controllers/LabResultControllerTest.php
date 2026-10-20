@@ -31,6 +31,34 @@ it('renders the results index', function () {
         ->assertOk()->assertInertia(fn ($p) => $p->component('LabTests/Results/Index'));
 });
 
+it('flattens patient and test definition onto each result row', function () {
+    $request = LabRequest::factory()->create();
+    LabResult::factory()->for($request)->create();
+
+    $this->actingAs($this->labTech)->get(route('results.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('LabTests/Results/Index')
+            ->has('results.data', 1)
+            ->where('results.data.0.patient.first_name', $request->patient->first_name)
+            ->where('results.data.0.patient.last_name', $request->patient->last_name)
+            ->where('results.data.0.patient.patient_uid', $request->patient->patient_uid)
+            ->where('results.data.0.test_definition.test_name', $request->testDefinition->test_name)
+            ->where('results.data.0.test_definition.code', $request->testDefinition->code)
+            ->where('results.data.0.lab_request_id', $request->id)
+            ->has('results.data.0.status'));
+});
+
+it('sends the result status as a plain string', function () {
+    $result = LabResult::factory()->normal()->create();
+
+    $this->actingAs($this->labTech)->get(route('results.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('results.data.0.status', LabResultStatus::NORMAL->value)
+            ->where('results.data.0.id', $result->id));
+});
+
 it('creates a lab result', function () {
     $request = LabRequest::factory()->create();
     $this->actingAs($this->labTech)->post(route('results.store'), [
