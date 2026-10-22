@@ -85,7 +85,17 @@ Route::middleware([InitializeTenancyBySubdomainGraceful::class])->group(function
     // Shared authenticated routes (work in both central and tenant contexts)
     Route::middleware(['auth'])->group(function () {
         Route::get('/profile', fn () => Inertia::render('Profile/Show'))->name('profile');
-        Route::get('/settings', fn () => Inertia::render('Settings/Index'))->name('settings');
+        Route::get('/settings', function () {
+            // Landlord accounts do not have hospital settings; their real
+            // settings live in the platform console and are permission-gated.
+            if (tenant() === null) {
+                abort_unless(auth()->user()?->can('manage-platform-settings'), 403);
+
+                return redirect()->route('platform.settings');
+            }
+
+            return Inertia::render('Settings/Index');
+        })->name('settings');
     });
 });
 

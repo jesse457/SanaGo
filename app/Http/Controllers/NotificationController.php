@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -19,8 +20,10 @@ class NotificationController extends Controller
         $user = auth()->user();
 
         $notifications = $user->notifications()
-            ->when(! $user->can('view-finance'), function ($q) {
-                // Non-admin users only see clinical notifications
+            ->when(tenant() !== null && ! $user->can('view-finance'), function ($q) {
+                // Inside a hospital, non-finance users only see clinical
+                // notifications. The landlord console has no tenant
+                // permissions, so its platform/billing feed is never filtered.
                 $q->whereIn('data->category', ['clinical', 'lab', 'pharmacy', 'radiology', 'general']);
             })
             ->orderBy('created_at', 'desc')
@@ -43,12 +46,18 @@ class NotificationController extends Controller
     /**
      * Mark a single notification as read.
      */
-    public function markRead(string $id): JsonResponse
+    public function markRead(Request $request, string $id): JsonResponse|RedirectResponse
     {
         $notification = auth()->user()->notifications()->where('id', $id)->firstOrFail();
         $notification->markAsRead();
 
-        return response()->json(['ok' => true]);
+        // Inertia visits need a redirect so the page props refresh; the bell
+        // dropdown and tests call this endpoint as JSON instead.
+        if ($request->expectsJson() && ! $request->header('X-Inertia')) {
+            return response()->json(['ok' => true]);
+        }
+
+        return back();
     }
 
     /**
@@ -69,7 +78,7 @@ class NotificationController extends Controller
         $user = auth()->user();
 
         $notifications = $user->unreadNotifications()
-            ->when(! $user->can('view-finance'), function ($q) {
+            ->when(tenant() !== null && ! $user->can('view-finance'), function ($q) {
                 $q->whereIn('data->category', ['clinical', 'lab', 'pharmacy', 'radiology', 'general']);
             })
             ->orderBy('created_at', 'desc')

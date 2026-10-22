@@ -134,16 +134,11 @@ Route::middleware([
             Route::post('prescriptions/{prescription}/dispense', [PrescriptionController::class, 'dispense'])
                 ->name('prescriptions.dispense');
 
-            // Medical Certificates (Cameroon specific)
+            // Medical Certificates (Cameroon specific) — one entry point, the
+            // certificate type is chosen inside the form.
             Route::prefix('certificates')->group(function () {
-                Route::get('/sick-leave', [CertificateController::class, 'createSickLeave'])->name('certificates.sick-leave.create');
-                Route::post('/sick-leave', [CertificateController::class, 'storeSickLeave'])->name('certificates.sick-leave.store');
-
-                Route::get('/medical', [CertificateController::class, 'createMedical'])->name('certificates.medical.create');
-                Route::post('/medical', [CertificateController::class, 'storeMedical'])->name('certificates.medical.store');
-
-                Route::get('/death', [CertificateController::class, 'createDeath'])->name('certificates.death.create');
-                Route::post('/death', [CertificateController::class, 'storeDeath'])->name('certificates.death.store');
+                Route::get('/', [CertificateController::class, 'create'])->name('certificates.create');
+                Route::post('/', [CertificateController::class, 'store'])->name('certificates.store');
 
                 Route::get('/{certificate}/print', [CertificateController::class, 'print'])->name('certificates.print');
             });
@@ -186,6 +181,14 @@ Route::middleware([
                     'show' => 'radiology.requests.show',
                 ]);
                 Route::get('/requests/{request}/print', [RadiologyRequestController::class, 'print'])->name('radiology.requests.print');
+
+                Route::resource('results', RadiologyResultController::class)->except(['show', 'destroy'])->names([
+                    'index' => 'radiology.results.index',
+                    'create' => 'radiology.results.create',
+                    'store' => 'radiology.results.store',
+                    'edit' => 'radiology.results.edit',
+                    'update' => 'radiology.results.update',
+                ]);
             });
 
             Route::middleware('can:validate-radiology')->group(function () {

@@ -215,6 +215,7 @@ const SidebarNav = memo(function SidebarNav({
     onToggleCategory,
     platformName,
     currency,
+    canManagePlatformSettings,
 }: {
     isOpen: boolean;
     isActive: (href: string) => boolean;
@@ -222,6 +223,7 @@ const SidebarNav = memo(function SidebarNav({
     onToggleCategory: (category: string) => void;
     platformName: string;
     currency: string;
+    canManagePlatformSettings: boolean;
 }) {
     const { t } = useTranslation();
     const isCategoryOpen = (cat: string) => !!openCategories[cat];
@@ -338,39 +340,41 @@ const SidebarNav = memo(function SidebarNav({
                 </div>
             )}
 
-            <div className="space-y-0.5 border-t border-line p-2.5">
-                <NavLink
-                    href="/settings"
-                    isActive={isActive('/settings')}
-                    variant="sidebar"
-                    linkComponent={(linkProps) => (
-                        <Link
-                            href={linkProps.href}
-                            prefetch
-                            className={linkProps.className}
-                        >
-                            {linkProps.children}
-                        </Link>
-                    )}
-                >
-                    {({ isActive: settingsActive }) => (
-                        <>
-                            <Cog6ToothIcon
-                                className={`h-[17px] w-[17px] shrink-0 transition-colors ${
-                                    settingsActive
-                                        ? 'text-accent'
-                                        : 'text-ink-subtle group-hover:text-ink-muted'
-                                }`}
-                            />
-                            {isOpen && (
-                                <span className="truncate text-[12.5px]">
-                                    {t('nav.settings')}
-                                </span>
-                            )}
-                        </>
-                    )}
-                </NavLink>
-            </div>
+            {canManagePlatformSettings && (
+                <div className="space-y-0.5 border-t border-line p-2.5">
+                    <NavLink
+                        href="/platform/settings"
+                        isActive={isActive('/platform/settings')}
+                        variant="sidebar"
+                        linkComponent={(linkProps) => (
+                            <Link
+                                href={linkProps.href}
+                                prefetch
+                                className={linkProps.className}
+                            >
+                                {linkProps.children}
+                            </Link>
+                        )}
+                    >
+                        {({ isActive: settingsActive }) => (
+                            <>
+                                <Cog6ToothIcon
+                                    className={`h-[17px] w-[17px] shrink-0 transition-colors ${
+                                        settingsActive
+                                            ? 'text-accent'
+                                            : 'text-ink-subtle group-hover:text-ink-muted'
+                                    }`}
+                                />
+                                {isOpen && (
+                                    <span className="truncate text-[12.5px]">
+                                        {t('nav.settings')}
+                                    </span>
+                                )}
+                            </>
+                        )}
+                    </NavLink>
+                </div>
+            )}
         </>
     );
 });
@@ -532,9 +536,11 @@ const NotificationsDropdown = memo(function NotificationsDropdown({
 
 const UserMenuDropdown = memo(function UserMenuDropdown({
     user,
+    canManagePlatformSettings,
     onClose,
 }: {
     user: User | null;
+    canManagePlatformSettings: boolean;
     onClose: () => void;
 }) {
     const { t } = useTranslation();
@@ -544,6 +550,8 @@ const UserMenuDropdown = memo(function UserMenuDropdown({
             user={user}
             role="super-admin"
             roleLabel={t('nav.super_admin')}
+            settingsHref="/platform/settings"
+            showSettings={canManagePlatformSettings}
             labels={{
                 profile: t('nav.my_profile'),
                 profileDescription: t('nav.profile_description'),
@@ -569,6 +577,10 @@ export default function SuperAdminLayout({
     const { t } = useTranslation();
     const resolvedTitle = headerTitle ?? t('nav.dashboard');
     const user = (props.auth as any)?.user as User | null;
+    const permissions: string[] = (props.auth as any)?.user?.permissions ?? [];
+    const canManagePlatformSettings = permissions.includes(
+        'manage-platform-settings',
+    );
 
     // `platform` is the shared platform-context prop. It is not part of
     // HandleInertiaRequests yet, so the fallbacks below keep the shell honest
@@ -747,6 +759,7 @@ export default function SuperAdminLayout({
                         onToggleCategory={toggleCategory}
                         platformName={platformName}
                         currency={currency}
+                        canManagePlatformSettings={canManagePlatformSettings}
                     />
                 </aside>
 
@@ -763,6 +776,7 @@ export default function SuperAdminLayout({
                         onToggleCategory={toggleCategory}
                         platformName={platformName}
                         currency={currency}
+                        canManagePlatformSettings={canManagePlatformSettings}
                     />
                     <button
                         type="button"
@@ -891,6 +905,9 @@ export default function SuperAdminLayout({
                                     {userMenuOpen && (
                                         <UserMenuDropdown
                                             user={user}
+                                            canManagePlatformSettings={
+                                                canManagePlatformSettings
+                                            }
                                             onClose={closeAllDropdowns}
                                         />
                                     )}

@@ -25,7 +25,7 @@ import {
 } from '@/Components/ui';
 import type { TabItem } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
-import AppLayout from '@/Layouts/AppLayout';
+import ContextLayout from '@/Layouts/ContextLayout';
 
 type SettingsTab =
     | 'general'
@@ -77,7 +77,7 @@ export default function SystemSettings() {
     });
 
     return (
-        <AppLayout
+        <ContextLayout
             headerTitle={t('page.settings.title')}
             headerSubtitle={t('page.settings.subtitle')}
         >
@@ -347,6 +347,6 @@ export default function SystemSettings() {
                     </Button>
                 </div>
             </div>
-        </AppLayout>
+        </ContextLayout>
     );
 }

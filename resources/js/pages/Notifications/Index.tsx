@@ -6,7 +6,7 @@ import {
     DocumentTextIcon,
     PhotoIcon,
 } from '@heroicons/react/24/outline';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import type { ComponentType, SVGProps } from 'react';
 import { Pagination } from '@/Components/Pagination';
@@ -22,7 +22,7 @@ import {
 } from '@/Components/ui';
 import type { BadgeTone } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
-import AppLayout from '@/Layouts/AppLayout';
+import ContextLayout from '@/Layouts/ContextLayout';
 
 interface NotificationItem {
     id: string;
@@ -73,7 +73,19 @@ export default function NotificationsIndex({
     unreadCount,
 }: Props) {
     const { t } = useTranslation();
+    const { props } = usePage();
+    const isLandlord = Boolean((props as { isLandlord?: boolean }).isLandlord);
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
+
+    const markReadRoute = (id: string) =>
+        isLandlord
+            ? route('landlord.notifications.read', id)
+            : route('notifications.read', id);
+
+    const markAllReadRoute = () =>
+        isLandlord
+            ? route('landlord.notifications.mark-all-read')
+            : route('notifications.mark-all-read');
 
     const filtered =
         filter === 'unread'
@@ -82,7 +94,7 @@ export default function NotificationsIndex({
 
     const handleMarkRead = (id: string) => {
         router.post(
-            route('notifications.read', id),
+            markReadRoute(id),
             {},
             {
                 preserveScroll: true,
@@ -93,7 +105,7 @@ export default function NotificationsIndex({
 
     const handleMarkAllRead = () => {
         router.post(
-            route('notifications.mark-all-read'),
+            markAllReadRoute(),
             {},
             {
                 preserveScroll: true,
@@ -102,7 +114,7 @@ export default function NotificationsIndex({
     };
 
     return (
-        <AppLayout
+        <ContextLayout
             headerTitle={t('Notifications')}
             headerSubtitle={t(
                 'Stay updated on patient care, lab results, and system events',
@@ -258,6 +270,6 @@ export default function NotificationsIndex({
                     }}
                 />
             </div>
-        </AppLayout>
+        </ContextLayout>
     );
 }

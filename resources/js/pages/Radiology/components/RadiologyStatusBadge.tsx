@@ -8,6 +8,17 @@ const REQUEST_STATUS_TONES: Record<string, BadgeTone> = {
     validated: 'accent',
 };
 
+/**
+ * Status → translation key, so a badge label always matches the option a user
+ * picked in the report form.
+ */
+export const RADIOLOGY_STATUS_LABEL_KEYS: Record<string, string> = {
+    pending: 'radiology.status.pending',
+    in_progress: 'radiology.status.in_progress',
+    completed: 'radiology.status.completed',
+    validated: 'radiology.status.validated',
+};
+
 interface RadiologyStatusBadgeProps {
     /** Raw enum value, e.g. `in_progress`. */
     status: string;
@@ -27,7 +38,7 @@ export function RadiologyStatusBadge({
 }: RadiologyStatusBadgeProps) {
     return (
         <Badge tone={REQUEST_STATUS_TONES[status] ?? 'neutral'} dot={dot}>
-            {label ?? status}
+            {label ?? status.replace(/_/g, ' ')}
         </Badge>
     );
 }

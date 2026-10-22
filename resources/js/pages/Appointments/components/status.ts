@@ -1,42 +1,31 @@
 import type { BadgeTone } from '@/Components/ui';
 
-/** Appointment statuses are title-cased on the index/booking screens. */
+/** Appointment statuses are stored as the lowercase Enum values. */
 export type AppointmentStatus =
-    | 'Scheduled'
-    | 'Waiting'
-    | 'In Consultation'
-    | 'Completed'
-    | 'Canceled';
-
-/** …and snake_cased on the calendar payload. */
-export type CalendarAppointmentStatus =
     | 'scheduled'
-    | 'confirmed'
+    | 'waiting'
+    | 'in_consultation'
+    | 'pending'
     | 'completed'
-    | 'cancelled'
-    | 'no_show';
+    | 'cancelled';
 
 /**
  * One status → one tone. Kept in one place so the index table, the index cards,
- * the calendar dots and the calendar detail dialog never disagree.
+ * the calendar chips and the detail dialogs never disagree.
  */
 export function statusTone(status: string): BadgeTone {
-    switch (status) {
-        case 'Waiting':
+    switch (status.toLowerCase()) {
         case 'waiting':
         case 'in_consultation':
-        case 'In Consultation':
+        case 'pending':
             return 'warning';
-        case 'Completed':
         case 'completed':
         case 'confirmed':
             return 'positive';
-        case 'Canceled':
-        case 'Cancelled':
+        case 'canceled':
         case 'cancelled':
         case 'no_show':
             return 'critical';
-        case 'Scheduled':
         case 'scheduled':
             return 'accent';
         default:
@@ -51,8 +40,27 @@ export const statusDot: Record<string, string> = {
     critical: 'bg-critical',
     accent: 'bg-accent',
     neutral: 'bg-ink-subtle',
+    muted: 'bg-ink-subtle',
 };
 
 export function statusDotClass(status: string): string {
     return statusDot[statusTone(status)] ?? statusDot.neutral;
+}
+
+/** Calendar chips: tinted fill plus a left status bar, Google Calendar style. */
+export const statusChip: Record<string, string> = {
+    accent: 'border-accent/70 bg-accent-soft text-accent-ink hover:border-accent',
+    positive:
+        'border-positive/60 bg-positive-soft text-positive-ink hover:border-positive',
+    warning:
+        'border-warning/60 bg-warning-soft text-warning-ink hover:border-warning',
+    critical:
+        'border-critical/60 bg-critical-soft text-critical-ink hover:border-critical',
+    neutral:
+        'border-line-strong bg-surface-inset text-ink-muted hover:border-ink-subtle',
+    muted: 'border-line bg-surface-muted text-ink-subtle hover:border-line-strong',
+};
+
+export function statusChipClass(status: string): string {
+    return statusChip[statusTone(status)] ?? statusChip.neutral;
 }

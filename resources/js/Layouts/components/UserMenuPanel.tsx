@@ -26,6 +26,10 @@ export interface UserMenuPanelProps {
     };
     onClose: () => void;
     onSignOut: () => void;
+    /** Where the settings row points; defaults to the tenant settings page. */
+    settingsHref?: string;
+    /** Hide the settings row when the role cannot use that destination. */
+    showSettings?: boolean;
     className?: string;
 }
 
@@ -39,6 +43,8 @@ export function UserMenuPanel({
     labels,
     onClose,
     onSignOut,
+    settingsHref = '/settings',
+    showSettings = true,
     className,
 }: UserMenuPanelProps) {
     const items = [
@@ -48,12 +54,16 @@ export function UserMenuPanel({
             label: labels.profile,
             description: labels.profileDescription,
         },
-        {
-            href: '/settings',
-            icon: Cog6ToothIcon,
-            label: labels.settings,
-            description: labels.settingsDescription,
-        },
+        ...(showSettings
+            ? [
+                  {
+                      href: settingsHref,
+                      icon: Cog6ToothIcon,
+                      label: labels.settings,
+                      description: labels.settingsDescription,
+                  },
+              ]
+            : []),
     ];
 
     return (

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Announcement;
+use App\Models\Certificate;
 use App\Support\PlatformContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -54,8 +55,12 @@ class HandleInertiaRequests extends Middleware
                 'info' => fn () => session('info'),
             ],
             'tenant' => fn () => $this->tenantPayload(),
+            // True on the central domain (the landlord console), false inside
+            // a hospital subdomain. Shared pages use it to pick the right shell.
+            'isLandlord' => tenant() === null,
             'platform' => fn () => PlatformContext::toArray(),
             'announcements' => fn () => $this->publishedAnnouncements(),
+            'certificateCounts' => fn () => $this->certificateCounts($request),
             'auth' => [
                 'user' => $request->user() ? array_merge(
                     $request->user()->toArray(),
@@ -138,6 +143,38 @@ class HandleInertiaRequests extends Middleware
                 'features' => [],
                 'usage' => [],
             ];
+        }
+    }
+
+    /**
+     * Certificate activity for the sidebar badge.
+     *
+     * Certificates are tenant data, so landlord requests, users who cannot
+     * issue one and environments without the tenant tables all resolve to
+     * null — which the layout renders as "no badge" rather than a zero.
+     *
+     * @return array{issued_today: int}|null
+     */
+    private function certificateCounts(Request $request): ?array
+    {
+        $user = $request->user();
+
+        if ($user === null || tenant() === null || ! $user->can('create-consultations')) {
+            return null;
+        }
+
+        try {
+            if (! Schema::hasTable('certificates')) {
+                return null;
+            }
+
+            return [
+                'issued_today' => Certificate::query()
+                    ->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
+                    ->count(),
+            ];
+        } catch (Throwable) {
+            return null;
         }
     }
 

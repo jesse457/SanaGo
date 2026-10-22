@@ -1,10 +1,10 @@
 import {
     ArrowPathIcon,
-    ArrowRightIcon,
     CalendarDaysIcon,
     CheckBadgeIcon,
     CheckIcon,
     ClockIcon,
+    EyeIcon,
     ListBulletIcon,
     NoSymbolIcon,
     PlusIcon,
@@ -12,13 +12,14 @@ import {
     UserGroupIcon,
     UserIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import debounce from 'lodash/debounce';
 import { useEffect, useMemo, useState } from 'react';
 import { Pagination } from '@/Components/Pagination';
 import {
     Button,
+    Dialog,
     EmptyState,
     Input,
     PageHeader,
@@ -32,18 +33,23 @@ import {
     TableHeader,
     TableHeaderCell,
     TableRow,
+    Tabs,
     Toolbar,
     ToolbarSearch,
     ToolbarSpacer,
 } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
+import { AppointmentCalendar } from '@/pages/Appointments/components/AppointmentCalendar';
+import type { CalendarAppointment } from '@/pages/Appointments/components/AppointmentCalendar';
 import {
     AppointmentIdentity,
     AppointmentStatusBadge,
 } from '@/pages/Appointments/components/AppointmentIdentity';
+import type { AppointmentStatus } from '@/pages/Appointments/components/status';
 
 interface Patient {
+    id: number;
     first_name: string;
     last_name: string;
     patient_uid: string;
@@ -52,22 +58,29 @@ interface Patient {
 interface Doctor {
     id: number;
     name: string;
-    department?: { name: string };
+    department?: { name: string } | null;
 }
 
 interface Appointment {
     id: number;
     appointment_date: string;
     appointment_time: string;
-    status:
-        | 'Scheduled'
-        | 'Waiting'
-        | 'In Consultation'
-        | 'Completed'
-        | 'Canceled';
-    queue_position?: number;
+    status: AppointmentStatus;
+    queue_position?: number | null;
+    consultation_fee?: number | string | null;
+    reason_for_visit?: string | null;
     patient: Patient;
-    doctor?: Doctor;
+    doctor?: Doctor | null;
+}
+
+interface Stats {
+    total: number;
+    waiting: number;
+    scheduled: number;
+    completed: number;
+    today: number;
+    upcoming: number;
+    cancelled: number;
 }
 
 interface Props {
@@ -78,12 +91,15 @@ interface Props {
         from: number;
         to: number;
     };
+    calendarAppointments: CalendarAppointment[];
+    stats: Stats;
     doctors: Doctor[];
     filters: {
         search?: string;
         status?: string;
         doctor_id?: string;
         date?: string;
+        view?: 'table' | 'calendar';
     };
 }
 
@@ -100,14 +116,37 @@ const viewOptions = [
     },
 ];
 
+const statusOptions: AppointmentStatus[] = [
+    'scheduled',
+    'waiting',
+    'in_consultation',
+    'pending',
+    'completed',
+    'cancelled',
+];
+
+const cancellableStatuses: AppointmentStatus[] = [
+    'scheduled',
+    'waiting',
+    'pending',
+];
+
 export default function AppointmentIndex({
     appointments,
+    calendarAppointments,
+    stats,
     doctors,
     filters,
 }: Props) {
     const { t } = useTranslation();
 
-    // Persist the selected view format (grid vs table) locally so it survives pagination reloads
+    const activeTab = filters.view === 'calendar' ? 'calendar' : 'table';
+
+    const statusLabel = (status: string) =>
+        t(`page.appointment_calendar.status.${status}`, status);
+
+    // Persist the selected view format (grid vs table) locally so it survives
+    // pagination reloads.
     const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('appointments_view_mode');
@@ -120,6 +159,8 @@ export default function AppointmentIndex({
         return 'table';
     });
 
+    const [detail, setDetail] = useState<Appointment | null>(null);
+
     const [params, setParams] = useState({
         search: filters.search || '',
         status: filters.status || '',
@@ -127,10 +168,9 @@ export default function AppointmentIndex({
         date: filters.date || '',
     });
 
-    // Synchronize local params with server-side filters on pagination or navigation back/forward
+    // Synchronize local params with server-side filters on pagination or
+    // navigation back/forward.
     useEffect(() => {
-        // Server-driven filters changed (pagination, back/forward): mirror them
-        // into the local param state. External event, not derived render state.
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setParams({
             search: filters.search || '',
@@ -148,18 +188,24 @@ export default function AppointmentIndex({
         }
     };
 
-    const stats = useMemo(
-        () => ({
-            total: appointments.total,
-            waiting: appointments.data.filter((a) => a.status === 'Waiting')
-                .length,
-            scheduled: appointments.data.filter((a) => a.status === 'Scheduled')
-                .length,
-            completed: appointments.data.filter((a) => a.status === 'Completed')
-                .length,
-        }),
-        [appointments],
-    );
+    const handleTabChange = (value: string) => {
+        const view = value === 'calendar' ? 'calendar' : 'table';
+
+        if (view === activeTab) {
+            return;
+        }
+
+        router.get(
+            route('appointments.index'),
+            { ...params, view },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                only: ['filters'],
+            },
+        );
+    };
 
     const requestUpdate = useMemo(
         () =>
@@ -177,21 +223,103 @@ export default function AppointmentIndex({
         const newParams = {
             ...params,
             [key]: value,
-            page: '1', // Explicitly force result set to start on page 1 when filters are changed
+            page: '1',
         };
         setParams(newParams);
         requestUpdate(newParams);
     };
 
-    const handleStatusUpdate = (id: number, newStatus: string) => {
+    const handleStatusUpdate = (
+        id: number,
+        newStatus: AppointmentStatus,
+        closeDetail = false,
+    ) => {
         router.patch(
             route('appointments.update', id),
-            {
-                status: newStatus,
-            },
+            { status: newStatus },
             {
                 preserveScroll: true,
+                onSuccess: () => {
+                    if (closeDetail) {
+                        setDetail(null);
+                    }
+                },
             },
+        );
+    };
+
+    const canCheckIn = (status: string) => status === 'scheduled';
+    const canCancel = (status: string) =>
+        cancellableStatuses.includes(status as AppointmentStatus);
+
+    const renderAppointmentActions = (
+        appointment: Appointment,
+        mode: 'table' | 'grid',
+    ) => {
+        if (mode === 'grid') {
+            return (
+                <div className="flex gap-1.5">
+                    {canCheckIn(appointment.status) && (
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            icon={CheckIcon}
+                            onClick={() =>
+                                handleStatusUpdate(appointment.id, 'waiting')
+                            }
+                            title={t('checkIn')}
+                        >
+                            {t('checkIn')}
+                        </Button>
+                    )}
+                    <Button
+                        size="sm"
+                        variant="secondary"
+                        icon={EyeIcon}
+                        onClick={() => setDetail(appointment)}
+                    >
+                        {t('page.appointment_calendar.common.details')}
+                    </Button>
+                </div>
+            );
+        }
+
+        return (
+            <div className="flex items-center justify-end gap-1">
+                {canCheckIn(appointment.status) && (
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        icon={CheckIcon}
+                        onClick={() =>
+                            handleStatusUpdate(appointment.id, 'waiting')
+                        }
+                        aria-label={t('checkIn')}
+                        title={t('checkIn')}
+                    />
+                )}
+                {canCancel(appointment.status) && (
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        icon={NoSymbolIcon}
+                        onClick={() =>
+                            handleStatusUpdate(appointment.id, 'cancelled')
+                        }
+                        aria-label={t('cancel')}
+                        title={t('cancel')}
+                        className="text-critical-ink hover:bg-critical-soft"
+                    />
+                )}
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    icon={EyeIcon}
+                    onClick={() => setDetail(appointment)}
+                    aria-label={t('page.appointment_calendar.common.details')}
+                    title={t('page.appointment_calendar.common.details')}
+                />
+            </div>
         );
     };
 
@@ -245,203 +373,134 @@ export default function AppointmentIndex({
                     />
                 </StatGrid>
 
-                <Toolbar>
-                    <ToolbarSearch
-                        value={params.search}
-                        onChange={(value) =>
-                            handleFilterChange('search', value)
-                        }
-                        placeholder={t('searchPatient')}
-                    />
-                    <Select
-                        name="status"
-                        aria-label={t('status')}
-                        value={params.status}
-                        onChange={(event) =>
-                            handleFilterChange('status', event.target.value)
-                        }
-                        className="sm:w-44"
-                    >
-                        <option value="">{t('allStatuses')}</option>
-                        <option value="Scheduled">{t('scheduled')}</option>
-                        <option value="Waiting">{t('waiting')}</option>
-                        <option value="In Consultation">
-                            {t('inConsultation')}
-                        </option>
-                        <option value="Completed">{t('completed')}</option>
-                        <option value="Canceled">{t('canceled')}</option>
-                    </Select>
-                    <Select
-                        name="doctor_id"
-                        aria-label={t('doctor')}
-                        value={params.doctor_id}
-                        onChange={(event) =>
-                            handleFilterChange('doctor_id', event.target.value)
-                        }
-                        className="sm:w-48"
-                    >
-                        <option value="">{t('allDoctors')}</option>
-                        {doctors.map((doctor) => (
-                            <option key={doctor.id} value={doctor.id}>
-                                {doctor.name}
-                            </option>
-                        ))}
-                    </Select>
-                    <Input
-                        name="date"
-                        type="date"
-                        aria-label={t('date')}
-                        value={params.date}
-                        onChange={(event) =>
-                            handleFilterChange('date', event.target.value)
-                        }
-                        className="sm:w-40"
-                    />
-                    <ToolbarSpacer />
-                    <SegmentedControl
-                        options={viewOptions}
-                        value={viewMode}
-                        onChange={handleViewModeChange}
-                    />
-                </Toolbar>
+                <Tabs
+                    value={activeTab}
+                    onChange={handleTabChange}
+                    items={[
+                        {
+                            value: 'table',
+                            label: t('page.appointment_calendar.tabs.table'),
+                            icon: ListBulletIcon,
+                            count: stats.total,
+                        },
+                        {
+                            value: 'calendar',
+                            label: t('page.appointment_calendar.tabs.calendar'),
+                            icon: CalendarDaysIcon,
+                        },
+                    ]}
+                />
 
-                <AnimatePresence mode="wait">
-                    {appointments.data.length === 0 ? (
-                        <motion.div
-                            key="empty"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            <EmptyState
-                                icon={ArrowPathIcon}
-                                title={t('noAppointmentsFound')}
-                                description={t('adjustFiltersOrBook')}
-                                action={{
-                                    label: t('bookNew'),
-                                    href: route('appointments.create'),
-                                }}
+                {activeTab === 'calendar' ? (
+                    <AppointmentCalendar appointments={calendarAppointments} />
+                ) : (
+                    <>
+                        <Toolbar>
+                            <ToolbarSearch
+                                value={params.search}
+                                onChange={(value) =>
+                                    handleFilterChange('search', value)
+                                }
+                                placeholder={t('searchPatient')}
                             />
-                        </motion.div>
-                    ) : viewMode === 'grid' ? (
-                        <motion.div
-                            key="grid"
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -8 }}
-                            transition={{ duration: 0.22 }}
-                            className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
-                        >
-                            {appointments.data.map((apt) => (
-                                <div
-                                    key={apt.id}
-                                    className="flex h-full flex-col rounded-xl border border-line bg-surface p-4 transition-[border-color,box-shadow] duration-300 ease-premium hover:border-line-strong hover:shadow-surface"
+                            <Select
+                                name="status"
+                                aria-label={t('status')}
+                                value={params.status}
+                                onChange={(event) =>
+                                    handleFilterChange(
+                                        'status',
+                                        event.target.value,
+                                    )
+                                }
+                                className="sm:w-44"
+                            >
+                                <option value="">{t('allStatuses')}</option>
+                                {statusOptions.map((status) => (
+                                    <option key={status} value={status}>
+                                        {statusLabel(status)}
+                                    </option>
+                                ))}
+                            </Select>
+                            {doctors.length > 0 && (
+                                <Select
+                                    name="doctor_id"
+                                    aria-label={t('doctor')}
+                                    value={params.doctor_id}
+                                    onChange={(event) =>
+                                        handleFilterChange(
+                                            'doctor_id',
+                                            event.target.value,
+                                        )
+                                    }
+                                    className="sm:w-48"
                                 >
-                                    <div className="mb-3 flex items-start justify-between gap-3">
-                                        <AppointmentIdentity
-                                            firstName={apt.patient.first_name}
-                                            lastName={apt.patient.last_name}
-                                            patientUid={apt.patient.patient_uid}
-                                        />
-                                        <AppointmentStatusBadge
-                                            status={apt.status}
-                                            pulse={
-                                                apt.status === 'In Consultation'
-                                            }
-                                        />
-                                    </div>
-
-                                    <dl className="mb-3 flex-1 space-y-2 rounded-lg border border-line bg-surface-muted px-3 py-2.5">
-                                        <div className="flex items-center gap-2 text-[12px]">
-                                            <UserIcon className="h-3.5 w-3.5 shrink-0 text-ink-subtle" />
-                                            <dt className="sr-only">
-                                                {t('doctor')}
-                                            </dt>
-                                            <dd className="truncate font-medium text-ink">
-                                                {apt.doctor?.name ?? '—'}
-                                            </dd>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-[12px] text-ink-muted">
-                                            <CalendarDaysIcon className="h-3.5 w-3.5 shrink-0 text-ink-subtle" />
-                                            <dt className="sr-only">
-                                                {t('schedule')}
-                                            </dt>
-                                            <dd className="truncate tabular-nums">
-                                                {apt.appointment_date} ·{' '}
-                                                {apt.appointment_time}
-                                            </dd>
-                                        </div>
-                                    </dl>
-
-                                    <div className="flex items-center justify-between border-t border-line pt-3">
-                                        <div className="flex gap-1.5">
-                                            {apt.status === 'Scheduled' && (
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    icon={CheckIcon}
-                                                    onClick={() =>
-                                                        handleStatusUpdate(
-                                                            apt.id,
-                                                            'Waiting',
-                                                        )
-                                                    }
-                                                    title={t('checkIn')}
-                                                >
-                                                    {t('checkIn')}
-                                                </Button>
-                                            )}
-                                        </div>
-                                        <Button
-                                            size="sm"
-                                            variant="secondary"
-                                            trailingIcon={ArrowRightIcon}
-                                            href={route(
-                                                'appointments.show',
-                                                apt.id,
-                                            )}
+                                    <option value="">{t('allDoctors')}</option>
+                                    {doctors.map((doctor) => (
+                                        <option
+                                            key={doctor.id}
+                                            value={doctor.id}
                                         >
-                                            {t('manage')}
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))}
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            key="table"
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -8 }}
-                            transition={{ duration: 0.22 }}
-                        >
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHeaderCell>
-                                            {t('patient')}
-                                        </TableHeaderCell>
-                                        <TableHeaderCell>
-                                            {t('doctor')}
-                                        </TableHeaderCell>
-                                        <TableHeaderCell>
-                                            {t('schedule')}
-                                        </TableHeaderCell>
-                                        <TableHeaderCell>
-                                            {t('status')}
-                                        </TableHeaderCell>
-                                        <TableHeaderCell>
-                                            <span className="sr-only">
-                                                {t('actions')}
-                                            </span>
-                                        </TableHeaderCell>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
+                                            {doctor.name}
+                                        </option>
+                                    ))}
+                                </Select>
+                            )}
+                            <Input
+                                name="date"
+                                type="date"
+                                aria-label={t('date')}
+                                value={params.date}
+                                onChange={(event) =>
+                                    handleFilterChange(
+                                        'date',
+                                        event.target.value,
+                                    )
+                                }
+                                className="sm:w-40"
+                            />
+                            <ToolbarSpacer />
+                            <SegmentedControl
+                                options={viewOptions}
+                                value={viewMode}
+                                onChange={handleViewModeChange}
+                            />
+                        </Toolbar>
+
+                        <AnimatePresence mode="wait">
+                            {appointments.data.length === 0 ? (
+                                <motion.div
+                                    key="empty"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <EmptyState
+                                        icon={ArrowPathIcon}
+                                        title={t('noAppointmentsFound')}
+                                        description={t('adjustFiltersOrBook')}
+                                        action={{
+                                            label: t('bookNew'),
+                                            href: route('appointments.create'),
+                                        }}
+                                    />
+                                </motion.div>
+                            ) : viewMode === 'grid' ? (
+                                <motion.div
+                                    key="grid"
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -8 }}
+                                    transition={{ duration: 0.22 }}
+                                    className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+                                >
                                     {appointments.data.map((apt) => (
-                                        <TableRow key={apt.id}>
-                                            <TableCell>
+                                        <div
+                                            key={apt.id}
+                                            className="flex h-full flex-col rounded-xl border border-line bg-surface p-4 transition-[border-color,box-shadow] duration-300 ease-premium hover:border-line-strong hover:shadow-surface"
+                                        >
+                                            <div className="mb-3 flex items-start justify-between gap-3">
                                                 <AppointmentIdentity
                                                     firstName={
                                                         apt.patient.first_name
@@ -452,108 +511,296 @@ export default function AppointmentIndex({
                                                     patientUid={
                                                         apt.patient.patient_uid
                                                     }
-                                                    size="sm"
                                                 />
-                                            </TableCell>
-                                            <TableCell muted>
-                                                <p className="text-[13px] font-medium text-ink">
-                                                    {apt.doctor?.name ?? '—'}
-                                                </p>
-                                                <p className="text-[11px] text-ink-subtle">
-                                                    {apt.doctor?.department
-                                                        ?.name ?? ''}
-                                                </p>
-                                            </TableCell>
-                                            <TableCell muted>
-                                                <p className="text-[13px] font-medium text-ink tabular-nums">
-                                                    {apt.appointment_date}
-                                                </p>
-                                                <p className="text-[11px] text-ink-subtle tabular-nums">
-                                                    {apt.appointment_time}
-                                                </p>
-                                            </TableCell>
-                                            <TableCell>
                                                 <AppointmentStatusBadge
                                                     status={apt.status}
+                                                    label={statusLabel(
+                                                        apt.status,
+                                                    )}
                                                     pulse={
                                                         apt.status ===
-                                                        'In Consultation'
+                                                        'in_consultation'
                                                     }
                                                 />
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center justify-end gap-1">
-                                                    {apt.status ===
-                                                        'Scheduled' && (
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            icon={CheckIcon}
-                                                            onClick={() =>
-                                                                handleStatusUpdate(
-                                                                    apt.id,
-                                                                    'Waiting',
-                                                                )
-                                                            }
-                                                            aria-label={t(
-                                                                'checkIn',
-                                                            )}
-                                                            title={t('checkIn')}
-                                                        />
-                                                    )}
-                                                    {[
-                                                        'Scheduled',
-                                                        'Waiting',
-                                                    ].includes(apt.status) && (
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            icon={NoSymbolIcon}
-                                                            onClick={() =>
-                                                                handleStatusUpdate(
-                                                                    apt.id,
-                                                                    'Canceled',
-                                                                )
-                                                            }
-                                                            aria-label={t(
-                                                                'canceled',
-                                                            )}
-                                                            title={t(
-                                                                'canceled',
-                                                            )}
-                                                            className="text-critical-ink hover:bg-critical-soft"
-                                                        />
-                                                    )}
-                                                    <Link
-                                                        href={route(
-                                                            'appointments.show',
-                                                            apt.id,
-                                                        )}
-                                                        aria-label={t('manage')}
-                                                        title={t('manage')}
-                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-ink-subtle transition-colors duration-200 ease-premium hover:bg-surface-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none"
-                                                    >
-                                                        <ArrowRightIcon className="h-4 w-4" />
-                                                    </Link>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                                            </div>
 
-                <Pagination
-                    links={appointments.links}
-                    meta={{
-                        from: appointments.from,
-                        to: appointments.to,
-                        total: appointments.total,
-                    }}
-                />
+                                            <dl className="mb-3 flex-1 space-y-2 rounded-lg border border-line bg-surface-muted px-3 py-2.5">
+                                                <div className="flex items-center gap-2 text-[12px]">
+                                                    <UserIcon className="h-3.5 w-3.5 shrink-0 text-ink-subtle" />
+                                                    <dt className="sr-only">
+                                                        {t('doctor')}
+                                                    </dt>
+                                                    <dd className="truncate font-medium text-ink">
+                                                        {apt.doctor?.name ??
+                                                            '—'}
+                                                    </dd>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-[12px] text-ink-muted">
+                                                    <CalendarDaysIcon className="h-3.5 w-3.5 shrink-0 text-ink-subtle" />
+                                                    <dt className="sr-only">
+                                                        {t('schedule')}
+                                                    </dt>
+                                                    <dd className="truncate tabular-nums">
+                                                        {apt.appointment_date} ·{' '}
+                                                        {apt.appointment_time.slice(
+                                                            0,
+                                                            5,
+                                                        )}
+                                                    </dd>
+                                                </div>
+                                            </dl>
+
+                                            <div className="flex items-center justify-between border-t border-line pt-3">
+                                                {renderAppointmentActions(
+                                                    apt,
+                                                    'grid',
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="table"
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -8 }}
+                                    transition={{ duration: 0.22 }}
+                                >
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHeaderCell>
+                                                    {t('patient')}
+                                                </TableHeaderCell>
+                                                <TableHeaderCell>
+                                                    {t('doctor')}
+                                                </TableHeaderCell>
+                                                <TableHeaderCell>
+                                                    {t('schedule')}
+                                                </TableHeaderCell>
+                                                <TableHeaderCell>
+                                                    {t('status')}
+                                                </TableHeaderCell>
+                                                <TableHeaderCell>
+                                                    <span className="sr-only">
+                                                        {t('actions')}
+                                                    </span>
+                                                </TableHeaderCell>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {appointments.data.map((apt) => (
+                                                <TableRow key={apt.id}>
+                                                    <TableCell>
+                                                        <AppointmentIdentity
+                                                            firstName={
+                                                                apt.patient
+                                                                    .first_name
+                                                            }
+                                                            lastName={
+                                                                apt.patient
+                                                                    .last_name
+                                                            }
+                                                            patientUid={
+                                                                apt.patient
+                                                                    .patient_uid
+                                                            }
+                                                            size="sm"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell muted>
+                                                        <p className="text-[13px] font-medium text-ink">
+                                                            {apt.doctor?.name ??
+                                                                '—'}
+                                                        </p>
+                                                        <p className="text-[11px] text-ink-subtle">
+                                                            {apt.doctor
+                                                                ?.department
+                                                                ?.name ?? ''}
+                                                        </p>
+                                                    </TableCell>
+                                                    <TableCell muted>
+                                                        <p className="text-[13px] font-medium text-ink tabular-nums">
+                                                            {
+                                                                apt.appointment_date
+                                                            }
+                                                        </p>
+                                                        <p className="text-[11px] text-ink-subtle tabular-nums">
+                                                            {apt.appointment_time.slice(
+                                                                0,
+                                                                5,
+                                                            )}
+                                                        </p>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <AppointmentStatusBadge
+                                                            status={apt.status}
+                                                            label={statusLabel(
+                                                                apt.status,
+                                                            )}
+                                                            pulse={
+                                                                apt.status ===
+                                                                'in_consultation'
+                                                            }
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {renderAppointmentActions(
+                                                            apt,
+                                                            'table',
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <Pagination
+                            links={appointments.links}
+                            meta={{
+                                from: appointments.from,
+                                to: appointments.to,
+                                total: appointments.total,
+                            }}
+                        />
+                    </>
+                )}
             </div>
+
+            <Dialog
+                open={detail !== null}
+                onClose={() => setDetail(null)}
+                title={t('page.appointment_calendar.details.title')}
+                size="md"
+                footer={
+                    detail ? (
+                        <>
+                            <Button
+                                variant="ghost"
+                                onClick={() => setDetail(null)}
+                            >
+                                {t('page.appointment_calendar.common.close')}
+                            </Button>
+                            {canCancel(detail.status) && (
+                                <Button
+                                    variant="danger"
+                                    icon={NoSymbolIcon}
+                                    onClick={() =>
+                                        handleStatusUpdate(
+                                            detail.id,
+                                            'cancelled',
+                                            true,
+                                        )
+                                    }
+                                >
+                                    {t('cancel')}
+                                </Button>
+                            )}
+                            {canCheckIn(detail.status) && (
+                                <Button
+                                    variant="secondary"
+                                    icon={CheckIcon}
+                                    onClick={() =>
+                                        handleStatusUpdate(
+                                            detail.id,
+                                            'waiting',
+                                            true,
+                                        )
+                                    }
+                                >
+                                    {t('checkIn')}
+                                </Button>
+                            )}
+                        </>
+                    ) : null
+                }
+            >
+                {detail && (
+                    <div className="space-y-5">
+                        <div className="flex items-start justify-between gap-3">
+                            <AppointmentIdentity
+                                firstName={detail.patient.first_name}
+                                lastName={detail.patient.last_name}
+                                patientUid={detail.patient.patient_uid}
+                            />
+                            <AppointmentStatusBadge
+                                status={detail.status}
+                                label={statusLabel(detail.status)}
+                            />
+                        </div>
+
+                        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg border border-line bg-surface-muted px-4 py-3">
+                            <div>
+                                <dt className="text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
+                                    {t(
+                                        'page.appointment_calendar.details.doctor',
+                                    )}
+                                </dt>
+                                <dd className="mt-0.5 text-[13px] font-medium text-ink">
+                                    {detail.doctor?.name ?? '—'}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
+                                    {t(
+                                        'page.appointment_calendar.details.date_time',
+                                    )}
+                                </dt>
+                                <dd className="mt-0.5 text-[13px] font-medium text-ink tabular-nums">
+                                    {detail.appointment_date} ·{' '}
+                                    {detail.appointment_time.slice(0, 5)}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
+                                    {t(
+                                        'page.appointment_calendar.details.queue_position',
+                                    )}
+                                </dt>
+                                <dd className="mt-0.5 text-[13px] font-medium text-ink tabular-nums">
+                                    {detail.queue_position ?? '—'}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
+                                    {t(
+                                        'page.appointment_calendar.details.consultation_fee',
+                                    )}
+                                </dt>
+                                <dd className="mt-0.5 text-[13px] font-medium text-ink tabular-nums">
+                                    {detail.consultation_fee ?? '—'}
+                                </dd>
+                            </div>
+                        </dl>
+
+                        {detail.reason_for_visit && (
+                            <div>
+                                <p className="text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
+                                    {t(
+                                        'page.appointment_calendar.details.reason',
+                                        'Reason for visit',
+                                    )}
+                                </p>
+                                <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
+                                    {detail.reason_for_visit}
+                                </p>
+                            </div>
+                        )}
+
+                        <Button
+                            href={route('patients.show', detail.patient.id)}
+                            variant="secondary"
+                            size="sm"
+                        >
+                            {t('page.appointment_calendar.common.view_profile')}
+                        </Button>
+                    </div>
+                )}
+            </Dialog>
         </AppLayout>
     );
 }

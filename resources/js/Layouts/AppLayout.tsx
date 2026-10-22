@@ -19,6 +19,7 @@ import {
     CheckIcon,
     UserCircleIcon,
     DocumentTextIcon,
+    DocumentCheckIcon,
     ChevronLeftIcon,
     ClockIcon,
     QuestionMarkCircleIcon,
@@ -56,7 +57,18 @@ interface NavItem {
     href: string;
     permission?: string;
     badge?: number;
+    /** Shared Inertia prop the badge count comes from, instead of a literal. */
+    badgeSource?: keyof NavBadges;
     icon?: React.ReactNode;
+}
+
+/**
+ * Live counters the sidebar can show as item badges. Values arrive from the
+ * shared Inertia props, so a badge stays correct without the layout knowing
+ * which page is open.
+ */
+interface NavBadges {
+    certificatesIssuedToday?: number;
 }
 
 interface NavGroup {
@@ -159,12 +171,6 @@ const NAV_CONFIG: NavGroup[] = [
                 href: '/appointments',
                 permission: 'view-appointments',
             },
-            {
-                label: 'Appt. Calendar',
-                labelKey: 'nav.appt_calendar',
-                href: '/appointments/calendar',
-                permission: 'view-appointments',
-            },
         ],
     },
     {
@@ -179,22 +185,12 @@ const NAV_CONFIG: NavGroup[] = [
                 permission: 'view-consultations',
             },
             {
-                label: 'Sick Leave Cert.',
-                labelKey: 'nav.sick_leave_cert',
-                href: '/certificates/sick-leave',
+                label: 'Certificates',
+                labelKey: 'nav.certificates',
+                href: '/certificates',
                 permission: 'create-consultations',
-            },
-            {
-                label: 'Medical Certificates',
-                labelKey: 'nav.medical_certs',
-                href: '/certificates/medical',
-                permission: 'create-consultations',
-            },
-            {
-                label: 'Death Certificates',
-                labelKey: 'nav.death_certs',
-                href: '/certificates/death',
-                permission: 'create-consultations',
+                icon: <DocumentCheckIcon className="h-[14px] w-[14px]" />,
+                badgeSource: 'certificatesIssuedToday',
             },
         ],
     },
@@ -252,6 +248,12 @@ const NAV_CONFIG: NavGroup[] = [
                 label: 'Radiology Requests',
                 labelKey: 'nav.radiology_requests',
                 href: '/radiology/requests',
+                permission: 'view-radiology',
+            },
+            {
+                label: 'Radiology Results',
+                labelKey: 'nav.radiology_results',
+                href: '/radiology/results',
                 permission: 'view-radiology',
             },
         ],
@@ -489,6 +491,7 @@ const SidebarNav = memo(function SidebarNav({
     onToggleCategory,
     dashboardUrl,
     isActive,
+    badges,
 }: {
     isOpen: boolean;
     filteredNav: NavGroup[];
@@ -496,6 +499,7 @@ const SidebarNav = memo(function SidebarNav({
     onToggleCategory: (category: string) => void;
     dashboardUrl: string;
     isActive: (href: string) => boolean;
+    badges: NavBadges;
 }) {
     const { t } = useTranslation();
     const isDashboardActive = isActive(dashboardUrl);
@@ -611,6 +615,11 @@ const SidebarNav = memo(function SidebarNav({
                                         const isItemActive = isActive(
                                             item.href,
                                         );
+                                        const itemBadge =
+                                            item.badge ??
+                                            (item.badgeSource
+                                                ? badges[item.badgeSource]
+                                                : undefined);
 
                                         return (
                                             <Link
@@ -634,16 +643,26 @@ const SidebarNav = memo(function SidebarNav({
                                                         className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-accent"
                                                     />
                                                 )}
-                                                <span className="truncate">
-                                                    {t(item.labelKey)}
+                                                <span className="flex min-w-0 items-center gap-1.5">
+                                                    {item.icon && (
+                                                        <span
+                                                            aria-hidden="true"
+                                                            className="shrink-0 opacity-70"
+                                                        >
+                                                            {item.icon}
+                                                        </span>
+                                                    )}
+                                                    <span className="truncate">
+                                                        {t(item.labelKey)}
+                                                    </span>
                                                 </span>
-                                                {item.badge && (
+                                                {itemBadge ? (
                                                     <span
                                                         className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold tabular-nums ${isItemActive ? 'bg-accent/12 text-accent-ink' : 'bg-surface-inset text-ink-subtle'}`}
                                                     >
-                                                        {item.badge}
+                                                        {itemBadge}
                                                     </span>
-                                                )}
+                                                ) : null}
                                             </Link>
                                         );
                                     })}
@@ -1439,6 +1458,9 @@ export default function AppLayout({
     const user = (props.auth as any)?.user as User | null;
     const tenant = (props as any).tenant as SharedTenant | null | undefined;
     const platform = (props as any).platform as SharedPlatform | undefined;
+    const certificateCounts = (props as any).certificateCounts as {
+        issued_today?: number;
+    } | null;
     const isAdmin =
         user?.roles?.some((r: any) => r === 'admin' || r?.name === 'admin') ??
         false;
@@ -1633,6 +1655,16 @@ export default function AppLayout({
         [url, t],
     );
 
+    /**
+     * Live counters for sidebar item badges, resolved from the shared props.
+     */
+    const navBadges = useMemo<NavBadges>(
+        () => ({
+            certificatesIssuedToday: certificateCounts?.issued_today,
+        }),
+        [certificateCounts],
+    );
+
     const sidebarProps = useMemo(
         () => ({
             filteredNav,
@@ -1640,6 +1672,7 @@ export default function AppLayout({
             onToggleCategory: toggleCategory,
             dashboardUrl,
             isActive: isActiveLink,
+            badges: navBadges,
         }),
         [
             filteredNav,
@@ -1647,6 +1680,7 @@ export default function AppLayout({
             toggleCategory,
             dashboardUrl,
             isActiveLink,
+            navBadges,
         ],
     );
 

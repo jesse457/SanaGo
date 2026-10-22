@@ -1,247 +1,322 @@
 import {
     ArrowLeftIcon,
     CameraIcon,
-    DocumentTextIcon,
     CheckBadgeIcon,
+    DocumentArrowDownIcon,
+    DocumentTextIcon,
+    PencilSquareIcon,
+    PrinterIcon,
 } from '@heroicons/react/24/outline';
-import { Head, useForm } from '@inertiajs/react';
-import type { FormEvent } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
 import {
     Button,
-    Field,
     KeyValue,
     KeyValueGrid,
     PageHeader,
     SectionCard,
-    Textarea,
 } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
-import { RadiologyStatusBadge } from '@/pages/Radiology/components';
-import type { RadiologyRequest } from '@/types';
+import {
+    humanise,
+    imagingTypeLabel,
+    RadiologyPatientIdentity,
+    RadiologyStatusBadge,
+} from '@/pages/Radiology/components';
 
-interface Props {
-    request: RadiologyRequest;
+interface RequestRecord {
+    id: number;
+    status: string;
+    request_date?: string | null;
+    imaging_type: string;
+    body_part: string;
+    clinical_notes?: string | null;
+    patient?: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        patient_uid?: string;
+        date_of_birth?: string | null;
+        gender?: string | null;
+    } | null;
+    requested_by?: { id: number; name: string } | null;
+    result?: {
+        id: number;
+        request_id: number;
+        status: string;
+        findings?: string | null;
+        conclusion?: string | null;
+        performed_by?: string | null;
+        validated_by?: string | null;
+        validated_at?: string | null;
+        report_url?: string | null;
+    } | null;
 }
 
-export default function RadiologyRequestsShow({ request: req }: Props) {
+interface Props {
+    request: RequestRecord;
+}
+
+/** Permission check against the shared `auth.user.permissions` list. */
+function useCan(permission: string): boolean {
+    const { props } = usePage();
+    const permissions = ((props.auth as any)?.user?.permissions ??
+        []) as string[];
+
+    return permissions.includes(permission);
+}
+
+export default function RadiologyRequestsShow({ request }: Props) {
     const { t } = useTranslation();
+    const canValidate = useCan('validate-radiology');
 
-    const { data, setData, post, processing, errors } = useForm({
-        findings: req.result?.findings ?? '',
-        conclusion: req.result?.conclusion ?? '',
-    });
+    const statusLabel = (status: string) => {
+        const fallback = humanise(status);
 
-    const handleSubmitResult = (e: FormEvent) => {
-        e.preventDefault();
-        post(route('radiology.results.validate', req.result?.id), {
-            onSuccess: () => {
-                // Page will reload with updated data
-            },
-        });
+        return t(`radiology.status.${status}`, fallback);
+    };
+
+    const reportHref = request.result
+        ? route('radiology.results.edit', request.result.id)
+        : route('radiology.results.create', { request_id: request.id });
+
+    const handleValidate = () => {
+        if (!request.result) {
+            return;
+        }
+
+        router.post(
+            route('radiology.results.validate', request.result.id),
+            {},
+            { preserveScroll: true },
+        );
     };
 
     return (
         <AppLayout
-            headerTitle={t('Radiology Request Detail')}
-            headerSubtitle={`${req.imaging_type} — ${req.body_part}`}
+            headerTitle={t('radiology.requests.detail_title')}
+            headerSubtitle={`${imagingTypeLabel(request.imaging_type)} · ${humanise(request.body_part)}`}
         >
-            <Head title={t('Radiology Request')} />
+            <Head title={t('radiology.requests.detail_title')} />
 
-            <div className="mx-auto flex max-w-4xl flex-col gap-6">
+            <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 pb-12 sm:px-6 lg:px-8">
                 <PageHeader
-                    title={t('Radiology Request Detail')}
-                    description={`${req.imaging_type.replace('_', ' ')} — ${req.body_part.replace('_', ' ')}`}
+                    icon={CameraIcon}
+                    eyebrow={t('radiology.requests.imaging_requests')}
+                    title={t('radiology.requests.detail_title')}
+                    description={`${imagingTypeLabel(request.imaging_type)} · ${humanise(request.body_part)}`}
                     breadcrumbs={[
-                        { label: t('Lab & Diagnostics') },
                         {
-                            label: t('Radiology'),
+                            label: t('radiology.requests.imaging_requests'),
                             href: route('radiology.requests.index'),
                         },
-                        { label: `#${req.id}` },
+                        { label: `#${request.id}` },
                     ]}
                     meta={
                         <RadiologyStatusBadge
-                            status={req.status}
-                            label={t(req.status)}
+                            status={request.status}
+                            label={statusLabel(request.status)}
                             dot
                         />
                     }
                     actions={
-                        <Button
-                            variant="secondary"
-                            icon={ArrowLeftIcon}
-                            href={route('radiology.requests.index')}
-                        >
-                            {t('Back to Requests')}
-                        </Button>
+                        <>
+                            <Button
+                                variant="secondary"
+                                icon={ArrowLeftIcon}
+                                href={route('radiology.requests.index')}
+                            >
+                                {t('radiology.requests.back_to_requests')}
+                            </Button>
+                            <Button
+                                href={reportHref}
+                                icon={
+                                    request.result
+                                        ? PencilSquareIcon
+                                        : CameraIcon
+                                }
+                            >
+                                {request.result
+                                    ? t('radiology.requests.open_report')
+                                    : t('radiology.requests.process_result')}
+                            </Button>
+                        </>
                     }
                 />
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <SectionCard title={t('Request Details')} icon={CameraIcon}>
+                    <SectionCard
+                        title={t('radiology.requests.order')}
+                        icon={CameraIcon}
+                    >
                         <KeyValueGrid columns={1}>
                             <KeyValue
-                                label={t('Patient')}
+                                label={t('radiology.requests.patient')}
                                 value={
-                                    req.patient
-                                        ? `${req.patient.first_name} ${req.patient.last_name}`
-                                        : '—'
+                                    request.patient ? (
+                                        <RadiologyPatientIdentity
+                                            request={{
+                                                patient: request.patient,
+                                            }}
+                                        />
+                                    ) : (
+                                        '—'
+                                    )
                                 }
                             />
                             <KeyValue
-                                label={t('Imaging Type')}
-                                value={req.imaging_type.replace('_', ' ')}
+                                label={t('radiology.requests.imaging_type')}
+                                value={imagingTypeLabel(request.imaging_type)}
                             />
                             <KeyValue
-                                label={t('Body Part')}
-                                value={req.body_part.replace('_', ' ')}
+                                label={t('radiology.requests.body_part')}
+                                value={humanise(request.body_part)}
                             />
                             <KeyValue
-                                label={t('Requested By')}
-                                value={req.requested_by_user?.name ?? '—'}
+                                label={t('radiology.requests.referred_by')}
+                                value={request.requested_by?.name ?? '—'}
                             />
                             <KeyValue
-                                label={t('Status')}
-                                value={
-                                    <RadiologyStatusBadge
-                                        status={req.status}
-                                        label={t(req.status)}
-                                    />
-                                }
+                                label={t('radiology.requests.requested_on')}
+                                value={formatDate(request.request_date)}
                             />
                         </KeyValueGrid>
                     </SectionCard>
 
-                    {req.clinical_notes && (
-                        <SectionCard
-                            title={t('Clinical Notes')}
-                            icon={DocumentTextIcon}
-                        >
-                            <p className="text-[13px] leading-relaxed text-ink-muted">
-                                {req.clinical_notes}
-                            </p>
-                        </SectionCard>
-                    )}
+                    <SectionCard
+                        title={t('radiology.requests.clinical_notes')}
+                        icon={DocumentTextIcon}
+                    >
+                        <p className="text-[13px] leading-relaxed text-ink-muted">
+                            {request.clinical_notes?.trim() ||
+                                t('radiology.requests.no_clinical_notes')}
+                        </p>
+                    </SectionCard>
                 </div>
 
-                {req.result && (
+                {request.result ? (
                     <SectionCard
-                        title={t('Radiology Result')}
+                        title={t('radiology.results.enter.report')}
                         icon={CheckBadgeIcon}
+                        description={t(
+                            'radiology.results.enter.report_description',
+                        )}
                     >
-                        <div className="space-y-4">
-                            <KeyValueGrid columns={2}>
-                                <KeyValue
-                                    label={t('Performed By')}
-                                    value={
-                                        req.result.performed_by_user?.name ??
-                                        '—'
-                                    }
-                                />
-                                <KeyValue
-                                    label={t('Validated By')}
-                                    value={
-                                        req.result.validated_by_user?.name ??
-                                        '—'
-                                    }
-                                />
-                                <KeyValue
-                                    label={t('Status')}
-                                    value={t(req.result.status)}
-                                />
-                                {req.result.validated_at && (
-                                    <KeyValue
-                                        label={t('Validated At')}
-                                        value={new Date(
-                                            req.result.validated_at,
-                                        ).toLocaleString()}
+                        <KeyValueGrid columns={3}>
+                            <KeyValue
+                                label={t('radiology.results.enter.status')}
+                                value={
+                                    <RadiologyStatusBadge
+                                        status={request.result.status}
+                                        label={statusLabel(
+                                            request.result.status,
+                                        )}
+                                        dot
                                     />
+                                }
+                            />
+                            <KeyValue
+                                label={t(
+                                    'radiology.results.enter.performed_by',
                                 )}
-                            </KeyValueGrid>
+                                value={request.result.performed_by ?? '—'}
+                            />
+                            <KeyValue
+                                label={t(
+                                    'radiology.results.enter.validated_by',
+                                )}
+                                value={request.result.validated_by ?? '—'}
+                            />
+                        </KeyValueGrid>
 
-                            {req.result.findings && (
-                                <div>
-                                    <p className="text-[11px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">
-                                        {t('Findings')}
-                                    </p>
-                                    <p className="mt-1.5 rounded-lg bg-surface-muted px-3.5 py-3 text-[13px] leading-relaxed text-ink-muted">
-                                        {req.result.findings}
-                                    </p>
-                                </div>
-                            )}
+                        <div className="mt-4 space-y-3">
+                            <ReportBlock
+                                label={t('radiology.results.enter.findings')}
+                                value={request.result.findings}
+                            />
+                            <ReportBlock
+                                label={t('radiology.results.enter.conclusion')}
+                                value={request.result.conclusion}
+                            />
+                        </div>
 
-                            {req.result.conclusion && (
-                                <div>
-                                    <p className="text-[11px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">
-                                        {t('Conclusion')}
-                                    </p>
-                                    <p className="mt-1.5 rounded-lg bg-surface-muted px-3.5 py-3 text-[13px] leading-relaxed text-ink-muted">
-                                        {req.result.conclusion}
-                                    </p>
-                                </div>
+                        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-4">
+                            {request.result.report_url && (
+                                <Button
+                                    variant="secondary"
+                                    icon={DocumentArrowDownIcon}
+                                    href={request.result.report_url}
+                                >
+                                    {t(
+                                        'radiology.results.enter.download_report',
+                                    )}
+                                </Button>
                             )}
+                            {canValidate &&
+                                request.result.status !== 'validated' && (
+                                    <Button
+                                        icon={CheckBadgeIcon}
+                                        onClick={handleValidate}
+                                    >
+                                        {t(
+                                            'radiology.results.enter.validate_report',
+                                        )}
+                                    </Button>
+                                )}
                         </div>
                     </SectionCard>
-                )}
-
-                {req.status !== 'validated' && req.status !== 'completed' && (
+                ) : (
                     <SectionCard
-                        title={t('Enter Result')}
+                        title={t('radiology.results.enter.no_report')}
                         icon={DocumentTextIcon}
                         description={t(
-                            'Record findings and conclusion for this radiology exam',
+                            'radiology.results.enter.no_report_description',
                         )}
                         footer={
-                            <Button type="submit" form="radiology-result-form">
-                                {processing
-                                    ? t('Saving...')
-                                    : t('Save & Validate Result')}
+                            <Button href={reportHref} icon={CameraIcon}>
+                                {t('radiology.requests.process_result')}
                             </Button>
                         }
                     >
-                        <form
-                            id="radiology-result-form"
-                            onSubmit={handleSubmitResult}
-                            className="space-y-4"
-                        >
-                            <Field
-                                label={t('Findings')}
-                                htmlFor="findings"
-                                required
-                                error={errors.findings}
-                            >
-                                <Textarea
-                                    id="findings"
-                                    value={data.findings}
-                                    onChange={(e) =>
-                                        setData('findings', e.target.value)
-                                    }
-                                    rows={4}
-                                    invalid={Boolean(errors.findings)}
-                                />
-                            </Field>
-
-                            <Field
-                                label={t('Conclusion')}
-                                htmlFor="conclusion"
-                                required
-                                error={errors.conclusion}
-                            >
-                                <Textarea
-                                    id="conclusion"
-                                    value={data.conclusion}
-                                    onChange={(e) =>
-                                        setData('conclusion', e.target.value)
-                                    }
-                                    rows={3}
-                                    invalid={Boolean(errors.conclusion)}
-                                />
-                            </Field>
-                        </form>
+                        <p className="text-[13px] text-ink-muted">
+                            {t('radiology.results.enter.no_report_body')}
+                        </p>
                     </SectionCard>
                 )}
+
+                <div className="flex flex-wrap items-center justify-end gap-2 border-t border-line pt-4">
+                    <Button
+                        variant="ghost"
+                        icon={PrinterIcon}
+                        href={route('radiology.requests.print', request.id)}
+                    >
+                        {t('radiology.requests.print')}
+                    </Button>
+                </div>
             </div>
         </AppLayout>
+    );
+}
+
+function formatDate(value?: string | null): string {
+    return value ? new Date(value).toLocaleDateString() : '—';
+}
+
+function ReportBlock({
+    label,
+    value,
+}: {
+    label: string;
+    value?: string | null;
+}) {
+    return (
+        <div>
+            <p className="text-[10.5px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">
+                {label}
+            </p>
+            <p className="mt-1.5 rounded-lg bg-surface-muted px-3.5 py-3 text-[13px] leading-relaxed whitespace-pre-line text-ink-muted">
+                {value?.trim() || '—'}
+            </p>
+        </div>
     );
 }

@@ -31,6 +31,50 @@ it('renders the appointments index', function () {
         ->assertOk()->assertInertia(fn ($p) => $p->component('Appointments/Index'));
 });
 
+it('redirects the legacy calendar route to the index calendar tab', function () {
+    $this->actingAs($this->admin)->get(route('appointments.calendar'))
+        ->assertRedirect(route('appointments.index', ['view' => 'calendar']));
+});
+
+it('lets reception see every appointment', function () {
+    $reception = tap(User::factory()->create())->assignRole('reception');
+    Appointment::factory()->count(2)->create();
+
+    $this->actingAs($reception)->get(route('appointments.index'))
+        ->assertOk()
+        ->assertInertia(fn ($p) => $p->has('appointments.data', 2)->has('calendarAppointments', 2));
+});
+
+it('scopes appointments to the signed-in doctor', function () {
+    $doctor = tap(User::factory()->create())->assignRole('doctor');
+    Appointment::factory()->create(['doctor_id' => $doctor->id]);
+    Appointment::factory()->count(2)->create();
+
+    $this->actingAs($doctor)->get(route('appointments.index'))
+        ->assertOk()
+        ->assertInertia(fn ($p) => $p->has('appointments.data', 1)->has('calendarAppointments', 1));
+});
+
+it('lets a doctor update their own appointment status', function () {
+    $doctor = tap(User::factory()->create())->assignRole('doctor');
+    $appointment = Appointment::factory()->scheduled()->create(['doctor_id' => $doctor->id]);
+
+    $this->actingAs($doctor)
+        ->patch(route('appointments.update', $appointment), ['status' => 'waiting'])
+        ->assertRedirect();
+
+    expect(Appointment::find($appointment->id)->status)->toBe(AppointmentStatus::WAITING);
+});
+
+it('prevents a doctor from updating another doctor appointment', function () {
+    $doctor = tap(User::factory()->create())->assignRole('doctor');
+    $appointment = Appointment::factory()->scheduled()->create();
+
+    $this->actingAs($doctor)
+        ->patch(route('appointments.update', $appointment), ['status' => 'waiting'])
+        ->assertForbidden();
+});
+
 it('creates an appointment', function () {
     $patient = Patient::factory()->create();
     $this->actingAs($this->admin)->post(route('appointments.store'), [

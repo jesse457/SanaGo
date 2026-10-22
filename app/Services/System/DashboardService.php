@@ -242,7 +242,7 @@ class DashboardService
             ];
             $quickActions[] = [
                 'label' => 'View My Appointments',
-                'href' => '/appointments/calendar',
+                'href' => '/appointments?view=calendar',
                 'icon' => 'calendar',
             ];
         }

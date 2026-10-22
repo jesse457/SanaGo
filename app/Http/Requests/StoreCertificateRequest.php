@@ -18,7 +18,7 @@ class StoreCertificateRequest extends FormRequest
         return [
             'patient_id' => ['required', 'exists:patients,id'],
             'consultation_id' => ['nullable', 'exists:medical_records,id'],
-            // 'type' => ['required', Rule::enum(CertificateType::class)],
+            'type' => ['required', Rule::enum(CertificateType::class)],
             'from_date' => ['required', 'date'],
             'to_date' => ['required', 'date', 'after_or_equal:from_date'],
             'diagnosis_summary' => ['nullable', 'string'],

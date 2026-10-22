@@ -8,11 +8,13 @@ use App\Models\PlatformAuditLog;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\TenantLifecycleNotification;
 use App\Services\Platform\SubscriptionService;
 use App\Support\PlatformContext;
 use Database\Seeders\SuperAdminRoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Stancl\Tenancy\Features\UserImpersonation;
 
 use function Tests\Helpers\resolveCentralToDefault;
@@ -81,6 +83,50 @@ describe('panel access', function () {
 
     it('forbids unauthenticated access to the panel', function () {
         $this->get(route('tenants.index'))->assertRedirect(route('login'));
+    });
+});
+
+describe('shared account pages', function () {
+    it('renders the profile page inside the landlord context', function () {
+        $this->actingAs($this->superAdmin)
+            ->get(route('profile'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Profile/Show', false)
+                ->where('isLandlord', true));
+    });
+
+    it('routes landlord settings to the platform settings screen', function () {
+        $this->actingAs($this->superAdmin)
+            ->get(route('settings'))
+            ->assertRedirect(route('platform.settings'));
+    });
+
+    it('denies platform settings to landlord roles without the permission', function () {
+        $this->actingAs($this->salesRep)
+            ->get(route('settings'))
+            ->assertForbidden();
+    });
+
+    it('shows platform notifications to landlord users without tenant finance permissions', function () {
+        $this->salesRep->notifications()->create([
+            'id' => (string) Str::uuid(),
+            'type' => TenantLifecycleNotification::class,
+            'data' => [
+                'message' => 'New hospital provisioned',
+                'category' => 'platform',
+                'type_label' => 'tenant',
+            ],
+            'read_at' => null,
+        ]);
+
+        $this->actingAs($this->salesRep)
+            ->get(route('landlord.notifications.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Notifications/Index', false)
+                ->where('isLandlord', true)
+                ->has('notifications.data', 1));
     });
 });
 

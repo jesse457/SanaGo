@@ -1,4 +1,9 @@
-import { CheckIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import {
+    CalendarDaysIcon,
+    CheckIcon,
+    DocumentTextIcon,
+    HeartIcon,
+} from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
@@ -8,34 +13,41 @@ import {
     FieldSet,
     Input,
     PageHeader,
+    SegmentedControl,
     Select,
     Textarea,
 } from '@/Components/ui';
+import type { IconType, SegmentedOption } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 import { FormPageCard, FormStatusAlerts } from '@/pages/Radiology/components';
 import type { Patient } from '@/types';
+import { CertificateType } from '@/types/enums';
+import type { CertificateTypeEnum } from '@/types/enums';
 
 interface Props {
-    type: string;
     patients: Pick<
         Patient,
         'id' | 'first_name' | 'last_name' | 'patient_uid' | 'address'
     >[];
 }
 
-export default function CertificatesCreate({ type, patients }: Props) {
-    const { t } = useTranslation();
-    const [patientSearch] = useState('');
+/**
+ * Copy and icon per certificate type. The page renders all three certificates;
+ * only the fields that the chosen type actually needs are shown.
+ */
+type TypeMeta = {
+    label: string;
+    segmentLabel: string;
+    description: string;
+    icon: IconType;
+};
 
-    const typeLabel =
-        type === 'sick_leave'
-            ? t('Sick Leave Certificate')
-            : type === 'medical_fitness'
-              ? t('Medical Fitness Certificate')
-              : t('Death Certificate');
+export default function CertificatesCreate({ patients }: Props) {
+    const { t } = useTranslation();
 
     const { data, setData, post, processing, errors } = useForm({
+        type: CertificateType.SICK_LEAVE as CertificateTypeEnum,
         patient_id: '',
         consultation_id: '' as string,
         from_date: '',
@@ -49,35 +61,81 @@ export default function CertificatesCreate({ type, patients }: Props) {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    const patientOptions = patients
-        .filter(
-            (p) =>
-                p.first_name
-                    .toLowerCase()
-                    .includes(patientSearch.toLowerCase()) ||
-                p.last_name
-                    .toLowerCase()
-                    .includes(patientSearch.toLowerCase()) ||
-                p.patient_uid
-                    .toLowerCase()
-                    .includes(patientSearch.toLowerCase()),
-        )
-        .map((p) => ({
-            value: String(p.id),
-            label: `${p.last_name} ${p.first_name} — ${p.patient_uid}`,
-        }));
+    const typeMeta: Record<CertificateTypeEnum, TypeMeta> = {
+        [CertificateType.SICK_LEAVE]: {
+            label: t('sickLeaveCertificate'),
+            segmentLabel: t('sickLeave'),
+            description: t('sickLeaveCertificateDescription'),
+            icon: CalendarDaysIcon,
+        },
+        [CertificateType.MEDICAL_FITNESS]: {
+            label: t('medicalFitnessCertificate'),
+            segmentLabel: t('medicalFitness'),
+            description: t('medicalFitnessCertificateDescription'),
+            icon: HeartIcon,
+        },
+        [CertificateType.DEATH]: {
+            label: t('deathCertificate'),
+            segmentLabel: t('death'),
+            description: t('deathCertificateDescription'),
+            icon: DocumentTextIcon,
+        },
+    };
 
-    const routeName =
-        type === 'sick_leave'
-            ? 'certificates.sick-leave.store'
-            : type === 'medical_fitness'
-              ? 'certificates.medical.store'
-              : 'certificates.death.store';
+    const typeOptions: SegmentedOption<CertificateTypeEnum>[] = [
+        CertificateType.SICK_LEAVE,
+        CertificateType.MEDICAL_FITNESS,
+        CertificateType.DEATH,
+    ].map((value) => {
+        const meta = typeMeta[value];
+
+        return {
+            value,
+            label: meta.segmentLabel,
+            icon: meta.icon,
+            ariaLabel: meta.label,
+        };
+    });
+
+    const active = typeMeta[data.type];
+
+    // Type-specific fields follow the chosen certificate: switching type drops
+    // the values that no longer belong to it so nothing stale is submitted.
+    const showDiagnosis = data.type !== CertificateType.DEATH;
+    const showEmployer = data.type === CertificateType.SICK_LEAVE;
+
+    const handleTypeChange = (nextType: CertificateTypeEnum) => {
+        setData({
+            ...data,
+            type: nextType,
+            diagnosis_summary:
+                nextType === CertificateType.DEATH
+                    ? ''
+                    : data.diagnosis_summary,
+            recommendations:
+                nextType === CertificateType.SICK_LEAVE
+                    ? data.recommendations
+                    : '',
+            employer_name:
+                nextType === CertificateType.SICK_LEAVE
+                    ? data.employer_name
+                    : '',
+            employer_address:
+                nextType === CertificateType.SICK_LEAVE
+                    ? data.employer_address
+                    : '',
+        });
+    };
+
+    const patientOptions = patients.map((p) => ({
+        value: String(p.id),
+        label: `${p.last_name} ${p.first_name} — ${p.patient_uid}`,
+    }));
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         setErrorMessage(null);
-        post(route(routeName), {
+        post(route('certificates.store'), {
             onSuccess: () => {
                 setSuccessMessage(t('certificateIssuedSuccessfully'));
             },
@@ -89,19 +147,25 @@ export default function CertificatesCreate({ type, patients }: Props) {
 
     return (
         <AppLayout
-            headerTitle={typeLabel}
-            headerSubtitle={t('Issue a medical certificate')}
+            headerTitle={t('certificates')}
+            headerSubtitle={t('issueACertificate')}
         >
-            <Head title={typeLabel} />
+            <Head title={t('certificates')} />
 
             <div className="mx-auto flex max-w-5xl flex-col gap-6">
                 <PageHeader
-                    title={typeLabel}
-                    description={t('Issue a medical certificate')}
-                    breadcrumbs={[
-                        { label: t('clinical') },
-                        { label: typeLabel },
-                    ]}
+                    title={t('certificates')}
+                    eyebrow={t('clinical')}
+                    description={active.description}
+                    icon={DocumentTextIcon}
+                    actions={
+                        <SegmentedControl
+                            value={data.type}
+                            onChange={handleTypeChange}
+                            options={typeOptions}
+                            size="sm"
+                        />
+                    }
                 />
 
                 <FormStatusAlerts
@@ -115,8 +179,9 @@ export default function CertificatesCreate({ type, patients }: Props) {
                 />
 
                 <FormPageCard
-                    title={typeLabel}
-                    headingIcon={DocumentTextIcon}
+                    title={active.label}
+                    description={active.description}
+                    headingIcon={active.icon}
                     onSubmit={handleSubmit}
                     footer={
                         <>
@@ -198,7 +263,7 @@ export default function CertificatesCreate({ type, patients }: Props) {
                             />
                         </Field>
 
-                        {type !== 'death' && (
+                        {showDiagnosis && (
                             <Field
                                 label={t('diagnosisSummary')}
                                 htmlFor="diagnosis_summary"
@@ -221,31 +286,33 @@ export default function CertificatesCreate({ type, patients }: Props) {
                             </Field>
                         )}
 
-                        {type === 'sick_leave' && (
-                            <Field
-                                label={t('recommendations')}
-                                htmlFor="recommendations"
-                                error={errors.recommendations}
-                                className="sm:col-span-2"
-                            >
-                                <Textarea
-                                    id="recommendations"
-                                    value={data.recommendations}
-                                    onChange={(e) =>
-                                        setData(
-                                            'recommendations',
-                                            e.target.value,
-                                        )
-                                    }
-                                    placeholder={t('provideRecommendations')}
-                                    rows={2}
-                                    invalid={Boolean(errors.recommendations)}
-                                />
-                            </Field>
-                        )}
-
-                        {type === 'sick_leave' && (
+                        {showEmployer && (
                             <>
+                                <Field
+                                    label={t('recommendations')}
+                                    htmlFor="recommendations"
+                                    error={errors.recommendations}
+                                    className="sm:col-span-2"
+                                >
+                                    <Textarea
+                                        id="recommendations"
+                                        value={data.recommendations}
+                                        onChange={(e) =>
+                                            setData(
+                                                'recommendations',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder={t(
+                                            'provideRecommendations',
+                                        )}
+                                        rows={2}
+                                        invalid={Boolean(
+                                            errors.recommendations,
+                                        )}
+                                    />
+                                </Field>
+
                                 <Field
                                     label={t('employerName')}
                                     htmlFor="employer_name"

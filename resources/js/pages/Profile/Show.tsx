@@ -23,7 +23,7 @@ import {
     SectionCard,
 } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
-import AppLayout from '@/Layouts/AppLayout';
+import ContextLayout from '@/Layouts/ContextLayout';
 
 interface User {
     id: number;
@@ -37,17 +37,26 @@ interface User {
     hire_date?: string | null;
     is_active: boolean;
     department?: { name: string } | null;
-    roles?: { name: string }[];
+    roles?: ({ name: string } | string)[];
     created_at?: string;
 }
 
 export default function ProfileShow() {
     const { t } = useTranslation();
-    const user = (usePage().props.auth as any)?.user as User;
+    const pageProps = usePage().props as unknown as {
+        isLandlord?: boolean;
+        auth?: { user?: User & { permissions?: string[] } };
+    };
+    const user = pageProps.auth?.user as User;
+    const permissions = pageProps.auth?.user?.permissions ?? [];
+    const canOpenSettings =
+        !pageProps.isLandlord ||
+        permissions.includes('manage-platform-settings');
 
-    const role =
-        user?.roles?.[0]?.name?.replace('_', ' ') ||
-        t('page.profile_show.staff');
+    const primaryRole = user?.roles?.[0];
+    const roleName =
+        typeof primaryRole === 'string' ? primaryRole : primaryRole?.name;
+    const role = roleName?.replace('_', ' ') || t('page.profile_show.staff');
 
     const formatDate = (dateString?: string | null) => {
         if (!dateString) {
@@ -62,7 +71,7 @@ export default function ProfileShow() {
     };
 
     return (
-        <AppLayout
+        <ContextLayout
             headerTitle={t('page.profile_show.title')}
             headerSubtitle={user?.name}
         >
@@ -75,13 +84,15 @@ export default function ProfileShow() {
                     icon={UserCircleIcon}
                     breadcrumbs={[{ label: t('page.profile_show.title') }]}
                     actions={
-                        <Button
-                            variant="secondary"
-                            href={route('settings')}
-                            icon={Cog6ToothIcon}
-                        >
-                            Settings
-                        </Button>
+                        canOpenSettings ? (
+                            <Button
+                                variant="secondary"
+                                href={route('settings')}
+                                icon={Cog6ToothIcon}
+                            >
+                                {t('nav.settings')}
+                            </Button>
+                        ) : undefined
                     }
                 />
 
@@ -199,6 +210,6 @@ export default function ProfileShow() {
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </ContextLayout>
     );
 }

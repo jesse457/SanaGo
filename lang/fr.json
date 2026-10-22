@@ -740,9 +740,7 @@
         "appt_calendar": "Calendrier RDV",
         "patient_feedback": "Avis des patients",
         "new_consultation": "Nouvelle consultation",
-        "sick_leave_cert": "Certificat de repos",
-        "medical_certs": "Certificats médicaux",
-        "death_certs": "Certificats de décès",
+        "certificates": "Certificats",
         "all_surgeries": "Toutes les chirurgies",
         "schedule_surgery": "Planifier une chirurgie",
         "new_emergency": "Nouvelle urgence",
@@ -772,7 +770,8 @@
         "add_user": "Ajouter utilisateur",
         "roles_permissions": "Rôles et permissions",
         "billing_settings": "Paramètres de facturation",
-        "new_ticket": "Nouveau ticket"
+        "new_ticket": "Nouveau ticket",
+        "radiology_results": "Résultats de radiologie"
     },
     "marketing": {
         "modules": {
@@ -1694,6 +1693,16 @@
             "appointments": "Rendez-vous",
             "no_appointments": "Aucun rendez-vous",
             "no_appointments_desc": "Il n’y a pas de rendez-vous ce jour.",
+            "more": "de plus",
+            "views": {
+                "month": "Mois",
+                "week": "Semaine",
+                "day": "Jour"
+            },
+            "tabs": {
+                "table": "Liste",
+                "calendar": "Calendrier"
+            },
             "weekdays": {
                 "mon": "Lun",
                 "tue": "Mar",
@@ -1715,7 +1724,8 @@
                 "doctor": "Médecin",
                 "date_time": "Date et heure",
                 "queue_position": "Position dans la file",
-                "consultation_fee": "Honoraires"
+                "consultation_fee": "Honoraires",
+                "reason": "Motif de la visite"
             },
             "status": {
                 "scheduled": "Planifié",
@@ -1732,6 +1742,9 @@
                 "view_profile": "Voir le profil",
                 "edit": "Modifier",
                 "close": "Fermer",
+                "details": "Détails",
+                "previous": "Précédent",
+                "next": "Suivant",
                 "today": "Aujourd’hui"
             }
         },
@@ -2190,6 +2203,18 @@
     "e.g. General: Alert, no acute distress": "Ex: Général: Alerte, pas de détresse aiguë. CV: Régulier. Resp: Clair. Abdomen: Souple.",
     "e.g. Return in 2 weeks for review": "Ex: Revenir dans 2 semaines pour contrôle. Revenir plus tôt si les symptômes s'aggravent.",
     "Loading...": "Chargement...",
+    "certificates": "Certificats",
+    "issueACertificate": "Émettre un certificat",
+    "certificateIssuedSuccessfully": "Certificat émis avec succès",
+    "sickLeave": "Arrêt de travail",
+    "medicalFitness": "Aptitude médicale",
+    "death": "Décès",
+    "sickLeaveCertificate": "Certificat de repos",
+    "medicalFitnessCertificate": "Certificat d'aptitude médicale",
+    "deathCertificate": "Certificat de décès",
+    "sickLeaveCertificateDescription": "Justifie une absence et prescrit des jours de repos pour l'employeur, l'école ou l'assureur.",
+    "medicalFitnessCertificateDescription": "Atteste l'aptitude au travail, à la scolarité, au voyage ou au sport.",
+    "deathCertificateDescription": "Consigne la date et la cause du décès pour l'état civil.",
     "Notification": "Notification",
     "hospitals": "Hôpitaux",
     "platform": {
@@ -2230,6 +2255,108 @@
         "health": {
             "title": "Santé et supervision",
             "description": "Accessibilité de chaque base de données d'hôpital, les services de la plateforme et les abonnements qui demandent une intervention."
+        }
+    },
+    "radiology": {
+        "status": {
+            "pending": "En attente",
+            "in_progress": "En cours",
+            "completed": "Terminé",
+            "validated": "Validé"
+        },
+        "requests": {
+            "title": "Demandes d'imagerie",
+            "subtitle": "Toutes les demandes de radiographie, échographie, scanner et IRM d'un patient",
+            "head_title": "Demandes d'imagerie",
+            "imaging_requests": "Demandes d'imagerie",
+            "new_request": "Nouvelle demande",
+            "total_requests": "Demandes totales",
+            "completed": "Terminées",
+            "in_progress": "En cours",
+            "pending": "En attente",
+            "search_placeholder": "Rechercher un patient, un examen ou une région...",
+            "status": "Statut",
+            "all_statuses": "Tous les statuts",
+            "no_requests": "Aucune demande d'imagerie",
+            "no_requests_description": "Les demandes créées dans les services apparaissent ici dès leur validation.",
+            "patient": "Patient",
+            "exam": "Examen",
+            "process_result": "Traiter le résultat",
+            "open_report": "Ouvrir le compte rendu",
+            "referred_by": "Prescrit par :name",
+            "detail_title": "Demande d'imagerie",
+            "back_to_requests": "Toutes les demandes",
+            "order": "Demande d'examen",
+            "imaging_type": "Modalité",
+            "body_part": "Région",
+            "requested_on": "Demandée le",
+            "clinical_notes": "Notes cliniques",
+            "no_clinical_notes": "Aucune note clinique n'accompagne cette demande.",
+            "print": "Imprimer la demande"
+        },
+        "results": {
+            "index": {
+                "title": "Archive des comptes rendus",
+                "subtitle": "Tous les comptes rendus d'imagerie signés, du plus récent au plus ancien",
+                "head_title": "Comptes rendus de radiologie",
+                "archive": "Archive des comptes rendus",
+                "back_to_requests": "Toutes les demandes",
+                "validated": "Validés",
+                "signed": "Signés",
+                "in_progress": "En cours",
+                "status": "Statut",
+                "all_statuses": "Tous les statuts",
+                "search_placeholder": "Rechercher un patient, un examen ou une région...",
+                "no_results": "Aucun compte rendu trouvé",
+                "no_results_description": "Les comptes rendus apparaissent ici dès qu'un radiologue en enregistre un.",
+                "patient": "Détails du patient",
+                "exam": "Examen",
+                "report_date": "Date du compte rendu",
+                "edit": "Modifier le compte rendu",
+                "open_request": "Ouvrir la demande",
+                "no_findings": "Aucune observation enregistrée pour l'instant."
+            },
+            "enter": {
+                "create_title": "Traiter le résultat",
+                "edit_title": "Modifier le compte rendu",
+                "head_title": "Compte rendu de radiologie",
+                "subtitle": "Saisir les observations d'un examen d'imagerie et le valider",
+                "breadcrumb": "Traiter le résultat",
+                "subject_patient": "Patient",
+                "exam": "Examen",
+                "current_lifecycle": "Cycle actuel",
+                "order": "Demande d'examen",
+                "order_description": "Ce qui a été demandé et pourquoi",
+                "imaging_type": "Modalité",
+                "body_part": "Région",
+                "referred_by": "Prescrit par",
+                "clinical_notes": "Notes cliniques",
+                "status_assignment": "Statut du compte rendu",
+                "performed_by": "Réalisé par",
+                "validated_by": "Validé par",
+                "you": "Vous",
+                "findings": "Observations",
+                "findings_hint": "Décrivez ce que montrent les images, appareil par appareil",
+                "findings_placeholder": "ex. Champs pulmonaires bilatéraux clairs. Pas d'épanchement pleural ni de pneumothorax.",
+                "conclusion": "Conclusion",
+                "conclusion_hint": "L'impression que le clinicien prescripteur lit en premier",
+                "conclusion_placeholder": "ex. Radiographie thoracique normale.",
+                "attach_report": "Joindre des images ou le compte rendu",
+                "drop_files": "Déposez les fichiers à joindre",
+                "files_selected": "{count} fichier(s) sélectionné(s)",
+                "max_file_size": "Taille maximale : 10 Mo",
+                "finalizing_notice": "Enregistrez le compte rendu pour l'ajouter au dossier du patient.",
+                "submit_report": "Enregistrer le compte rendu",
+                "update_report": "Mettre à jour le compte rendu",
+                "report": "Compte rendu de radiologie",
+                "report_description": "Observations et conclusion enregistrées pour cet examen",
+                "status": "Statut du compte rendu",
+                "no_report": "Aucun compte rendu",
+                "no_report_description": "Cet examen a été demandé mais pas encore interprété",
+                "no_report_body": "Ouvrez le formulaire de compte rendu pour saisir les observations et valider l'examen.",
+                "download_report": "Télécharger le compte rendu",
+                "validate_report": "Valider le compte rendu"
+            }
         }
     }
 }

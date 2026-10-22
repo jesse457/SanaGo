@@ -3,6 +3,7 @@ import { PageHeader } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 import type { Certificate } from '@/types';
+import { CertificateType } from '@/types/enums';
 
 interface Props {
     certificate: Certificate;
@@ -35,11 +36,11 @@ export default function CertificatesPrint({ certificate }: Props) {
     const { t } = useTranslation();
 
     const typeLabel =
-        certificate.type === 'sick_leave'
-            ? t('SICK LEAVE CERTIFICATE')
-            : certificate.type === 'medical_fitness'
-              ? t('MEDICAL FITNESS CERTIFICATE')
-              : t('DEATH CERTIFICATE');
+        certificate.type === CertificateType.SICK_LEAVE
+            ? t('sickLeaveCertificate')
+            : certificate.type === CertificateType.MEDICAL_FITNESS
+              ? t('medicalFitnessCertificate')
+              : t('deathCertificate');
 
     return (
         <AppLayout headerTitle={t('Print Certificate')}>

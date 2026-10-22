@@ -218,6 +218,33 @@ return new class extends Migration
             $table->text('analysis_comments')->nullable();
             $table->timestamps();
         });
+        // Radiology tables — drop the central stubs first, then create the
+        // tenant columns the queue, the report and its attachments read.
+        Schema::dropIfExists('radiology_results');
+        Schema::dropIfExists('radiology_requests');
+
+        Schema::create('radiology_requests', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('consultation_id')->nullable()->constrained('medical_records')->nullOnDelete();
+            $table->foreignId('requested_by')->constrained('users')->cascadeOnDelete();
+            $table->string('imaging_type');
+            $table->string('body_part');
+            $table->text('clinical_notes')->nullable();
+            $table->string('status')->default('pending')->index();
+            $table->timestamps();
+        });
+        Schema::create('radiology_results', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('request_id')->unique()->constrained('radiology_requests')->cascadeOnDelete();
+            $table->foreignId('performed_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->text('findings')->nullable();
+            $table->text('conclusion')->nullable();
+            $table->foreignId('validated_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->dateTime('validated_at')->nullable();
+            $table->string('status')->default('in_progress')->index();
+            $table->timestamps();
+        });
         Schema::create('nurse_care_reports', function (Blueprint $table) {
             $table->id();
             $table->foreignId('patient_id')->constrained()->cascadeOnDelete();

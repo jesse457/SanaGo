@@ -295,36 +295,36 @@ export interface Certificate {
 }
 
 /**
- * Radiology Request Interface
+ * Radiology Request Interface — the queue row `RadiologyRequestController`
+ * projects for the index, detail and report screens.
  */
 export interface RadiologyRequest {
     id: number;
-    patient_id: number;
-    consultation_id?: number;
-    requested_by: number;
+    patient_id?: number;
+    consultation_id?: number | null;
+    requested_by?: { id: number; name: string } | null;
     imaging_type: string;
     body_part: string;
-    clinical_notes?: string;
+    clinical_notes?: string | null;
     status: RadiologyStatusEnum;
-    patient?: Patient;
-    requested_by_user?: User;
-    result?: RadiologyResult;
+    request_date?: string | null;
+    patient?: Patient | null;
+    result?: RadiologyResult | null;
 }
 
 /**
- * Radiology Result Interface
+ * Radiology Result Interface — a report as the archive and the report form
+ * receive it.
  */
 export interface RadiologyResult {
     id: number;
     request_id: number;
-    performed_by?: number;
-    findings?: string;
-    conclusion?: string;
-    validated_by?: number;
-    validated_at?: string;
+    performed_by?: { id: number; name: string } | null;
+    findings?: string | null;
+    conclusion?: string | null;
+    validated_by?: { id: number; name: string } | null;
+    validated_at?: string | null;
     status: RadiologyStatusEnum;
-    performed_by_user?: User;
-    validated_by_user?: User;
 }
 
 /**

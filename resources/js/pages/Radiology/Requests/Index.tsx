@@ -1,22 +1,25 @@
 import {
-    PlusIcon,
-    EyeIcon,
     CameraIcon,
+    CheckBadgeIcon,
+    ClipboardDocumentListIcon,
     ClockIcon,
-    CheckCircleIcon,
+    ExclamationTriangleIcon,
+    PlusIcon,
 } from '@heroicons/react/24/outline';
-import { Head } from '@inertiajs/react';
-import { useState, useMemo } from 'react';
+import { Head, router } from '@inertiajs/react';
+import debounce from 'lodash/debounce';
+import { useEffect, useMemo, useState } from 'react';
 import { Pagination } from '@/Components/Pagination';
 import {
     Button,
     EmptyState,
     PageHeader,
+    SegmentedControl,
+    Select,
     StatCard,
     StatGrid,
     Table,
     TableBody,
-    TableCell,
     TableHeader,
     TableHeaderCell,
     TableRow,
@@ -26,186 +29,251 @@ import {
 } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
-import { RadiologyStatusBadge } from '@/pages/Radiology/components';
-import type { RadiologyRequest } from '@/types';
+import {
+    RADIOLOGY_STATUS_LABEL_KEYS,
+    RadiologyRequestCard,
+    RadiologyRequestTableRow,
+} from '@/pages/Radiology/components';
+import type { RadiologyRequestRow } from '@/pages/Radiology/components';
 
 interface Props {
     requests: {
-        data: RadiologyRequest[];
-        links: any[];
-        from: number;
-        to: number;
+        data: RadiologyRequestRow[];
+        links: { url: string | null; label: string; active: boolean }[];
         total: number;
+        from: number | null;
+        to: number | null;
+    };
+    filters: {
+        search?: string;
+        status?: string;
+    };
+    stats: {
+        total: number;
+        completed: number;
+        inProgress: number;
+        pending: number;
     };
 }
 
-export default function RadiologyRequestsIndex({ requests }: Props) {
+export default function RadiologyRequestsIndex({
+    requests,
+    filters,
+    stats,
+}: Props) {
     const { t } = useTranslation();
-    const [searchQuery, setSearchQuery] = useState('');
+    const [search, setSearch] = useState(filters.search || '');
+    const [statusFilter, setStatusFilter] = useState(filters.status || '');
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
-    const stats = {
-        total: requests.total,
-        pending: requests.data.filter((r) => r.status === 'pending').length,
-        completed: requests.data.filter(
-            (r) => r.status === 'completed' || r.status === 'validated',
-        ).length,
+    // One debounced visit keeps typing cheap; the cleanup cancels a pending
+    // call when the screen unmounts.
+    const handleFilter = useMemo(
+        () =>
+            debounce((searchValue: string, statusValue: string) => {
+                router.get(
+                    route('radiology.requests.index'),
+                    { search: searchValue, status: statusValue },
+                    { preserveState: true, replace: true },
+                );
+            }, 300),
+        [],
+    );
+
+    useEffect(() => {
+        handleFilter(search, statusFilter);
+    }, [handleFilter, search, statusFilter]);
+
+    useEffect(() => () => handleFilter.cancel(), [handleFilter]);
+
+    const statusLabel = (status: string) => {
+        const fallback = status.replace(/_/g, ' ');
+        const key = RADIOLOGY_STATUS_LABEL_KEYS[status];
+
+        return key ? t(key, fallback) : fallback;
     };
 
-    const filtered = useMemo(() => {
-        if (!searchQuery.trim()) {
-            return requests.data;
+    /** A request with a report opens it; a fresh one starts the report. */
+    const actionFor = (request: RadiologyRequestRow) => {
+        if (request.result) {
+            return {
+                href: route('radiology.results.edit', request.result.id),
+                label: t('radiology.requests.open_report'),
+            };
         }
 
-        const q = searchQuery.toLowerCase();
-
-        return requests.data.filter(
-            (r) =>
-                r.patient?.first_name?.toLowerCase().includes(q) ||
-                r.patient?.last_name?.toLowerCase().includes(q) ||
-                r.imaging_type?.toLowerCase().includes(q) ||
-                r.body_part?.toLowerCase().includes(q),
-        );
-    }, [requests.data, searchQuery]);
+        return {
+            href: route('radiology.results.create', {
+                request_id: request.id,
+            }),
+            label: t('radiology.requests.process_result'),
+        };
+    };
 
     return (
         <AppLayout
-            headerTitle={t('Radiology Requests')}
-            headerSubtitle={t(
-                'Manage X-ray, ultrasound, CT scan and other imaging requests',
-            )}
+            headerTitle={t('radiology.requests.title')}
+            headerSubtitle={t('radiology.requests.subtitle')}
         >
-            <Head title={t('Radiology')} />
+            <Head title={t('radiology.requests.head_title')} />
 
-            <div className="flex flex-col gap-6">
+            <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 <PageHeader
-                    title={t('Radiology Requests')}
-                    description={t(
-                        'Manage X-ray, ultrasound, CT scan and other imaging requests',
-                    )}
+                    icon={CameraIcon}
+                    eyebrow={t('radiology.requests.imaging_requests')}
+                    title={t('radiology.requests.title')}
+                    description={t('radiology.requests.subtitle')}
                     breadcrumbs={[
-                        { label: t('Lab & Diagnostics') },
-                        { label: t('Radiology') },
+                        { label: t('radiology.requests.imaging_requests') },
                     ]}
                     actions={
                         <Button
                             href={route('radiology.requests.create')}
                             icon={PlusIcon}
+                            variant="accent"
                         >
-                            {t('New Request')}
+                            {t('radiology.requests.new_request')}
                         </Button>
                     }
                 />
 
-                <StatGrid columns={3}>
+                <StatGrid>
                     <StatCard
-                        icon={CameraIcon}
-                        label={t('Total Requests')}
+                        label={t('radiology.requests.total_requests')}
                         value={stats.total}
+                        icon={ClipboardDocumentListIcon}
                         tone="accent"
                     />
                     <StatCard
-                        icon={ClockIcon}
-                        label={t('Pending')}
-                        value={stats.pending}
-                        tone="warning"
+                        label={t('radiology.requests.completed')}
+                        value={stats.completed}
+                        icon={CheckBadgeIcon}
+                        tone="positive"
                     />
                     <StatCard
-                        icon={CheckCircleIcon}
-                        label={t('Completed')}
-                        value={stats.completed}
-                        tone="positive"
+                        label={t('radiology.requests.in_progress')}
+                        value={stats.inProgress}
+                        icon={ClockIcon}
+                        tone="neutral"
+                    />
+                    <StatCard
+                        label={t('radiology.requests.pending')}
+                        value={stats.pending}
+                        icon={ExclamationTriangleIcon}
+                        tone="warning"
                     />
                 </StatGrid>
 
                 <Toolbar>
                     <ToolbarSearch
-                        value={searchQuery}
-                        onChange={setSearchQuery}
-                        placeholder={t('Search requests...')}
+                        value={search}
+                        onChange={setSearch}
+                        placeholder={t('radiology.requests.search_placeholder')}
                     />
+                    <Select
+                        aria-label={t('radiology.requests.status')}
+                        className="h-9 w-auto text-[13px]"
+                        value={statusFilter}
+                        onChange={(event) =>
+                            setStatusFilter(event.target.value)
+                        }
+                    >
+                        <option value="">
+                            {t('radiology.requests.all_statuses')}
+                        </option>
+                        <option value="pending">
+                            {t('radiology.status.pending')}
+                        </option>
+                        <option value="in_progress">
+                            {t('radiology.status.in_progress')}
+                        </option>
+                        <option value="completed">
+                            {t('radiology.status.completed')}
+                        </option>
+                        <option value="validated">
+                            {t('radiology.status.validated')}
+                        </option>
+                    </Select>
                     <ToolbarSpacer />
+                    <SegmentedControl
+                        value={viewMode}
+                        onChange={setViewMode}
+                        options={[
+                            {
+                                value: 'grid',
+                                label: t('common.grid', 'Grid'),
+                                ariaLabel: 'Grid view',
+                            },
+                            {
+                                value: 'table',
+                                label: t('common.table', 'Table'),
+                                ariaLabel: 'Table view',
+                            },
+                        ]}
+                        size="sm"
+                    />
                 </Toolbar>
 
-                {filtered.length === 0 ? (
+                {requests.data.length === 0 ? (
                     <EmptyState
                         icon={CameraIcon}
-                        title={t('No Radiology Requests')}
-                        description={t('Create your first radiology request.')}
+                        title={t('radiology.requests.no_requests')}
+                        description={t(
+                            'radiology.requests.no_requests_description',
+                        )}
                         action={{
-                            label: t('New Request'),
+                            label: t('radiology.requests.new_request'),
                             href: route('radiology.requests.create'),
                         }}
                     />
+                ) : viewMode === 'grid' ? (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {requests.data.map((request) => (
+                            <RadiologyRequestCard
+                                key={request.id}
+                                request={request}
+                                statusLabel={statusLabel(request.status)}
+                                actionHref={actionFor(request).href}
+                                actionLabel={actionFor(request).label}
+                                meta={
+                                    request.requested_by
+                                        ? t('radiology.requests.referred_by', {
+                                              name: request.requested_by.name,
+                                          })
+                                        : undefined
+                                }
+                            />
+                        ))}
+                    </div>
                 ) : (
                     <Table>
                         <TableHeader>
-                            <TableRow>
+                            <TableRow className="hover:bg-transparent">
                                 <TableHeaderCell>
-                                    {t('Patient')}
+                                    {t('radiology.requests.patient')}
                                 </TableHeaderCell>
                                 <TableHeaderCell>
-                                    {t('Imaging')}
+                                    {t('radiology.requests.exam')}
                                 </TableHeaderCell>
                                 <TableHeaderCell>
-                                    {t('Body Part')}
-                                </TableHeaderCell>
-                                <TableHeaderCell>
-                                    {t('Requested By')}
+                                    {t('radiology.requests.status')}
                                 </TableHeaderCell>
                                 <TableHeaderCell numeric>
-                                    {t('Status')}
-                                </TableHeaderCell>
-                                <TableHeaderCell numeric>
-                                    {t('Actions')}
+                                    <span className="sr-only">
+                                        {t('common.actions', 'Actions')}
+                                    </span>
                                 </TableHeaderCell>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filtered.map((req) => (
-                                <TableRow key={req.id}>
-                                    <TableCell>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            href={route(
-                                                'radiology.requests.show',
-                                                req.id,
-                                            )}
-                                            className="-ml-3 font-semibold text-accent hover:text-accent-ink"
-                                        >
-                                            {req.patient
-                                                ? `${req.patient.first_name} ${req.patient.last_name}`
-                                                : '—'}
-                                        </Button>
-                                    </TableCell>
-                                    <TableCell muted className="capitalize">
-                                        {req.imaging_type.replace('_', ' ')}
-                                    </TableCell>
-                                    <TableCell muted className="capitalize">
-                                        {req.body_part}
-                                    </TableCell>
-                                    <TableCell muted>
-                                        {req.requested_by_user?.name ?? '—'}
-                                    </TableCell>
-                                    <TableCell numeric>
-                                        <RadiologyStatusBadge
-                                            status={req.status}
-                                            label={t(req.status)}
-                                        />
-                                    </TableCell>
-                                    <TableCell numeric>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            aria-label={t('Radiology')}
-                                            icon={EyeIcon}
-                                            href={route(
-                                                'radiology.requests.show',
-                                                req.id,
-                                            )}
-                                        />
-                                    </TableCell>
-                                </TableRow>
+                            {requests.data.map((request) => (
+                                <RadiologyRequestTableRow
+                                    key={request.id}
+                                    request={request}
+                                    statusLabel={statusLabel(request.status)}
+                                    actionHref={actionFor(request).href}
+                                    actionLabel={actionFor(request).label}
+                                />
                             ))}
                         </TableBody>
                     </Table>
@@ -214,8 +282,8 @@ export default function RadiologyRequestsIndex({ requests }: Props) {
                 <Pagination
                     links={requests.links}
                     meta={{
-                        from: requests.from,
-                        to: requests.to,
+                        from: requests.from || 0,
+                        to: requests.to || 0,
                         total: requests.total,
                     }}
                 />
