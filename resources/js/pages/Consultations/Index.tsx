@@ -316,10 +316,13 @@ const PatientProfilePage = ({ patient }: Props) => {
                     </>
                 }
             >
+                {/* The question is already the header description; this well
+                    carries the consequence instead of repeating it. */}
                 <Alert tone="warning">
-                    {t('page.patient_profile.confirmAdmissionMessage', {
-                        name: `${patient.first_name} ${patient.last_name}`,
-                    })}
+                    {t(
+                        'page.patient_profile.confirmAdmissionBody',
+                        'A bed is reserved and nursing staff are notified. You can cancel the request from the admissions registry.',
+                    )}
                 </Alert>
             </Dialog>
         </div>

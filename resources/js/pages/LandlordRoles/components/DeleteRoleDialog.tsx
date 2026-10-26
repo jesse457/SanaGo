@@ -1,7 +1,6 @@
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { Button, Dialog } from '@/Components/ui';
+import { Alert, Button, Dialog } from '@/Components/ui';
 
 export interface DeletableRole {
     id: number;
@@ -52,22 +51,12 @@ export function DeleteRoleDialog({ role, onClose }: DeleteRoleDialogProps) {
                 </>
             }
         >
-            <div className="flex items-start gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-critical-soft text-critical-ink">
-                    <ExclamationTriangleIcon className="h-[18px] w-[18px]" />
-                </span>
-                <div className="min-w-0">
-                    <p className="text-[13px] leading-relaxed text-ink">
-                        Delete role{' '}
-                        <strong className="font-semibold">{role?.name}</strong>?
-                    </p>
-                    <p className="mt-1 text-[12.5px] leading-relaxed text-ink-muted">
-                        {(role?.users_count ?? 0) > 0
-                            ? `${role?.users_count} staff members currently hold this role.`
-                            : 'This cannot be undone.'}
-                    </p>
-                </div>
-            </div>
+            {/* Alert owns the danger treatment; the dialog only supplies copy. */}
+            <Alert tone="critical" title={`Delete role ${role?.name ?? ''}?`}>
+                {(role?.users_count ?? 0) > 0
+                    ? `${role?.users_count} staff members currently hold this role.`
+                    : 'This cannot be undone.'}
+            </Alert>
         </Dialog>
     );
 }

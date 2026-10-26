@@ -9,19 +9,16 @@ import {
     MapPinIcon,
     UserIcon,
 } from '@heroicons/react/24/outline';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import React from 'react';
-import { toast } from 'sonner';
 import {
     Button,
     Card,
     CardContent,
     CardHeader,
-    Field,
     KeyValue,
     KeyValueGrid,
     PageHeader,
-    Select,
 } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
@@ -62,7 +59,7 @@ interface Admission {
     id: number;
     admission_date: string;
     discharge_date: string | null;
-    status: 'Pending' | 'Admitted' | 'Discharged';
+    status: 'pending' | 'admitted' | 'discharged';
     reason_for_admission: string;
     attending_doctor?: Doctor;
     attendingDoctor?: Doctor;
@@ -91,31 +88,14 @@ export default function AdmissionDetails({
     // Form setup for the dedicated discharge route
     const { post, processing } = useForm();
 
-    const handleAdmissionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const id = e.target.value;
-        router.get(route('admissions.show', id), {}, { preserveState: true });
-    };
-
     const handleDischarge = () => {
         if (!selectedAdmission) {
             return;
         }
 
-        // Triggers a POST request to admissions.discharge
-        post(route('admissions.discharge', selectedAdmission.id), {
-            onSuccess: () => {
-                toast.success(
-                    t('flash.admission.discharged') ||
-                        'Patient discharged successfully.',
-                );
-            },
-            onError: () => {
-                toast.error(
-                    t('flash.error') ||
-                        'Failed to complete discharge operation.',
-                );
-            },
-        });
+        /* AdmissionController flashes success; validation failures open the
+           global alert. Local toasts duplicated both. */
+        post(route('admissions.discharge', selectedAdmission.id));
     };
 
     // Helper references for rendering fields cleanly
@@ -193,33 +173,6 @@ export default function AdmissionDetails({
                     <CardContent>
                         {admissions.length > 0 ? (
                             <>
-                                <div className="max-w-md">
-                                    <Field
-                                        label={
-                                            t(
-                                                'page.checkin.select_admission_record',
-                                            ) || 'Select Admission Record'
-                                        }
-                                        htmlFor="admissionSelector"
-                                    >
-                                        <Select
-                                            id="admissionSelector"
-                                            value={selectedAdmission?.id || ''}
-                                            onChange={handleAdmissionChange}
-                                        >
-                                            {admissions.map((option) => (
-                                                <option
-                                                    key={option.id}
-                                                    value={option.id}
-                                                >
-                                                    {option.admission_date} —{' '}
-                                                    {option.status}
-                                                </option>
-                                            ))}
-                                        </Select>
-                                    </Field>
-                                </div>
-
                                 {selectedAdmission ? (
                                     <div className="mt-6 space-y-6">
                                         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface-muted px-4 py-3">
@@ -326,7 +279,7 @@ export default function AdmissionDetails({
                                             </Button>
 
                                             {selectedAdmission.status ===
-                                            'Admitted' ? (
+                                            'admitted' ? (
                                                 <Button
                                                     variant="danger"
                                                     icon={

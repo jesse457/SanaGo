@@ -77,9 +77,6 @@ export default function CreatePatient() {
     const [step, setStep] = useState(0);
     const [touchedSteps, setTouchedSteps] = useState<number[]>([]);
 
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
     // Tracks which submit action is actively being processed ('save' or 'vitals')
     // Where to go after registering: the desk that sent us here (cashier,
     // vitals, plain list) keeps its own flow instead of dumping the patient on
@@ -130,7 +127,6 @@ export default function CreatePatient() {
 
     const submit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setErrorMessage(null);
 
         // Fallback to 'save' if the form was submitted via keyboard 'Enter'
         const action = submitType || redirectTarget;
@@ -139,18 +135,8 @@ export default function CreatePatient() {
         post(route('patients.store', { redirect_to: action }), {
             forceFormData: true,
             onSuccess: () => {
-                setSuccessMessage(
-                    t('patientCreatedSuccessfully') ||
-                        'Patient registered successfully.',
-                );
                 reset();
                 setImagePreview(null);
-            },
-            onError: () => {
-                setErrorMessage(
-                    t('pleaseCheckForm') ||
-                        'Please review the fields and try again.',
-                );
             },
             onFinish: () => {
                 setSubmitType(null);
@@ -183,18 +169,6 @@ export default function CreatePatient() {
                         { label: t('page.patients_create.new_registration') },
                     ]}
                 />
-
-                {successMessage && (
-                    <Alert tone="positive" title={t('success')}>
-                        {successMessage}
-                    </Alert>
-                )}
-
-                {(errorMessage || Object.keys(errors).length > 0) && (
-                    <Alert tone="critical" title={t('error')}>
-                        {errorMessage || t('someFieldsRequireAttention')}
-                    </Alert>
-                )}
 
                 <SectionCard
                     title={currentStep?.label}

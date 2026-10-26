@@ -4,19 +4,25 @@ import {
     PencilSquareIcon,
 } from '@heroicons/react/24/outline';
 import { Head, useForm, router } from '@inertiajs/react';
-import React, { useState, useMemo } from 'react';
-import FormInput from '@/Components/FormInput';
-import FormSelect from '@/Components/FormSelect';
-import Modal from '@/Components/Modal';
+import type { FormEvent } from 'react';
+import { useState, useMemo } from 'react';
 import PageBreadcrumb from '@/Components/PageBreadcrumb';
 import StatusBadge from '@/Components/StatusBadge';
 import {
+    Button,
+    Dialog,
+    Field,
+    FieldSet,
+    Input,
+    Select,
+    swal,
     Table,
     TableBody,
     TableCell,
     TableHeader,
     TableHeaderCell,
     TableRow,
+    Textarea,
 } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
@@ -62,15 +68,16 @@ export default function ExpendituresIndex({ expenditures }: Props) {
     const [modalOpen, setModalOpen] = useState(false);
     const [editing, setEditing] = useState<Expenditure | null>(null);
 
-    const { data, setData, post, put, processing, reset } = useForm({
-        category: 'supplies',
-        description: '',
-        amount: '',
-        expenditure_date: new Date().toISOString().slice(0, 10),
-        vendor: '',
-        reference_number: '',
-        notes: '',
-    });
+    const { data, setData, post, put, processing, reset, errors, clearErrors } =
+        useForm({
+            category: 'supplies',
+            description: '',
+            amount: '',
+            expenditure_date: new Date().toISOString().slice(0, 10),
+            vendor: '',
+            reference_number: '',
+            notes: '',
+        });
 
     const filtered = useMemo(() => {
         let r = expenditures.data;
@@ -108,16 +115,44 @@ export default function ExpendituresIndex({ expenditures }: Props) {
         setModalOpen(true);
     };
 
-    const handleSubmit = () => {
+    const closeModal = () => {
+        setModalOpen(false);
+        setEditing(null);
+        clearErrors();
+    };
+
+    const handleSubmit = (event: FormEvent) => {
+        event.preventDefault();
+
+        const options = { onSuccess: () => closeModal(), preserveScroll: true };
+
         if (editing) {
-            put(route('expenditures.update', editing.id), {
-                onSuccess: () => setModalOpen(false),
-            });
+            put(route('expenditures.update', editing.id), options);
         } else {
-            post(route('expenditures.store'), {
-                onSuccess: () => setModalOpen(false),
-            });
+            post(route('expenditures.store'), options);
         }
+    };
+
+    const handleDelete = async (expenditure: Expenditure) => {
+        const confirmed = await swal.confirm({
+            tone: 'warning',
+            danger: true,
+            title: t(
+                'finance.expenditures.delete_expenditure',
+                'Delete this expenditure?',
+            ),
+            message: t('finance.expenditures.delete_confirm'),
+            confirmLabel: t('common.delete', 'Delete'),
+            cancelLabel: t('common.cancel', 'Cancel'),
+        });
+
+        if (!confirmed) {
+            return;
+        }
+
+        router.delete(route('expenditures.destroy', expenditure.id), {
+            preserveScroll: true,
+        });
     };
 
     return (
@@ -204,29 +239,18 @@ export default function ExpendituresIndex({ expenditures }: Props) {
                                     <TableCell numeric>
                                         <div className="flex justify-end gap-2">
                                             <button
+                                                type="button"
                                                 onClick={() => openEdit(e)}
+                                                aria-label={t('common.edit')}
                                                 className="rounded-lg p-2 text-ink-subtle transition-colors hover:bg-accent-soft hover:text-accent"
                                             >
                                                 <PencilSquareIcon className="h-4 w-4" />
                                             </button>
                                             <button
-                                                onClick={() => {
-                                                    if (
-                                                        confirm(
-                                                            t(
-                                                                'finance.expenditures.delete_confirm',
-                                                            ),
-                                                        )
-                                                    ) {
-                                                        router.delete(
-                                                            route(
-                                                                'expenditures.destroy',
-                                                                e.id,
-                                                            ),
-                                                        );
-                                                    }
-                                                }}
-                                                className="rounded-lg p-2 text-ink-subtle transition-colors hover:bg-critical-soft hover:text-red-600"
+                                                type="button"
+                                                onClick={() => handleDelete(e)}
+                                                aria-label={t('common.delete')}
+                                                className="rounded-lg p-2 text-ink-subtle transition-colors hover:bg-critical-soft hover:text-critical-ink focus-visible:ring-2 focus-visible:ring-critical/40 focus-visible:outline-none"
                                             >
                                                 <TrashIcon className="h-4 w-4" />
                                             </button>
@@ -239,83 +263,157 @@ export default function ExpendituresIndex({ expenditures }: Props) {
                 </div>
             </div>
 
-            <Modal
-                isOpen={modalOpen}
-                onClose={() => setModalOpen(false)}
+            <Dialog
+                open={modalOpen}
+                onClose={closeModal}
+                size="lg"
                 title={
                     editing
                         ? t('finance.expenditures.edit_expenditure')
                         : t('finance.expenditures.add_expenditure')
                 }
-            >
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        handleSubmit();
-                    }}
-                    className="space-y-4"
-                >
-                    <FormSelect
-                        name="category"
-                        label={t('finance.expenditures.category')}
-                        value={data.category}
-                        onChange={(v) => setData('category', v)}
-                        options={CATEGORY_OPTIONS}
-                    />
-                    <FormInput
-                        name="description"
-                        label={t('finance.expenditures.description')}
-                        value={data.description}
-                        onChange={(v) => setData('description', v)}
-                        required
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormInput
-                            name="amount"
-                            label={t('finance.expenditures.amount_fcfa')}
-                            type="number"
-                            step="0.01"
-                            value={data.amount}
-                            onChange={(v) => setData('amount', v)}
-                            required
-                        />
-                        <FormInput
-                            name="expenditure_date"
-                            label={t('finance.expenditures.date')}
-                            type="date"
-                            value={data.expenditure_date}
-                            onChange={(v) => setData('expenditure_date', v)}
-                            required
-                        />
-                    </div>
-                    <FormInput
-                        name="vendor"
-                        label={t('finance.expenditures.vendor')}
-                        value={data.vendor}
-                        onChange={(v) => setData('vendor', v)}
-                    />
-                    <div className="flex gap-4 pt-2">
-                        <button
+                description={t('finance.expenditures.subtitle')}
+                footer={
+                    <>
+                        <Button
                             type="button"
-                            onClick={() => setModalOpen(false)}
-                            className="flex-1 rounded-xl border border-line bg-surface py-3 font-bold text-ink-subtle transition-colors hover:bg-surface-hover"
+                            variant="secondary"
+                            onClick={closeModal}
+                            disabled={processing}
                         >
                             {t('common.cancel')}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
-                            disabled={processing}
-                            className="flex-[2] rounded-xl bg-accent py-3 font-bold text-ink-inverse transition-colors hover:bg-accent-hover disabled:opacity-50"
+                            form="expenditure-form"
+                            loading={processing}
                         >
-                            {processing
-                                ? t('common.saving')
-                                : editing
-                                  ? t('common.update')
-                                  : t('finance.expenditures.record_expense')}
-                        </button>
-                    </div>
+                            {editing
+                                ? t('common.update')
+                                : t('finance.expenditures.record_expense')}
+                        </Button>
+                    </>
+                }
+            >
+                <form
+                    id="expenditure-form"
+                    onSubmit={handleSubmit}
+                    className="space-y-4"
+                >
+                    <FieldSet columns={2}>
+                        <Field
+                            label={t('finance.expenditures.description')}
+                            htmlFor="expenditure-description"
+                            required
+                            error={errors.description}
+                            className="sm:col-span-2"
+                        >
+                            <Input
+                                id="expenditure-description"
+                                value={data.description}
+                                onChange={(event) =>
+                                    setData('description', event.target.value)
+                                }
+                                invalid={Boolean(errors.description)}
+                                autoFocus
+                            />
+                        </Field>
+
+                        <Field
+                            label={t('finance.expenditures.category')}
+                            htmlFor="expenditure-category"
+                            error={errors.category}
+                        >
+                            <Select
+                                id="expenditure-category"
+                                value={data.category}
+                                onChange={(event) =>
+                                    setData('category', event.target.value)
+                                }
+                                invalid={Boolean(errors.category)}
+                            >
+                                {CATEGORY_OPTIONS.map((option) => (
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </Select>
+                        </Field>
+
+                        <Field
+                            label={t('finance.expenditures.amount_fcfa')}
+                            htmlFor="expenditure-amount"
+                            required
+                            error={errors.amount}
+                        >
+                            <Input
+                                id="expenditure-amount"
+                                type="number"
+                                step="0.01"
+                                value={data.amount}
+                                onChange={(event) =>
+                                    setData('amount', event.target.value)
+                                }
+                                invalid={Boolean(errors.amount)}
+                            />
+                        </Field>
+
+                        <Field
+                            label={t('finance.expenditures.date')}
+                            htmlFor="expenditure-date"
+                            required
+                            error={errors.expenditure_date}
+                        >
+                            <Input
+                                id="expenditure-date"
+                                type="date"
+                                value={data.expenditure_date}
+                                onChange={(event) =>
+                                    setData(
+                                        'expenditure_date',
+                                        event.target.value,
+                                    )
+                                }
+                                invalid={Boolean(errors.expenditure_date)}
+                            />
+                        </Field>
+
+                        <Field
+                            label={t('finance.expenditures.vendor')}
+                            htmlFor="expenditure-vendor"
+                            error={errors.vendor}
+                        >
+                            <Input
+                                id="expenditure-vendor"
+                                value={data.vendor}
+                                onChange={(event) =>
+                                    setData('vendor', event.target.value)
+                                }
+                                invalid={Boolean(errors.vendor)}
+                            />
+                        </Field>
+
+                        <Field
+                            label={t('finance.expenditures.notes', 'Notes')}
+                            htmlFor="expenditure-notes"
+                            error={errors.notes}
+                            className="sm:col-span-2"
+                        >
+                            <Textarea
+                                id="expenditure-notes"
+                                value={data.notes}
+                                onChange={(event) =>
+                                    setData('notes', event.target.value)
+                                }
+                                invalid={Boolean(errors.notes)}
+                            />
+                        </Field>
+                    </FieldSet>
                 </form>
-            </Modal>
+            </Dialog>
         </AppLayout>
     );
 }

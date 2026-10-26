@@ -1,6 +1,6 @@
 import { useForm, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { swal } from '@/Components/ui/sweetAlert';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
     calculateBMI,
@@ -140,7 +140,10 @@ export function useConsultationForm({
         setData('allergies', []);
     };
 
-    const addPrescription = (input: string, matched: Medication | null) => {
+    const addPrescription = async (
+        input: string,
+        matched: Medication | null,
+    ) => {
         if (!input.trim()) {
             return;
         }
@@ -160,9 +163,16 @@ export function useConsultationForm({
         );
 
         if (allergyConflict) {
-            const proceed = window.confirm(
-                `${t('allergyWarning')}: ${medicationName} ${t('mayCauseReaction')} (${allergyConflict.allergen}). ${t('continueAnyway')}?`,
-            );
+            /* A patient-safety gate: never a browser popup, and never a
+               pre-focused confirm that a stray Enter could accept. */
+            const proceed = await swal.confirm({
+                tone: 'critical',
+                danger: true,
+                title: t('allergyWarning', 'Allergy warning'),
+                message: `${medicationName} ${t('mayCauseReaction')} (${allergyConflict.allergen}).`,
+                confirmLabel: t('continueAnyway', 'Continue anyway'),
+                cancelLabel: t('common.cancel', 'Cancel'),
+            });
 
             if (!proceed) {
                 return;
@@ -261,13 +271,13 @@ export function useConsultationForm({
         event.preventDefault();
 
         if (!data.chief_complaint.trim()) {
-            toast.error(t('chiefComplaintRequired'));
+            swal.toast(t('chiefComplaintRequired'), 'warning');
 
             return;
         }
 
         if (!data.diagnosis.trim()) {
-            toast.error(t('diagnosisRequired'));
+            swal.toast(t('diagnosisRequired'), 'warning');
 
             return;
         }

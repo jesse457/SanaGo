@@ -2,7 +2,6 @@ import { BeakerIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import React, { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { EmptyState, PageHeader } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
@@ -122,15 +121,12 @@ export default function DispenseMedications({ patients, medications }: Props) {
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
+        /* Feedback is global: the controller flashes success, and any 422
+           opens the validation alert. Toasting here doubled both. */
         post(route('dispensation.store'), {
             onSuccess: () => {
                 setIsModalOpen(false);
                 reset();
-                toast.success(t('medicationDispensedSuccessfully'));
-            },
-            onError: (errors) => {
-                const firstError = Object.values(errors).flat()[0];
-                toast.error(firstError || t('failedToDispense'));
             },
         });
     };

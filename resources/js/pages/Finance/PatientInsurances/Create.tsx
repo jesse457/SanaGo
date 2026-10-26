@@ -1,6 +1,5 @@
 import { CheckIcon, CreditCardIcon } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
-import { useState } from 'react';
 import type { FormEvent } from 'react';
 import {
     Button,
@@ -13,7 +12,7 @@ import {
 } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
-import { FormPageCard, FormStatusAlerts } from '@/pages/Radiology/components';
+import { FormPageCard } from '@/pages/Radiology/components';
 
 interface LocalPayer {
     id: number;
@@ -69,9 +68,6 @@ export default function PatientInsurancesCreate({
         is_primary: insurance?.is_primary ?? true,
     });
 
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
     const patientOptions = patients.map((p) => ({
         value: String(p.id),
         label: `${p.last_name} ${p.first_name} — ${p.patient_uid}`,
@@ -84,26 +80,11 @@ export default function PatientInsurancesCreate({
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        setErrorMessage(null);
 
         if (isEdit && insurance) {
-            put(route('patient-insurances.update', insurance.id), {
-                onSuccess: () => {
-                    setSuccessMessage(t('insuranceUpdatedSuccessfully'));
-                },
-                onError: () => {
-                    setErrorMessage(t('pleaseCheckForm'));
-                },
-            });
+            put(route('patient-insurances.update', insurance.id), {});
         } else {
-            post(route('patient-insurances.store'), {
-                onSuccess: () => {
-                    setSuccessMessage(t('insuranceLinkedSuccessfully'));
-                },
-                onError: () => {
-                    setErrorMessage(t('pleaseCheckForm'));
-                },
-            });
+            post(route('patient-insurances.store'), {});
         }
     };
 
@@ -129,16 +110,6 @@ export default function PatientInsurancesCreate({
                         { label: t('patientInsurances') },
                         { label: isEdit ? t('edit') : t('new') },
                     ]}
-                />
-
-                <FormStatusAlerts
-                    successMessage={successMessage}
-                    onDismissSuccess={() => setSuccessMessage(null)}
-                    errorMessage={errorMessage}
-                    hasFieldErrors={Object.keys(errors).length > 0}
-                    successTitle={t('success')}
-                    errorTitle={t('error')}
-                    errorFallback={t('someFieldsRequireAttention')}
                 />
 
                 <FormPageCard

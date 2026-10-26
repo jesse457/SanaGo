@@ -30,6 +30,7 @@ import {
     ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { Link, usePage, router } from '@inertiajs/react';
+import type { ComponentType, SVGProps } from 'react';
 import React, {
     useState,
     useEffect,
@@ -39,14 +40,15 @@ import React, {
     useRef,
 } from 'react';
 import AnnouncementBanner from '@/Components/AnnouncementBanner';
-import { AppToaster } from '@/Components/AppToaster';
-import { FlashHandler } from '@/Components/FlashHandler';
+import { SanaGoMark, SanaGoWordmark } from '@/Components/brand/SanaGoLogo';
 import { LocaleSwitcher } from '@/Components/LocaleSwitcher';
-import { Button, Dialog, Skeleton } from '@/Components/ui';
+import { NotificationHandler } from '@/Components/NotificationHandler';
+import { AlertModal, Button, Dialog, Skeleton } from '@/Components/ui';
 import type { BreadcrumbItem } from '@/Components/ui/Breadcrumbs';
 import { BreadcrumbTrailProvider } from '@/Components/ui/PageHeader';
 import { useTranslation, TranslationProvider } from '@/hooks/useTranslation';
 import { formatCurrency, formatDateRelative } from '@/lib/format';
+import { fetchJson } from '@/lib/http';
 import { cn } from '@/lib/utils';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -303,6 +305,12 @@ const NAV_CONFIG: NavGroup[] = [
                 permission: 'manage-infrastructure',
             },
             {
+                label: 'Bed Types',
+                labelKey: 'nav.bed_types',
+                href: '/bed-types',
+                permission: 'manage-infrastructure',
+            },
+            {
                 label: 'Departments',
                 labelKey: 'nav.departments',
                 href: '/departments',
@@ -319,12 +327,6 @@ const NAV_CONFIG: NavGroup[] = [
                 label: 'Services Catalog',
                 labelKey: 'nav.services_catalog',
                 href: '/finance/services',
-                permission: 'view-finance',
-            },
-            {
-                label: 'Invoices',
-                labelKey: 'nav.invoices',
-                href: '/finance/invoices',
                 permission: 'view-finance',
             },
             {
@@ -377,16 +379,16 @@ const NAV_CONFIG: NavGroup[] = [
                 permission: 'manage-caisse',
             },
             {
-                label: 'Open Shift',
-                labelKey: 'nav.open_shift',
-                href: '/caisse',
+                label: 'Cash Shifts',
+                labelKey: 'nav.cash_shifts',
+                href: '/caisse/shifts',
                 permission: 'manage-caisse',
             },
             {
-                label: 'Record Payment',
-                labelKey: 'nav.record_payment',
-                href: '/caisse',
-                permission: 'manage-caisse',
+                label: 'Invoices',
+                labelKey: 'nav.invoices',
+                href: '/finance/invoices',
+                permission: 'view-finance',
             },
         ],
     },
@@ -510,20 +512,19 @@ const SidebarNav = memo(function SidebarNav({
             <div className="flex h-14 shrink-0 items-center border-b border-line px-3.5">
                 <Link
                     href={dashboardUrl}
-                    className="flex w-full items-center gap-2.5 overflow-hidden"
+                    className="flex w-full items-center gap-2.5 overflow-hidden rounded-md focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none"
                 >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink text-ink-inverse">
-                        <HeartIcon className="h-4 w-4" />
-                    </span>
+                    <SanaGoMark className="h-7 w-auto shrink-0" />
                     {isOpen && (
-                        <div className="min-w-0 overflow-hidden">
-                            <span className="block truncate text-[14px] font-semibold tracking-tight whitespace-nowrap text-ink">
-                                SanaGo
-                            </span>
+                        <span className="min-w-0 overflow-hidden">
+                            <SanaGoWordmark
+                                size="md"
+                                className="block truncate"
+                            />
                             <span className="-mt-0.5 block truncate text-[9.5px] font-medium tracking-[0.18em] text-ink-subtle uppercase">
                                 {t('layout.hms_platform')}
                             </span>
-                        </div>
+                        </span>
                     )}
                 </Link>
             </div>
@@ -706,26 +707,6 @@ const SidebarNav = memo(function SidebarNav({
 
 // ─── Notification centre ────────────────────────────────────────────────────
 
-/** XSRF cookie name Laravel sets, used for the non-Inertia mark-read call. */
-function xsrfToken(): string {
-    const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
-
-    return match ? decodeURIComponent(match[1]) : '';
-}
-
-function fetchJson(url: string, init: RequestInit = {}) {
-    return fetch(url, {
-        credentials: 'same-origin',
-        ...init,
-        headers: {
-            Accept: 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-XSRF-TOKEN': xsrfToken(),
-            ...(init.headers ?? {}),
-        },
-    });
-}
-
 /**
  * Real-time notification state for the bell.
  *
@@ -742,6 +723,9 @@ function useNotificationFeed(userId?: number, realtimeEnabled = true) {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(true);
+    // The notification that just arrived over Reverb and deserves the big
+    // bold alert, not a small badge. Stays up until the user answers it.
+    const [liveAlert, setLiveAlert] = useState<AppNotification | null>(null);
     // Optimistic: if Echo exists and we subscribe successfully, real-time is
     // assumed live. Transport errors flip it off and start the polling timer.
     const [connected, setConnected] = useState(
@@ -800,7 +784,34 @@ function useNotificationFeed(userId?: number, realtimeEnabled = true) {
             return [incoming, ...prev].slice(0, 12);
         });
         setUnreadCount((prev) => prev + 1);
+        // Real-time arrival: raise the bold animated alert over the app.
+        setLiveAlert(incoming);
     }, []);
+
+    const dismissLiveAlert = useCallback(
+        (markRead = false) => {
+            /* Read the alert from closure state and keep every side effect out
+               of the updater: React invokes updaters twice in development, so
+               the fetch and the counter writes would fire twice. */
+            const current = liveAlert;
+            setLiveAlert(null);
+
+            if (!current || !markRead || current.read) {
+                return;
+            }
+
+            fetchJson(`/notifications/${current.id}/read`, {
+                method: 'POST',
+            }).catch(() => load());
+            setNotifications((prev) =>
+                prev.map((n) =>
+                    n.id === current.id ? { ...n, read: true } : n,
+                ),
+            );
+            setUnreadCount((prev) => Math.max(0, prev - 1));
+        },
+        [liveAlert, load],
+    );
 
     // ── Real-time transport ──
     useEffect(() => {
@@ -920,27 +931,49 @@ function useNotificationFeed(userId?: number, realtimeEnabled = true) {
         unreadCount,
         loading,
         connected,
+        liveAlert,
+        dismissLiveAlert,
         markRead,
         markAllRead,
         reload: load,
     };
 }
 
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-    clinical: <DocumentTextIcon className="h-4 w-4" />,
-    lab: <BeakerIcon className="h-4 w-4" />,
-    radiology: <PresentationChartBarIcon className="h-4 w-4" />,
-    pharmacy: <ClockIcon className="h-4 w-4" />,
-    finance: <BanknotesIcon className="h-4 w-4" />,
-    billing: <CreditCardIcon className="h-4 w-4" />,
-    general: <BellIcon className="h-4 w-4" />,
+const CATEGORY_ICONS: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
+    clinical: DocumentTextIcon,
+    lab: BeakerIcon,
+    radiology: PresentationChartBarIcon,
+    pharmacy: ClockIcon,
+    finance: BanknotesIcon,
+    billing: CreditCardIcon,
+    general: BellIcon,
 };
+
+/**
+ * Renders a category glyph at a fixed size. Both the bell list and the live
+ * alert go through it, so the unknown-category fallback is decided once.
+ */
+function CategoryIcon({ category }: { category: string }) {
+    const Icon = CATEGORY_ICONS[category] ?? CATEGORY_ICONS.general;
+
+    return <Icon className="h-4 w-4" />;
+}
 
 const TYPE_TONE: Record<string, string> = {
     info: 'bg-accent-soft text-accent-ink',
     success: 'bg-positive-soft text-positive-ink',
     warning: 'bg-warning-soft text-warning-ink',
     error: 'bg-critical-soft text-critical-ink',
+};
+
+const TYPE_ALERT_TONE: Record<
+    string,
+    'info' | 'success' | 'warning' | 'critical'
+> = {
+    info: 'info',
+    success: 'success',
+    warning: 'warning',
+    error: 'critical',
 };
 
 /**
@@ -1070,9 +1103,9 @@ const NotificationsDropdown = memo(function NotificationsDropdown({
                                                     TYPE_TONE.info,
                                             )}
                                         >
-                                            {CATEGORY_ICONS[
-                                                notification.category
-                                            ] ?? CATEGORY_ICONS.general}
+                                            <CategoryIcon
+                                                category={notification.category}
+                                            />
                                         </span>
                                         <span className="min-w-0 flex-1">
                                             <span
@@ -1687,249 +1720,328 @@ export default function AppLayout({
     return (
         <TranslationProvider>
             <BreadcrumbTrailProvider value={derivedBreadcrumbs}>
-                <FlashHandler />
-                <AppToaster />
+                <NotificationHandler />
 
                 {/* Skip link — first stop for keyboard and screen-reader users. */}
                 <a href="#main-content" className="sg-skip-link">
                     {t('common.skip_to_content', 'Skip to content')}
                 </a>
 
-                <div className="flex h-dvh overflow-hidden bg-canvas font-sans">
+                <div className="flex h-dvh flex-col overflow-hidden bg-canvas font-sans">
                     <AnnouncementBanner />
 
-                    {/* ── Mobile Backdrop ── */}
-                    {mobileMenuOpen && (
-                        <div
-                            className="fixed inset-0 z-40 bg-ink/25 backdrop-blur-[2px] lg:hidden"
-                            onClick={() => setMobileMenuOpen(false)}
-                        />
-                    )}
-
-                    {/* ── Mobile Sidebar ── */}
-                    <aside
-                        className={`fixed inset-y-0 left-0 z-50 flex w-[268px] transform flex-col border-r border-line bg-surface transition-transform duration-300 ease-premium lg:hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
-                    >
-                        <div className="absolute top-3.5 right-3 z-10">
-                            <button
+                    {/* ── Shell Row ── */}
+                    <div className="flex min-h-0 flex-1 overflow-hidden">
+                        {/* ── Mobile Backdrop ── */}
+                        {mobileMenuOpen && (
+                            <div
+                                className="fixed inset-0 z-40 bg-ink/25 backdrop-blur-[2px] lg:hidden"
                                 onClick={() => setMobileMenuOpen(false)}
-                                aria-label={t(
-                                    'common.close_navigation',
-                                    'Close navigation',
-                                )}
-                                className="rounded-md p-1.5 text-ink-subtle transition-colors duration-150 hover:bg-surface-hover hover:text-ink"
-                            >
-                                <XMarkIcon className="h-[18px] w-[18px]" />
-                            </button>
-                        </div>
-                        <SidebarNav isOpen={true} {...sidebarProps} />
-                    </aside>
-
-                    {/* ── Desktop Sidebar ── */}
-                    <aside
-                        className={`relative hidden flex-col border-r border-line bg-surface transition-[width] duration-300 ease-premium lg:flex ${sidebarOpen ? 'w-[268px]' : 'w-[68px]'}`}
-                    >
-                        <SidebarNav isOpen={sidebarOpen} {...sidebarProps} />
-                        <button
-                            onClick={() => setSidebarOpen((p) => !p)}
-                            aria-label={
-                                sidebarOpen
-                                    ? t('common.collapse_sidebar')
-                                    : t('common.expand_sidebar')
-                            }
-                            className="absolute top-20 -right-3 z-50 rounded-md border border-line bg-surface p-1.5 text-ink-subtle shadow-surface transition-[color,transform] duration-200 ease-premium hover:text-ink active:scale-95"
-                            title={
-                                sidebarOpen
-                                    ? t('common.collapse_sidebar')
-                                    : t('common.expand_sidebar')
-                            }
-                        >
-                            <ChevronLeftIcon
-                                className={`h-3.5 w-3.5 transition-transform duration-300 ease-premium ${!sidebarOpen ? 'rotate-180' : ''}`}
                             />
-                        </button>
-                    </aside>
+                        )}
 
-                    {/* ── Main Content Area ── */}
-                    <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                        {/*
-                         * Utility bar only — NO page title/subtitle. The page
-                         * heading lives in <PageHeader> inside <main>, so each
-                         * screen states its title exactly once.
-                         */}
-                        <header className="chrome-blur sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line px-3 lg:px-5">
-                            <div className="flex min-w-0 flex-1 items-center gap-2">
-                                <button
-                                    onClick={() => setMobileMenuOpen(true)}
-                                    aria-label={t(
-                                        'common.open_navigation',
-                                        'Open navigation',
-                                    )}
-                                    className="-ml-1 rounded-md p-1.5 text-ink-muted transition-colors duration-150 hover:bg-surface-hover hover:text-ink lg:hidden"
-                                >
-                                    <Bars3Icon className="h-[18px] w-[18px]" />
-                                </button>
-                                <SubscriptionChip
-                                    subscription={tenant?.subscription}
-                                    currency={platform?.currency}
-                                    currencySymbol={platform?.currency_symbol}
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-1 lg:gap-1.5">
-                                {headerAction && (
-                                    <div className="hidden md:block">
-                                        {headerAction}
-                                    </div>
-                                )}
-                                <LocaleSwitcher variant="full" />
-
-                                {/* Theme toggle */}
-                                <button
-                                    onClick={() => setIsDark((p) => !p)}
-                                    role="switch"
-                                    aria-checked={isDark}
-                                    aria-label={t(
-                                        'common.toggle_dark_mode',
-                                        'Toggle dark mode',
-                                    )}
-                                    title={t(
-                                        'common.toggle_theme',
-                                        'Toggle theme',
-                                    )}
-                                    className="relative inline-flex h-[22px] w-[38px] shrink-0 cursor-pointer items-center rounded-full border border-line-strong bg-surface-inset transition-colors duration-200 ease-premium focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas focus-visible:outline-none data-[dark=true]:border-accent data-[dark=true]:bg-accent"
-                                    data-dark={isDark}
-                                >
-                                    <span
-                                        className={`pointer-events-none absolute left-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-surface shadow-surface transition-transform duration-200 ease-spring ${isDark ? 'translate-x-[16px]' : 'translate-x-0'}`}
-                                    >
-                                        {isDark ? (
-                                            <MoonIcon className="h-2.5 w-2.5 text-accent-ink" />
-                                        ) : (
-                                            <SunIcon className="h-2.5 w-2.5 text-warning-ink" />
-                                        )}
-                                    </span>
-                                </button>
-
-                                {/* Notifications */}
-                                <div className="relative" ref={notifRef}>
-                                    <button
-                                        ref={notifButtonRef}
-                                        onClick={() => {
-                                            setNotifOpen((p) => !p);
-                                            setUserMenuOpen(false);
-                                        }}
-                                        aria-label={t('common.notifications')}
-                                        aria-haspopup="dialog"
-                                        aria-expanded={notifOpen}
-                                        className={cn(
-                                            'relative rounded-md p-1.5 transition-colors duration-150',
-                                            notifOpen
-                                                ? 'bg-surface-hover text-ink'
-                                                : 'text-ink-subtle hover:bg-surface-hover hover:text-ink',
-                                        )}
-                                    >
-                                        <BellIcon className="h-[18px] w-[18px]" />
-                                        {feed.unreadCount > 0 && (
-                                            <span className="absolute top-0.5 right-0.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-critical px-1 text-[8.5px] font-bold text-ink-inverse tabular-nums">
-                                                {feed.unreadCount > 99
-                                                    ? '99+'
-                                                    : feed.unreadCount}
-                                            </span>
-                                        )}
-                                        {/* Real-time is live but quiet. */}
-                                        {!feed.connected &&
-                                            realtimeEnabled === false && (
-                                                <SignalSlashIcon className="sr-only" />
-                                            )}
-                                    </button>
-                                    {notifOpen && (
-                                        <NotificationsDropdown
-                                            feed={feed}
-                                            locale={locale}
-                                            onClose={closeAllDropdowns}
-                                        />
-                                    )}
-                                </div>
-
-                                {/* User menu */}
-                                <div className="relative" ref={userMenuRef}>
-                                    <button
-                                        onClick={() => {
-                                            setUserMenuOpen((p) => !p);
-                                            setNotifOpen(false);
-                                        }}
-                                        aria-haspopup="menu"
-                                        aria-expanded={userMenuOpen}
-                                        aria-label={t('common.user_menu')}
-                                        className="flex items-center gap-2 rounded-md border border-line bg-surface py-1 pr-2 pl-1 transition-colors duration-200 hover:border-line-strong hover:bg-surface-hover"
-                                    >
-                                        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-ink text-[10px] font-bold tracking-tight text-ink-inverse">
-                                            {userInitials}
-                                        </span>
-                                        <span className="hidden text-[12.5px] font-medium text-ink md:block">
-                                            {user?.name?.split(' ')[0]}
-                                        </span>
-                                        <ChevronDownIcon className="hidden h-3.5 w-3.5 text-ink-subtle md:block" />
-                                    </button>
-                                    {userMenuOpen && (
-                                        <UserMenuDropdown
-                                            user={user}
-                                            userRole={userRole}
-                                            onClose={closeAllDropdowns}
-                                            onLogoutClick={() =>
-                                                setLogoutModalOpen(true)
-                                            }
-                                        />
-                                    )}
-                                </div>
-                            </div>
-                        </header>
-
-                        {/* ── Page Content ── */}
-                        <main
-                            id="main-content"
-                            tabIndex={-1}
-                            className="flex-1 overflow-y-auto bg-canvas focus-visible:outline-none"
+                        {/* ── Mobile Sidebar ── */}
+                        <aside
+                            className={`fixed inset-y-0 left-0 z-50 flex w-[268px] transform flex-col border-r border-line bg-surface transition-transform duration-300 ease-premium lg:hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
                         >
-                            <div className="mx-auto w-full max-w-[1560px] px-4 py-5 sm:px-6 lg:px-8">
-                                {children}
+                            <div className="absolute top-3.5 right-3 z-10">
+                                <button
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    aria-label={t(
+                                        'common.close_navigation',
+                                        'Close navigation',
+                                    )}
+                                    className="rounded-md p-1.5 text-ink-subtle transition-colors duration-150 hover:bg-surface-hover hover:text-ink"
+                                >
+                                    <XMarkIcon className="h-[18px] w-[18px]" />
+                                </button>
                             </div>
-                        </main>
-                    </div>
+                            <SidebarNav isOpen={true} {...sidebarProps} />
+                        </aside>
 
-                    {/* ── Logout Confirmation ── */}
-                    <Dialog
-                        open={logoutModalOpen}
-                        onClose={() => setLogoutModalOpen(false)}
-                        size="sm"
-                        hideClose
-                        title={t('nav.sign_out')}
-                        description={t('nav.sign_out_description')}
-                        footer={
-                            <>
-                                <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={() => setLogoutModalOpen(false)}
-                                >
-                                    {t('common.cancel')}
-                                </Button>
-                                <Button
-                                    variant="danger"
-                                    size="sm"
-                                    icon={ArrowRightStartOnRectangleIcon}
-                                    onClick={() => router.post('/logout')}
-                                >
-                                    {t('nav.sign_out')}
-                                </Button>
-                            </>
-                        }
-                    >
-                        <p className="text-[13px] leading-relaxed text-ink-muted">
-                            {t('nav.sign_out_description')}
-                        </p>
-                    </Dialog>
+                        {/* ── Desktop Sidebar ── */}
+                        <aside
+                            className={`relative hidden flex-col border-r border-line bg-surface transition-[width] duration-300 ease-premium lg:flex ${sidebarOpen ? 'w-[268px]' : 'w-[68px]'}`}
+                        >
+                            <SidebarNav
+                                isOpen={sidebarOpen}
+                                {...sidebarProps}
+                            />
+                            <button
+                                onClick={() => setSidebarOpen((p) => !p)}
+                                aria-label={
+                                    sidebarOpen
+                                        ? t('common.collapse_sidebar')
+                                        : t('common.expand_sidebar')
+                                }
+                                className="absolute top-20 -right-3 z-50 rounded-md border border-line bg-surface p-1.5 text-ink-subtle shadow-surface transition-[color,transform] duration-200 ease-premium hover:text-ink active:scale-95"
+                                title={
+                                    sidebarOpen
+                                        ? t('common.collapse_sidebar')
+                                        : t('common.expand_sidebar')
+                                }
+                            >
+                                <ChevronLeftIcon
+                                    className={`h-3.5 w-3.5 transition-transform duration-300 ease-premium ${!sidebarOpen ? 'rotate-180' : ''}`}
+                                />
+                            </button>
+                        </aside>
+
+                        {/* ── Main Content Area ── */}
+                        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                            {/*
+                             * Utility bar only — NO page title/subtitle. The page
+                             * heading lives in <PageHeader> inside <main>, so each
+                             * screen states its title exactly once.
+                             */}
+                            <header className="chrome-blur sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line px-3 lg:px-5">
+                                <div className="flex min-w-0 flex-1 items-center gap-2">
+                                    <button
+                                        onClick={() => setMobileMenuOpen(true)}
+                                        aria-label={t(
+                                            'common.open_navigation',
+                                            'Open navigation',
+                                        )}
+                                        className="-ml-1 rounded-md p-1.5 text-ink-muted transition-colors duration-150 hover:bg-surface-hover hover:text-ink lg:hidden"
+                                    >
+                                        <Bars3Icon className="h-[18px] w-[18px]" />
+                                    </button>
+                                    <SubscriptionChip
+                                        subscription={tenant?.subscription}
+                                        currency={platform?.currency}
+                                        currencySymbol={
+                                            platform?.currency_symbol
+                                        }
+                                    />
+                                </div>
+
+                                <div className="flex items-center gap-1 lg:gap-1.5">
+                                    {headerAction && (
+                                        <div className="hidden md:block">
+                                            {headerAction}
+                                        </div>
+                                    )}
+                                    <LocaleSwitcher variant="full" />
+
+                                    {/* Theme toggle */}
+                                    <button
+                                        onClick={() => setIsDark((p) => !p)}
+                                        role="switch"
+                                        aria-checked={isDark}
+                                        aria-label={t(
+                                            'common.toggle_dark_mode',
+                                            'Toggle dark mode',
+                                        )}
+                                        title={t(
+                                            'common.toggle_theme',
+                                            'Toggle theme',
+                                        )}
+                                        className="relative inline-flex h-[22px] w-[38px] shrink-0 cursor-pointer items-center rounded-full border border-line-strong bg-surface-inset transition-colors duration-200 ease-premium focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas focus-visible:outline-none data-[dark=true]:border-accent data-[dark=true]:bg-accent"
+                                        data-dark={isDark}
+                                    >
+                                        <span
+                                            className={`pointer-events-none absolute left-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-surface shadow-surface transition-transform duration-200 ease-spring ${isDark ? 'translate-x-[16px]' : 'translate-x-0'}`}
+                                        >
+                                            {isDark ? (
+                                                <MoonIcon className="h-2.5 w-2.5 text-accent-ink" />
+                                            ) : (
+                                                <SunIcon className="h-2.5 w-2.5 text-warning-ink" />
+                                            )}
+                                        </span>
+                                    </button>
+
+                                    {/* Notifications */}
+                                    <div className="relative" ref={notifRef}>
+                                        <button
+                                            ref={notifButtonRef}
+                                            onClick={() => {
+                                                setNotifOpen((p) => !p);
+                                                setUserMenuOpen(false);
+                                            }}
+                                            aria-label={t(
+                                                'common.notifications',
+                                            )}
+                                            aria-haspopup="dialog"
+                                            aria-expanded={notifOpen}
+                                            className={cn(
+                                                'relative rounded-md p-1.5 transition-colors duration-150',
+                                                notifOpen
+                                                    ? 'bg-surface-hover text-ink'
+                                                    : 'text-ink-subtle hover:bg-surface-hover hover:text-ink',
+                                            )}
+                                        >
+                                            <BellIcon className="h-[18px] w-[18px]" />
+                                            {feed.unreadCount > 0 && (
+                                                <span className="absolute top-0.5 right-0.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-critical px-1 text-[8.5px] font-bold text-ink-inverse tabular-nums">
+                                                    {feed.unreadCount > 99
+                                                        ? '99+'
+                                                        : feed.unreadCount}
+                                                </span>
+                                            )}
+                                            {/* Real-time is live but quiet. */}
+                                            {!feed.connected &&
+                                                realtimeEnabled === false && (
+                                                    <SignalSlashIcon className="sr-only" />
+                                                )}
+                                        </button>
+                                        {notifOpen && (
+                                            <NotificationsDropdown
+                                                feed={feed}
+                                                locale={locale}
+                                                onClose={closeAllDropdowns}
+                                            />
+                                        )}
+                                    </div>
+
+                                    {/* User menu */}
+                                    <div className="relative" ref={userMenuRef}>
+                                        <button
+                                            onClick={() => {
+                                                setUserMenuOpen((p) => !p);
+                                                setNotifOpen(false);
+                                            }}
+                                            aria-haspopup="menu"
+                                            aria-expanded={userMenuOpen}
+                                            aria-label={t('common.user_menu')}
+                                            className="flex items-center gap-2 rounded-md border border-line bg-surface py-1 pr-2 pl-1 transition-colors duration-200 hover:border-line-strong hover:bg-surface-hover"
+                                        >
+                                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-ink text-[10px] font-bold tracking-tight text-ink-inverse">
+                                                {userInitials}
+                                            </span>
+                                            <span className="hidden text-[12.5px] font-medium text-ink md:block">
+                                                {user?.name?.split(' ')[0]}
+                                            </span>
+                                            <ChevronDownIcon className="hidden h-3.5 w-3.5 text-ink-subtle md:block" />
+                                        </button>
+                                        {userMenuOpen && (
+                                            <UserMenuDropdown
+                                                user={user}
+                                                userRole={userRole}
+                                                onClose={closeAllDropdowns}
+                                                onLogoutClick={() =>
+                                                    setLogoutModalOpen(true)
+                                                }
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            </header>
+
+                            {/* ── Page Content ── */}
+                            <main
+                                id="main-content"
+                                tabIndex={-1}
+                                className="flex-1 overflow-y-auto bg-canvas focus-visible:outline-none"
+                            >
+                                <div className="mx-auto w-full max-w-[1560px] px-4 py-5 sm:px-6 lg:px-8">
+                                    {children}
+                                </div>
+                            </main>
+                        </div>
+
+                        {/* ── Logout Confirmation ── */}
+                        <Dialog
+                            open={logoutModalOpen}
+                            onClose={() => setLogoutModalOpen(false)}
+                            size="sm"
+                            hideClose
+                            title={t('nav.sign_out')}
+                            description={t('nav.sign_out_description')}
+                            footer={
+                                <>
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() =>
+                                            setLogoutModalOpen(false)
+                                        }
+                                    >
+                                        {t('common.cancel')}
+                                    </Button>
+                                    <Button
+                                        variant="danger"
+                                        size="sm"
+                                        icon={ArrowRightStartOnRectangleIcon}
+                                        onClick={() => router.post('/logout')}
+                                    >
+                                        {t('nav.sign_out')}
+                                    </Button>
+                                </>
+                            }
+                        >
+                            {/* The description lives in the header; repeating
+                                it as body copy showed the same sentence twice. */}
+                            <p className="text-[13px] leading-relaxed text-ink-muted">
+                                {t(
+                                    'nav.sign_out_confirm',
+                                    'Your session ends and you are returned to the sign-in page.',
+                                )}
+                            </p>
+                        </Dialog>
+
+                        {/* ── Live notification alert ── */}
+                        {/* A push from Reverb deserves the big bold animated
+                            alert, not a corner toast: the bell can wait. */}
+                        <AlertModal
+                            open={feed.liveAlert !== null}
+                            onClose={() => feed.dismissLiveAlert()}
+                            tone={
+                                TYPE_ALERT_TONE[feed.liveAlert?.type ?? 'info']
+                            }
+                            icon={
+                                feed.liveAlert ? (
+                                    <CategoryIcon
+                                        category={feed.liveAlert.category}
+                                    />
+                                ) : undefined
+                            }
+                            title={
+                                feed.liveAlert?.message ||
+                                t('common.notifications')
+                            }
+                            message={
+                                <span className="inline-flex flex-wrap items-center justify-center gap-2">
+                                    {feed.liveAlert && (
+                                        <span
+                                            className={cn(
+                                                'rounded-full px-2 py-0.5 text-[10.5px] font-semibold tracking-[0.06em] uppercase',
+                                                TYPE_TONE[feed.liveAlert.type],
+                                            )}
+                                        >
+                                            {feed.liveAlert.category}
+                                        </span>
+                                    )}
+                                    {feed.liveAlert?.created_at && (
+                                        <span className="text-[11.5px] text-ink-subtle tabular-nums">
+                                            {formatDateRelative(
+                                                feed.liveAlert.created_at,
+                                                { locale },
+                                            )}
+                                        </span>
+                                    )}
+                                </span>
+                            }
+                            confirmLabel={
+                                feed.liveAlert?.link
+                                    ? t('common.later')
+                                    : t('common.got_it')
+                            }
+                            onConfirm={() => feed.dismissLiveAlert()}
+                            action={
+                                feed.liveAlert?.link
+                                    ? {
+                                          label: t('common.open'),
+                                          onClick: () => {
+                                              const target = feed.liveAlert;
+
+                                              feed.dismissLiveAlert(true);
+                                              router.visit(target!.link!);
+                                          },
+                                      }
+                                    : undefined
+                            }
+                        />
+                    </div>
                 </div>
             </BreadcrumbTrailProvider>
         </TranslationProvider>

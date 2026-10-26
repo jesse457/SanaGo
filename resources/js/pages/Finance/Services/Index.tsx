@@ -1,30 +1,43 @@
 import {
-    PlusIcon,
-    MagnifyingGlassIcon,
-    TrashIcon,
+    BanknotesIcon,
+    CheckIcon,
     PencilIcon,
+    PlusIcon,
     TagIcon,
+    TrashIcon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, router } from '@inertiajs/react';
-import React, { useState } from 'react';
-import EmptyState from '@/Components/EmptyState';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import debounce from 'lodash/debounce';
+import { useEffect, useMemo, useState } from 'react';
 import { Pagination } from '@/Components/Pagination';
 import {
+    Badge,
+    Button,
+    EmptyState,
+    PageHeader,
     Table,
     TableBody,
     TableCell,
     TableHeader,
     TableHeaderCell,
     TableRow,
+    swal,
+    Toolbar,
+    ToolbarSearch,
+    ToolbarSpacer,
 } from '@/Components/ui';
+import type { BadgeTone } from '@/Components/ui';
+import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
+import { formatMoney } from '@/pages/Finance/components/format';
 
 interface ServiceItem {
     id: number;
     name: string;
     code: string;
     category: string;
+    module: string;
     default_price: number;
     is_active: boolean;
     requires_upfront_payment: boolean;
@@ -41,240 +54,377 @@ interface Props {
         to: number;
         total: number;
     };
+    filters: { search: string; module: string };
+    modules: { value: string; label: string }[];
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-    consultation: 'Consultation',
-    procedure: 'Procedure',
-    lab: 'Laboratoire',
-    radiology: 'Radiologie',
-    imaging: 'Imagerie',
-    medication: 'Médicament',
-    bed: 'Lit',
-    nursing: 'Soins Infirmiers',
-    emergency: 'Urgence',
-    other: 'Autre',
+const MODULE_TONES: Record<string, BadgeTone> = {
+    consultation: 'accent',
+    laboratory: 'positive',
+    radiology: 'warning',
+    pharmacy: 'positive',
+    admission: 'muted',
+    surgery: 'critical',
+    other: 'neutral',
 };
 
-const CATEGORY_COLORS: Record<string, string> = {
-    consultation: 'bg-accent-soft text-accent-ink ',
-    procedure: 'bg-accent-soft text-accent-ink ',
-    lab: 'bg-positive-soft text-positive-ink ',
-    radiology: 'bg-warning-soft text-warning-ink ',
-    imaging: 'bg-accent-soft text-accent-ink ',
-    medication: 'bg-accent-soft text-accent-ink ',
-    bed: 'bg-warning-soft text-warning-ink ',
-    nursing: 'bg-accent-soft text-accent-ink ',
-    emergency: 'bg-critical-soft text-critical-ink ',
-    other: 'bg-surface-inset text-ink-muted ',
-};
+export default function ServicesIndex({ services, filters, modules }: Props) {
+    const { t } = useTranslation();
+    const [search, setSearch] = useState(filters.search ?? '');
+    const [module, setModule] = useState(filters.module || 'all');
 
-export default function ServicesIndex({ services }: Props) {
-    const [search, setSearch] = useState('');
-    const [categoryFilter, setCategoryFilter] = useState('all');
+    // The row being priced right now: one price editor at a time.
+    const [editingId, setEditingId] = useState<number | null>(null);
 
-    const filteredServices = services.data.filter((s) => {
-        const matchesSearch =
-            !search ||
-            s.name.toLowerCase().includes(search.toLowerCase()) ||
-            s.code.toLowerCase().includes(search.toLowerCase());
-        const matchesCategory =
-            categoryFilter === 'all' || s.category === categoryFilter;
+    const applyFilters = useMemo(
+        () =>
+            debounce((nextModule: string, nextSearch: string) => {
+                router.get(
+                    route('finance.services.index'),
+                    {
+                        module: nextModule !== 'all' ? nextModule : undefined,
+                        search: nextSearch || undefined,
+                    },
+                    {
+                        preserveState: true,
+                        preserveScroll: true,
+                        replace: true,
+                    },
+                );
+            }, 300),
+        [],
+    );
 
-        return matchesSearch && matchesCategory;
+    useEffect(() => () => applyFilters.cancel(), [applyFilters]);
+
+    const handleSearch = (value: string) => {
+        setSearch(value);
+        setEditingId(null);
+        applyFilters(module, value);
+    };
+
+    const handleModule = (value: string) => {
+        setModule(value);
+        setEditingId(null);
+        applyFilters(value, search);
+    };
+
+    const priceForm = useForm<{ default_price: string }>({
+        default_price: '',
     });
 
-    const categories = [
-        'all',
-        ...Array.from(new Set(services.data.map((s) => s.category))),
-    ];
+    const openPriceEditor = (service: ServiceItem) => {
+        setEditingId(service.id);
+        priceForm.setData('default_price', String(service.default_price));
+    };
 
-    const paginationLinks = services.links?.map((link) => ({
-        url: link.url,
-        label: link.label,
-        active: link.active,
-    }));
+    const closePriceEditor = () => {
+        setEditingId(null);
+        priceForm.reset();
+        priceForm.clearErrors();
+    };
+
+    const savePrice = (service: ServiceItem) => {
+        priceForm.put(route('finance.services.price', service.id), {
+            preserveScroll: true,
+            onSuccess: closePriceEditor,
+        });
+    };
+
+    const tabs = [{ value: 'all', label: t('All modules') }, ...modules];
+    const hasRows = services.data.length > 0;
+    const moduleLabel = (value: string) =>
+        modules.find((m) => m.value === value)?.label ?? value;
+
+    const handleDelete = async (service: ServiceItem) => {
+        const confirmed = await swal.confirm({
+            tone: 'warning',
+            danger: true,
+            title: t(
+                'finance.services.index.delete_service',
+                'Delete this service?',
+            ),
+            message: t('finance.services.index.delete_confirm'),
+            confirmLabel: t('common.delete', 'Delete'),
+            cancelLabel: t('common.cancel', 'Cancel'),
+        });
+
+        if (!confirmed) {
+            return;
+        }
+
+        router.delete(route('finance.services.destroy', service.id), {
+            preserveScroll: true,
+        });
+    };
 
     return (
         <AppLayout
-            headerTitle="Catalogue des Services"
-            headerSubtitle="Gérer les prix et la configuration des services médicaux"
+            headerTitle={t('nav.services_catalog')}
+            headerSubtitle={t('finance.services.index.subtitle')}
         >
-            <Head title="Catalogue des Services" />
+            <Head title={t('nav.services_catalog')} />
 
-            <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
-                <PageBreadcrumb
-                    items={[
-                        { label: 'Accueil', href: route('dashboard') },
-                        { label: 'Finance' },
-                        { label: 'Services' },
+            <div className="space-y-5">
+                <PageHeader
+                    title={t('nav.services_catalog')}
+                    description={t('finance.services.index.subtitle')}
+                    breadcrumbs={[
+                        { label: t('finance.services.index.finance') },
+                        { label: t('nav.services_catalog') },
                     ]}
+                    actions={
+                        <Button
+                            icon={PlusIcon}
+                            href={route('finance.services.create')}
+                        >
+                            {t('nav.new_service')}
+                        </Button>
+                    }
                 />
 
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                    <div className="flex overflow-x-auto rounded-lg bg-surface-inset p-1">
-                        {categories.map((cat) => (
-                            <button
-                                key={cat}
-                                onClick={() => setCategoryFilter(cat)}
-                                className={`rounded-lg px-4 py-2 text-xs font-bold tracking-wide whitespace-nowrap uppercase transition-all ${categoryFilter === cat ? 'bg-surface text-accent-ink shadow-surface' : 'text-ink-subtle hover:text-ink'}`}
-                            >
-                                {cat === 'all'
-                                    ? 'Tous'
-                                    : CATEGORY_LABELS[cat] || cat}
-                            </button>
-                        ))}
-                    </div>
+                <Toolbar>
+                    <div className="min-w-0 flex-1 overflow-x-auto sm:flex-none">
+                        <div className="flex items-center gap-1">
+                            {tabs.map((tab) => {
+                                const active = module === tab.value;
 
-                    <div className="flex items-center gap-3">
-                        <div className="relative">
-                            <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-ink-subtle" />
-                            <input
-                                type="text"
-                                placeholder="Rechercher un service..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="rounded-lg border border-line bg-surface py-2 pr-4 pl-9 text-ink outline-none focus:ring-2 focus:ring-blue-500"
-                            />
+                                return (
+                                    <Button
+                                        key={tab.value}
+                                        size="sm"
+                                        variant={active ? 'secondary' : 'ghost'}
+                                        aria-pressed={active}
+                                        onClick={() => handleModule(tab.value)}
+                                        className="whitespace-nowrap"
+                                    >
+                                        {tab.label}
+                                    </Button>
+                                );
+                            })}
                         </div>
-                        <Link
-                            href={route('finance.services.create')}
-                            className="flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold whitespace-nowrap text-ink-inverse shadow-surface transition-colors hover:bg-accent-hover"
-                        >
-                            <PlusIcon className="h-4 w-4" /> Nouveau Service
-                        </Link>
                     </div>
-                </div>
+                    <ToolbarSpacer />
+                    <ToolbarSearch
+                        value={search}
+                        onChange={handleSearch}
+                        placeholder={t(
+                            'finance.services.index.search_placeholder',
+                        )}
+                    />
+                </Toolbar>
 
-                <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-surface">
-                    <Table bare>
+                {hasRows ? (
+                    <Table>
                         <TableHeader>
-                            <TableRow className="hover:bg-transparent">
-                                <TableHeaderCell>Service</TableHeaderCell>
-                                <TableHeaderCell>Code</TableHeaderCell>
-                                <TableHeaderCell>Catégorie</TableHeaderCell>
-                                <TableHeaderCell numeric>
-                                    Prix (XAF)
+                            <TableRow>
+                                <TableHeaderCell>
+                                    {t('finance.services.index.service')}
                                 </TableHeaderCell>
-                                <TableHeaderCell>Paiement</TableHeaderCell>
-                                <TableHeaderCell>Statut</TableHeaderCell>
+                                <TableHeaderCell>{t('Module')}</TableHeaderCell>
+                                <TableHeaderCell>
+                                    {t('finance.services.index.code')}
+                                </TableHeaderCell>
                                 <TableHeaderCell numeric>
-                                    <span className="sr-only">Actions</span>
+                                    {t('finance.services.index.price')}
+                                </TableHeaderCell>
+                                <TableHeaderCell>
+                                    {t('finance.services.index.payment')}
+                                </TableHeaderCell>
+                                <TableHeaderCell>
+                                    {t('finance.services.index.status')}
+                                </TableHeaderCell>
+                                <TableHeaderCell numeric>
+                                    {t('common.actions')}
                                 </TableHeaderCell>
                             </TableRow>
                         </TableHeader>
+
                         <TableBody>
-                            {filteredServices.map((svc) => (
-                                <TableRow key={svc.id} className="group">
+                            {services.data.map((service) => (
+                                <TableRow key={service.id}>
                                     <TableCell>
-                                        <p className="text-[13px] font-semibold text-ink">
-                                            {svc.name}
+                                        <p className="text-[13px] font-medium text-ink">
+                                            {service.name}
                                         </p>
-                                        {svc.description && (
-                                            <p className="mt-0.5 line-clamp-1 max-w-xs text-xs text-ink-subtle">
-                                                {svc.description}
+                                        {service.description && (
+                                            <p className="mt-0.5 line-clamp-1 max-w-xs text-[11.5px] text-ink-subtle">
+                                                {service.description}
                                             </p>
                                         )}
                                     </TableCell>
                                     <TableCell>
-                                        <code className="rounded bg-surface-inset px-2 py-0.5 text-xs font-bold text-ink">
-                                            {svc.code}
-                                        </code>
-                                    </TableCell>
-                                    <TableCell>
-                                        <span
-                                            className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${CATEGORY_COLORS[svc.category] || CATEGORY_COLORS.other}`}
+                                        <Badge
+                                            tone={
+                                                MODULE_TONES[service.module] ??
+                                                'neutral'
+                                            }
+                                            size="sm"
                                         >
-                                            {CATEGORY_LABELS[svc.category] ||
-                                                svc.category}
+                                            {moduleLabel(service.module)}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell muted>
+                                        <span className="font-mono text-[12px] tracking-tight text-ink-muted">
+                                            {service.code}
                                         </span>
                                     </TableCell>
-                                    <TableCell
-                                        numeric
-                                        className="text-[13px] font-semibold text-ink"
-                                    >
-                                        {Number(
-                                            svc.default_price,
-                                        ).toLocaleString()}{' '}
-                                        FCFA
-                                    </TableCell>
-                                    <TableCell>
-                                        {svc.requires_upfront_payment ? (
-                                            <span className="inline-flex items-center gap-1 rounded-full bg-warning-soft px-2.5 py-0.5 text-xs font-semibold text-warning-ink">
-                                                Avant service
-                                            </span>
+                                    <TableCell numeric>
+                                        {editingId === service.id ? (
+                                            <form
+                                                onSubmit={(event) => {
+                                                    event.preventDefault();
+                                                    savePrice(service);
+                                                }}
+                                                className="flex items-center gap-1"
+                                            >
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    value={
+                                                        priceForm.data
+                                                            .default_price
+                                                    }
+                                                    onChange={(event) =>
+                                                        priceForm.setData(
+                                                            'default_price',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    aria-label={t(
+                                                        'finance.services.index.price',
+                                                    )}
+                                                    className="w-24 rounded-md border border-line-strong bg-surface px-2 py-1 text-right text-[12.5px] text-ink tabular-nums focus:border-accent focus:outline-none"
+                                                    autoFocus
+                                                />
+                                                <Button
+                                                    type="submit"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    icon={CheckIcon}
+                                                    aria-label={t('Save price')}
+                                                    disabled={
+                                                        priceForm.processing
+                                                    }
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    onClick={closePriceEditor}
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    aria-label={t(
+                                                        'Cancel edit',
+                                                    )}
+                                                    icon={XMarkIcon}
+                                                />
+                                            </form>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1 rounded-full bg-positive-soft px-2.5 py-0.5 text-xs font-semibold text-positive-ink">
-                                                Après service
-                                            </span>
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                <span className="font-semibold text-ink tabular-nums">
+                                                    {formatMoney(
+                                                        service.default_price,
+                                                    )}
+                                                </span>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    icon={BanknotesIcon}
+                                                    aria-label={t(
+                                                        'Change price',
+                                                    )}
+                                                    onClick={() =>
+                                                        openPriceEditor(service)
+                                                    }
+                                                />
+                                            </div>
                                         )}
                                     </TableCell>
                                     <TableCell>
-                                        {svc.is_active ? (
-                                            <span className="inline-flex rounded-full bg-positive-soft px-2.5 py-0.5 text-xs font-semibold text-positive-ink">
-                                                Actif
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex rounded-full bg-critical-soft px-2.5 py-0.5 text-xs font-semibold text-critical-ink">
-                                                Inactif
-                                            </span>
-                                        )}
+                                        <Badge
+                                            tone={
+                                                service.requires_upfront_payment
+                                                    ? 'warning'
+                                                    : 'positive'
+                                            }
+                                            size="sm"
+                                        >
+                                            {service.requires_upfront_payment
+                                                ? t(
+                                                      'finance.services.index.payment_before',
+                                                  )
+                                                : t(
+                                                      'finance.services.index.payment_after',
+                                                  )}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge
+                                            tone={
+                                                service.is_active
+                                                    ? 'positive'
+                                                    : 'critical'
+                                            }
+                                            size="sm"
+                                        >
+                                            {service.is_active
+                                                ? t(
+                                                      'finance.services.index.status_active',
+                                                  )
+                                                : t(
+                                                      'finance.services.index.status_inactive',
+                                                  )}
+                                        </Badge>
                                     </TableCell>
                                     <TableCell numeric>
-                                        <div className="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                                        <div className="flex items-center justify-end gap-1">
                                             <Link
                                                 href={route(
                                                     'finance.services.edit',
-                                                    svc.id,
+                                                    service.id,
                                                 )}
-                                                className="rounded-lg p-2 text-ink-subtle transition-colors hover:bg-warning-soft hover:text-warning-ink"
+                                                aria-label={t('common.edit')}
+                                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle transition-colors duration-150 ease-premium hover:bg-surface-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none"
                                             >
                                                 <PencilIcon className="h-4 w-4" />
                                             </Link>
-                                            <button
-                                                onClick={() => {
-                                                    if (
-                                                        confirm(
-                                                            'Supprimer ce service ?',
-                                                        )
-                                                    ) {
-                                                        router.delete(
-                                                            route(
-                                                                'finance.services.destroy',
-                                                                svc.id,
-                                                            ),
-                                                            {
-                                                                preserveScroll: true,
-                                                            },
-                                                        );
-                                                    }
-                                                }}
-                                                className="rounded-lg p-2 text-ink-subtle transition-colors hover:bg-critical-soft hover:text-red-600"
-                                            >
-                                                <TrashIcon className="h-4 w-4" />
-                                            </button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                icon={TrashIcon}
+                                                aria-label={t('common.delete')}
+                                                onClick={() =>
+                                                    handleDelete(service)
+                                                }
+                                            />
                                         </div>
                                     </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
-                    {filteredServices.length === 0 && (
-                        <div className="p-6">
-                            <EmptyState
-                                icon={TagIcon}
-                                title="Aucun service trouvé"
-                                action={{
-                                    label: 'Créer le premier service',
-                                    href: route('finance.services.create'),
-                                }}
-                            />
-                        </div>
-                    )}
-                </div>
+                ) : (
+                    <EmptyState
+                        icon={TagIcon}
+                        title={t('finance.services.index.no_services')}
+                        description={t('finance.services.index.subtitle')}
+                        action={{
+                            label: t(
+                                'finance.services.index.create_first_service',
+                            ),
+                            href: route('finance.services.create'),
+                        }}
+                    />
+                )}
+
+                {priceForm.errors.default_price && (
+                    <p className="text-xs font-semibold text-critical-ink">
+                        {priceForm.errors.default_price}
+                    </p>
+                )}
 
                 <Pagination
-                    links={paginationLinks}
+                    links={services.links ?? []}
                     meta={{
                         from: services.from,
                         to: services.to,

@@ -18,7 +18,7 @@ composer dev
 composer dev-1
 
 # Frontend only
-npm run dev
+bun run dev
 
 # Run all tests
 composer test              # also runs lint:check first
@@ -28,14 +28,14 @@ php artisan test --filter=SomeTest   # single test
 # Linting & formatting
 composer lint              # PHP (pint)
 composer lint:check        # PHP (dry-run)
-npm run lint               # JS/TS/TSX (eslint --fix)
-npm run lint:check         # JS/TS/TSX (no fix)
-npm run format             # Prettier
-npm run format:check       # Prettier (check only)
-npm run types:check        # tsc --noEmit
+bun run lint               # JS/TS/TSX (eslint --fix)
+bun run lint:check         # JS/TS/TSX (no fix)
+bun run format             # Prettier
+bun run format:check       # Prettier (check only)
+bun run types:check        # tsc --noEmit
 
 # Build
-npm run build
+bun run build
 
 # Run all CI checks (lint + format + types + tests)
 composer ci:check
@@ -48,13 +48,13 @@ This is a **Hospital Management System (SanaGo)**. The backend follows a **servi
 ### Backend structure
 
 - **`app/Services/`** — business logic organized by domain:
-  - `Billing/` — `BillingService`, `SupplyService`
-  - `Clinical/` — `MedicalRecordService`, `NurseCareService`, `VitalService`
-  - `Facility/` — `FacilityService`
-  - `Laboratory/` — `LabRequestService`, `LabResultService`
-  - `PatientManagement/` — `AdmissionService`, `AppointmentService`, `PatientService`
-  - `Pharmacy/` — `InventoryService`, `PharmacyService`, `PrescriptionService`
-  - `System/` — `CommunicationService`, `DemoService`
+    - `Billing/` — `BillingService`, `SupplyService`
+    - `Clinical/` — `MedicalRecordService`, `NurseCareService`, `VitalService`
+    - `Facility/` — `FacilityService`
+    - `Laboratory/` — `LabRequestService`, `LabResultService`
+    - `PatientManagement/` — `AdmissionService`, `AppointmentService`, `PatientService`
+    - `Pharmacy/` — `InventoryService`, `PharmacyService`, `PrescriptionService`
+    - `System/` — `CommunicationService`, `DemoService`
 - **`app/Http/Controllers/`** — thin controllers, delegate to services. There are ~30 resource controllers (no separate API/web split — this is an Inertia monolith).
 - **`app/Http/Requests/`** — paired Store/Update form requests per resource. Validation lives here.
 - **`app/Models/`** — Eloquent models (~25 models covering patients, appointments, labs, pharmacy, billing, etc.)
@@ -81,7 +81,9 @@ Design tokens live in `resources/css/app.css` (`@theme` + `@theme inline` + `:ro
 - **Use semantic tokens, not palette steps, and no `dark:` variants.** `bg-canvas`, `bg-surface`, `bg-surface-muted`, `bg-surface-inset`, `bg-surface-hover`, `border-line`, `border-line-strong`, `text-ink`, `text-ink-muted`, `text-ink-subtle`, `text-ink-inverse`, `bg-accent`/`text-accent-ink`/`bg-accent-soft`, `bg-positive-soft`/`text-positive-ink`, `bg-warning-soft`/`text-warning-ink`, `bg-critical-soft`/`text-critical-ink`. They flip automatically with the `.dark` class on `<html>`.
 - **Elevation and radii are constrained**: only `shadow-surface`/`shadow-raised`/`shadow-float`; `rounded-md` for controls, `rounded-lg`/`rounded-xl` for panels, `rounded-full` only for badges/dots. No gradients. Motion is 150–300ms with `ease-premium`, animating transform/opacity only.
 
-States are components too: `Skeleton*` for loading, `EmptyState` for empty, `Alert` for errors, `Dialog` for modals (never `window.alert`). Mount one `AppToaster` from the layout — pages call `toast()` but never render their own `<Toaster />`.
+States are components too: `Skeleton*` for loading, `EmptyState` for empty, `Alert` for in-page hints, `Dialog` for form modals (never `window.alert`).
+
+Notifications and confirmations own exactly one channel: **`swal`** (`resources/js/Components/ui/sweetAlert.tsx`, SweetAlert2 under the hood, themed by the tokens in `app.css`). `NotificationHandler` mounts once per layout and turns server feedback into those notifications: a flash success/info/warning becomes an animated `swal` toast, a flash error and _any_ validation bag open the `swal` modal. So never render a page-local "Success" banner or an error toast — it would duplicate the flash. Ask with `await swal.confirm({ title, message, danger })` and gate destructive work on the answer.
 
 ### Route generation
 
@@ -98,7 +100,7 @@ Uses `spatie/laravel-permission`. The `RoleSeeder` defines three roles: `admin`,
 - **`spatie/laravel-activitylog`** — audit trail for model changes
 - **`chart.js` / `react-chartjs-2`** — analytics dashboards
 - **`framer-motion`** — animations
-- **`sonner`** — toast notifications
+- **`sweetalert2`** — the notification/confirmation engine behind `swal` (toasts + modals)
 - **`babel-plugin-react-compiler`** — React Compiler (auto-memoization)
 
 ### Testing
@@ -161,7 +163,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 ## Frontend Bundling
 
-- If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `npm run build`, `npm run dev`, or `composer run dev`. Ask them.
+- If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `bun run build`, `bun run dev`, or `composer run dev`. Ask them.
 
 ## Documentation Files
 
@@ -207,7 +209,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 - Execute PHP in app context for debugging and testing code. Do not create models without user approval, prefer tests with factories instead. Prefer existing Artisan commands over custom tinker code.
 - Always use single quotes to prevent shell expansion: `php artisan tinker --execute 'Your::code();'`
-  - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
+    - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
 
 === php rules ===
 
@@ -284,7 +286,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 ## Vite Error
 
-- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
+- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `bun run build` or ask the user to run `bun run dev` or `composer run dev`.
 
 === wayfinder/core rules ===
 

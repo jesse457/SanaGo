@@ -3,10 +3,7 @@
  * shared by the request queue, the report form and the report archive.
  */
 
-export {
-    FormPageCard,
-    FormStatusAlerts,
-} from '@/pages/Radiology/components/FormPageCard';
+export { FormPageCard } from '@/pages/Radiology/components/FormPageCard';
 
 export {
     RADIOLOGY_STATUS_LABEL_KEYS,

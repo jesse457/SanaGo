@@ -1,7 +1,6 @@
 import { CameraIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { useState } from 'react';
 import {
     Button,
     Field,
@@ -12,7 +11,7 @@ import {
 } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
-import { FormPageCard, FormStatusAlerts } from '@/pages/Radiology/components';
+import { FormPageCard } from '@/pages/Radiology/components';
 import type { Patient } from '@/types';
 
 interface Props {
@@ -50,9 +49,6 @@ export default function RadiologyRequestsCreate({ patients }: Props) {
         clinical_notes: '',
     });
 
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
     const patientOptions = patients.map((p) => ({
         value: String(p.id),
         label: `${p.last_name} ${p.first_name} — ${p.patient_uid}`,
@@ -60,14 +56,9 @@ export default function RadiologyRequestsCreate({ patients }: Props) {
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        setErrorMessage(null);
         post(route('radiology.requests.store'), {
             onSuccess: () => {
-                setSuccessMessage(t('radiology.requestCreated'));
                 reset();
-            },
-            onError: () => {
-                setErrorMessage(t('radiology.pleaseCheckForm'));
             },
         });
     };
@@ -92,16 +83,6 @@ export default function RadiologyRequestsCreate({ patients }: Props) {
                         },
                         { label: t('radiology.newRequest') },
                     ]}
-                />
-
-                <FormStatusAlerts
-                    successMessage={successMessage}
-                    onDismissSuccess={() => setSuccessMessage(null)}
-                    errorMessage={errorMessage}
-                    hasFieldErrors={Object.keys(errors).length > 0}
-                    successTitle={t('common.success')}
-                    errorTitle={t('common.error')}
-                    errorFallback={t('common.someFieldsRequireAttention')}
                 />
 
                 <FormPageCard

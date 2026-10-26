@@ -1,13 +1,7 @@
-import {
-    CheckCircleIcon,
-    TicketIcon,
-    XMarkIcon,
-} from '@heroicons/react/24/outline';
+import { CheckCircleIcon, TicketIcon } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { useState } from 'react';
 import {
-    Alert,
     Button,
     Card,
     CardContent,
@@ -29,19 +23,11 @@ export default function SupportCreate() {
         message: '',
     });
 
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
     const submit = (e: FormEvent) => {
         e.preventDefault();
-        setErrorMessage(null);
         post('/support', {
             onSuccess: () => {
-                setSuccessMessage(t('support.ticketCreated'));
                 reset();
-            },
-            onError: () => {
-                setErrorMessage(t('support.pleaseCheckForm'));
             },
         });
     };
@@ -64,44 +50,6 @@ export default function SupportCreate() {
                         { label: t('support.newTicket') },
                     ]}
                 />
-
-                {successMessage && (
-                    <Alert
-                        tone="positive"
-                        title={t('common.success')}
-                        action={
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                aria-label="Dismiss"
-                                onClick={() => setSuccessMessage(null)}
-                            >
-                                <XMarkIcon className="h-4 w-4" />
-                            </Button>
-                        }
-                    >
-                        {successMessage}
-                    </Alert>
-                )}
-
-                {(errorMessage || Object.keys(errors).length > 0) && (
-                    <Alert
-                        tone="critical"
-                        title={t('common.error')}
-                        action={
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                aria-label="Dismiss"
-                                onClick={() => setErrorMessage(null)}
-                            >
-                                <XMarkIcon className="h-4 w-4" />
-                            </Button>
-                        }
-                    >
-                        {errorMessage || t('common.someFieldsRequireAttention')}
-                    </Alert>
-                )}
 
                 <Card>
                     <CardContent className="py-5">

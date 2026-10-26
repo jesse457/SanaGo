@@ -1,6 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
-import { Alert, PageHeader } from '@/Components/ui';
+import { PageHeader } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 import { ClinicalTeamSection } from './components/ClinicalTeamSection';
@@ -45,9 +45,6 @@ export default function SurgeryForm({
     const [anesthetistQuery, setAnesthetistQuery] = useState('');
     const [isExternalAnesthetist, setIsExternalAnesthetist] = useState(false);
     const [bedQuery, setBedQuery] = useState('');
-
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
         patient_id: surgery?.patient_id?.toString() || '',
@@ -169,24 +166,15 @@ export default function SurgeryForm({
 
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
-        setErrorMessage(null);
 
         if (isEdit && surgery) {
-            put(route('surgeries.update', surgery.id), {
-                onSuccess: () => {
-                    setSuccessMessage(t('surgeries.create.success_message'));
-                },
-                onError: () => {
-                    setErrorMessage(t('surgeries.create.error_message'));
-                },
-            });
+            put(route('surgeries.update', surgery.id), {});
 
             return;
         }
 
         post(route('surgeries.store'), {
             onSuccess: () => {
-                setSuccessMessage(t('surgeries.create.success_message'));
                 reset();
                 setSelectedPatient(null);
                 setPatientQuery('');
@@ -195,9 +183,6 @@ export default function SurgeryForm({
                 setBedQuery('');
                 setIsExternalSurgeon(false);
                 setIsExternalAnesthetist(false);
-            },
-            onError: () => {
-                setErrorMessage(t('surgeries.create.error_message'));
             },
         });
     };
@@ -257,21 +242,6 @@ export default function SurgeryForm({
                         },
                     ]}
                 />
-
-                {successMessage && (
-                    <Alert
-                        tone="positive"
-                        title={t('surgeries.create.success')}
-                    >
-                        {successMessage}
-                    </Alert>
-                )}
-
-                {(errorMessage || Object.keys(errors).length > 0) && (
-                    <Alert tone="critical" title={t('surgeries.create.error')}>
-                        {errorMessage || t('surgeries.create.error_attention')}
-                    </Alert>
-                )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <ProcedureSection

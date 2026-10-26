@@ -1,7 +1,6 @@
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { Button, Dialog } from '@/Components/ui';
+import { Alert, Button, Dialog } from '@/Components/ui';
 
 export interface DeletableUser {
     id: number;
@@ -51,22 +50,13 @@ export function DeleteUserDialog({ user, onClose }: DeleteUserDialogProps) {
                 </>
             }
         >
-            <div className="flex items-start gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-critical-soft text-critical-ink">
-                    <ExclamationTriangleIcon className="h-[18px] w-[18px]" />
-                </span>
-                <div className="min-w-0">
-                    <p className="text-[13px] leading-relaxed text-ink">
-                        Delete{' '}
-                        <strong className="font-semibold">{user?.name}</strong>{' '}
-                        permanently?
-                    </p>
-                    <p className="mt-1 text-[12.5px] leading-relaxed text-ink-muted">
-                        This staff account loses access immediately. This cannot
-                        be undone.
-                    </p>
-                </div>
-            </div>
+            <Alert
+                tone="critical"
+                title={`Delete ${user?.name ?? ''} permanently?`}
+            >
+                This staff account loses access immediately. This cannot be
+                undone.
+            </Alert>
         </Dialog>
     );
 }

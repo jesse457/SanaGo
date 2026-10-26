@@ -6,6 +6,7 @@ import {
     EmptyState,
     PageHeader,
     SegmentedControl,
+    swal,
     Toolbar,
     ToolbarSearch,
     ToolbarSpacer,
@@ -120,12 +121,25 @@ export default function BedIndex({ beds, wards, bedTypes }: Props) {
         setSelectedBed(null);
     };
 
-    const handleDelete = (bed: Bed) => {
-        if (confirm(t('page.beds.delete_confirm', { code: bed.code ?? '' }))) {
-            router.delete(route('beds.destroy', bed.id), {
-                preserveScroll: true,
-            });
+    const handleDelete = async (bed: Bed) => {
+        const confirmed = await swal.confirm({
+            tone: 'warning',
+            danger: true,
+            title: t('page.beds.delete_bed', 'Delete this bed?'),
+            message: t('page.beds.delete_confirm', {
+                code: bed.code ?? '',
+            }),
+            confirmLabel: t('common.delete', 'Delete'),
+            cancelLabel: t('common.cancel', 'Cancel'),
+        });
+
+        if (!confirmed) {
+            return;
         }
+
+        router.delete(route('beds.destroy', bed.id), {
+            preserveScroll: true,
+        });
     };
 
     return (

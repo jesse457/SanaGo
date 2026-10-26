@@ -10,7 +10,6 @@ import {
 import { Head, useForm } from '@inertiajs/react';
 import React, { useState } from 'react';
 import {
-    Alert,
     Button,
     Field,
     FieldSet,
@@ -53,9 +52,6 @@ export default function EmergencyCreate({ patients }: Props) {
         treatment_notes: '',
     });
 
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
     const selectPatient = (patient: EmergencyPatient) => {
         setSelectedPatient(patient);
         setData('patient_id', String(patient.id));
@@ -67,18 +63,8 @@ export default function EmergencyCreate({ patients }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setErrorMessage(null);
-        post(route('emergencies.store'), {
-            onSuccess: () => {
-                setSuccessMessage(t('emergencyRegisteredSuccessfully'));
-            },
-            onError: () => {
-                setErrorMessage(t('pleaseCheckForm'));
-            },
-        });
+        post(route('emergencies.store'), {});
     };
-
-    const hasErrors = Boolean(errorMessage) || Object.keys(errors).length > 0;
 
     return (
         <AppLayout
@@ -127,18 +113,6 @@ export default function EmergencyCreate({ patients }: Props) {
                         )
                     }
                 />
-
-                {successMessage && (
-                    <Alert tone="positive" title={t('success')}>
-                        {successMessage}
-                    </Alert>
-                )}
-
-                {hasErrors && (
-                    <Alert tone="critical" title={t('error')}>
-                        {errorMessage || t('someFieldsRequireAttention')}
-                    </Alert>
-                )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <SectionCard

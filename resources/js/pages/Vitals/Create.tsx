@@ -6,9 +6,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { useState } from 'react';
 import {
-    Alert,
     Button,
     Checkbox,
     Field,
@@ -45,24 +43,14 @@ export default function VitalsForm({ patient }: { patient: Patient }) {
         notes: '',
     });
 
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        setErrorMessage(null);
         post(route('vitals.store'), {
             onSuccess: () => {
-                setSuccessMessage(t('page.vitals_create.recordedSuccessfully'));
                 reset();
-            },
-            onError: () => {
-                setErrorMessage(t('page.vitals_create.pleaseCheckForm'));
             },
         });
     };
-
-    const hasErrors = Boolean(errorMessage) || Object.keys(errors).length > 0;
 
     return (
         <AppLayout
@@ -103,18 +91,6 @@ export default function VitalsForm({ patient }: { patient: Patient }) {
                         </>
                     }
                 />
-
-                {successMessage && (
-                    <Alert tone="positive" title={t('common.success')}>
-                        {successMessage}
-                    </Alert>
-                )}
-
-                {hasErrors && (
-                    <Alert tone="critical" title={t('common.error')}>
-                        {errorMessage || t('common.someFieldsRequireAttention')}
-                    </Alert>
-                )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <SectionCard

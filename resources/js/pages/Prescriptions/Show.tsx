@@ -14,6 +14,7 @@ import {
     TableHeader,
     TableHeaderCell,
     TableRow,
+    swal,
 } from '@/Components/ui';
 import type { BadgeTone } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -43,10 +44,26 @@ export default function PrescriptionsShow({ prescription }: Props) {
         }
     };
 
-    const handleDispense = () => {
-        if (confirm(t('Mark this prescription as dispensed?'))) {
-            router.post(route('prescriptions.dispense', prescription.id));
+    const handleDispense = async () => {
+        const confirmed = await swal.confirm({
+            tone: 'info',
+            title: t(
+                'page.prescriptions.dispense_title',
+                'Dispense this prescription?',
+            ),
+            message: t(
+                'page.prescriptions.dispense_message',
+                'Stock leaves the pharmacy and the prescription closes.',
+            ),
+            confirmLabel: t('common.continue', 'Continue'),
+            cancelLabel: t('common.cancel', 'Cancel'),
+        });
+
+        if (!confirmed) {
+            return;
         }
+
+        router.post(route('prescriptions.dispense', prescription.id));
     };
 
     const canDispense =

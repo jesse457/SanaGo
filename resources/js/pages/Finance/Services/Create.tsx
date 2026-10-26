@@ -1,6 +1,5 @@
 import { CheckIcon, TagIcon } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
-import { useState } from 'react';
 import {
     Button,
     Checkbox,
@@ -13,23 +12,19 @@ import {
 } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
-import { FormPageCard, FormStatusAlerts } from '@/pages/Radiology/components';
+import { FormPageCard } from '@/pages/Radiology/components';
 
-const CATEGORY_OPTIONS = [
-    { value: 'consultation', label: 'Consultation' },
-    { value: 'procedure', label: 'Procédure' },
-    { value: 'lab', label: 'Laboratoire' },
-    { value: 'radiology', label: 'Radiologie' },
-    { value: 'imaging', label: 'Imagerie' },
-    { value: 'medication', label: 'Médicament' },
-    { value: 'bed', label: 'Lit' },
-    { value: 'nursing', label: 'Soins Infirmiers' },
-    { value: 'emergency', label: 'Urgence' },
-    { value: 'other', label: 'Autre' },
-];
-
-export default function ServicesCreate() {
+export default function ServicesCreate({
+    categories,
+}: {
+    categories: string[];
+}) {
     const { t } = useTranslation();
+
+    const categoryOptions = categories.map((value) => ({
+        value,
+        label: t(`finance.services.index.category_${value}`),
+    }));
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         code: '',
@@ -40,52 +35,34 @@ export default function ServicesCreate() {
         requires_upfront_payment: false,
     });
 
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setErrorMessage(null);
         post(route('finance.services.store'), {
             onSuccess: () => {
-                setSuccessMessage(t('serviceCreatedSuccessfully'));
                 reset();
-            },
-            onError: () => {
-                setErrorMessage(t('pleaseCheckForm'));
             },
         });
     };
 
     return (
         <AppLayout
-            headerTitle={t('newService')}
-            headerSubtitle={t('addServiceToCatalogue')}
+            headerTitle={t('finance.services.create.title')}
+            headerSubtitle={t('finance.services.create.subtitle')}
         >
-            <Head title={t('newService')} />
+            <Head title={t('finance.services.create.title')} />
 
             <div className="mx-auto flex max-w-5xl flex-col gap-6">
                 <PageHeader
-                    title={t('newService')}
-                    description={t('addServiceToCatalogue')}
+                    title={t('finance.services.create.title')}
+                    description={t('finance.services.create.subtitle')}
                     breadcrumbs={[
-                        { label: t('services') },
-                        { label: t('newService') },
+                        { label: t('finance.services.create.services') },
+                        { label: t('finance.services.create.title') },
                     ]}
                 />
 
-                <FormStatusAlerts
-                    successMessage={successMessage}
-                    onDismissSuccess={() => setSuccessMessage(null)}
-                    errorMessage={errorMessage}
-                    hasFieldErrors={Object.keys(errors).length > 0}
-                    successTitle={t('success')}
-                    errorTitle={t('error')}
-                    errorFallback={t('someFieldsRequireAttention')}
-                />
-
                 <FormPageCard
-                    title={t('serviceDetails')}
+                    title={t('finance.services.create.details')}
                     headingIcon={TagIcon}
                     onSubmit={handleSubmit}
                     footer={
@@ -94,7 +71,7 @@ export default function ServicesCreate() {
                                 variant="secondary"
                                 href={route('finance.services.index')}
                             >
-                                {t('cancel')}
+                                {t('common.cancel')}
                             </Button>
                             <Button
                                 type="submit"
@@ -102,15 +79,15 @@ export default function ServicesCreate() {
                                 icon={CheckIcon}
                             >
                                 {processing
-                                    ? `${t('creating')}...`
-                                    : t('createService')}
+                                    ? t('finance.services.create.creating')
+                                    : t('finance.services.create.create')}
                             </Button>
                         </>
                     }
                 >
                     <FieldSet columns={2}>
                         <Field
-                            label={t('serviceName')}
+                            label={t('finance.services.create.name')}
                             htmlFor="name"
                             required
                             error={errors.name}
@@ -122,13 +99,15 @@ export default function ServicesCreate() {
                                 onChange={(e) =>
                                     setData('name', e.target.value)
                                 }
-                                placeholder={t('egGeneralConsultation')}
+                                placeholder={t(
+                                    'finance.services.create.name_placeholder',
+                                )}
                                 invalid={Boolean(errors.name)}
                             />
                         </Field>
 
                         <Field
-                            label={t('code')}
+                            label={t('finance.services.create.code')}
                             htmlFor="code"
                             required
                             error={errors.code}
@@ -140,13 +119,15 @@ export default function ServicesCreate() {
                                 onChange={(e) =>
                                     setData('code', e.target.value)
                                 }
-                                placeholder={t('egConsGen')}
+                                placeholder={t(
+                                    'finance.services.create.code_placeholder',
+                                )}
                                 invalid={Boolean(errors.code)}
                             />
                         </Field>
 
                         <Field
-                            label={t('category')}
+                            label={t('finance.services.create.category')}
                             htmlFor="category"
                             required
                             error={errors.category}
@@ -159,16 +140,19 @@ export default function ServicesCreate() {
                                 }
                                 invalid={Boolean(errors.category)}
                             >
-                                {CATEGORY_OPTIONS.map((opt) => (
-                                    <option key={opt.value} value={opt.value}>
-                                        {opt.label}
+                                {categoryOptions.map((option) => (
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
                                     </option>
                                 ))}
                             </Select>
                         </Field>
 
                         <Field
-                            label={t('defaultPriceXaf')}
+                            label={t('finance.services.create.price')}
                             htmlFor="default_price"
                             required
                             error={errors.default_price}
@@ -189,7 +173,7 @@ export default function ServicesCreate() {
                         </Field>
 
                         <Field
-                            label={t('description')}
+                            label={t('finance.services.create.description')}
                             htmlFor="description"
                             error={errors.description}
                             className="sm:col-span-2"
@@ -201,7 +185,9 @@ export default function ServicesCreate() {
                                     setData('description', e.target.value)
                                 }
                                 rows={3}
-                                placeholder={t('serviceDescriptionOptional')}
+                                placeholder={t(
+                                    'finance.services.create.description_placeholder',
+                                )}
                                 invalid={Boolean(errors.description)}
                             />
                         </Field>
@@ -214,7 +200,7 @@ export default function ServicesCreate() {
                             onChange={(e) =>
                                 setData('is_active', e.target.checked)
                             }
-                            label={t('activeService')}
+                            label={t('finance.services.create.active')}
                         />
                         <Checkbox
                             id="requires_upfront_payment"
@@ -225,7 +211,7 @@ export default function ServicesCreate() {
                                     e.target.checked,
                                 )
                             }
-                            label={t('requiresUpfrontPayment')}
+                            label={t('finance.services.create.upfront')}
                         />
                     </div>
                 </FormPageCard>

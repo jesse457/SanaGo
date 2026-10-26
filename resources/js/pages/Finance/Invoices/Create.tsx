@@ -5,7 +5,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
     Alert,
     Button,
@@ -54,9 +54,6 @@ export default function InvoiceCreate({ patients }: Props) {
         items: [{ ...BLANK_ITEM }] as InvoiceLineDraft[],
     });
 
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
     const addItem = () => {
         setData('items', [...data.items, { ...BLANK_ITEM }]);
     };
@@ -95,16 +92,11 @@ export default function InvoiceCreate({ patients }: Props) {
 
     const handleSubmit = (event: FormEvent) => {
         event.preventDefault();
-        setErrorMessage(null);
         post(route('finance.invoices.store'), {
             onSuccess: () => {
-                setSuccessMessage(t('invoiceCreatedSuccessfully'));
                 reset();
                 setData('invoice_date', new Date().toISOString().slice(0, 10));
                 setData('items', [{ ...BLANK_ITEM }]);
-            },
-            onError: () => {
-                setErrorMessage(t('pleaseCheckForm'));
             },
         });
     };
@@ -128,18 +120,6 @@ export default function InvoiceCreate({ patients }: Props) {
                         { label: t('finance.invoices.create.create_invoice') },
                     ]}
                 />
-
-                {successMessage && (
-                    <Alert tone="positive" title={t('common.success')}>
-                        {successMessage}
-                    </Alert>
-                )}
-
-                {(errorMessage || Object.keys(errors).length > 0) && (
-                    <Alert tone="critical" title={t('common.error')}>
-                        {errorMessage || t('common.someFieldsRequireAttention')}
-                    </Alert>
-                )}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <SectionCard

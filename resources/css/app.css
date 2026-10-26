@@ -60,6 +60,14 @@
     --font-mono:
         'Geist Mono', 'JetBrains Mono', 'SF Mono', ui-monospace, SFMono-Regular,
         Menlo, monospace;
+    /* ---- The marketing voice --------------------------------------------
+     | Display lines on the public site only (`.font-editorial`). The product
+     | UI keeps Inter everywhere, so the marketing pages read like a printed
+     | case file while the workspace stays utilitarian.
+     */
+    --font-editorial:
+        'Instrument Serif', 'Iowan Old Style', 'Palatino Linotype', Palatino,
+        Georgia, serif;
 
     /* ---- Radii: crisp, never pill-shaped for panels ---- */
     --radius-xs: 3px;
@@ -284,6 +292,13 @@
     --color-critical-ink: var(--sg-critical-ink);
     --color-info-soft: var(--sg-info-soft);
     --color-info-ink: var(--sg-info-ink);
+    /* The two inks the logo is drawn in: the figure and the heart. Text
+       partners for them live beside them so the wordmark stays legible on
+       whichever canvas the theme is using. */
+    --color-brand-figure: var(--sg-brand-figure);
+    --color-brand-care: var(--sg-brand-care);
+    --color-brand-figure-ink: var(--sg-brand-figure-ink);
+    --color-brand-care-ink: var(--sg-brand-care-ink);
 }
 
 /* ---------------------------------------------------------------------------
@@ -321,6 +336,12 @@
     --sg-critical-ink: #952420;
     --sg-info-soft: #e8f3f3;
     --sg-info-ink: #155a5c;
+    /* Logo inks: the blue figure and the green heart, plus darker partners
+       that clear 4.5:1 on the light canvas for the wordmark. */
+    --sg-brand-figure: #0b83c8;
+    --sg-brand-care: #4caf50;
+    --sg-brand-figure-ink: #0a6da6;
+    --sg-brand-care-ink: #2f7d3f;
     --sg-focus: var(--sg-accent);
     --sg-shadow-surface:
         0 1px 2px rgb(28 109 112 / 0.05),
@@ -372,6 +393,12 @@
     --sg-critical-ink: #f0a29d;
     --sg-info-soft: #0f2729;
     --sg-info-ink: #8dcfd1;
+    /* The logo inks gain lightness on the dark canvas; the wordmark partners
+       lift with them so "SanaGo" still reads at 4.5:1. */
+    --sg-brand-figure: #3fa9e0;
+    --sg-brand-care: #6dc46a;
+    --sg-brand-figure-ink: #6fc2ea;
+    --sg-brand-care-ink: #8ad189;
     --sg-focus: var(--sg-accent);
     --sg-shadow-surface:
         0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -16px rgb(0 0 0 / 0.55);
@@ -661,4 +688,271 @@
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
+}
+
+/*
+ * Invoice print isolation. While a page marks <body> with
+ * .print-document-printing, printing hides the application chrome and carries
+ * only the .print-document block — nothing else reaches the sheet.
+ * ltr/rtl both flow through the document's own `dir` attribute.
+ */
+@media print {
+    body.print-document-printing {
+        background: #ffffff !important;
+    }
+
+    body.print-document-printing * {
+        visibility: hidden !important;
+    }
+
+    body.print-document-printing .print-document,
+    body.print-document-printing .print-document * {
+        visibility: visible !important;
+    }
+
+    body.print-document-printing .print-document {
+        position: absolute !important;
+        inset-block-start: 0 !important;
+        inset-inline-start: 0 !important;
+        inset-inline-end: 0 !important;
+        box-shadow: none !important;
+    }
+
+    /* Scroll containers and shells must not clip or trap the sheet. */
+    body.print-document-printing :has(.print-document) {
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
+        flex: none !important;
+    }
+
+    body.print-document-printing .print-hide {
+        display: none !important;
+    }
+}
+
+/* ---------------------------------------------------------------------------
+| SweetAlert2 — the one notification surface
+| ---------------------------------------------------------------------------
+|
+| SweetAlert2 ships its own palette. It is re-bound to the SanaGo tokens here,
+| on `html`/`html.dark` so the modal and its toasts flip with the theme exactly
+| like every other surface: `html.dark` outranks SweetAlert2's own `:root`
+| block on specificity, so no `!important` and no `theme:` option are needed.
+|
+| Everything is scoped to `.sg-swal` (the `customClass.popup` the wrapper sets)
+| so a stray default SweetAlert2 instance is still visibly unthemed.
+| ------------------------------------------------------------------------- */
+/* `html:root` and `html.dark` both outrank SweetAlert2's own `:root` block on
+   specificity (0,1,1 vs 0,1,0), so the palette below wins in either theme and
+   regardless of the order the two stylesheets load in. */
+html:root,
+html.dark {
+    --swal2-background: var(--sg-surface);
+    --swal2-color: var(--sg-ink);
+    --swal2-border: 1px solid var(--sg-line);
+    --swal2-border-radius: 12px;
+    --swal2-width: 26rem;
+    --swal2-padding: 1.75rem 1.75rem 1.5rem;
+    --swal2-title-padding: 0;
+    --swal2-html-container-padding: 0.5rem 0 0;
+    --swal2-backdrop: color-mix(in srgb, var(--sg-ink) 40%, transparent);
+    --swal2-confirm-button-background-color: var(--sg-accent);
+    --swal2-confirm-button-color: var(--sg-ink-inverse);
+    --swal2-confirm-button-border-radius: 6px;
+    --swal2-confirm-button-box-shadow: none;
+    --swal2-cancel-button-background-color: var(--sg-surface);
+    --swal2-cancel-button-color: var(--sg-ink);
+    --swal2-cancel-button-border-radius: 6px;
+    --swal2-cancel-button-box-shadow: none;
+    --swal2-deny-button-background-color: var(--sg-critical);
+    --swal2-deny-button-color: #fff;
+    --swal2-deny-button-border-radius: 6px;
+    --swal2-deny-button-box-shadow: none;
+    --swal2-action-button-hover: #000 6%;
+    --swal2-action-button-active: #000 10%;
+    --swal2-toast-border: 1px solid var(--sg-line);
+    --swal2-toast-box-shadow: var(--sg-shadow-float);
+    --swal2-timer-progress-bar-background: var(--sg-accent);
+    --swal2-actions-margin: 1.35rem 0 0;
+    --swal2-close-button-color: var(--sg-ink-subtle);
+    --swal2-validation-message-background: var(--sg-critical-soft);
+    --swal2-validation-message-color: var(--sg-critical-ink);
+}
+
+.sg-swal {
+    font-family: inherit;
+    box-shadow: var(--sg-shadow-float);
+}
+
+.sg-swal .swal2-title {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+    color: var(--sg-ink);
+}
+
+.sg-swal .swal2-html-container {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--sg-ink-muted);
+}
+
+/* Buttons: the app's control geometry, not SweetAlert2's 0.625em padding. */
+.sg-swal button.swal2-styled {
+    min-height: 2rem;
+    padding: 0.375rem 0.875rem;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.006em;
+    box-shadow: none;
+}
+
+.sg-swal button.swal2-styled:focus-visible {
+    outline: none;
+    box-shadow:
+        0 0 0 2px var(--sg-surface),
+        0 0 0 4px var(--sg-accent);
+}
+
+.sg-swal button.swal2-styled.swal2-cancel {
+    border: 1px solid var(--sg-line-strong);
+}
+
+/* Destructive confirms repaint the confirm button in the critical tone. */
+.sg-swal.sg-swal-danger button.swal2-styled.swal2-confirm {
+    background-color: var(--sg-critical);
+    color: #fff;
+}
+
+.sg-swal.sg-swal-danger button.swal2-styled.swal2-confirm:focus-visible {
+    box-shadow:
+        0 0 0 2px var(--sg-surface),
+        0 0 0 4px var(--sg-critical);
+}
+
+/* Icons: status hues come from the token layer, so they match the badges. */
+.sg-swal .swal2-icon.swal2-success {
+    border-color: var(--sg-positive);
+    color: var(--sg-positive);
+}
+
+.sg-swal .swal2-icon.swal2-success [class^='swal2-success-line'] {
+    background-color: var(--sg-positive);
+}
+
+.sg-swal .swal2-icon.swal2-success .swal2-success-ring {
+    border-color: var(--sg-positive);
+}
+
+.sg-swal .swal2-icon.swal2-success [class^='swal2-success-circular-line'] {
+    background-color: var(--sg-surface);
+}
+
+.sg-swal .swal2-icon.swal2-error {
+    border-color: var(--sg-critical);
+}
+
+.sg-swal .swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+    background-color: var(--sg-critical);
+}
+
+.sg-swal .swal2-icon.swal2-warning {
+    border-color: var(--sg-warning);
+    color: var(--sg-warning);
+}
+
+.sg-swal .swal2-icon.swal2-info,
+.sg-swal .swal2-icon.swal2-question {
+    border-color: var(--sg-accent);
+    color: var(--sg-accent);
+}
+
+/* Validation list — the field messages, one recessed row each. */
+.sg-swal .sg-swal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+}
+
+.sg-swal .sg-swal-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    border-radius: 6px;
+    background: var(--sg-surface-inset);
+    padding: 6px 10px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--sg-ink);
+}
+
+.sg-swal .sg-swal-list li::before {
+    content: '';
+    margin-top: 6px;
+    width: 4px;
+    height: 4px;
+    flex: none;
+    border-radius: 9999px;
+    background: var(--sg-critical);
+}
+
+.sg-swal .sg-swal-more {
+    background: none;
+    padding-inline: 10px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--sg-ink-subtle);
+}
+
+.sg-swal .sg-swal-more::before {
+    display: none;
+}
+
+/* Toasts keep the app's surface + hairline, and read as one line of text. */
+.sg-swal-toast {
+    border: 1px solid var(--sg-line);
+    border-radius: 10px;
+    box-shadow: var(--sg-shadow-float);
+    font-family: inherit;
+}
+
+.sg-swal-toast .swal2-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.006em;
+    color: var(--sg-ink);
+}
+
+.sg-swal-toast .swal2-html-container {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--sg-ink-muted);
+}
+
+/* The optional second line of a toast (what changed, for whom). */
+.sg-swal-toast-detail {
+    display: block;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--sg-ink-subtle);
+}
+
+/* Toast chrome: our spacing, our icon size, no stock padding jumps. */
+.sg-swal-toast .swal2-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0.1rem 0.55rem 0 0.15rem;
+    border-width: 0;
+    zoom: 1;
+}
+
+.sg-swal-toast .swal2-icon .swal2-icon-content {
+    font-size: 1.25rem;
 }

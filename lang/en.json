@@ -36,10 +36,13 @@
         "edit": "Edit",
         "expand_sidebar": "Expand sidebar",
         "female": "Female",
+        "got_it": "Got it",
+        "later": "Later",
         "home": "Home",
         "male": "Male",
         "manage": "Manage",
         "mark_all_read": "Mark all as read",
+        "open": "Open",
         "months": {
             "apr": "April",
             "aug": "August",
@@ -87,7 +90,9 @@
         "close_navigation": "Close navigation",
         "open_navigation": "Open navigation",
         "mark_as_read": "Mark as read",
-        "skip_to_content": "Skip to content"
+        "skip_to_content": "Skip to content",
+        "and_more": "and :count more",
+        "reset": "Reset"
     },
     "finance": {
         "breadcrumb": "Finance",
@@ -165,7 +170,9 @@
             "filter_equipment": "Equipment",
             "filter_pharmaceuticals": "Pharmaceuticals",
             "filter_administrative": "Administrative",
-            "filter_other": "Other"
+            "filter_other": "Other",
+            "delete_expenditure": "Delete this expenditure?",
+            "notes": "Notes"
         },
         "analytics": {
             "emergencies": "Emergencies",
@@ -180,6 +187,70 @@
             "surgeries": "Surgeries",
             "title": "Financial analytics",
             "total_revenue": "Total revenue"
+        },
+        "services": {
+            "index": {
+                "finance": "Finance",
+                "subtitle": "Prices and configuration for every billable service.",
+                "search_placeholder": "Search a service...",
+                "service": "Service",
+                "code": "Code",
+                "category": "Category",
+                "price": "Price",
+                "payment": "Payment",
+                "status": "Status",
+                "payment_before": "Before service",
+                "payment_after": "After service",
+                "status_active": "Active",
+                "status_inactive": "Inactive",
+                "no_services": "No services yet",
+                "create_first_service": "Create the first service",
+                "delete_confirm": "Delete this service? This cannot be undone.",
+                "category_all": "All",
+                "category_consultation": "Consultation",
+                "category_procedure": "Procedure",
+                "category_lab": "Laboratory",
+                "category_radiology": "Radiology",
+                "category_imaging": "Imaging",
+                "category_medication": "Medication",
+                "category_bed": "Bed",
+                "category_nursing": "Nursing",
+                "category_emergency": "Emergency",
+                "category_other": "Other",
+                "delete_service": "Delete this service?"
+            },
+            "edit": {
+                "title": "Edit service",
+                "subtitle": "Editing :name",
+                "details": "Service details",
+                "name": "Service name",
+                "price": "Default price",
+                "description": "Description",
+                "active": "Service is active",
+                "upfront": "Payment before service required",
+                "saving": "Saving...",
+                "save": "Save service"
+            },
+            "create": {
+                "title": "New service",
+                "subtitle": "Add a priced service to the catalogue.",
+                "services": "Services",
+                "details": "Service details",
+                "name": "Service name",
+                "name_placeholder": "e.g. General consultation",
+                "code": "Code",
+                "code_placeholder": "e.g. CONS-GEN",
+                "category": "Category",
+                "price": "Default price",
+                "description": "Description",
+                "description_placeholder": "Optional notes for the counter.",
+                "active": "Service is active",
+                "upfront": "Payment before service required",
+                "creating": "Creating...",
+                "create": "Create service",
+                "created": "Service created.",
+                "form_error": "Check the highlighted fields before submitting."
+            }
         }
     },
     "flash": {
@@ -240,7 +311,6 @@
         "arrivalMode": "Arrival Mode",
         "arrived": "Arrived",
         "assessment": "Assessment",
-        "assigningPatientsToStreams": "Assigning Patients to Streams",
         "attachments": "Attachments",
         "backToPatientList": "Back to Patient List",
         "batch": "Batch",
@@ -257,7 +327,6 @@
         "canceled": "Canceled",
         "cannotBeUndone": "This action cannot be undone.",
         "caseDetails": "Case Details",
-        "checkIn": "Check In",
         "checkup": "Checkup",
         "chiefComplaint": "Chief Complaint",
         "clickToSelectOrDrop": "Click to select or drop files",
@@ -268,7 +337,6 @@
         "complaint": "Complaint",
         "completed": "Completed",
         "confirmAndProcess": "Confirm and Process",
-        "confirmAndQueuePatient": "Confirm and Queue Patient",
         "confirmDepletion": "Confirm Depletion",
         "confirmDispensation": "Confirm Dispensation",
         "consultation": "Consultation",
@@ -360,7 +428,6 @@
         "medicationDispensedSuccessfully": "Medication dispensed successfully",
         "minStockLevel": "Min. Stock Level",
         "minimumStockLevel": "Minimum Stock Level",
-        "monitorPatientQueues": "Monitor Patient Queues",
         "nameOrId": "Name or ID",
         "newBooking": "New Booking",
         "newEmergency": "New Emergency",
@@ -417,7 +484,6 @@
         "provideAdditionalDetails": "Provide Additional Details",
         "purchasePrice": "Purchase Price",
         "qty": "Qty",
-        "queueManagement": "Queue Management",
         "reason": "Reason",
         "reasonClinicalIndications": "Reason / Clinical Indications",
         "ref001": "REF-001",
@@ -432,6 +498,7 @@
         "saveRecord": "Save Record",
         "schedule": "Schedule",
         "scheduled": "Scheduled",
+        "schedulePatientVisits": "Schedule, track and follow up on patient visits",
         "searchAndSelectPatient": "Search and Select Patient",
         "searchAndSelectPatientDispensing": "Search and Select Patient (Dispensing)",
         "searchDatabase": "Search Database",
@@ -469,6 +536,7 @@
         "totalAmount": "Total Amount",
         "totalAppointments": "Total Appointments",
         "totalCompleted": "Total Completed",
+        "upcomingAppointments": "Upcoming Appointments",
         "totalCost": "Total Cost",
         "totalFormulations": "Total Formulations",
         "totalItems": "Total Items",
@@ -497,8 +565,6 @@
         "visitDetails": "Visit Details",
         "vitalSigns": "Vital Signs",
         "vitalsPhysicalFindings": "Vitals & Physical Findings",
-        "waiting": "Waiting",
-        "waitingInHall": "Waiting in Hall",
         "walkIn": "Walk-in",
         "walkInCart": "Walk-in Cart",
         "warning": "Warning",
@@ -566,13 +632,25 @@
             "all_statuses": "All Statuses",
             "code_label": "Code",
             "completed": "Completed",
+            "counter_collect": "Collected at the counter",
+            "file_order": "File Order",
             "head_title": "Lab Requests",
             "in_progress": "In Progress",
             "lab_requests": "Lab Requests",
+            "lab_test": "Lab Test",
             "no_requests": "No requests found",
+            "order_details": "Order Details",
+            "order_new": "New Request",
+            "order_standalone": "This order stands on its own — no consultation is needed. Payment, when the test is not covered, is settled at the counter.",
+            "order_subtitle": "Raise a lab order for any patient",
+            "order_title": "Order a Lab Test",
             "patient": "Patient",
             "pending": "Pending",
+            "pick_patient": "Select a patient",
+            "pick_test": "Select a lab test",
             "process_result": "Process Result",
+            "reason": "Reason for Test",
+            "reason_placeholder": "Clinical indication (optional)",
             "search_placeholder": "Search requests...",
             "showing_orders": "Showing {from} to {to} of {total} entries",
             "status": "Status",
@@ -580,7 +658,9 @@
             "test_definition": "Test Definition",
             "title": "Lab Requests",
             "total_requests": "Total Requests",
-            "no_requests_description": "No requests description"
+            "urgency": "Urgency",
+            "no_requests_description": "No requests description",
+            "accession": "Sample"
         },
         "results": {
             "enter": {
@@ -611,7 +691,30 @@
                 "test_definition": "Test Definition",
                 "update_record": "Update Record",
                 "verification_date": "Verification Date",
-                "voided_cancelled": "Voided / Cancelled"
+                "voided_cancelled": "Voided / Cancelled",
+                "analyzer_auto": "Detect automatically",
+                "analyzer_choose_file": "Choose file",
+                "analyzer_frame": "Analyzer frame",
+                "analyzer_frame_hint": "Paste what the instrument sent — ASTM, HL7 or a CSV run export — or choose the exported file.",
+                "analyzer_apply": "Use these values",
+                "analyzer_applied": "Analyzer values loaded — review and save the result",
+                "analyzer_empty": "Nothing to read yet",
+                "analyzer_empty_hint": "Paste the analyzer frame or choose the file the instrument exported.",
+                "analyzer_unreadable": "That frame could not be read",
+                "analyzer_failed": "The analyzer frame could not be read",
+                "analyzer_unknown": "Unknown analyzer",
+                "analyzer_sample": "Sample",
+                "analyzer_analytes": "analytes",
+                "analyzer_unmatched": "No matching lab order",
+                "analyzer_unmatched_hint": "No order carries this sample id or patient. The values can still be loaded into this result by hand.",
+                "analyzer_critical": "Critical value",
+                "analyzer_critical_hint": "The analyzer flagged a panic value. Notify the requesting doctor before saving.",
+                "analyte": "Analyte",
+                "result": "Result",
+                "unit": "Unit",
+                "reference": "Reference",
+                "flag": "Flag",
+                "flag_normal": "Normal"
             },
             "index": {
                 "actions": "Actions",
@@ -630,7 +733,8 @@
                 "test_profile": "Test Profile",
                 "title": "Results Archive",
                 "no_results": "No results",
-                "no_results_description": "No results description"
+                "no_results_description": "No results description",
+                "source": "Source"
             }
         }
     },
@@ -753,13 +857,13 @@
         "claims": "Claims",
         "minsante_reports": "MINSANTE Reports",
         "caisse": "Caisse",
-        "open_shift": "Open Shift",
-        "record_payment": "Record Payment",
+        "cash_shifts": "Cash Shifts",
         "add_user": "Add User",
         "roles_permissions": "Roles & Permissions",
         "billing_settings": "Billing Settings",
         "new_ticket": "New Ticket",
-        "radiology_results": "Radiology Results"
+        "radiology_results": "Radiology Results",
+        "sign_out_confirm": "Your session ends and you are returned to the sign-in page."
     },
     "marketing": {
         "modules": {
@@ -1065,7 +1169,8 @@
             "saving": "Saving...",
             "search_placeholder": "Search bed types...",
             "subtitle": "Configure bed type definitions",
-            "title": "Bed Types"
+            "title": "Bed Types",
+            "delete_type": "Delete this bed type?"
         },
         "beds": {
             "add_bed": "Add Bed",
@@ -1098,7 +1203,8 @@
             "transfer_bed": "Transfer Bed",
             "transfer_to_ward": "Transfer to Ward",
             "transferring": "Transferring...",
-            "unknown": "Unknown"
+            "unknown": "Unknown",
+            "delete_bed": "Delete this bed?"
         },
         "checkin": {
             "admission_date": "Admission Date",
@@ -1396,7 +1502,9 @@
             "title": "Staff Shifts",
             "update_shift": "Update Shift",
             "search_placeholder": "Search placeholder",
-            "general": "General"
+            "general": "General",
+            "delete_shift": "Delete this shift?",
+            "delete_confirm": "This removes the shift from the roster. It cannot be undone."
         },
         "show": {
             "admission_closed": "Admission Closed",
@@ -1668,7 +1776,8 @@
             "subtitle": "Manage hospital wards and bed assignments",
             "title": "Wards",
             "ward_code": "Ward Code",
-            "ward_name": "Ward Name"
+            "ward_name": "Ward Name",
+            "delete_ward": "Delete this ward?"
         },
         "about": {
             "cta_button": "Get in Touch",
@@ -1803,7 +1912,8 @@
             "vitals_description": "Measurements recorded for this patient.",
             "vitals_title": "Vital signs",
             "ward_bed": "Ward / bed",
-            "years": "years"
+            "years": "years",
+            "confirmAdmissionBody": "A bed is reserved and nursing staff are notified. You can cancel the request from the admissions registry."
         },
         "appointment_calendar": {
             "title": "Appointment Calendar",
@@ -1842,7 +1952,6 @@
                 "status": "Status",
                 "doctor": "Doctor",
                 "date_time": "Date & Time",
-                "queue_position": "Queue Position",
                 "consultation_fee": "Fee",
                 "reason": "Reason for visit"
             },
@@ -1852,7 +1961,6 @@
                 "completed": "Completed",
                 "cancelled": "Cancelled",
                 "pending": "Pending",
-                "waiting": "Waiting",
                 "no_show": "No Show",
                 "in_consultation": "In consultation"
             },
@@ -1865,7 +1973,11 @@
                 "previous": "Previous",
                 "next": "Next",
                 "today": "Today"
-            }
+            },
+            "cancel_confirm": "Cancel this appointment?",
+            "cancel_message": "The slot is released and the patient is notified.",
+            "cancel_action": "Cancel appointment",
+            "keep_action": "Keep appointment"
         },
         "billing_page": {
             "auto_renew": "Auto-renews",
@@ -2035,6 +2147,8 @@
             "eyebrow": "Cash desk",
             "heading": "Cash register",
             "description": "Find the patient, tick what they are paying for, take the money and print the receipt.",
+            "pick_module": "Pick a module...",
+            "pick_module_first": "Pick a module first...",
             "shift_open": "Shift open",
             "shift_closed": "No open shift",
             "stat_shift": "Shift status",
@@ -2044,7 +2158,7 @@
             "stat_collected": "Collected",
             "stat_today": "Today's total",
             "collect_title": "Collect payment",
-            "collect_description": "Amounts come from the bill and the price list, never typed by hand.",
+            "collect_description": "Every amount comes from the catalogue: drugs from the pharmacy stock, tests from the laboratory, the stay from the admission.",
             "open_shift": "Open shift",
             "close_shift": "Close shift",
             "open_shift_first": "Open a shift on a till before taking payments.",
@@ -2086,7 +2200,44 @@
             "cancel": "Cancel",
             "close_shift_title": "Close cash shift",
             "close_shift_hint": "Count the cash in the drawer. Leave the field empty to accept the expected total.",
-            "counted_balance": "Counted balance (XAF)"
+            "counted_balance": "Counted balance (XAF)",
+            "bill_total": "Billed",
+            "bill_paid": "Paid",
+            "bill_due": "Left to pay",
+            "empty_bill": "Nothing billed yet",
+            "empty_bill_desc": "Add what the patient consumed below, or pick a service from the price list.",
+            "col_select": "Select",
+            "col_charge": "Charge",
+            "col_qty": "Qty",
+            "col_unit": "Unit price",
+            "col_total": "Total",
+            "col_actions": "Actions",
+            "manual_charge": "Added at desk",
+            "settled": "Paid",
+            "edit_charge": "Edit charge",
+            "void_charge": "Remove charge",
+            "payments_on_bill": "Payments",
+            "charge_description": "What was used",
+            "charge_quantity": "Quantity",
+            "charge_price": "Unit price",
+            "charge_line_total": "Line total",
+            "save_charge": "Save charge",
+            "charge_description_hint": "Free text — an admission fee, oxygen, a dressing, anything consumed during the stay.",
+            "charge_description_placeholder": "e.g. Admission fee — general ward",
+            "charge_category": "Heading",
+            "add_charge": "Add to bill",
+            "price_list": "Or pick a priced service",
+            "add_to_payment": "Add to payment",
+            "stay": "Hospital stay",
+            "admitted": "Currently admitted",
+            "night_count": ":count night(s)",
+            "all_modules": "All",
+            "search_catalogue": "Search a drug, a test, a bed or a service...",
+            "nothing_found": "Nothing matches that search",
+            "nothing_found_desc": "Only what the price list, the drug stock and the laboratory catalogue hold can be sold here.",
+            "in_stock": "in stock",
+            "out_of_stock": "out of stock",
+            "added": "Added"
         },
         "doctor_pricing": {
             "title": "Doctor prices",
@@ -2106,7 +2257,12 @@
             "col_price": "This doctor",
             "custom": "custom",
             "hint": "Values equal to the catalogue price are stored as “use hospital default”.",
-            "cancel": "Cancel"
+            "cancel": "Cancel",
+            "read_only": "Only this doctor can change their own prices. You are viewing the list in read-only mode."
+        },
+        "prescriptions": {
+            "dispense_title": "Dispense this prescription?",
+            "dispense_message": "Stock leaves the pharmacy and the prescription closes."
         }
     },
     "pagination": {
@@ -2767,8 +2923,6 @@
         "submitting": "Submitting",
         "submitTicket": "Submit Ticket"
     },
-    "queueManagement": "Queue Management",
-    "assigningPatientsToStreams": "Assigning Patients To Streams",
     "bookAppointment": "Book Appointment",
     "appointments": "Appointments",
     "newBooking": "New Booking",
@@ -2784,25 +2938,21 @@
     "time": "Time",
     "reason": "Reason",
     "checkup": "Checkup",
-    "confirmAndQueuePatient": "Confirm And Queue Patient",
     "manageAppointments": "Manage Appointments",
-    "monitorPatientQueues": "Monitor Patient Queues",
     "bookNew": "Book New",
     "totalAppointments": "Total Appointments",
-    "waitingInHall": "Waiting In Hall",
     "todaysScheduled": "Todays Scheduled",
     "totalCompleted": "Total Completed",
     "allStatuses": "All Statuses",
     "scheduled": "Scheduled",
-    "waiting": "Waiting",
     "inConsultation": "In Consultation",
     "completed": "Completed",
     "canceled": "Canceled",
     "allDoctors": "All Doctors",
     "noAppointmentsFound": "No Appointments Found",
     "adjustFiltersOrBook": "Adjust Filters Or Book",
+    "schedulePatientVisits": "Schedule, Track And Follow Up On Patient Visits",
     "schedule": "Schedule",
-    "checkIn": "Check In",
     "manage": "Manage",
     "emergency": "Emergency",
     "caseDetails": "Case Details",
@@ -2934,6 +3084,693 @@
         "health": {
             "title": "Health & monitoring",
             "description": "Live reachability of every hospital database, the platform's own services, and the subscriptions that need an operator's attention."
+        }
+    },
+    "mk": {
+        "home": {
+            "hero": {
+                "caption": "The administrator dashboard of a live hospital, drawn from the product UI kit",
+                "eyebrow": "Hospital management system",
+                "title_a": "One record,",
+                "title_b": "from the door",
+                "title_c": "to the receipt",
+                "lede": "SanaGo runs the front desk, the consultation room, the laboratory, the pharmacy, the ward and the cashier on the same patient file — so the chart a doctor reads is the chart the nurse wrote, and the invoice is the one the cashier can prove.",
+                "primary": "Book a working session",
+                "secondary": "See what it costs"
+            },
+            "modules": {
+                "records": {
+                    "title": "Patient records",
+                    "body": "A file opened once and never re-typed: demographics, guardian, blood group, insurer, allergies, and every visit that follows. Searchable by name, phone or hospital UID.",
+                    "caption": "Records desk"
+                },
+                "diagnostics": {
+                    "title": "Laboratory & imaging",
+                    "body": "Requests leave the consultation already attached to the patient. Technicians work a list, enter results against the test definition, and release them signed."
+                },
+                "consult": {
+                    "title": "Consultations & prescriptions",
+                    "body": "Notes, diagnosis, prescription and follow-up date in one sitting — with allergy warnings against the record before the prescription is signed."
+                },
+                "pharmacy": {
+                    "title": "Pharmacy & stock",
+                    "body": "Dispense from the prescription, batch by batch. Stock, expiries and low-level alerts follow the same transaction."
+                },
+                "wards": {
+                    "title": "Wards & admissions",
+                    "body": "A real bed per patient, a deposit on the account, and the shift handover written down instead of remembered."
+                },
+                "money": {
+                    "title": "Billing, cashier & claims",
+                    "body": "One invoice per episode. The cashier takes the payment, the shift reconciles to a counted drawer, and the insurer claim keeps its supporting lines."
+                },
+                "theatre": {
+                    "title": "Surgery & emergency"
+                },
+                "emergency": {
+                    "body": "Schedule a theatre, record the procedure and its fee, and register an emergency arrival with triage before the file is complete."
+                },
+                "label": "Modules",
+                "note": "Eight desks, one file. Each module is a capability the platform can grant per plan.",
+                "title": "Everything the ward needs, in the order it happens",
+                "body": "Nothing here is a module you visit once. Each screen writes into the record the next one reads.",
+                "cta": "The full module catalogue",
+                "cta_note": "Read from the platform console · changes when a plan changes"
+            },
+            "facts": {
+                "modules": "Modules gated by plan",
+                "desks": "Role consoles",
+                "trial": "Day trial, no card",
+                "locales": "Working languages"
+            },
+            "market": {
+                "currency": "FCFA, natively",
+                "currency_body": "Tariffs, invoices, cashier shifts and insurer claims are all held in FCFA. No exchange-rate workaround at the desk.",
+                "language": "French and English",
+                "language_body": "Every desk can work in either language — the interface a nurse sees does not depend on the language the administrator chose.",
+                "sms": "MTN & Orange SMS",
+                "sms_body": "Appointment reminders and result notices go out as SMS on Cameroonian networks, with email as the fallback.",
+                "claims": "Tiers payant",
+                "claims_body": "Patient insurance, policy numbers and claim lines are part of the record, not a spreadsheet beside it.",
+                "label": "Local detail",
+                "title": "Built for a Cameroonian hospital, not translated for one"
+            },
+            "workflow": {
+                "label": "Patient journey",
+                "note": "Six hand-offs. The record is not re-created at any of them.",
+                "title": "The same chart, six rooms later",
+                "body": "Most hospitals lose the thread between the queue and the ward. SanaGo is built so that hand-off is a state change on one record, not a new form."
+            },
+            "roles": {
+                "label": "Role consoles",
+                "note": "Permissions decide what a desk can open — not a shared password.",
+                "title": "Each desk opens on the work it does",
+                "body": "A nurse should not have to read the revenue report to record a temperature. Pick a desk to see its screen."
+            },
+            "inside": {
+                "label": "Inside the hospital",
+                "note": "Three rooms this software was shaped around.",
+                "title": "Written with the people who work the shift",
+                "body": "The messy parts are the point: a patient who arrives without a file, a prescription half dispensed, a drawer that does not balance. Those are the moments the screens are designed for.",
+                "c1": "Front desk",
+                "c1_body": "Registration takes a minute, not a re-interview.",
+                "c2": "Consultation",
+                "c2_body": "Vitals, notes and the next appointment in one sitting.",
+                "c3": "Dispensary",
+                "c3_body": "Every box dispensed leaves a trace on the batch."
+            },
+            "plans": {
+                "label": "Plans",
+                "note": "Read from the plans published in the platform console.",
+                "title": "Priced per hospital, in FCFA",
+                "cta": "Compare every module"
+            },
+            "faq": {
+                "label": "Questions",
+                "note": "Straight answers, including the uncomfortable ones.",
+                "title": "The things hospital directors actually ask"
+            }
+        },
+        "tour": {
+            "label": "The workspace",
+            "note": "Seven stops on one patient file. Pick a desk to see the screen it opens on.",
+            "title": "Look at the screens before you look at the price",
+            "body": "Nothing on this page is a mock-up made for a brochure. It is the same interface a receptionist, a nurse and a cashier work in on the day you go live.",
+            "tablist": "A tour of the workspace",
+            "caption": "Drawn from the working UI kit · same tables, badges and totals as the live hospital",
+            "patients": {
+                "label": "Patient directory",
+                "line": "One file opened at the front desk and never re-typed: guardian, blood group, allergies, insurer and every visit behind a single search box."
+            },
+            "consultation": {
+                "label": "Consultation",
+                "line": "Vitals, diagnosis, prescription and the follow-up date in one sitting, with the allergy already on screen before the drug is chosen."
+            },
+            "laboratory": {
+                "label": "Laboratory",
+                "line": "Requests arrive already attached to the patient. Technicians work a list and enter results against the test definition, not as free text."
+            },
+            "pharmacy": {
+                "label": "Pharmacy",
+                "line": "Dispense from the signed prescription, batch by batch, while stock, expiries and reorder levels move with the same transaction."
+            },
+            "wards": {
+                "label": "Wards and beds",
+                "line": "Occupancy is live, so the ward knows which bed is free before the patient reaches the door, and the discharge list is written down."
+            },
+            "finance": {
+                "label": "Invoices",
+                "line": "One invoice per episode with partial payments, the balance carried forward and the insurer claim keeping its supporting lines."
+            },
+            "caisse": {
+                "label": "Caisse",
+                "line": "Open a shift, take the payments in cash or mobile money, close against a counted drawer and keep that shift its own ledger."
+            }
+        },
+        "about": {
+            "proof_label": "On screen",
+            "proof_title": "This is the product, not a highlights reel",
+            "proof_body": "Two screens a hospital opens on its first Monday: the patient directory and the cashier shift. Both are drawn from the same interface the hospital actually operates.",
+            "proof_c1": "Patient directory · search by name, phone or UID",
+            "proof_c2": "Caisse · one shift, one counted drawer",
+            "p1": {
+                "title": "The record is the product",
+                "body": "Every screen either writes to the patient file or reads from it. When a feature cannot justify itself that way, it does not ship — that rule is why the ward and the cashier agree."
+            },
+            "p2": {
+                "title": "Permission, not trust",
+                "body": "Access is granted per role and per action, and every privileged change is logged with the person, the address and the payload. A hospital should be able to prove who saw what."
+            },
+            "p3": {
+                "title": "One hospital, one database",
+                "body": "Each hospital runs on its own database on its own subdomain. A login from one hospital cannot reach another’s records, however the URL is typed."
+            },
+            "p4": {
+                "title": "Built for the shift, not the demo",
+                "body": "Slow connections, shared terminals, a nurse with gloves on. The interfaces are designed to be operated at speed, in French or English, with the numbers we actually bill in."
+            },
+            "promise1": {
+                "title": "A named person on support",
+                "body": "Write or call the same team that sets the hospital up — not a queue that reroutes to a reseller.",
+                "body_plain": "The team that sets the hospital up is the team that answers when something breaks."
+            },
+            "promise2": {
+                "title": "Migration, not a re-typing",
+                "body": "Patient lists, tariffs, drug catalogues, staff accounts and wards are loaded before go-live, from the exports your current system already produces."
+            },
+            "promise3": {
+                "title": "You keep the data",
+                "body": "A full export of the hospital’s records is available at any time, including after a subscription ends. Leaving is a process, not a hostage negotiation."
+            },
+            "fig_hospitals": "Hospitals live",
+            "fig_modules": "Modules in the product",
+            "fig_locales": "Languages",
+            "fig_currency": "Billing currency",
+            "eyebrow": "About",
+            "title_a": "Hospital software should be",
+            "title_b": "the quiet part",
+            "lede": "SanaGo exists because small and mid-sized hospitals are offered two bad options: spreadsheets held together by one person, or an enterprise suite priced for a ministry. We build the third one.",
+            "primary": "Talk to the team",
+            "secondary": "See what we built",
+            "photo_caption": "Ward round",
+            "photo_note": "Photography from hospital settings. Unsplash licence.",
+            "story_label": "The problem",
+            "story_title": "The gap is not software. It is software priced for this hospital.",
+            "story_p1": "Most hospital software is sold per bed, per module, per year, in a currency the hospital does not earn in. So the work migrates: the patient register becomes a notebook, the pharmacy ledger becomes a spreadsheet, and the cashier reconciles three sources by hand at midnight.",
+            "story_p2": "SanaGo is built the other way around. One hospital, one database, one price in FCFA, and a workflow that assumes the reality of a busy Cameroonian hospital — several stations, shared terminals, patients who arrive without a file, and insurers who pay late.",
+            "story_p3": "The product is deliberately narrow. It does clinical records, diagnostics, stock, wards and money, and it does nothing else until those are excellent.",
+            "principles_label": "Principles",
+            "principles_note": "Four rules the product is held to.",
+            "photo2_caption": "The ward",
+            "promises_label": "What we owe you",
+            "how_label": "Working together",
+            "how_note": "From signature to the first ward round on the system.",
+            "how_title": "A fortnight to live, not a quarter",
+            "how1": "Onboarding",
+            "how1_body": "Two weeks from signed agreement to a live subdomain, with the hospital’s own tariffs loaded.",
+            "how2": "Training",
+            "how2_body": "Per-desk sessions — front office, nursing, laboratory, pharmacy, cashier — in French or English.",
+            "how3": "Support",
+            "how3_body": "Weekday support by phone and email, with an audit trail of every ticket.",
+            "how4": "Reviews",
+            "how4_body": "A quarterly look at what the wards actually use, and what we should stop building.",
+            "cta_title": "Come and interrogate the product.",
+            "cta_body": "Bring your hardest workflow — a transfer between wards, a half-paid invoice, a lab result that changes the treatment. We will walk it on a real screen."
+        },
+        "contact": {
+            "email": "Email",
+            "phone": "Phone",
+            "languages": "Languages",
+            "trial": "Trial",
+            "days": "days",
+            "step1": {
+                "title": "You send the form",
+                "body": "It lands in the platform’s request queue with the hospital name and what you are trying to fix."
+            },
+            "step2": {
+                "title": "We reply within a working day",
+                "body": "A short call to understand the wards, the tariffs and who currently holds the data."
+            },
+            "step3": {
+                "title": "A working session, not a slideshow",
+                "body": "We open the product and walk the workflow you described — with your units and drug names on screen."
+            },
+            "eyebrow": "Contact",
+            "title_a": "Tell us what breaks",
+            "title_b": "on a normal Tuesday",
+            "lede": "The useful demo is the one where you describe the mess and we show you the screen. Send the form, or write straight to the support address — both are read by the same people.",
+            "f_reply": "Reply time",
+            "f_reply_v": "1 working day",
+            "f_session": "Session",
+            "f_session_v": "45 minutes",
+            "f_trial": "Trial",
+            "f_cost": "Cost",
+            "f_cost_v": "No card",
+            "form_label": "Request a demo",
+            "bring": "Bring to the session",
+            "bring1": "Your current tariff list, by service",
+            "bring2": "The units and wards you run, and their bed counts",
+            "bring3": "The drug and consumable catalogue you order from",
+            "bring4": "The one report your board asks for every month",
+            "details_label": "Direct lines",
+            "next": "What happens next",
+            "photo_caption": "Consultation",
+            "login_note": "Already a hospital on SanaGo? Do not use this form — sign in on your hospital’s own address and raise a support ticket from the console so it carries your tenant and permissions.",
+            "closing_title": "If it is easier, call and ask for the SanaGo team.",
+            "closing_body": "We would rather answer a specific question about the cashier shift than send a brochure."
+        },
+        "pricing": {
+            "recommended": "Recommended",
+            "limit_users": "users",
+            "per_month": "/ month",
+            "empty": "Plans are being configured in the platform console. Talk to us and we will price your hospital directly.",
+            "how": {
+                "invoice": "One invoice per hospital",
+                "invoice_body": "Billed monthly or annually in FCFA, with a record of every plan change — so the finance desk always has the paper trail.",
+                "annual": "Annual plans cost less",
+                "annual_body": "Paying for twelve months up front costs less than twelve monthly payments. Change the cycle at any renewal.",
+                "trial": "Start before you commit",
+                "trial_body": "Every hospital begins on a trial with its own database. Move onto a plan when the wards are ready, or walk away with your data."
+            },
+            "eyebrow": "Plans and pricing",
+            "title_a": "Priced per hospital,",
+            "title_b": "not per user account",
+            "lede": "Every tier runs the same platform on its own database. What changes is how much of it you unlock, how many staff can work in it, and how many patient records it holds.",
+            "primary": "Start a trial",
+            "secondary": "Read the catalogue",
+            "f_cycle": "Billing",
+            "f_mm": "monthly or annual",
+            "f_trial": "Trial",
+            "days": "days",
+            "f_grace": "Grace after expiry",
+            "f_modules": "Modules gated",
+            "published": "Published plans",
+            "annual_saving": "Annual saves",
+            "monthly": "Monthly",
+            "yearly": "Annual",
+            "faq_title": "Before you sign anything",
+            "faq_body": "Still unanswered? Write to the support address in the footer — a person reads it.",
+            "ask": "Ask a question",
+            "per_year": "/ year",
+            "unlimited": "Unlimited",
+            "limit_patients": "Patient records",
+            "limit_storage": "Storage",
+            "active_badge": "Most chosen",
+            "default_description": "A complete hospital workspace for this tier.",
+            "per_month_short": "monthly",
+            "per_year_short": "yearly",
+            "cta_featured": "Start the trial",
+            "cta": "Talk to us",
+            "trial_days": "day trial included"
+        },
+        "cap": {
+            "patients": {
+                "title": "Patient records",
+                "body": "One file per patient, opened at the front desk and never re-typed: photo, guardian, blood group, allergies, insurer and the full visit history behind a single search box."
+            },
+            "appointments": {
+                "title": "Appointments & queue",
+                "body": "Book by desk, doctor or station. The hall list shows who is waiting, who is in consultation and who has not arrived."
+            },
+            "consultations": {
+                "title": "Consultations",
+                "body": "Structured clinical notes — presenting complaint, examination by system, diagnosis, treatment plan and follow-up — attached to the visit."
+            },
+            "admissions": {
+                "title": "Admissions & wards",
+                "body": "Admit, transfer a bed, discharge with a summary. Occupancy is live, so the ward knows what is free before the patient arrives."
+            },
+            "vitals": {
+                "title": "Vitals & nursing",
+                "body": "Temperature, blood pressure, pulse, oxygen saturation, respiration and weight, with abnormal readings flagged at the moment of entry."
+            },
+            "laboratory": {
+                "title": "Laboratory",
+                "body": "Requests, specimens and results entered against the test definition, then validated and released to the doctor who ordered them."
+            },
+            "radiology": {
+                "title": "Radiology & imaging",
+                "body": "Orders by modality — X-ray, ultrasound, CT, MRI — with findings, a conclusion and a signed report archive."
+            },
+            "pharmacy": {
+                "title": "Pharmacy & dispensing",
+                "body": "Dispense against the prescription, batch by batch, with expiry and low-stock warnings before the shelf is empty."
+            },
+            "inventory": {
+                "title": "Inventory & supplies",
+                "body": "Non-drug stock — consumables, PPE, IV fluids, wound care — with reorder thresholds, usage and current inventory value."
+            },
+            "surgery": {
+                "title": "Surgery",
+                "body": "Theatre schedule with surgeon, anaesthetist, procedure, fee and complications recorded against the patient."
+            },
+            "emergency": {
+                "title": "Emergency",
+                "body": "Register an arrival with triage level, arrival mode, assessment and disposition — before a full file exists."
+            },
+            "billing": {
+                "title": "Billing & invoicing",
+                "body": "Invoices with tariff lines, per-doctor pricing, partial payments and the balance carried on the episode."
+            },
+            "cash_register": {
+                "title": "Cashier (Caisse)",
+                "body": "Open a shift, take payments, close and reconcile against a counted drawer. Each shift keeps its own ledger."
+            },
+            "claims": {
+                "title": "Insurance & tiers payant",
+                "body": "Patient policies, beneficiaries and insurer claims with the supporting lines the payer will ask for."
+            },
+            "certificates": {
+                "title": "Medical certificates",
+                "body": "Sick leave, fitness and death certificates issued from the record, numbered and printable."
+            },
+            "reports": {
+                "title": "Reports & analytics",
+                "body": "Revenue by period and service, activity across desks, and the figures the board asks for — without a spreadsheet export."
+            },
+            "audit": {
+                "title": "Audit log",
+                "body": "Who opened, changed or exported a record, and when. Visible to the administrator, not to everyone."
+            },
+            "sms": {
+                "title": "SMS notifications",
+                "body": "Appointment reminders and result notices over MTN and Orange numbers, with email as the fallback channel."
+            },
+            "api": {
+                "title": "API access",
+                "body": "Machine-to-machine access for a billing system, an analyser or a national reporting feed."
+            },
+            "branding": {
+                "title": "Custom branding",
+                "body": "The hospital’s own name, mark and subdomain, instead of a generic tenant address."
+            }
+        },
+        "features": {
+            "g1": "The clinical core",
+            "g1_intro": "The five capabilities every hospital touches on its first day.",
+            "g2": "Diagnostics",
+            "g2_intro": "Requests leave the consultation with the patient already attached.",
+            "g3": "Pharmacy and stock",
+            "g3_intro": "Every box that leaves the shelf leaves a trace.",
+            "g4": "Money",
+            "g4_intro": "The end of the episode: invoice, drawer, insurer.",
+            "g5": "Operations and platform",
+            "g5_intro": "Theatre, emergencies, reporting and the machinery underneath.",
+            "eyebrow": "Module catalogue",
+            "title_a": "Every module",
+            "title_b": "the platform gates",
+            "lede": "This page is generated from the platform’s own capability list and the plans an operator published — so it cannot promise a module that does not exist, or forget one that does.",
+            "primary": "See it on your wards",
+            "secondary": "Which plan has what",
+            "f_modules": "Capabilities",
+            "f_plans": "Published plans",
+            "f_desks": "Role consoles",
+            "f_trial": "Trial",
+            "index": "Catalogue index",
+            "not_in_plan": "Not in a published plan",
+            "gated_note": "Gated by plan capability · drawn from the working UI kit",
+            "workflow_note": "What the capabilities above look like end to end.",
+            "workflow_title": "Six rooms, one chart",
+            "roles_note": "The same capabilities, arranged by the desk that uses them.",
+            "roles_title": "A console per desk, not a password per person",
+            "rooms": "Rooms",
+            "rooms_title": "Where these screens get used",
+            "rooms_body": "A theatre list, a ward round and a dispensary shelf: three places a hospital loses hours every week, and three places SanaGo is designed to give them back.",
+            "room_theatre": "Theatre",
+            "room_ward": "Ward"
+        },
+        "matrix": {
+            "label": "Module comparison",
+            "note": "Straight from each plan’s capability flags — flip a module on in the console and this table follows.",
+            "title": "Which tier unlocks which module",
+            "body": "Core clinical work is in every tier. Diagnostics, theatre and the money desk are where the tiers separate.",
+            "caption": "Which modules each published plan unlocks",
+            "module": "Module",
+            "included": "Included",
+            "excluded": "Not included"
+        },
+        "nav": {
+            "skip": "Skip to content",
+            "primary": "Primary",
+            "toggle_theme": "Toggle dark mode",
+            "demo": "Book a demo",
+            "open": "Open menu",
+            "close": "Close menu",
+            "top": "Back to top"
+        },
+        "common": {
+            "meta": "metadata"
+        },
+        "workflow": {
+            "register": {
+                "title": "Register",
+                "body": "A patient file is opened once — photo, guardian, blood group, insurer — and every later visit attaches to it."
+            },
+            "triage": {
+                "title": "Triage & queue",
+                "body": "Vitals at the door, a position in the queue per station, and a waiting list the front desk can see."
+            },
+            "consult": {
+                "title": "Consult",
+                "body": "Structured notes, diagnosis, prescription and the next appointment, written into the same record."
+            },
+            "diagnose": {
+                "title": "Diagnostics",
+                "body": "Lab and imaging requests leave the consultation already attached to the patient and the doctor who ordered them."
+            },
+            "ward": {
+                "title": "Dispense & admit",
+                "body": "Pharmacy deducts the batch it dispensed; the ward assigns a real bed and the deposit lands on the account."
+            },
+            "settle": {
+                "title": "Bill & settle",
+                "body": "One invoice per episode, a cash shift that reconciles, and an insurer claim with its supporting lines."
+            }
+        },
+        "footer": {
+            "workflow": "Patient journey",
+            "roles": "Role consoles",
+            "privacy": "Privacy",
+            "terms": "Terms",
+            "fact_hospitals": "Hospitals live",
+            "fact_modules": "Gated modules",
+            "fact_currency": "Billing currency",
+            "fact_locales": "Desk languages",
+            "toggle_theme": "Toggle dark mode",
+            "nav": "Footer",
+            "product": "Product",
+            "company": "Company",
+            "from_console": "From the console",
+            "facts_note": "Plans, contacts and counts on this site are read live from the platform console.",
+            "rights": "All rights reserved",
+            "photography": "Photography via Unsplash",
+            "built": "Built for FCFA billing"
+        },
+        "roles": {
+            "admin": {
+                "label": "Administration",
+                "scope": "Users, roles and the whole ledger",
+                "a1": "Create a role and decide exactly which desks reach which record",
+                "a2": "Read the audit trail: who opened, edited or exported a file",
+                "a3": "Watch revenue, stock value and occupancy on one board"
+            },
+            "doctor": {
+                "label": "Doctor",
+                "scope": "Today's list, the record, the prescription pad",
+                "a1": "Open any patient with their full history already loaded",
+                "a2": "Prescribe against real stock, with allergy warnings inline",
+                "a3": "Order labs and imaging without leaving the consultation"
+            },
+            "nurse": {
+                "label": "Nursing",
+                "scope": "Ward rounds, vitals and care reports",
+                "a1": "Record vitals in seconds and flag the abnormal ones",
+                "a2": "Chart a bed for the night and hand over the shift in writing",
+                "a3": "See which prescriptions are still waiting at the pharmacy"
+            },
+            "lab": {
+                "label": "Laboratory",
+                "scope": "Requests, specimens, results",
+                "a1": "A worklist of every open request, oldest first",
+                "a2": "Enter results against the test definition, not free text",
+                "a3": "Validate and release — the doctor is notified immediately"
+            },
+            "pharmacy": {
+                "label": "Pharmacy",
+                "scope": "Dispensing, batches, expiry",
+                "a1": "Dispense from the prescription, batch by batch",
+                "a2": "Watch expiries and low stock before they become a shortage",
+                "a3": "Bill the medicines into the same invoice as the consultation"
+            },
+            "radiology": {
+                "label": "Imaging",
+                "scope": "Orders, studies, reports",
+                "a1": "Queue X-ray, ultrasound, CT and MRI orders by modality",
+                "a2": "Write findings and a conclusion, then sign the study off",
+                "a3": "Keep every report in one searchable archive"
+            },
+            "cashier": {
+                "label": "Caisse",
+                "scope": "Payments, shifts, claims",
+                "a1": "Take a payment against the invoice, in cash or by transfer",
+                "a2": "Open and close a shift with a counted drawer",
+                "a3": "Prepare the insurer claim with its supporting lines"
+            },
+            "tablist": "Hospital roles",
+            "scope_label": "Sees"
+        },
+        "faq": {
+            "trial": {
+                "q": "How does the trial work?",
+                "a": "Every new hospital starts on a full working trial — no card, no sales call. When it ends the hospital keeps its data and can move onto any plan; nothing is deleted."
+            },
+            "patient_cap": {
+                "q": "What happens when we reach the patient limit?",
+                "a": "The console warns you as you approach the tier ceiling. Nothing breaks and no record is hidden, but new registrations pause until you move up a tier."
+            },
+            "upgrade": {
+                "q": "Can we change plan mid-year?",
+                "a": "Yes — up or down, at any point. The change is recorded on the subscription with its own invoice, so the finance desk always has an audit trail."
+            },
+            "data": {
+                "q": "Where does our patient data live?",
+                "a": "Each hospital gets its own database. Staff on one subdomain cannot reach another hospital’s records even with a valid login, and every privileged action is written to an audit log."
+            },
+            "offline": {
+                "q": "Our power and internet are not reliable. Is that a problem?",
+                "a": "The desk keeps working through short outages and rejoins cleanly. Work that must not be lost — dispensing, payments — is committed to the record, not held in the browser."
+            },
+            "payment": {
+                "q": "How do we pay?",
+                "a": "Invoices are raised in FCFA and settled by transfer or mobile money. An annual plan bills once and costs less than twelve monthly payments."
+            }
+        },
+        "cta": {
+            "eyebrow": "Next step",
+            "title": "Put the whole hospital on one record.",
+            "body": "Book a working session and we will show you the desks you care about — with your own units, tariffs and ward names in the room.",
+            "primary": "Book a working session",
+            "secondary": "See the plans",
+            "talk": "Talk to a human"
+        },
+        "announcement": {
+            "dismiss": "Dismiss notice"
+        },
+        "terms": {
+            "agreement": {
+                "title": "The agreement",
+                "p1": "These terms govern the use of the SanaGo platform by a hospital, clinic or health centre (the customer) and the people it invites into its workspace. By provisioning a hospital or using a trial, the customer accepts them."
+            },
+            "trial": {
+                "title": "Trials",
+                "p1": "A new hospital starts on a working trial that runs for the number of days published on the pricing page at the time of signup. No payment method is required to start. At the end of the trial the workspace keeps its data and moves to read-only until a plan is taken or the hospital asks for deletion."
+            },
+            "plans": {
+                "title": "Plans, quotas and billing",
+                "b1": "Plans are priced per hospital in the currency shown on the pricing page, billed monthly or annually.",
+                "b2": "Each plan carries a user limit, a patient-record limit, a storage allowance and a set of unlocked modules. Limits are shown before a plan is chosen.",
+                "b3": "When a limit is reached, new records in that category pause. Existing records are never hidden or deleted.",
+                "b4": "Changing plan mid-cycle raises a new invoice for the difference; the change is recorded on the subscription.",
+                "b5": "After expiry there is a grace period before the workspace becomes read-only. Data is preserved during it."
+            },
+            "customer": {
+                "title": "What the hospital is responsible for",
+                "b1": "Issuing, changing and revoking its own staff accounts, and keeping their roles accurate.",
+                "b2": "Clinical decisions. SanaGo records and routes information; it does not diagnose, prescribe or replace clinical judgement.",
+                "b3": "Obtaining any patient consent required by local law for the collection and use of health data.",
+                "b4": "The accuracy of tariffs, drug catalogues and insurance details entered into the workspace."
+            },
+            "data": {
+                "title": "Ownership of data",
+                "p1": "The hospital owns its data. We store and process it to run the service and for support, and we do not sell it or use it to train models. A full export is available on request, including after the subscription ends."
+            },
+            "service": {
+                "title": "Availability and support",
+                "p1": "We aim to keep the platform available continuously and to give notice of planned maintenance. Support is provided on working days through the channels published on the contact page; response times depend on the plan."
+            },
+            "acceptable": {
+                "title": "Acceptable use",
+                "b1": "No attempts to reach another hospital’s data, to bypass role permissions, or to probe the platform for vulnerabilities without written agreement.",
+                "b2": "No resale, sublicensing or white-labelling of the platform outside the branding options a plan includes.",
+                "b3": "No use of the platform to store records the hospital is not entitled to hold."
+            },
+            "suspension": {
+                "title": "Suspension and termination",
+                "p1": "A workspace may be suspended for non-payment after the grace period, or immediately where continued operation would be unlawful or would put other hospitals at risk. Where a workspace is suspended for non-payment, data is retained and access is restored when the balance is settled."
+            },
+            "liability": {
+                "title": "Limits of liability",
+                "p1": "The service is provided with reasonable skill and care. To the extent permitted by law, our aggregate liability in any twelve-month period is limited to the fees paid for that hospital in the preceding twelve months. We are not liable for clinical outcomes or for losses caused by data the hospital entered incorrectly."
+            },
+            "changes": {
+                "title": "Changes to these terms",
+                "p1": "We will give notice in the workspace before a material change takes effect. Continuing to use the platform after that date constitutes acceptance."
+            },
+            "contact": {
+                "title": "Contact",
+                "p1": "Contract and billing questions go to the platform support address, quoting the hospital subdomain. For anything urgent, call the published support number."
+            },
+            "eyebrow": "Terms",
+            "title_a": "The commercial terms,",
+            "title_b": "in plain language",
+            "lede": "What a hospital signs up to: the trial, the billing cycle, the quotas, who owns the data and who is responsible for what.",
+            "f_currency": "Currency",
+            "f_trial": "Trial",
+            "days": "days",
+            "f_grace": "Grace period",
+            "f_plans": "Plans"
+        },
+        "legal": {
+            "contents": "Contents",
+            "updated": "Updated"
+        },
+        "privacy": {
+            "scope": {
+                "title": "What this notice covers",
+                "p1": "This notice explains how patient and staff data moves through the SanaGo platform, who inside a hospital can see it, and what a hospital can require from us. It covers the public site you are reading and the hospital workspaces served on each hospital’s own address."
+            },
+            "roles": {
+                "title": "The hospital decides, we operate",
+                "p1": "For clinical data the hospital is the data controller and SanaGo is the processor: the hospital decides what is collected and who may see it, and we run the system on its behalf. For account and billing data on the platform console, we act as controller."
+            },
+            "isolation": {
+                "title": "One hospital, one database",
+                "p1": "Every hospital is provisioned with its own database and its own subdomain. There is no shared table holding several hospitals’ patients. A session opened on one hospital’s address cannot read another hospital’s records, even with a valid login."
+            },
+            "access": {
+                "title": "Who can see a record",
+                "b1": "Access is granted per role and per action, not per person and not by sharing a login.",
+                "b2": "A doctor sees the patients they treat and the results attached to them; a cashier sees billing lines, not clinical notes.",
+                "b3": "Sensitive actions — dispensing, discharge, refunds, exports — are recorded against the user who performed them.",
+                "b4": "Platform staff cannot browse clinical records. Support access happens through a hospital-created account or an explicit, logged impersonation by the platform administrator."
+            },
+            "audit": {
+                "title": "The audit trail",
+                "p1": "Privileged actions on the platform are written to an audit log with the actor, the hospital concerned, the origin address and the payload. A hospital administrator can read the trail for their own hospital; the platform administrator reads platform-level events."
+            },
+            "processors": {
+                "title": "Third parties involved",
+                "b1": "Transactional email for account, notification and support messages.",
+                "b2": "SMS delivery over mobile networks for appointment and result notices, when the hospital enables it.",
+                "b3": "The hosting and database infrastructure that stores the hospital’s data, with access limited to platform operators and covered by our agreements with them."
+            },
+            "retention": {
+                "title": "Retention and export",
+                "p1": "Records are retained for as long as the hospital’s subscription is active. A hospital can request a full export of its data at any time and, when it leaves, receive a final export before its database is decommissioned.",
+                "p2": "Operational logs are kept for a shorter window, sized for support and security review rather than long-term archival."
+            },
+            "rights": {
+                "title": "Requests from patients and staff",
+                "p1": "Patients and hospital staff direct access, correction and deletion requests to the hospital that holds their record — that hospital is the controller. We support the hospital in answering them through export and correction tools in the workspace."
+            },
+            "contact": {
+                "title": "Contact",
+                "p1": "Questions about this notice, a data-handling agreement or an export request go to the platform support address below. If you are a patient, contact the hospital that holds your record first."
+            },
+            "eyebrow": "Privacy",
+            "title_a": "How patient data",
+            "title_b": "moves through SanaGo",
+            "lede": "A short, specific notice — written for the hospital director who has to sign a data-handling agreement, and the administrator who has to answer a patient."
         }
     }
 }

@@ -33,10 +33,13 @@
         "edit": "Modifier",
         "expand_sidebar": "Développer la barre latérale",
         "female": "Femme",
+        "got_it": "Bien reçu",
+        "later": "Plus tard",
         "home": "Accueil",
         "male": "Homme",
         "manage": "Gérer",
         "mark_all_read": "Tout marquer comme lu",
+        "open": "Ouvrir",
         "months": {
             "apr": "Avril",
             "aug": "Août",
@@ -75,7 +78,11 @@
         "close_navigation": "Fermer la navigation",
         "open_navigation": "Ouvrir la navigation",
         "mark_as_read": "Marquer comme lu",
-        "skip_to_content": "Aller au contenu"
+        "skip_to_content": "Aller au contenu",
+        "success": "Succès",
+        "error": "Erreur",
+        "and_more": "et :count de plus",
+        "reset": "Réinitialiser"
     },
     "finance": {
         "analytics": {
@@ -124,7 +131,9 @@
             "supplies": "Fournitures",
             "title": "Dépenses",
             "utilities": "Services publics",
-            "vendor": "Fournisseur"
+            "vendor": "Fournisseur",
+            "delete_expenditure": "Supprimer cette dépense ?",
+            "notes": "Notes"
         },
         "invoices": {
             "create": {
@@ -200,7 +209,71 @@
                 "unit_price": "Prix unitaire"
             }
         },
-        "breadcrumb": "Finances"
+        "breadcrumb": "Finances",
+        "services": {
+            "index": {
+                "finance": "Finances",
+                "subtitle": "Gérer les prix et la configuration des services médicaux",
+                "search_placeholder": "Rechercher un service...",
+                "service": "Service",
+                "code": "Code",
+                "category": "Catégorie",
+                "price": "Prix",
+                "payment": "Paiement",
+                "status": "Statut",
+                "payment_before": "Avant service",
+                "payment_after": "Après service",
+                "status_active": "Actif",
+                "status_inactive": "Inactif",
+                "no_services": "Aucun service trouvé",
+                "create_first_service": "Créer le premier service",
+                "delete_confirm": "Supprimer ce service ?",
+                "category_all": "Tous",
+                "category_consultation": "Consultation",
+                "category_procedure": "Procédure",
+                "category_lab": "Laboratoire",
+                "category_radiology": "Radiologie",
+                "category_imaging": "Imagerie",
+                "category_medication": "Médicament",
+                "category_bed": "Lit",
+                "category_nursing": "Soins infirmiers",
+                "category_emergency": "Urgence",
+                "category_other": "Autre",
+                "delete_service": "Supprimer cette prestation ?"
+            },
+            "edit": {
+                "title": "Modifier le service",
+                "subtitle": "Modifier :name",
+                "details": "Détails du service",
+                "name": "Nom du service",
+                "price": "Prix par défaut",
+                "description": "Description",
+                "active": "Service actif",
+                "upfront": "Paiement avant service requis",
+                "saving": "Enregistrement...",
+                "save": "Enregistrer le service"
+            },
+            "create": {
+                "title": "Nouveau service",
+                "subtitle": "Ajouter un service facturé au catalogue.",
+                "services": "Services",
+                "details": "Détails du service",
+                "name": "Nom du service",
+                "name_placeholder": "ex. Consultation générale",
+                "code": "Code",
+                "code_placeholder": "ex. CONS-GEN",
+                "category": "Catégorie",
+                "price": "Prix par défaut",
+                "description": "Description",
+                "description_placeholder": "Notes facultatives pour la caisse.",
+                "active": "Service actif",
+                "upfront": "Paiement avant service requis",
+                "creating": "Création...",
+                "create": "Créer le service",
+                "created": "Service créé.",
+                "form_error": "Vérifiez les champs en surbrillance avant l’envoi."
+            }
+        }
     },
     "flash": {
         "admission": {
@@ -260,7 +333,6 @@
         "arrivalMode": "Mode d'arrivée",
         "arrived": "Arrivé",
         "assessment": "Évaluation",
-        "assigningPatientsToStreams": "Affectation des patients aux files",
         "attachments": "Pièces jointes",
         "backToPatientList": "Retour à la liste des patients",
         "batch": "Lot",
@@ -277,7 +349,6 @@
         "canceled": "Annulé",
         "cannotBeUndone": "Cette action est irréversible.",
         "caseDetails": "Détails du cas",
-        "checkIn": "Enregistrer",
         "checkup": "Examen",
         "chiefComplaint": "Plainte principale",
         "clickToSelectOrDrop": "Cliquez pour sélectionner ou glissez-déposez des fichiers",
@@ -288,7 +359,6 @@
         "complaint": "Plainte",
         "completed": "Terminé",
         "confirmAndProcess": "Confirmer et traiter",
-        "confirmAndQueuePatient": "Confirmer et mettre le patient en file d'attente",
         "confirmDepletion": "Confirmer l'épuisement",
         "confirmDispensation": "Confirmer la délivrance",
         "consultation": "Consultation",
@@ -380,7 +450,6 @@
         "medicationDispensedSuccessfully": "Médicament délivré avec succès",
         "minStockLevel": "Niv. de stock min.",
         "minimumStockLevel": "Niveau de stock minimum",
-        "monitorPatientQueues": "Surveiller les files d'attente des patients",
         "nameOrId": "Nom ou ID",
         "newBooking": "Nouvelle réservation",
         "newEmergency": "Nouvelle urgence",
@@ -437,7 +506,6 @@
         "provideAdditionalDetails": "Fournir des détails supplémentaires",
         "purchasePrice": "Prix d'achat",
         "qty": "Qté",
-        "queueManagement": "Gestion de la file d'attente",
         "reason": "Motif",
         "reasonClinicalIndications": "Motif / Indications cliniques",
         "ref001": "REF-001",
@@ -505,6 +573,7 @@
         "units": "Unités",
         "unknown": "Inconnu",
         "unrecognizedItemsExternal": "Articles non reconnus (Externes)",
+        "upcomingAppointments": "Rendez-vous à venir",
         "updateInformation": "Mettre à jour les informations",
         "updating": "Mise à jour",
         "uploadExternalDocuments": "Télécharger des documents externes",
@@ -516,8 +585,6 @@
         "visitDetails": "Détails de la visite",
         "vitalSigns": "Signes vitaux",
         "vitalsPhysicalFindings": "Signes vitaux et constatations physiques",
-        "waiting": "En attente",
-        "waitingInHall": "En attente dans le hall",
         "walkIn": "Sans rendez-vous",
         "walkInCart": "Panier sans rendez-vous",
         "warning": "Avertissement",
@@ -581,20 +648,34 @@
             "all_statuses": "Tous les statuts",
             "code_label": "Code",
             "completed": "Terminé",
+            "counter_collect": "Payable au guichet",
+            "file_order": "Enregistrer la commande",
             "head_title": "Demandes de laboratoire",
             "in_progress": "En cours",
             "lab_requests": "Demandes de laboratoire",
+            "lab_test": "Test de laboratoire",
             "no_requests": "Aucune demande trouvée",
+            "order_details": "Détails de la commande",
+            "order_new": "Nouvelle demande",
+            "order_standalone": "Cette commande est autonome — aucune consultation n'est nécessaire. Le paiement, si le test est à la charge du patient, se règle au guichet.",
+            "order_subtitle": "Créer une demande de laboratoire pour un patient",
+            "order_title": "Commander un test de laboratoire",
             "patient": "Patient",
             "pending": "En attente",
+            "pick_patient": "Sélectionner un patient",
+            "pick_test": "Sélectionner un test de laboratoire",
             "process_result": "Traiter le résultat",
+            "reason": "Motif du test",
+            "reason_placeholder": "Indication clinique (facultatif)",
             "search_placeholder": "Rechercher des demandes...",
             "showing_orders": "Affichage de {from} à {to} sur {total} entrées",
             "status": "Statut",
             "subtitle": "Voir et gérer toutes les demandes de tests de laboratoire",
             "test_definition": "Définition du test",
             "title": "Demandes de laboratoire",
-            "total_requests": "Total des demandes"
+            "total_requests": "Total des demandes",
+            "urgency": "Urgence",
+            "accession": "Échantillon"
         },
         "results": {
             "enter": {
@@ -625,7 +706,30 @@
                 "test_definition": "Définition du test",
                 "update_record": "Mettre à jour le dossier",
                 "verification_date": "Date de vérification",
-                "voided_cancelled": "Annulé / Suspendu"
+                "voided_cancelled": "Annulé / Suspendu",
+                "analyzer_auto": "Détection automatique",
+                "analyzer_choose_file": "Choisir un fichier",
+                "analyzer_frame": "Trame de l’automate",
+                "analyzer_frame_hint": "Collez ce que l’automate a envoyé — ASTM, HL7 ou un export CSV — ou choisissez le fichier exporté.",
+                "analyzer_apply": "Utiliser ces valeurs",
+                "analyzer_applied": "Valeurs de l’automate chargées — vérifiez puis enregistrez le résultat",
+                "analyzer_empty": "Rien à lire pour le moment",
+                "analyzer_empty_hint": "Collez la trame de l’automate ou choisissez le fichier exporté par l’appareil.",
+                "analyzer_unreadable": "Cette trame n’a pas pu être lue",
+                "analyzer_failed": "La trame de l’automate n’a pas pu être lue",
+                "analyzer_unknown": "Automate inconnu",
+                "analyzer_sample": "Échantillon",
+                "analyzer_analytes": "analytes",
+                "analyzer_unmatched": "Aucune demande correspondante",
+                "analyzer_unmatched_hint": "Aucune demande ne porte cet identifiant d’échantillon ou ce patient. Les valeurs peuvent tout de même être reprises dans ce résultat.",
+                "analyzer_critical": "Valeur critique",
+                "analyzer_critical_hint": "L’automate a signalé une valeur critique. Prévenez le médecin prescripteur avant d’enregistrer.",
+                "analyte": "Analyte",
+                "result": "Résultat",
+                "unit": "Unité",
+                "reference": "Référence",
+                "flag": "Indicateur",
+                "flag_normal": "Normal"
             },
             "index": {
                 "actions": "Actions",
@@ -642,7 +746,8 @@
                 "status": "Statut",
                 "subtitle": "Parcourir les résultats de tests de laboratoire terminés",
                 "test_profile": "Profil du test",
-                "title": "Archives des résultats"
+                "title": "Archives des résultats",
+                "source": "Source"
             }
         }
     },
@@ -765,13 +870,13 @@
         "claims": "Réclamations",
         "minsante_reports": "Rapports MINSANTE",
         "caisse": "Caisse",
-        "open_shift": "Ouverture de caisse",
-        "record_payment": "Enregistrer un paiement",
+        "cash_shifts": "Caisses (quarts)",
         "add_user": "Ajouter utilisateur",
         "roles_permissions": "Rôles et permissions",
         "billing_settings": "Paramètres de facturation",
         "new_ticket": "Nouveau ticket",
-        "radiology_results": "Résultats de radiologie"
+        "radiology_results": "Résultats de radiologie",
+        "sign_out_confirm": "Votre session se termine et vous revenez à la page de connexion."
     },
     "marketing": {
         "modules": {
@@ -1074,7 +1179,8 @@
             "saving": "Enregistrement en cours...",
             "search_placeholder": "Rechercher des types de lits...",
             "subtitle": "Configurer les définitions des types de lits",
-            "title": "Types de lits"
+            "title": "Types de lits",
+            "delete_type": "Supprimer ce type de lit ?"
         },
         "beds": {
             "add_bed": "Ajouter un lit",
@@ -1107,7 +1213,8 @@
             "transfer_bed": "Transférer le lit",
             "transfer_to_ward": "Transférer vers le service",
             "transferring": "Transfert en cours...",
-            "unknown": "Inconnu"
+            "unknown": "Inconnu",
+            "delete_bed": "Supprimer ce lit ?"
         },
         "checkin": {
             "admission_date": "Date d'admission",
@@ -1387,7 +1494,9 @@
             "table_hours": "Heures",
             "table_staff": "Personnel",
             "title": "Quarts du personnel",
-            "update_shift": "Mettre à jour le quart"
+            "update_shift": "Mettre à jour le quart",
+            "delete_shift": "Supprimer cette garde ?",
+            "delete_confirm": "La garde disparaît du planning. Cette action est définitive."
         },
         "show": {
             "admission_closed": "Admission fermée",
@@ -1631,7 +1740,8 @@
             "subtitle": "Gérer les services de l'hôpital et les attributions de lits",
             "title": "Services",
             "ward_code": "Code du service",
-            "ward_name": "Nom du service"
+            "ward_name": "Nom du service",
+            "delete_ward": "Supprimer ce service ?"
         },
         "about": {
             "cta_button": "Nous contacter",
@@ -1723,17 +1833,16 @@
                 "status": "Statut",
                 "doctor": "Médecin",
                 "date_time": "Date et heure",
-                "queue_position": "Position dans la file",
                 "consultation_fee": "Honoraires",
                 "reason": "Motif de la visite"
             },
             "status": {
                 "scheduled": "Planifié",
+                "schedulePatientVisits": "Planifier et suivre les visites des patients",
                 "confirmed": "Confirmé",
                 "completed": "Terminé",
                 "cancelled": "Annulé",
                 "no_show": "Absent",
-                "waiting": "En attente",
                 "pending": "En attente de confirmation",
                 "in_consultation": "En consultation"
             },
@@ -1746,7 +1855,11 @@
                 "previous": "Précédent",
                 "next": "Suivant",
                 "today": "Aujourd’hui"
-            }
+            },
+            "cancel_confirm": "Annuler ce rendez-vous ?",
+            "cancel_message": "Le créneau est libéré et le patient est prévenu.",
+            "cancel_action": "Annuler le rendez-vous",
+            "keep_action": "Conserver le rendez-vous"
         },
         "billing_page": {
             "auto_renew": "Renouvellement automatique",
@@ -1944,7 +2057,8 @@
             "noVitalSignsDescription": "Aucune mesure n’a encore été relevée.",
             "confirmAdmissionTitle": "Demander une admission",
             "confirmAdmissionMessage": "Voulez-vous vraiment demander l’admission de {name} ?",
-            "lastVisit": "Dernière visite"
+            "lastVisit": "Dernière visite",
+            "confirmAdmissionBody": "Un lit est réservé et le personnel soignant est prévenu. Vous pouvez annuler la demande depuis le registre des admissions."
         },
         "radiology_print": {
             "age": "Âge",
@@ -1998,6 +2112,8 @@
             "eyebrow": "Guichet caisse",
             "heading": "Caisse",
             "description": "Recherchez le patient, cochez les prestations à régler, encaissez le montant et imprimez le reçu.",
+            "pick_module": "Choisir un module...",
+            "pick_module_first": "Choisissez d'abord un module...",
             "shift_open": "Caisse ouverte",
             "shift_closed": "Aucune caisse ouverte",
             "stat_shift": "État de la caisse",
@@ -2007,7 +2123,7 @@
             "stat_collected": "Encaissé",
             "stat_today": "Total du jour",
             "collect_title": "Encaisser un paiement",
-            "collect_description": "Les montants viennent de la facture et de la grille tarifaire, jamais saisis à la main.",
+            "collect_description": "Chaque montant vient du catalogue : médicaments du stock, examens du laboratoire, séjour depuis l'admission.",
             "open_shift": "Ouvrir la caisse",
             "close_shift": "Clôturer la caisse",
             "open_shift_first": "Ouvrez une caisse avant d’encaisser un paiement.",
@@ -2049,7 +2165,17 @@
             "cancel": "Annuler",
             "close_shift_title": "Clôturer la caisse",
             "close_shift_hint": "Comptez l’espèce en caisse. Laissez le champ vide pour accepter le total attendu.",
-            "counted_balance": "Montant compté (FCFA)"
+            "counted_balance": "Montant compté (FCFA)",
+            "stay": "Hospitalisation",
+            "admitted": "Actuellement hospitalisé",
+            "night_count": ":count nuit(s)",
+            "all_modules": "Tout",
+            "search_catalogue": "Rechercher un médicament, un examen, un lit ou une prestation...",
+            "nothing_found": "Aucun résultat",
+            "nothing_found_desc": "Seuls la grille tarifaire, le stock de pharmacie et le catalogue du laboratoire peuvent être facturés ici.",
+            "in_stock": "en stock",
+            "out_of_stock": "rupture de stock",
+            "added": "Ajouté"
         },
         "doctor_pricing": {
             "title": "Tarifs du médecin",
@@ -2069,7 +2195,12 @@
             "col_price": "Ce médecin",
             "custom": "personnalisé",
             "hint": "Les valeurs égales au tarif de la grille sont enregistrées comme « tarif de l’hôpital ».",
-            "cancel": "Annuler"
+            "cancel": "Annuler",
+            "read_only": "Seul ce médecin peut modifier ses propres tarifs. Vous consultez la liste en lecture seule."
+        },
+        "prescriptions": {
+            "dispense_title": "Délivrer cette ordonnance ?",
+            "dispense_message": "Le stock quitte la pharmacie et l'ordonnance est clôturée."
         }
     },
     "pagination": {
@@ -2356,6 +2487,459 @@
                 "no_report_body": "Ouvrez le formulaire de compte rendu pour saisir les observations et valider l'examen.",
                 "download_report": "Télécharger le compte rendu",
                 "validate_report": "Valider le compte rendu"
+            }
+        }
+    },
+    "mk": {
+        "matrix": {
+            "module": "Module",
+            "label": "Comparaison des modules"
+        },
+        "common": {
+            "meta": "métadonnées"
+        },
+        "workflow": {
+            "register": {
+                "title": "Accueil"
+            },
+            "triage": {
+                "title": "Triage et file d’attente"
+            },
+            "consult": {
+                "title": "Consultation"
+            },
+            "diagnose": {
+                "title": "Diagnostics"
+            },
+            "ward": {
+                "title": "Délivrance et hospitalisation"
+            },
+            "settle": {
+                "title": "Facturation et règlement"
+            }
+        },
+        "footer": {
+            "workflow": "Parcours du patient",
+            "roles": "Postes par rôle",
+            "privacy": "Confidentialité",
+            "terms": "Conditions",
+            "fact_hospitals": "Hôpitaux en service",
+            "fact_modules": "Modules activés par offre",
+            "fact_currency": "Devise de facturation",
+            "fact_locales": "Langues du poste",
+            "toggle_theme": "Activer ou désactiver le mode sombre",
+            "nav": "Pied de page",
+            "product": "Produit",
+            "company": "Entreprise",
+            "from_console": "Depuis la console",
+            "rights": "Tous droits réservés",
+            "built": "Conçu pour la facturation en FCFA"
+        },
+        "pricing": {
+            "recommended": "Recommandé",
+            "per_year": "/ an",
+            "per_month": "/ mois",
+            "limit_users": "Utilisateurs",
+            "unlimited": "Illimité",
+            "limit_patients": "Dossiers patients",
+            "limit_storage": "Stockage",
+            "active_badge": "Le plus choisi",
+            "per_month_short": "mensuel",
+            "per_year_short": "annuel",
+            "cta_featured": "Commencer l’essai",
+            "cta": "Nous contacter",
+            "trial_days": "jours d’essai inclus",
+            "how": {
+                "invoice": "Une facture par hôpital",
+                "annual": "L’offre annuelle coûte moins cher",
+                "trial": "Commencez avant de vous engager"
+            },
+            "eyebrow": "Offres et tarifs",
+            "title_a": "Un tarif par hôpital,",
+            "title_b": "pas par compte utilisateur",
+            "primary": "Commencer un essai",
+            "secondary": "Consulter le catalogue",
+            "f_cycle": "Facturation",
+            "f_mm": "mensuelle ou annuelle",
+            "f_trial": "Essai",
+            "days": "jours",
+            "f_grace": "Délai après expiration",
+            "f_modules": "Modules activés",
+            "published": "Offres publiées",
+            "annual_saving": "Économie sur l’annuel",
+            "monthly": "Mensuel",
+            "yearly": "Annuel",
+            "ask": "Poser une question"
+        },
+        "roles": {
+            "admin": {
+                "label": "Administration"
+            },
+            "doctor": {
+                "label": "Médecin"
+            },
+            "nurse": {
+                "label": "Soins infirmiers"
+            },
+            "lab": {
+                "label": "Laboratoire",
+                "scope": "Demandes, prélèvements, résultats"
+            },
+            "pharmacy": {
+                "label": "Pharmacie",
+                "scope": "Délivrance, lots, péremption"
+            },
+            "radiology": {
+                "label": "Imagerie",
+                "scope": "Demandes, examens, comptes rendus"
+            },
+            "cashier": {
+                "label": "Caisse",
+                "scope": "Encaissements, caisses, prises en charge"
+            },
+            "tablist": "Rôles hospitaliers",
+            "scope_label": "Accès"
+        },
+        "cta": {
+            "eyebrow": "Prochaine étape",
+            "primary": "Réserver une séance de travail",
+            "secondary": "Voir les offres",
+            "talk": "Parler à une personne"
+        },
+        "announcement": {
+            "dismiss": "Fermer le message"
+        },
+        "contact": {
+            "bring": "À apporter à la séance",
+            "bring1": "Votre grille tarifaire actuelle, par service",
+            "bring2": "Les unités et services que vous gérez, et leur nombre de lits",
+            "bring3": "Le catalogue de médicaments et de consommables que vous commandez",
+            "bring4": "Le rapport que votre conseil d’administration demande chaque mois",
+            "email": "E-mail",
+            "phone": "Téléphone",
+            "languages": "Langues",
+            "trial": "Essai",
+            "days": "jours",
+            "step1": {
+                "title": "Vous envoyez le formulaire"
+            },
+            "eyebrow": "Contact",
+            "title_a": "Dites-nous ce qui bloque",
+            "title_b": "un mardi ordinaire",
+            "f_reply": "Délai de réponse",
+            "f_reply_v": "1 jour ouvré",
+            "f_session": "Séance",
+            "f_session_v": "45 minutes",
+            "f_trial": "Essai",
+            "f_cost": "Coût",
+            "f_cost_v": "Sans carte bancaire",
+            "next": "Ce qui se passe ensuite"
+        },
+        "about": {
+            "p1": {
+                "title": "Le dossier, c’est le produit"
+            },
+            "p2": {
+                "title": "Des droits, pas de la confiance"
+            },
+            "p3": {
+                "title": "Un hôpital, une base de données"
+            },
+            "p4": {
+                "title": "Conçu pour le service, pas pour la démo"
+            },
+            "promise1": {
+                "title": "Une personne nommée pour l’assistance"
+            },
+            "promise2": {
+                "title": "Une migration, pas une ressaisie"
+            },
+            "promise3": {
+                "title": "Vos données restent les vôtres"
+            },
+            "fig_hospitals": "Hôpitaux en service",
+            "fig_modules": "Modules dans le produit",
+            "fig_locales": "Langues",
+            "fig_currency": "Devise de facturation",
+            "eyebrow": "À propos",
+            "title_a": "Un logiciel hospitalier doit être",
+            "title_b": "la partie invisible",
+            "primary": "Parler à l’équipe",
+            "secondary": "Voir ce que nous avons construit",
+            "photo_caption": "Tournée dans les services",
+            "story_label": "Le problème",
+            "principles_label": "Principes",
+            "photo2_caption": "Le service",
+            "promises_label": "Ce que nous vous devons",
+            "how1": "Mise en service",
+            "how2": "Formation",
+            "how3": "Assistance",
+            "how4": "Bilans",
+            "how_label": "Travailler ensemble",
+            "how_note": "De la signature au premier tour de service sur le système.",
+            "how_title": "Quinze jours pour démarrer, pas un trimestre",
+            "proof_label": "À l'écran",
+            "proof_title": "Voici le produit, pas une bande-annonce",
+            "proof_body": "Deux écrans qu'un hôpital ouvre dès son premier lundi : le répertoire patients et la caisse. Tous deux sont tirés de l'interface que l'hôpital utilise réellement.",
+            "proof_c1": "Répertoire patients · recherche par nom, téléphone ou identifiant",
+            "proof_c2": "Caisse · une vacation, une caisse comptée"
+        },
+        "home": {
+            "modules": {
+                "records": {
+                    "title": "Dossiers patients"
+                },
+                "pharmacy": {
+                    "title": "Pharmacie et stock"
+                },
+                "wards": {
+                    "title": "Services et hospitalisations"
+                },
+                "label": "Modules"
+            },
+            "facts": {
+                "modules": "Modules activés selon l’offre",
+                "desks": "Postes par rôle",
+                "trial": "Jours d’essai, sans carte",
+                "locales": "Langues de travail"
+            },
+            "market": {
+                "currency": "FCFA, nativement",
+                "language": "Français et anglais",
+                "sms": "SMS MTN et Orange",
+                "claims": "Tiers payant",
+                "label": "Détail local"
+            },
+            "hero": {
+                "title_a": "Un seul dossier,",
+                "title_b": "de l’accueil",
+                "title_c": "jusqu’au reçu",
+                "caption": "Le tableau de bord administrateur d'un hôpital en production, composé avec les composants du produit"
+            },
+            "workflow": {
+                "label": "Parcours du patient"
+            },
+            "roles": {
+                "label": "Postes par rôle"
+            },
+            "inside": {
+                "label": "Dans l’hôpital",
+                "c1": "Accueil",
+                "c2": "Consultation",
+                "c3": "Pharmacie"
+            },
+            "plans": {
+                "label": "Offres"
+            },
+            "faq": {
+                "label": "Questions"
+            }
+        },
+        "cap": {
+            "patients": {
+                "title": "Dossiers patients"
+            },
+            "appointments": {
+                "title": "Rendez-vous et file d’attente"
+            },
+            "consultations": {
+                "title": "Consultations"
+            },
+            "admissions": {
+                "title": "Hospitalisations et services"
+            },
+            "vitals": {
+                "title": "Signes vitaux et soins infirmiers"
+            },
+            "laboratory": {
+                "title": "Laboratoire"
+            },
+            "radiology": {
+                "title": "Radiologie et imagerie"
+            },
+            "pharmacy": {
+                "title": "Pharmacie et délivrance"
+            },
+            "inventory": {
+                "title": "Stock et consommables"
+            },
+            "surgery": {
+                "title": "Chirurgie"
+            },
+            "emergency": {
+                "title": "Urgences"
+            },
+            "billing": {
+                "title": "Facturation"
+            },
+            "cash_register": {
+                "title": "Caisse"
+            },
+            "claims": {
+                "title": "Assurances et tiers payant"
+            },
+            "certificates": {
+                "title": "Certificats médicaux"
+            },
+            "reports": {
+                "title": "Rapports et analyses"
+            },
+            "audit": {
+                "title": "Journal d’audit"
+            },
+            "sms": {
+                "title": "Notifications SMS"
+            },
+            "api": {
+                "title": "Accès à l’API"
+            },
+            "branding": {
+                "title": "Image de marque personnalisée"
+            }
+        },
+        "features": {
+            "g1": "Le cœur clinique",
+            "g2": "Diagnostics",
+            "g3": "Pharmacie et stock",
+            "g4": "Finances",
+            "g5": "Exploitation et plateforme",
+            "eyebrow": "Catalogue des modules",
+            "title_a": "Tous les modules",
+            "title_b": "ouverts selon l’offre",
+            "primary": "Le voir dans vos services",
+            "secondary": "Quel module dans quelle offre",
+            "f_modules": "Fonctionnalités",
+            "f_plans": "Offres publiées",
+            "f_desks": "Postes par rôle",
+            "f_trial": "Essai",
+            "index": "Index du catalogue",
+            "workflow_title": "Six lieux, un seul dossier",
+            "rooms": "Lieux",
+            "room_theatre": "Bloc opératoire",
+            "room_ward": "Service"
+        },
+        "terms": {
+            "agreement": {
+                "title": "Le contrat"
+            },
+            "trial": {
+                "title": "Essais"
+            },
+            "plans": {
+                "title": "Offres, quotas et facturation"
+            },
+            "customer": {
+                "title": "Ce qui relève de la responsabilité de l’hôpital"
+            },
+            "data": {
+                "title": "Propriété des données"
+            },
+            "service": {
+                "title": "Disponibilité et assistance"
+            },
+            "acceptable": {
+                "title": "Usage acceptable"
+            },
+            "suspension": {
+                "title": "Suspension et résiliation"
+            },
+            "liability": {
+                "title": "Limites de responsabilité"
+            },
+            "changes": {
+                "title": "Modifications des présentes conditions"
+            },
+            "contact": {
+                "title": "Contact"
+            },
+            "eyebrow": "Conditions",
+            "title_a": "Les conditions commerciales,",
+            "title_b": "en langage clair",
+            "f_currency": "Devise",
+            "f_trial": "Essai",
+            "days": "jours",
+            "f_grace": "Délai de grâce",
+            "f_plans": "Offres"
+        },
+        "legal": {
+            "contents": "Sommaire",
+            "updated": "Mise à jour"
+        },
+        "privacy": {
+            "scope": {
+                "title": "Ce que couvre cette notice"
+            },
+            "roles": {
+                "title": "L’hôpital décide, nous exploitons"
+            },
+            "isolation": {
+                "title": "Un hôpital, une base de données"
+            },
+            "access": {
+                "title": "Qui peut consulter un dossier"
+            },
+            "audit": {
+                "title": "La traçabilité des accès"
+            },
+            "processors": {
+                "title": "Tiers impliqués"
+            },
+            "retention": {
+                "title": "Conservation et export"
+            },
+            "rights": {
+                "title": "Demandes des patients et du personnel"
+            },
+            "contact": {
+                "title": "Contact"
+            },
+            "eyebrow": "Confidentialité",
+            "title_a": "Comment les données des patients",
+            "title_b": "circulent dans SanaGo"
+        },
+        "nav": {
+            "skip": "Aller au contenu",
+            "primary": "Principal",
+            "toggle_theme": "Activer ou désactiver le mode sombre",
+            "demo": "Réserver une démo",
+            "open": "Ouvrir le menu",
+            "close": "Fermer le menu",
+            "top": "Retour en haut"
+        },
+        "tour": {
+            "label": "L'espace de travail",
+            "note": "Sept étapes sur un même dossier patient. Choisissez un poste pour voir l'écran qui s'ouvre.",
+            "title": "Regardez les écrans avant de regarder le prix",
+            "body": "Rien sur cette page n'est une maquette faite pour une brochure. C'est la même interface qu'utilisent l'accueil, l'infirmier et la caissière le jour de la mise en service.",
+            "tablist": "Visite de l'espace de travail",
+            "caption": "Composé avec le kit d'interface de production · les mêmes tableaux, badges et totaux que dans l'hôpital",
+            "patients": {
+                "label": "Répertoire patients",
+                "line": "Un dossier ouvert à l'accueil et jamais ressaisi : tuteur, groupe sanguin, allergies, assurance et toutes les visites derrière une seule barre de recherche."
+            },
+            "consultation": {
+                "label": "Consultation",
+                "line": "Constantes, diagnostic, ordonnance et date de suivi en une seule séance, l'allergie étant déjà affichée avant le choix du médicament."
+            },
+            "laboratory": {
+                "label": "Laboratoire",
+                "line": "Les demandes arrivent déjà rattachées au patient. Les techniciens travaillent une liste et saisissent les résultats selon la définition de l'analyse, pas en texte libre."
+            },
+            "pharmacy": {
+                "label": "Pharmacie",
+                "line": "Délivrer sur ordonnance signée, lot par lot, le stock, les péremptions et les seuils de réapprovisionnement évoluant dans la même opération."
+            },
+            "wards": {
+                "label": "Services et lits",
+                "line": "L'occupation est en temps réel : le service sait quel lit est libre avant que le patient n'arrive, et la liste des sorties est écrite."
+            },
+            "finance": {
+                "label": "Factures",
+                "line": "Une facture par épisode avec paiements partiels, le solde reporté et la créance assureur conservant ses lignes justificatives."
+            },
+            "caisse": {
+                "label": "Caisse",
+                "line": "Ouvrir une vacation, encaisser en espèces ou par mobile money, clôturer sur une caisse comptée et garder à chaque vacation son propre journal."
             }
         }
     }

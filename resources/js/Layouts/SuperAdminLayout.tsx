@@ -28,9 +28,8 @@ import React, {
     useRef,
     useState,
 } from 'react';
-import { AppToaster } from '@/Components/AppToaster';
-import { FlashHandler } from '@/Components/FlashHandler';
 import { LocaleSwitcher } from '@/Components/LocaleSwitcher';
+import { NotificationHandler } from '@/Components/NotificationHandler';
 import { Badge } from '@/Components/ui';
 import { useTranslation, TranslationProvider } from '@/hooks/useTranslation';
 import { BrandMark } from '@/Layouts/components/BrandMark';
@@ -232,7 +231,6 @@ const SidebarNav = memo(function SidebarNav({
         <>
             <div className="flex h-14 shrink-0 items-center border-b border-line px-3.5">
                 <BrandMark
-                    icon={ShieldCheckIcon}
                     caption={
                         isOpen
                             ? `${platformName} · ${t('nav.super_admin')}`
@@ -730,8 +728,7 @@ export default function SuperAdminLayout({
 
     return (
         <TranslationProvider>
-            <FlashHandler />
-            <AppToaster />
+            <NotificationHandler />
             <div className="flex h-dvh overflow-hidden bg-canvas font-sans">
                 {/* ─── Mobile backdrop ─── */}
                 <DrawerBackdrop
@@ -747,7 +744,6 @@ export default function SuperAdminLayout({
                 >
                     <DrawerHeader onClose={() => setMobileMenuOpen(false)}>
                         <BrandMark
-                            icon={ShieldCheckIcon}
                             caption={`${platformName} · ${t('nav.super_admin')}`}
                             href="/dashboard/super-admin"
                         />

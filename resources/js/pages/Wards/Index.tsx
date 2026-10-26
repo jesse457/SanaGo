@@ -5,6 +5,7 @@ import {
     Button,
     EmptyState,
     PageHeader,
+    swal,
     Toolbar,
     ToolbarSearch,
     ToolbarSpacer,
@@ -67,14 +68,25 @@ export default function WardIndex({ wards }: Props) {
         setEditingWard(null);
     };
 
-    const handleDelete = (ward: Ward) => {
-        if (
-            confirm(t('page.wards.delete_confirm', { name: ward.name ?? '' }))
-        ) {
-            router.delete(route('wards.destroy', ward.id), {
-                preserveScroll: true,
-            });
+    const handleDelete = async (ward: Ward) => {
+        const confirmed = await swal.confirm({
+            tone: 'warning',
+            danger: true,
+            title: t('page.wards.delete_ward', 'Delete this ward?'),
+            message: t('page.wards.delete_confirm', {
+                name: ward.name ?? '',
+            }),
+            confirmLabel: t('common.delete', 'Delete'),
+            cancelLabel: t('common.cancel', 'Cancel'),
+        });
+
+        if (!confirmed) {
+            return;
         }
+
+        router.delete(route('wards.destroy', ward.id), {
+            preserveScroll: true,
+        });
     };
 
     return (

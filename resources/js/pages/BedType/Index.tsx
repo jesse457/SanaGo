@@ -16,6 +16,7 @@ import {
     TableHeader,
     TableHeaderCell,
     TableRow,
+    swal,
     Toolbar,
     ToolbarSearch,
     ToolbarSpacer,
@@ -62,18 +63,25 @@ export default function BedTypeIndex({ bedTypes }: Props) {
         setEditingType(null);
     };
 
-    const handleDelete = (bedType: BedType) => {
-        if (
-            confirm(
-                t('page.bed_type.delete_confirm', {
-                    name: bedType.name ?? '',
-                }),
-            )
-        ) {
-            router.delete(route('bed-types.destroy', bedType.id), {
-                preserveScroll: true,
-            });
+    const handleDelete = async (bedType: BedType) => {
+        const confirmed = await swal.confirm({
+            tone: 'warning',
+            danger: true,
+            title: t('page.bed_type.delete_type', 'Delete this bed type?'),
+            message: t('page.bed_type.delete_confirm', {
+                name: bedType.name ?? '',
+            }),
+            confirmLabel: t('common.delete', 'Delete'),
+            cancelLabel: t('common.cancel', 'Cancel'),
+        });
+
+        if (!confirmed) {
+            return;
         }
+
+        router.delete(route('bed-types.destroy', bedType.id), {
+            preserveScroll: true,
+        });
     };
 
     return (

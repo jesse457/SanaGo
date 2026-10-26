@@ -5,7 +5,6 @@ import {
     CheckCircleIcon,
     ClockIcon,
     MagnifyingGlassIcon,
-    PlusIcon,
     ReceiptPercentIcon,
     UserPlusIcon,
     XMarkIcon,
@@ -38,7 +37,17 @@ import {
 import type { BadgeTone } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
-import { ShiftHistoryCard } from '@/pages/Caisse/components';
+import {
+    AdmissionPanel,
+    CataloguePicker,
+    ShiftHistoryCard,
+} from '@/pages/Caisse/components';
+import type {
+    BasketLine,
+    CatalogueItem,
+    CounterModule,
+    OngoingAdmission,
+} from '@/pages/Caisse/components/types';
 import type { CashShift, CashPayment } from '@/types';
 
 interface CashPointOption {
@@ -67,15 +76,6 @@ interface Charge {
     quantity: number;
     unit_price: number;
     total_price: number;
-}
-
-interface CatalogueService {
-    id: number;
-    name: string;
-    code?: string | null;
-    category?: string | null;
-    price: number;
-    requires_upfront_payment: boolean;
 }
 
 interface Props {
@@ -154,7 +154,9 @@ export default function CaisseIndex({
         setData: setCloseData,
         post: postClose,
         processing: closeProcessing,
+        errors: closeErrors,
         reset: resetClose,
+        clearErrors: clearCloseErrors,
     } = useForm({
         closing_balance: '',
     });
@@ -171,10 +173,11 @@ export default function CaisseIndex({
     const [searching, setSearching] = useState(false);
     // `null` means "not loaded yet" so the loading state needs no effect.
     const [charges, setCharges] = useState<Charge[] | null>(null);
-    const [services, setServices] = useState<CatalogueService[]>([]);
+    const [catalogue, setCatalogue] = useState<CatalogueItem[]>([]);
+    const [modules, setModules] = useState<CounterModule[]>([]);
+    const [admission, setAdmission] = useState<OngoingAdmission | null>(null);
     const [selectedCharges, setSelectedCharges] = useState<number[]>([]);
-    const [pickedServices, setPickedServices] = useState<number[]>([]);
-    const [serviceToAdd, setServiceToAdd] = useState('');
+    const [basket, setBasket] = useState<BasketLine[]>([]);
     const [amountTendered, setAmountTendered] = useState('');
     const [method, setMethod] = useState('cash');
     const [paying, setPaying] = useState(false);
@@ -235,12 +238,23 @@ export default function CaisseIndex({
                 const loaded = rows<Charge>(data, 'charges');
 
                 setCharges(loaded);
-                setServices(rows<CatalogueService>(data, 'services'));
+                // Everything the till may sell, priced by the record behind it:
+                // drugs from the stock, tests from the laboratory catalogue, the
+                // stay from the open admission and the rest from the price list.
+                setCatalogue(rows<CatalogueItem>(data, 'catalogue'));
+                setModules(rows<CounterModule>(data, 'modules'));
+                setAdmission(
+                    (data as { admission?: OngoingAdmission | null } | null)
+                        ?.admission ?? null,
+                );
                 // Everything the patient already owes is ticked by default.
                 setSelectedCharges(loaded.map((charge) => charge.id));
             })
             .catch(() => {
                 setCharges([]);
+                setCatalogue([]);
+                setModules([]);
+                setAdmission(null);
                 setSelectedCharges([]);
             });
     }, []);
@@ -251,41 +265,77 @@ export default function CaisseIndex({
         }
     }, [patient, loadCharges]);
 
+    const resetCounter = () => {
+        setCharges(null);
+        setSelectedCharges([]);
+        setBasket([]);
+        setAmountTendered('');
+        setPayError(null);
+    };
+
     const selectPatient = (next: PatientOption) => {
         clientUuid.current = crypto.randomUUID();
         setPatient(next);
-        setCharges(null);
-        setSelectedCharges([]);
         setQuery('');
         setResults([]);
-        setPickedServices([]);
-        setAmountTendered('');
-        setPayError(null);
-        loadCharges(next);
+        resetCounter();
     };
 
     const clearPatient = () => {
         setPatient(null);
-        setCharges(null);
-        setSelectedCharges([]);
-        setPickedServices([]);
-        setAmountTendered('');
-        setPayError(null);
+        setCatalogue([]);
+        setModules([]);
+        setAdmission(null);
+        resetCounter();
     };
 
-    const addedServices = useMemo(
-        () => services.filter((service) => pickedServices.includes(service.id)),
-        [services, pickedServices],
-    );
+    /** Put one catalogue row in the basket; a row is never added twice. */
+    const pickItem = (item: CatalogueItem) => {
+        setBasket((current) => {
+            if (current.some((line) => line.key === item.key)) {
+                return current;
+            }
+
+            return [
+                ...current,
+                {
+                    key: item.key,
+                    source: item.source,
+                    source_id: item.source_id,
+                    module: item.module,
+                    name: item.name,
+                    unit: item.unit,
+                    price: item.price,
+                    quantity: Math.max(1, item.quantity),
+                },
+            ];
+        });
+    };
+
+    const setLineQuantity = (key: string, quantity: number) => {
+        setBasket((current) =>
+            current.map((line) =>
+                line.key === key
+                    ? { ...line, quantity: Math.max(1, quantity) }
+                    : line,
+            ),
+        );
+    };
+
+    const removeLine = (key: string) => {
+        setBasket((current) => current.filter((line) => line.key !== key));
+    };
 
     const chargesTotal = (charges ?? [])
         .filter((charge) => selectedCharges.includes(charge.id))
         .reduce((sum, charge) => sum + charge.total_price, 0);
 
-    const servicesTotal = addedServices.reduce(
-        (sum, service) => sum + service.price,
+    const servicesTotal = basket.reduce(
+        (sum, line) => sum + line.price * line.quantity,
         0,
     );
+
+    const pickedKeys = useMemo(() => basket.map((line) => line.key), [basket]);
 
     const total = chargesTotal + servicesTotal;
     const tendered = Number(amountTendered || 0);
@@ -299,21 +349,6 @@ export default function CaisseIndex({
         );
     };
 
-    const addService = () => {
-        const id = Number(serviceToAdd);
-
-        if (!id || pickedServices.includes(id)) {
-            return;
-        }
-
-        setPickedServices((current) => [...current, id]);
-        setServiceToAdd('');
-    };
-
-    const removeService = (id: number) => {
-        setPickedServices((current) => current.filter((value) => value !== id));
-    };
-
     const handleOpenShift = (event: FormEvent) => {
         event.preventDefault();
         postShift(route('caisse.open'), {
@@ -324,13 +359,17 @@ export default function CaisseIndex({
         });
     };
 
+    const closeCloseModal = () => {
+        setShowCloseModal(false);
+        resetClose();
+        clearCloseErrors();
+    };
+
     const handleCloseShift = (event: FormEvent) => {
         event.preventDefault();
         postClose(route('caisse.close'), {
-            onSuccess: () => {
-                setShowCloseModal(false);
-                resetClose();
-            },
+            onSuccess: () => closeCloseModal(),
+            preserveScroll: true,
         });
     };
 
@@ -349,7 +388,13 @@ export default function CaisseIndex({
             {
                 patient_id: patient.id,
                 item_ids: selectedCharges,
-                service_ids: pickedServices,
+                // Each pick names the record behind the line, so the server
+                // prices it: nothing is typed by the cashier.
+                picks: basket.map((line) => ({
+                    source: line.source,
+                    id: line.source_id,
+                    quantity: line.quantity,
+                })),
                 payment_method: method,
                 amount_tendered: tendered,
                 client_uuid: clientUuid.current,
@@ -360,7 +405,7 @@ export default function CaisseIndex({
                     setPayError(
                         errors.amount_tendered ??
                             errors.item_ids ??
-                            errors.service_ids ??
+                            errors.picks ??
                             t(
                                 'page.caisse.payment_failed',
                                 'The payment could not be recorded.',
@@ -718,6 +763,23 @@ export default function CaisseIndex({
                                         )}
                                     </div>
 
+                                    {admission && (
+                                        <div>
+                                            <p className="mb-2 text-[10.5px] font-semibold tracking-[0.13em] text-ink-subtle uppercase">
+                                                {t(
+                                                    'page.caisse.stay',
+                                                    'Hospital stay',
+                                                )}
+                                            </p>
+                                            <AdmissionPanel
+                                                admission={admission}
+                                                picked={pickedKeys}
+                                                disabled={paying}
+                                                onPick={pickItem}
+                                            />
+                                        </div>
+                                    )}
+
                                     <div>
                                         <p className="mb-2 text-[10.5px] font-semibold tracking-[0.13em] text-ink-subtle uppercase">
                                             {t(
@@ -725,80 +787,100 @@ export default function CaisseIndex({
                                                 'Add a service',
                                             )}
                                         </p>
-                                        <div className="flex gap-2">
-                                            <Select
-                                                id="add-service"
-                                                value={serviceToAdd}
-                                                onChange={(event) =>
-                                                    setServiceToAdd(
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                className="flex-1"
-                                            >
-                                                <option value="">
-                                                    {t(
-                                                        'page.caisse.pick_service',
-                                                        'Pick a service from the price list...',
-                                                    )}
-                                                </option>
-                                                {services.map((service) => (
-                                                    <option
-                                                        key={service.id}
-                                                        value={service.id}
-                                                    >
-                                                        {service.name} —{' '}
-                                                        {money(service.price)}
-                                                    </option>
-                                                ))}
-                                            </Select>
-                                            <Button
-                                                type="button"
-                                                variant="secondary"
-                                                icon={PlusIcon}
-                                                onClick={addService}
-                                                disabled={!serviceToAdd}
-                                            >
-                                                {t('page.caisse.add', 'Add')}
-                                            </Button>
-                                        </div>
 
-                                        {addedServices.length > 0 && (
-                                            <ul className="mt-2 space-y-1.5">
-                                                {addedServices.map(
-                                                    (service) => (
-                                                        <li
-                                                            key={service.id}
-                                                            className="flex items-center justify-between gap-3 rounded-md bg-surface-muted px-3 py-2"
-                                                        >
-                                                            <span className="min-w-0 truncate text-[12.5px] text-ink">
-                                                                {service.name}
+                                        <CataloguePicker
+                                            items={catalogue}
+                                            modules={modules}
+                                            picked={pickedKeys}
+                                            disabled={paying}
+                                            onPick={pickItem}
+                                        />
+
+                                        {basket.length > 0 && (
+                                            <ul className="mt-3 space-y-1.5">
+                                                {basket.map((line) => (
+                                                    <li
+                                                        key={line.key}
+                                                        className="flex items-center gap-3 rounded-md bg-surface-muted px-3 py-2"
+                                                    >
+                                                        <span className="min-w-0 flex-1">
+                                                            <span className="block truncate text-[12.5px] font-medium text-ink">
+                                                                {line.name}
                                                             </span>
-                                                            <span className="flex shrink-0 items-center gap-2">
-                                                                <span className="text-[12.5px] font-semibold text-ink tabular-nums">
-                                                                    {money(
-                                                                        service.price,
-                                                                    )}
-                                                                </span>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        removeService(
-                                                                            service.id,
-                                                                        )
+                                                            <span className="mt-0.5 flex items-center gap-2">
+                                                                <Badge
+                                                                    tone={
+                                                                        MODULE_TONES[
+                                                                            line
+                                                                                .module
+                                                                        ] ??
+                                                                        'muted'
                                                                     }
-                                                                    className="rounded p-1 text-ink-subtle transition-colors hover:text-critical-ink"
-                                                                    aria-label={t(
-                                                                        'page.caisse.remove',
-                                                                        'Remove',
-                                                                    )}
+                                                                    size="sm"
                                                                 >
-                                                                    <XMarkIcon className="h-3.5 w-3.5" />
-                                                                </button>
+                                                                    {
+                                                                        line.module
+                                                                    }
+                                                                </Badge>
+                                                                <span className="text-[10.5px] text-ink-subtle tabular-nums">
+                                                                    {money(
+                                                                        line.price,
+                                                                    )}
+                                                                    {line.unit
+                                                                        ? ` / ${line.unit}`
+                                                                        : ''}
+                                                                </span>
                                                             </span>
-                                                        </li>
-                                                    ),
-                                                )}
+                                                        </span>
+
+                                                        <Input
+                                                            type="number"
+                                                            min={1}
+                                                            step={1}
+                                                            value={
+                                                                line.quantity
+                                                            }
+                                                            onChange={(event) =>
+                                                                setLineQuantity(
+                                                                    line.key,
+                                                                    Number(
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                    ),
+                                                                )
+                                                            }
+                                                            aria-label={t(
+                                                                'page.caisse.col_qty',
+                                                                'Qty',
+                                                            )}
+                                                            className="w-20 text-right tabular-nums"
+                                                        />
+
+                                                        <span className="w-28 shrink-0 text-right text-[12.5px] font-semibold text-ink tabular-nums">
+                                                            {money(
+                                                                line.price *
+                                                                    line.quantity,
+                                                            )}
+                                                        </span>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                removeLine(
+                                                                    line.key,
+                                                                )
+                                                            }
+                                                            className="rounded p-1 text-ink-subtle transition-colors hover:text-critical-ink"
+                                                            aria-label={t(
+                                                                'page.caisse.remove',
+                                                                'Remove',
+                                                            )}
+                                                        >
+                                                            <XMarkIcon className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    </li>
+                                                ))}
                                             </ul>
                                         )}
                                     </div>
@@ -1117,7 +1199,7 @@ export default function CaisseIndex({
 
             <Dialog
                 open={showCloseModal}
-                onClose={() => setShowCloseModal(false)}
+                onClose={closeCloseModal}
                 title={t('page.caisse.close_shift_title', 'Close cash shift')}
                 size="md"
             >
@@ -1135,6 +1217,7 @@ export default function CaisseIndex({
                             'Counted balance (XAF)',
                         )}
                         htmlFor="closing_balance"
+                        error={closeErrors.closing_balance}
                     >
                         <Input
                             id="closing_balance"
@@ -1148,6 +1231,7 @@ export default function CaisseIndex({
                                     event.target.value,
                                 )
                             }
+                            invalid={Boolean(closeErrors.closing_balance)}
                         />
                     </Field>
 
@@ -1155,7 +1239,7 @@ export default function CaisseIndex({
                         <Button
                             type="button"
                             variant="secondary"
-                            onClick={() => setShowCloseModal(false)}
+                            onClick={closeCloseModal}
                         >
                             {t('page.caisse.cancel', 'Cancel')}
                         </Button>

@@ -3,13 +3,11 @@ import {
     DocumentTextIcon,
     PlusIcon,
     UserIcon,
-    XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import {
-    Alert,
     Button,
     EmptyState,
     Field,
@@ -45,9 +43,6 @@ export default function PrescriptionsCreate({ patients, medications }: Props) {
         notes: '',
         items: [] as PrescriptionLineValues[],
     });
-
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const patientOptions = patients
         .filter(
@@ -100,15 +95,7 @@ export default function PrescriptionsCreate({ patients, medications }: Props) {
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        setErrorMessage(null);
-        post(route('prescriptions.store'), {
-            onSuccess: () => {
-                setSuccessMessage(t('prescriptionCreatedSuccessfully'));
-            },
-            onError: () => {
-                setErrorMessage(t('pleaseCheckForm'));
-            },
-        });
+        post(route('prescriptions.store'), {});
     };
 
     const getItemErr = (index: number, field: string) =>
@@ -138,42 +125,6 @@ export default function PrescriptionsCreate({ patients, medications }: Props) {
                         { label: t('new') },
                     ]}
                 />
-
-                {successMessage && (
-                    <Alert
-                        tone="positive"
-                        title={t('success')}
-                        action={
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                icon={XMarkIcon}
-                                onClick={() => setSuccessMessage(null)}
-                            />
-                        }
-                    >
-                        {successMessage}
-                    </Alert>
-                )}
-
-                {(errorMessage || Object.keys(errors).length > 0) && (
-                    <Alert
-                        tone="critical"
-                        title={t('error')}
-                        action={
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                icon={XMarkIcon}
-                                onClick={() => setErrorMessage(null)}
-                            />
-                        }
-                    >
-                        {errorMessage || t('someFieldsRequireAttention')}
-                    </Alert>
-                )}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <SectionCard title={t('patient')} icon={UserIcon}>

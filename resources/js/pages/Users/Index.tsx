@@ -3,7 +3,6 @@ import {
     MagnifyingGlassIcon,
     TrashIcon,
     PencilSquareIcon,
-    BanknotesIcon,
     ExclamationTriangleIcon,
     UserGroupIcon,
     CheckBadgeIcon,
@@ -12,7 +11,6 @@ import {
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useState, useMemo } from 'react';
-import { toast } from 'sonner';
 import EmptyState from '@/Components/EmptyState';
 import FormInput from '@/Components/FormInput';
 import FormSelect from '@/Components/FormSelect';
@@ -32,14 +30,6 @@ import {
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 
-interface Shift {
-    id?: number;
-    shift_date: string;
-    shift_type: string;
-    start_time?: string | null;
-    end_time?: string | null;
-}
-
 interface User {
     id: number;
     name: string;
@@ -50,7 +40,6 @@ interface User {
     department_id: number | null;
     department?: { name: string };
     roles?: { id: number; name: string }[];
-    shifts?: Shift[];
 }
 
 interface Role {
@@ -141,7 +130,6 @@ export default function UserManagement({
         phone_number: '',
         department_id: '' as string | number,
         is_active: true,
-        shifts: [] as Shift[],
     });
 
     const openEdit = (user: User) => {
@@ -155,12 +143,6 @@ export default function UserManagement({
             phone_number: user.phone_number,
             department_id: user.department_id || '',
             is_active: user.is_active,
-            shifts: (user.shifts || []).map((s) => ({
-                shift_date: s.shift_date,
-                shift_type: s.shift_type,
-                start_time: s.start_time || '',
-                end_time: s.end_time || '',
-            })),
         });
         setModalOpen(true);
     };
@@ -185,11 +167,9 @@ export default function UserManagement({
             return;
         }
 
+        /* UserController flashes success; NotificationHandler owns the toast. */
         put(route('users.update', selectedItem.id), {
-            onSuccess: () => {
-                closeModal();
-                toast.success(t('page.users_index.updated_success'));
-            },
+            onSuccess: () => closeModal(),
         });
     };
 
@@ -201,10 +181,7 @@ export default function UserManagement({
         }
 
         destroy(route('users.destroy', selectedItem.id), {
-            onSuccess: () => {
-                closeModal();
-                toast.success(t('page.users_index.deleted_success'));
-            },
+            onSuccess: () => closeModal(),
         });
     };
 
@@ -420,20 +397,10 @@ export default function UserManagement({
                                                         openEdit(user)
                                                     }
                                                     className="rounded-lg p-2 text-ink-subtle transition-colors hover:bg-accent-soft hover:text-accent"
-                                                    title="Edit users details and shifts"
+                                                    title="Edit user details"
                                                 >
                                                     <PencilSquareIcon className="h-4 w-4" />
                                                 </button>
-                                                <Link
-                                                    href={route(
-                                                        'users.pricing',
-                                                        user.id,
-                                                    )}
-                                                    className="rounded-lg p-2 text-ink-subtle transition-colors hover:bg-accent-soft hover:text-accent"
-                                                    title="This doctor's prices"
-                                                >
-                                                    <BanknotesIcon className="h-4 w-4" />
-                                                </Link>
                                                 <button
                                                     onClick={() =>
                                                         openDelete(user)
@@ -596,175 +563,6 @@ export default function UserManagement({
                             >
                                 {t('page.users_index.account_active')}
                             </label>
-                        </div>
-
-                        {/* Shifts Section */}
-                        <div className="border-t border-line pt-4">
-                            <div className="mb-3 flex items-center justify-between">
-                                <label className="text-xs font-semibold text-ink-subtle uppercase">
-                                    {t('page.users_index.assigned_shifts')}
-                                </label>
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setData('shifts', [
-                                            ...data.shifts,
-                                            {
-                                                shift_date: '',
-                                                shift_type: 'morning',
-                                                start_time: '',
-                                                end_time: '',
-                                            },
-                                        ])
-                                    }
-                                    className="flex items-center gap-1 text-xs font-bold text-accent-ink hover:text-accent-ink"
-                                >
-                                    <PlusIcon className="h-3.5 w-3.5" />{' '}
-                                    {t('page.users_index.add_shift')}
-                                </button>
-                            </div>
-                            {data.shifts.length === 0 && (
-                                <p className="text-xs text-ink-subtle italic">
-                                    {t('page.users_index.no_shifts')}
-                                </p>
-                            )}
-                            {data.shifts.map((shift, idx) => (
-                                <div
-                                    key={idx}
-                                    className="mb-2 flex items-end gap-2 rounded-lg bg-surface-muted p-3"
-                                >
-                                    <div className="flex-1">
-                                        <label className="text-[10px] font-semibold text-ink-subtle uppercase">
-                                            {t('page.users_index.date')}
-                                        </label>
-                                        <input
-                                            type="date"
-                                            value={shift.shift_date}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'shifts',
-                                                    data.shifts.map((s, i) =>
-                                                        i === idx
-                                                            ? {
-                                                                  ...s,
-                                                                  shift_date:
-                                                                      e.target
-                                                                          .value,
-                                                              }
-                                                            : s,
-                                                    ),
-                                                )
-                                            }
-                                            className="mt-0.5 w-full rounded border border-line bg-surface px-2 py-1.5 text-ink"
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <label className="text-[10px] font-semibold text-ink-subtle uppercase">
-                                            {t('page.users_index.type')}
-                                        </label>
-                                        <select
-                                            value={shift.shift_type}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'shifts',
-                                                    data.shifts.map((s, i) =>
-                                                        i === idx
-                                                            ? {
-                                                                  ...s,
-                                                                  shift_type:
-                                                                      e.target
-                                                                          .value,
-                                                              }
-                                                            : s,
-                                                    ),
-                                                )
-                                            }
-                                            className="mt-0.5 w-full rounded border border-line bg-surface px-2 py-1.5 text-ink"
-                                        >
-                                            <option value="morning">
-                                                {t('page.users_index.morning')}
-                                            </option>
-                                            <option value="afternoon">
-                                                {t(
-                                                    'page.users_index.afternoon',
-                                                )}
-                                            </option>
-                                            <option value="night">
-                                                {t('page.users_index.night')}
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div className="w-20">
-                                        <label className="text-[10px] font-semibold text-ink-subtle uppercase">
-                                            {t('page.users_index.start')}
-                                        </label>
-                                        <input
-                                            type="time"
-                                            value={shift.start_time || ''}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'shifts',
-                                                    data.shifts.map((s, i) =>
-                                                        i === idx
-                                                            ? {
-                                                                  ...s,
-                                                                  start_time:
-                                                                      e.target
-                                                                          .value,
-                                                              }
-                                                            : s,
-                                                    ),
-                                                )
-                                            }
-                                            className="mt-0.5 w-full rounded border border-line bg-surface px-2 py-1.5 text-ink"
-                                        />
-                                    </div>
-                                    <div className="w-20">
-                                        <label className="text-[10px] font-semibold text-ink-subtle uppercase">
-                                            {t('page.users_index.end')}
-                                        </label>
-                                        <input
-                                            type="time"
-                                            value={shift.end_time || ''}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'shifts',
-                                                    data.shifts.map((s, i) =>
-                                                        i === idx
-                                                            ? {
-                                                                  ...s,
-                                                                  end_time:
-                                                                      e.target
-                                                                          .value,
-                                                              }
-                                                            : s,
-                                                    ),
-                                                )
-                                            }
-                                            className="mt-0.5 w-full rounded border border-line bg-surface px-2 py-1.5 text-ink"
-                                        />
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setData(
-                                                'shifts',
-                                                data.shifts.filter(
-                                                    (_, i) => i !== idx,
-                                                ),
-                                            )
-                                        }
-                                        className="mb-0.5 rounded-lg p-1.5 text-ink-subtle transition-colors hover:bg-critical-soft hover:text-red-600"
-                                    >
-                                        <TrashIcon className="h-3.5 w-3.5" />
-                                    </button>
-                                </div>
-                            ))}
-                            {(errors as any)['shifts.0.shift_date'] && (
-                                <p className="mt-1 text-xs font-bold text-red-500">
-                                    {(errors as any)['shifts.0.shift_date']}
-                                </p>
-                            )}
                         </div>
 
                         <div className="flex gap-4 pt-2">

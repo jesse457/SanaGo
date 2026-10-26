@@ -2,7 +2,6 @@ import {
     ArrowPathIcon,
     CalendarDaysIcon,
     CheckBadgeIcon,
-    CheckIcon,
     ClockIcon,
     EyeIcon,
     ListBulletIcon,
@@ -37,6 +36,7 @@ import {
     Toolbar,
     ToolbarSearch,
     ToolbarSpacer,
+    swal,
 } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
@@ -66,7 +66,6 @@ interface Appointment {
     appointment_date: string;
     appointment_time: string;
     status: AppointmentStatus;
-    queue_position?: number | null;
     consultation_fee?: number | string | null;
     reason_for_visit?: string | null;
     patient: Patient;
@@ -75,7 +74,6 @@ interface Appointment {
 
 interface Stats {
     total: number;
-    waiting: number;
     scheduled: number;
     completed: number;
     today: number;
@@ -118,18 +116,13 @@ const viewOptions = [
 
 const statusOptions: AppointmentStatus[] = [
     'scheduled',
-    'waiting',
     'in_consultation',
     'pending',
     'completed',
     'cancelled',
 ];
 
-const cancellableStatuses: AppointmentStatus[] = [
-    'scheduled',
-    'waiting',
-    'pending',
-];
+const cancellableStatuses: AppointmentStatus[] = ['scheduled', 'pending'];
 
 export default function AppointmentIndex({
     appointments,
@@ -229,11 +222,40 @@ export default function AppointmentIndex({
         requestUpdate(newParams);
     };
 
-    const handleStatusUpdate = (
+    const handleStatusUpdate = async (
         id: number,
         newStatus: AppointmentStatus,
         closeDetail = false,
     ) => {
+        /* Cancelling is destructive and was the only such action in the app
+           that fired without asking. */
+        if (newStatus === 'cancelled') {
+            const confirmed = await swal.confirm({
+                tone: 'warning',
+                danger: true,
+                title: t(
+                    'page.appointment_calendar.cancel_confirm',
+                    'Cancel this appointment?',
+                ),
+                message: t(
+                    'page.appointment_calendar.cancel_message',
+                    'The slot is released and the patient is notified.',
+                ),
+                confirmLabel: t(
+                    'page.appointment_calendar.cancel_action',
+                    'Cancel appointment',
+                ),
+                cancelLabel: t(
+                    'page.appointment_calendar.keep_action',
+                    'Keep appointment',
+                ),
+            });
+
+            if (!confirmed) {
+                return;
+            }
+        }
+
         router.patch(
             route('appointments.update', id),
             { status: newStatus },
@@ -248,7 +270,6 @@ export default function AppointmentIndex({
         );
     };
 
-    const canCheckIn = (status: string) => status === 'scheduled';
     const canCancel = (status: string) =>
         cancellableStatuses.includes(status as AppointmentStatus);
 
@@ -259,19 +280,6 @@ export default function AppointmentIndex({
         if (mode === 'grid') {
             return (
                 <div className="flex gap-1.5">
-                    {canCheckIn(appointment.status) && (
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            icon={CheckIcon}
-                            onClick={() =>
-                                handleStatusUpdate(appointment.id, 'waiting')
-                            }
-                            title={t('checkIn')}
-                        >
-                            {t('checkIn')}
-                        </Button>
-                    )}
                     <Button
                         size="sm"
                         variant="secondary"
@@ -286,18 +294,6 @@ export default function AppointmentIndex({
 
         return (
             <div className="flex items-center justify-end gap-1">
-                {canCheckIn(appointment.status) && (
-                    <Button
-                        size="icon"
-                        variant="ghost"
-                        icon={CheckIcon}
-                        onClick={() =>
-                            handleStatusUpdate(appointment.id, 'waiting')
-                        }
-                        aria-label={t('checkIn')}
-                        title={t('checkIn')}
-                    />
-                )}
                 {canCancel(appointment.status) && (
                     <Button
                         size="icon"
@@ -326,15 +322,15 @@ export default function AppointmentIndex({
     return (
         <AppLayout
             headerTitle={t('manageAppointments')}
-            headerSubtitle={t('monitorPatientQueues')}
+            headerSubtitle={t('schedulePatientVisits')}
         >
             <Head title={t('appointments')} />
 
             <div className="space-y-5">
                 <PageHeader
-                    eyebrow={t('queueManagement')}
+                    eyebrow={t('appointments')}
                     title={t('manageAppointments')}
-                    description={t('monitorPatientQueues')}
+                    description={t('schedulePatientVisits')}
                     actions={
                         <Button
                             href={route('appointments.create')}
@@ -355,8 +351,8 @@ export default function AppointmentIndex({
                     />
                     <StatCard
                         icon={ClockIcon}
-                        label={t('waitingInHall')}
-                        value={stats.waiting}
+                        label={t('upcomingAppointments')}
+                        value={stats.upcoming}
                         tone="warning"
                     />
                     <StatCard
@@ -700,21 +696,6 @@ export default function AppointmentIndex({
                                     {t('cancel')}
                                 </Button>
                             )}
-                            {canCheckIn(detail.status) && (
-                                <Button
-                                    variant="secondary"
-                                    icon={CheckIcon}
-                                    onClick={() =>
-                                        handleStatusUpdate(
-                                            detail.id,
-                                            'waiting',
-                                            true,
-                                        )
-                                    }
-                                >
-                                    {t('checkIn')}
-                                </Button>
-                            )}
                         </>
                     ) : null
                 }
@@ -753,16 +734,6 @@ export default function AppointmentIndex({
                                 <dd className="mt-0.5 text-[13px] font-medium text-ink tabular-nums">
                                     {detail.appointment_date} ·{' '}
                                     {detail.appointment_time.slice(0, 5)}
-                                </dd>
-                            </div>
-                            <div>
-                                <dt className="text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
-                                    {t(
-                                        'page.appointment_calendar.details.queue_position',
-                                    )}
-                                </dt>
-                                <dd className="mt-0.5 text-[13px] font-medium text-ink tabular-nums">
-                                    {detail.queue_position ?? '—'}
                                 </dd>
                             </div>
                             <div>

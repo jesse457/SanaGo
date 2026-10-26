@@ -6,13 +6,11 @@ import {
     PhotoIcon,
     ScaleIcon,
     TagIcon,
-    XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import {
-    Alert,
     Button,
     Field,
     FieldSet,
@@ -51,37 +49,20 @@ export default function SupplyForm({ supply }: { supply?: Supply }) {
     });
 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        setErrorMessage(null);
 
         if (isEdit) {
             put(route('supplies.update', supply.id), {
                 forceFormData: true,
-                onSuccess: () => {
-                    setSuccessMessage(
-                        t('page.supply_create.updatedSuccessfully'),
-                    );
-                },
-                onError: () => {
-                    setErrorMessage(t('page.supply_create.pleaseCheckForm'));
-                },
             });
         } else {
             post(route('supplies.store'), {
                 forceFormData: true,
                 onSuccess: () => {
-                    setSuccessMessage(
-                        t('page.supply_create.createdSuccessfully'),
-                    );
                     reset();
                     setImagePreview(null);
-                },
-                onError: () => {
-                    setErrorMessage(t('page.supply_create.pleaseCheckForm'));
                 },
             });
         }
@@ -126,42 +107,6 @@ export default function SupplyForm({ supply }: { supply?: Supply }) {
                         },
                     ]}
                 />
-
-                {successMessage && (
-                    <Alert
-                        tone="positive"
-                        title={t('common.success')}
-                        action={
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                icon={XMarkIcon}
-                                onClick={() => setSuccessMessage(null)}
-                            />
-                        }
-                    >
-                        {successMessage}
-                    </Alert>
-                )}
-
-                {(errorMessage || Object.keys(errors).length > 0) && (
-                    <Alert
-                        tone="critical"
-                        title={t('common.error')}
-                        action={
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                icon={XMarkIcon}
-                                onClick={() => setErrorMessage(null)}
-                            />
-                        }
-                    >
-                        {errorMessage || t('common.someFieldsRequireAttention')}
-                    </Alert>
-                )}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <SectionCard

@@ -10,9 +10,7 @@ import {
 import { Head, useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { toast } from 'sonner';
 import {
-    Alert,
     Avatar,
     Button,
     Field,
@@ -23,6 +21,7 @@ import {
     Select,
     Textarea,
 } from '@/Components/ui';
+import { swal } from '@/Components/ui/sweetAlert';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 
@@ -57,8 +56,6 @@ export default function CreateUser({ departments, roles }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const handleFile = (file: File) => {
         if (!file) {
@@ -70,16 +67,18 @@ export default function CreateUser({ departments, roles }: Props) {
                 file.type,
             )
         ) {
-            toast.error(
+            swal.toast(
                 'That file type is not supported. Use a PNG, JPG or GIF.',
+                'warning',
             );
 
             return;
         }
 
         if (file.size > 2 * 1024 * 1024) {
-            toast.error(
+            swal.toast(
                 'That image is larger than 2 MB. Choose a smaller file.',
+                'warning',
             );
 
             return;
@@ -100,21 +99,16 @@ export default function CreateUser({ departments, roles }: Props) {
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
-        setErrorMessage(null);
         post(route('users.store'), {
             forceFormData: true,
             onSuccess: () => {
-                setSuccessMessage(t('page.users_create.userCreated'));
                 reset();
                 setImagePreview(null);
-            },
-            onError: () => {
-                setErrorMessage(t('page.users_create.pleaseCheckForm'));
             },
         });
     };
 
-    const hasErrors = Boolean(errorMessage) || Object.keys(errors).length > 0;
+    const photoError = (errors as Record<string, string>).profile_picture;
 
     return (
         <AppLayout
@@ -137,42 +131,6 @@ export default function CreateUser({ departments, roles }: Props) {
                         { label: t('page.users_create.new_registration') },
                     ]}
                 />
-
-                {successMessage && (
-                    <Alert
-                        tone="positive"
-                        title={t('common.success')}
-                        action={
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                icon={XMarkIcon}
-                                aria-label={t('common.close')}
-                                onClick={() => setSuccessMessage(null)}
-                            />
-                        }
-                    >
-                        {successMessage}
-                    </Alert>
-                )}
-
-                {hasErrors && (
-                    <Alert
-                        tone="critical"
-                        title={t('page.users_create.registration_failed')}
-                        action={
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                icon={XMarkIcon}
-                                aria-label={t('common.close')}
-                                onClick={() => setErrorMessage(null)}
-                            />
-                        }
-                    >
-                        {errorMessage || t('page.users_create.correct_fields')}
-                    </Alert>
-                )}
 
                 <form onSubmit={submit} className="space-y-6">
                     <SectionCard
@@ -401,7 +359,9 @@ export default function CreateUser({ departments, roles }: Props) {
                             className={`flex flex-col items-start gap-4 rounded-lg border border-dashed p-4 transition-colors duration-200 ease-premium sm:flex-row sm:items-center ${
                                 isDragging
                                     ? 'border-accent bg-accent-soft'
-                                    : 'border-line-strong bg-surface-muted'
+                                    : photoError
+                                      ? 'border-critical/70 bg-surface-muted'
+                                      : 'border-line-strong bg-surface-muted'
                             }`}
                         >
                             <Avatar
@@ -449,6 +409,9 @@ export default function CreateUser({ departments, roles }: Props) {
                                     ref={fileInputRef}
                                     type="file"
                                     name="profile_picture"
+                                    aria-invalid={
+                                        Boolean(photoError) || undefined
+                                    }
                                     className="sr-only"
                                     accept="image/*"
                                     onChange={(e) => {
@@ -462,9 +425,9 @@ export default function CreateUser({ departments, roles }: Props) {
                             </div>
                         </div>
 
-                        {(errors as any).profile_picture && (
+                        {photoError && (
                             <p className="mt-2 text-[12px] leading-snug font-medium text-critical-ink">
-                                {(errors as any).profile_picture}
+                                {photoError}
                             </p>
                         )}
                     </SectionCard>

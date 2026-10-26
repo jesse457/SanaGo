@@ -44,18 +44,34 @@ Available primitives include:
 - `Button` (primary/accent/secondary/outline/ghost/danger; renders an Inertia link when `href` is passed)
 - `Card`, `SectionCard`, `PageHeader`, `Toolbar`, `StatCard`, `KeyValue`
 - `Table`, `TableHeader`, `TableRow`, `TableHeaderCell`, `TableCell`, `TableBody`
-- `Badge`, `Alert`, `EmptyState`, `Skeleton*`, `Dialog`, `Tabs`, `SegmentedControl`
+- `Badge`, `Alert`, `EmptyState`, `Skeleton*`, `Dialog`, `AlertModal`, `Tabs`, `SegmentedControl`
+- `swal` — the imperative SweetAlert (`swal.confirm / toast / success / error / warning / info / validation`), SweetAlert2 driven by the design tokens
 - `Input`, `Select`, `Textarea`, `Checkbox`, `Switch`, `Field`, `FieldSet`
 - `DropdownMenu`, `ProgressBar`, `Avatar`, `Breadcrumbs`
 
 App-level pieces in `resources/js/Components`:
 
-- `AppToaster` — the single Sonner mount point, included by layouts
-- `FlashHandler` — reacts to shared `flash` props
+- `NotificationHandler` — the single feedback channel: shared `flash` props become SweetAlert toasts (success/info/warning) or the SweetAlert modal (error), and any Inertia validation bag opens the validation alert
 - `Pagination`, `StatusBadge`, `DetailItem`, `LocaleSwitcher`, `AnnouncementBanner` (not part of the `ui` barrel; import from their own paths)
 - `FormInput` / `FormSelect` / `FormTextarea` — legacy form helpers; prefer the UI kit for new work
 
-Do not mount another `<Toaster />` inside a page. Call `toast()` from `sonner`; the layout owns the mount.
+A success is a `swal.toast(...)` raised by `NotificationHandler` from the server flash — pages must not toast or banner it themselves, that is what produced double notifications.
+
+Never use `window.confirm`, `window.alert` or `window.prompt`. Ask with the sweet alert instead, and gate the destructive work on its answer:
+
+```tsx
+const confirmed = await swal.confirm({
+    danger: true,
+    title: t('page.wards.delete_ward'),
+    message: t('page.wards.delete_confirm', { name: ward.name }),
+    confirmLabel: t('common.delete'),
+    cancelLabel: t('common.cancel'),
+});
+
+if (!confirmed) {
+    return;
+}
+```
 
 ## Design tokens
 
@@ -137,7 +153,7 @@ form.post('/patients', { preserveScroll: true });
 
 For simple links/actions, `router.get/post/put/patch/delete` works. Use `<Form>` from `@inertiajs/react` where appropriate.
 
-Validation errors arrive as `form.errors`. Flash messages are displayed by `FlashHandler` in the layout, so pages do not need their own success banners; forms may still display field errors.
+Validation errors arrive as `form.errors`. Flash messages and the validation bag are displayed by `NotificationHandler` in the layout, so pages do not need their own success banners or error toasts — that double-toasts, because the server already flashed. Forms should still pass `error={errors.field}` to `Field` so the message sits next to the control.
 
 ## i18n
 

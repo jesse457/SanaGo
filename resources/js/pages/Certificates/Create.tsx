@@ -6,7 +6,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { useState } from 'react';
 import {
     Button,
     Field,
@@ -20,7 +19,7 @@ import {
 import type { IconType, SegmentedOption } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
-import { FormPageCard, FormStatusAlerts } from '@/pages/Radiology/components';
+import { FormPageCard } from '@/pages/Radiology/components';
 import type { Patient } from '@/types';
 import { CertificateType } from '@/types/enums';
 import type { CertificateTypeEnum } from '@/types/enums';
@@ -57,9 +56,6 @@ export default function CertificatesCreate({ patients }: Props) {
         employer_name: '',
         employer_address: '',
     });
-
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const typeMeta: Record<CertificateTypeEnum, TypeMeta> = {
         [CertificateType.SICK_LEAVE]: {
@@ -134,15 +130,7 @@ export default function CertificatesCreate({ patients }: Props) {
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        setErrorMessage(null);
-        post(route('certificates.store'), {
-            onSuccess: () => {
-                setSuccessMessage(t('certificateIssuedSuccessfully'));
-            },
-            onError: () => {
-                setErrorMessage(t('pleaseCheckForm'));
-            },
-        });
+        post(route('certificates.store'), {});
     };
 
     return (
@@ -166,16 +154,6 @@ export default function CertificatesCreate({ patients }: Props) {
                             size="sm"
                         />
                     }
-                />
-
-                <FormStatusAlerts
-                    successMessage={successMessage}
-                    onDismissSuccess={() => setSuccessMessage(null)}
-                    errorMessage={errorMessage}
-                    hasFieldErrors={Object.keys(errors).length > 0}
-                    successTitle={t('success')}
-                    errorTitle={t('error')}
-                    errorFallback={t('someFieldsRequireAttention')}
                 />
 
                 <FormPageCard

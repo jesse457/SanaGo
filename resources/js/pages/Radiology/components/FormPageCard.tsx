@@ -1,13 +1,6 @@
-import { CheckCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import type { ComponentType, FormEvent, ReactNode, SVGProps } from 'react';
-import {
-    Alert,
-    Button,
-    Card,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from '@/Components/ui';
+import { Card, CardFooter, CardHeader, CardTitle } from '@/Components/ui';
 
 /**
  * FormPageCard — the single-panel wrapper shared by the create/edit forms in
@@ -60,55 +53,5 @@ export function FormPageCard({
     );
 }
 
-/**
- * FormStatusAlerts — the success / validation pair shown above every form.
- * Renders nothing when there is nothing to say.
- */
-export function FormStatusAlerts({
-    successMessage,
-    onDismissSuccess,
-    errorMessage,
-    hasFieldErrors,
-    successTitle,
-    errorTitle,
-    errorFallback,
-}: {
-    successMessage: string | null;
-    onDismissSuccess: () => void;
-    errorMessage: string | null;
-    hasFieldErrors: boolean;
-    successTitle: string;
-    errorTitle: string;
-    errorFallback: string;
-}) {
-    return (
-        <>
-            {successMessage && (
-                <Alert
-                    tone="positive"
-                    title={successTitle}
-                    action={
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={successTitle}
-                            icon={XMarkIcon}
-                            onClick={onDismissSuccess}
-                        />
-                    }
-                >
-                    {successMessage}
-                </Alert>
-            )}
-
-            {(errorMessage || hasFieldErrors) && (
-                <Alert tone="critical" title={errorTitle}>
-                    {errorMessage || errorFallback}
-                </Alert>
-            )}
-        </>
-    );
-}
-
-/** Status icon kept next to the alert helpers so pages import one module. */
+/** Status icon re-exported so form pages import one module. */
 export { CheckCircleIcon };

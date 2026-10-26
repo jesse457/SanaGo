@@ -93,6 +93,19 @@ export {
 export { Dialog } from '@/Components/ui/Dialog';
 export type { DialogProps, DialogSize } from '@/Components/ui/Dialog';
 
+export { AlertModal } from '@/Components/ui/AlertModal';
+export type {
+    AlertModalIcon,
+    AlertModalProps,
+    AlertModalTone,
+} from '@/Components/ui/AlertModal';
+
+export { swal } from '@/Components/ui/sweetAlert';
+export type {
+    SweetAlertOptions,
+    SweetAlertTone,
+} from '@/Components/ui/sweetAlert';
+
 export { Tabs } from '@/Components/ui/Tabs';
 export type { TabItem, TabsProps } from '@/Components/ui/Tabs';
 

@@ -13,7 +13,6 @@ import {
 import { Head, router, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { Pagination } from '@/Components/Pagination';
 import {
     Alert,
@@ -153,11 +152,10 @@ export default function PatientManagement({ patients, filters }: Props) {
             return;
         }
 
+        /* Success is flashed by PatientController and raised by
+           NotificationHandler; toasting here would stack a second toast. */
         put(route('patients.update', selectedPatient.id), {
-            onSuccess: () => {
-                closeModal();
-                toast.success(t('flash.patient.updated'));
-            },
+            onSuccess: () => closeModal(),
         });
     };
 

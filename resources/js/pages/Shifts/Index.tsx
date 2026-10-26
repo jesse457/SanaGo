@@ -6,7 +6,8 @@ import {
     PlusIcon,
     SunIcon,
     TrashIcon,
-    UserIcon,
+    UserPlusIcon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { Head, useForm, router } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
@@ -30,6 +31,7 @@ import {
     TableHeader,
     TableHeaderCell,
     TableRow,
+    swal,
     Toolbar,
     ToolbarSearch,
 } from '@/Components/ui';
@@ -37,14 +39,26 @@ import type { BadgeTone } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 
+interface StaffMember {
+    id: number;
+    name: string;
+    department?: { name: string } | null;
+}
+
+interface StaffAssignment {
+    id: number;
+    user_id: number | null;
+    name: string | null;
+    user?: { name: string; department?: { name: string } | null } | null;
+}
+
 interface Shift {
     id: number;
-    user_id: number;
     shift_date: string;
     shift_type: string;
     start_time: string;
     end_time: string;
-    user?: { id: number; name: string; department?: { name: string } | null };
+    staff_assignments: StaffAssignment[];
 }
 
 interface Props {
@@ -59,6 +73,12 @@ interface Props {
         current_page: number;
         last_page: number;
     };
+    users: StaffMember[];
+}
+
+interface StaffEntry {
+    user_id?: number;
+    name?: string;
 }
 
 const SHIFT_LABELS: Record<string, string> = {
@@ -73,20 +93,27 @@ const SHIFT_TONES: Record<string, BadgeTone> = {
     night: 'accent',
 };
 
-export default function ShiftsIndex({ shifts }: Props) {
+export default function ShiftsIndex({ shifts, users }: Props) {
     const { t } = useTranslation();
     const [search, setSearch] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [modalOpen, setModalOpen] = useState(false);
     const [editingShift, setEditingShift] = useState<Shift | null>(null);
+    const [staffQuery, setStaffQuery] = useState('');
+    const [externalName, setExternalName] = useState('');
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
-        user_id: '',
         shift_date: '',
         shift_type: 'morning',
         start_time: '',
         end_time: '',
+        staff: [] as StaffEntry[],
     });
+
+    const staffError =
+        (errors as Record<string, string | undefined>)['staff'] ??
+        (errors as Record<string, string | undefined>)['staff.0.name'] ??
+        (errors as Record<string, string | undefined>)['staff.0.user_id'];
 
     const stats = useMemo(() => {
         const total = shifts.data.length;
@@ -113,7 +140,9 @@ export default function ShiftsIndex({ shifts }: Props) {
         if (search) {
             const q = search.toLowerCase();
             result = result.filter((s) =>
-                s.user?.name.toLowerCase().includes(q),
+                s.staff_assignments.some((a) =>
+                    (a.user?.name ?? a.name ?? '').toLowerCase().includes(q),
+                ),
             );
         }
 
@@ -122,20 +151,82 @@ export default function ShiftsIndex({ shifts }: Props) {
 
     const openEdit = (shift: Shift) => {
         setEditingShift(shift);
+        setStaffQuery('');
+        setExternalName('');
         setData({
-            user_id: String(shift.user_id),
             shift_date: shift.shift_date,
             shift_type: shift.shift_type,
             start_time: shift.start_time,
             end_time: shift.end_time,
+            staff: shift.staff_assignments.map((a) =>
+                a.user_id != null
+                    ? { user_id: a.user_id }
+                    : { name: a.name ?? '' },
+            ),
         });
         setModalOpen(true);
     };
 
     const openCreate = () => {
         setEditingShift(null);
+        setStaffQuery('');
+        setExternalName('');
         reset();
         setModalOpen(true);
+    };
+
+    const selectedUserIds = useMemo(
+        () => new Set(data.staff.map((s) => s.user_id).filter(Boolean)),
+        [data.staff],
+    );
+
+    const filteredUsers = useMemo(() => {
+        if (!staffQuery) {
+            return users;
+        }
+
+        const q = staffQuery.toLowerCase();
+
+        return users.filter((u) => u.name.toLowerCase().includes(q));
+    }, [users, staffQuery]);
+
+    const toggleUser = (userId: number) => {
+        if (selectedUserIds.has(userId)) {
+            setData(
+                'staff',
+                data.staff.filter((s) => s.user_id !== userId),
+            );
+        } else {
+            setData('staff', [...data.staff, { user_id: userId }]);
+        }
+    };
+
+    const addExternal = () => {
+        const name = externalName.trim();
+
+        if (!name || data.staff.some((s) => s.name === name)) {
+            return;
+        }
+
+        setData('staff', [...data.staff, { name }]);
+        setExternalName('');
+    };
+
+    const removeStaffEntry = (index: number) => {
+        setData(
+            'staff',
+            data.staff.filter((_, i) => i !== index),
+        );
+    };
+
+    const staffLabel = (entry: StaffEntry): string => {
+        if (entry.user_id) {
+            const found = users.find((u) => u.id === entry.user_id);
+
+            return found ? found.name : `User #${entry.user_id}`;
+        }
+
+        return entry.name ?? '';
     };
 
     const handleSubmit = () => {
@@ -150,10 +241,24 @@ export default function ShiftsIndex({ shifts }: Props) {
         }
     };
 
-    const handleDelete = (id: number) => {
-        if (confirm('Delete this shift?')) {
-            router.delete(route('shifts.destroy', id));
+    const handleDelete = async (id: number) => {
+        const confirmed = await swal.confirm({
+            tone: 'warning',
+            danger: true,
+            title: t('page.shifts_index.delete_shift', 'Delete this shift?'),
+            message: t(
+                'page.shifts_index.delete_confirm',
+                'This removes the shift from the roster. It cannot be undone.',
+            ),
+            confirmLabel: t('common.delete', 'Delete'),
+            cancelLabel: t('common.cancel', 'Cancel'),
+        });
+
+        if (!confirmed) {
+            return;
         }
+
+        router.delete(route('shifts.destroy', id));
     };
 
     return (
@@ -261,23 +366,37 @@ export default function ShiftsIndex({ shifts }: Props) {
                             {filtered.map((shift) => (
                                 <TableRow key={shift.id}>
                                     <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-muted text-[11px] font-semibold text-ink-muted">
-                                                {shift.user?.name?.charAt(0) ||
-                                                    '?'}
-                                            </span>
-                                            <div className="min-w-0">
-                                                <p className="truncate text-[13px] font-medium text-ink">
-                                                    {shift.user?.name}
-                                                </p>
-                                                <p className="truncate text-[11.5px] text-ink-subtle">
-                                                    {shift.user?.department
-                                                        ?.name ||
-                                                        t(
-                                                            'page.shifts_index.general',
-                                                        )}
-                                                </p>
-                                            </div>
+                                        <div className="flex max-w-md flex-wrap gap-1.5">
+                                            {shift.staff_assignments.length ===
+                                                0 && (
+                                                <span className="text-[12px] text-ink-subtle italic">
+                                                    Unassigned
+                                                </span>
+                                            )}
+                                            {shift.staff_assignments.map(
+                                                (a) => {
+                                                    const name =
+                                                        a.user?.name ??
+                                                        a.name ??
+                                                        '';
+
+                                                    return (
+                                                        <span
+                                                            key={a.id}
+                                                            className="inline-flex items-center gap-1 rounded-full border border-line bg-surface-muted px-2 py-0.5 text-[11.5px] font-medium text-ink-muted"
+                                                            title={
+                                                                a.user
+                                                                    ?.department
+                                                                    ?.name ??
+                                                                a.name ??
+                                                                undefined
+                                                            }
+                                                        >
+                                                            {name}
+                                                        </span>
+                                                    );
+                                                },
+                                            )}
                                         </div>
                                     </TableCell>
                                     <TableCell>
@@ -311,7 +430,7 @@ export default function ShiftsIndex({ shifts }: Props) {
                                                 variant="ghost"
                                                 size="icon"
                                                 icon={PencilSquareIcon}
-                                                aria-label="Edit shift"
+                                                aria-label="Edit staff"
                                                 onClick={() => openEdit(shift)}
                                             />
                                             <Button
@@ -387,25 +506,6 @@ export default function ShiftsIndex({ shifts }: Props) {
                     className="space-y-5"
                 >
                     <FieldSet columns={2}>
-                        <Field
-                            label={t('page.shifts_index.staff_id')}
-                            htmlFor="user_id"
-                            required
-                            error={errors.user_id}
-                        >
-                            <Input
-                                id="user_id"
-                                name="user_id"
-                                type="number"
-                                icon={UserIcon}
-                                value={data.user_id}
-                                onChange={(e) =>
-                                    setData('user_id', e.target.value)
-                                }
-                                invalid={Boolean(errors.user_id)}
-                                required
-                            />
-                        </Field>
                         <Field
                             label={t('page.shifts_index.date')}
                             htmlFor="shift_date"
@@ -486,6 +586,107 @@ export default function ShiftsIndex({ shifts }: Props) {
                             />
                         </Field>
                     </FieldSet>
+
+                    <Field
+                        label="Assigned staff"
+                        error={staffError}
+                        hint="Use the list to toggle system users, or record someone not in the system by name."
+                    >
+                        {data.staff.length > 0 ? (
+                            <div className="mb-2 flex flex-wrap gap-1.5">
+                                {data.staff.map((entry, idx) => (
+                                    <span
+                                        key={
+                                            entry.user_id
+                                                ? `user-${entry.user_id}`
+                                                : `name-${entry.name}-${idx}`
+                                        }
+                                        className="inline-flex items-center gap-1 rounded-full border border-line bg-surface-muted py-0.5 pr-1 pl-2 text-[12px] font-medium text-ink-muted"
+                                    >
+                                        {staffLabel(entry)}
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                removeStaffEntry(idx)
+                                            }
+                                            className="rounded-full p-0.5 text-ink-subtle hover:bg-critical-soft hover:text-critical-ink"
+                                            aria-label="Remove from shift"
+                                        >
+                                            <XMarkIcon className="h-3 w-3" />
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="mb-2 text-xs text-ink-subtle italic">
+                                No staff on this shift yet
+                            </p>
+                        )}
+
+                        <div className="rounded-lg border border-line bg-surface-muted p-2">
+                            <Input
+                                id="staff-search"
+                                type="search"
+                                value={staffQuery}
+                                onChange={(e) => setStaffQuery(e.target.value)}
+                                placeholder="Search staff by name"
+                            />
+                            <div className="mt-1 max-h-44 divide-y divide-line overflow-y-auto">
+                                {filteredUsers.length === 0 && (
+                                    <p className="px-2 py-2 text-xs text-ink-subtle">
+                                        No matching staff
+                                    </p>
+                                )}
+                                {filteredUsers.map((user) => (
+                                    <label
+                                        key={user.id}
+                                        className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-[13px] text-ink hover:bg-surface-hover"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            className="h-4 w-4 rounded accent-accent"
+                                            checked={selectedUserIds.has(
+                                                user.id,
+                                            )}
+                                            onChange={() => toggleUser(user.id)}
+                                        />
+                                        <span className="font-medium">
+                                            {user.name}
+                                        </span>
+                                        <span className="ml-auto text-[11px] text-ink-subtle">
+                                            {user.department?.name ?? ''}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                            <div className="mt-2 flex gap-2 border-t border-line pt-2">
+                                <Input
+                                    id="external-name"
+                                    type="text"
+                                    value={externalName}
+                                    onChange={(e) =>
+                                        setExternalName(e.target.value)
+                                    }
+                                    icon={UserPlusIcon}
+                                    placeholder="Someone not in the system"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            addExternal();
+                                        }
+                                    }}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={addExternal}
+                                    disabled={!externalName.trim()}
+                                >
+                                    {t('Add')}
+                                </Button>
+                            </div>
+                        </div>
+                    </Field>
                 </form>
             </Dialog>
         </AppLayout>

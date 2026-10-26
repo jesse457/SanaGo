@@ -5,13 +5,11 @@ import {
     PlusIcon,
     RectangleStackIcon,
     TagIcon,
-    XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import {
-    Alert,
     Button,
     EmptyState,
     Field,
@@ -33,7 +31,7 @@ interface Batch extends CreateBatchValues {
 
 interface DrugForm {
     name: string;
-    dosage_unit: string;
+    dosage_units: string;
     min_stock_level: string;
     description: string;
     batches: Batch[];
@@ -56,7 +54,7 @@ export default function CreateDrug() {
         DrugForm & { image: File | null }
     >({
         name: '',
-        dosage_unit: '',
+        dosage_units: '',
         min_stock_level: '',
         description: '',
         batches: [],
@@ -64,9 +62,6 @@ export default function CreateDrug() {
     });
 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const addBatch = () => {
         setData('batches', [...data.batches, emptyBatch()]);
@@ -92,16 +87,11 @@ export default function CreateDrug() {
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
-        setErrorMessage(null);
         post(route('drugs.store'), {
             forceFormData: true,
             onSuccess: () => {
-                setSuccessMessage(t('drugCreatedSuccessfully'));
                 reset();
                 setImagePreview(null);
-            },
-            onError: () => {
-                setErrorMessage(t('pleaseCheckForm'));
             },
         });
     };
@@ -124,42 +114,6 @@ export default function CreateDrug() {
                         { label: t('addNewDrug') },
                     ]}
                 />
-
-                {successMessage && (
-                    <Alert
-                        tone="positive"
-                        title={t('success')}
-                        action={
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                icon={XMarkIcon}
-                                onClick={() => setSuccessMessage(null)}
-                            />
-                        }
-                    >
-                        {successMessage}
-                    </Alert>
-                )}
-
-                {(errorMessage || Object.keys(errors).length > 0) && (
-                    <Alert
-                        tone="critical"
-                        title={t('error')}
-                        action={
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                icon={XMarkIcon}
-                                onClick={() => setErrorMessage(null)}
-                            />
-                        }
-                    >
-                        {errorMessage || t('someFieldsRequireAttention')}
-                    </Alert>
-                )}
 
                 <form onSubmit={submit} className="space-y-5">
                     <SectionCard title={t('medicationDetails')} icon={CubeIcon}>
@@ -186,15 +140,15 @@ export default function CreateDrug() {
                                 label={t('dosageUnit')}
                                 htmlFor="drug-dosage-unit"
                                 required
-                                error={errors.dosage_unit}
+                                error={errors.dosage_units}
                             >
                                 <Input
                                     id="drug-dosage-unit"
                                     icon={AdjustmentsHorizontalIcon}
-                                    value={data.dosage_unit}
-                                    invalid={Boolean(errors.dosage_unit)}
+                                    value={data.dosage_units}
+                                    invalid={Boolean(errors.dosage_units)}
                                     onChange={(e) =>
-                                        setData('dosage_unit', e.target.value)
+                                        setData('dosage_units', e.target.value)
                                     }
                                     placeholder={t('egMgTabletsMl')}
                                 />
