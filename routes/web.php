@@ -16,31 +16,37 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\TenantSubscriptionController;
-use App\Http\Middleware\InitializeTenancyBySubdomainGraceful;
+use App\Http\Middleware\RedirectTenantsFromMarketing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
+use Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain;
 
 /*
 |--------------------------------------------------------------------------
 | 1. SHARED ROUTES (Central + Tenant)
 |--------------------------------------------------------------------------
-| InitializeTenancyBySubdomainGraceful initializes tenancy on subdomains
-| but passes through on central domains (localhost, sanago.local).
-| Auth routes work in both contexts:
+| These routes are registered as "universal" for stancl/tenancy: the
+| package's InitializeTenancyBySubdomain resolves a hospital subdomain to
+| its own database, while the UniversalRoutes feature lets the same routes
+| run in the central context (localhost, sanago.local).
 |   - Central domain → central DB (super admins)
 |   - Tenant subdomain → tenant DB (hospital staff)
 */
-// Public marketing pages
-Route::get('/', [LandingPageController::class, 'index'])->name('home');
-Route::get('/features', [LandingPageController::class, 'features'])->name('features');
-Route::get('/pricing', [LandingPageController::class, 'pricing'])->name('pricing');
-Route::get('/about', [LandingPageController::class, 'about'])->name('about');
-Route::get('/contact', [LandingPageController::class, 'contact'])->name('contact');
-Route::post('/contact', [LandingPageController::class, 'submitDemoRequest'])->name('contact.submit');
+// Public marketing pages (central domain only — tenants get the app itself)
+Route::middleware([RedirectTenantsFromMarketing::class])->group(function () {
+    Route::get('/', [LandingPageController::class, 'index'])->name('home');
+    Route::get('/features', [LandingPageController::class, 'features'])->name('features');
+    Route::get('/pricing', [LandingPageController::class, 'pricing'])->name('pricing');
+    Route::get('/about', [LandingPageController::class, 'about'])->name('about');
+    Route::get('/contact', [LandingPageController::class, 'contact'])->name('contact');
+    Route::post('/contact', [LandingPageController::class, 'submitDemoRequest'])->name('contact.submit');
+    Route::get('/privacy', [LandingPageController::class, 'privacy'])->name('privacy');
+    Route::get('/terms', [LandingPageController::class, 'terms'])->name('terms');
+});
 
-Route::middleware([InitializeTenancyBySubdomainGraceful::class])->group(function () {
+Route::middleware(['universal', InitializeTenancyBySubdomain::class])->group(function () {
     // Auth
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])
@@ -83,7 +89,7 @@ Route::middleware([InitializeTenancyBySubdomainGraceful::class])->group(function
     })->name('locale.switch');
 
     // Shared authenticated routes (work in both central and tenant contexts)
-    Route::middleware(['auth'])->group(function () {
+    Route::middleware(['auth', 'tenant.active'])->group(function () {
         Route::get('/profile', fn () => Inertia::render('Profile/Show'))->name('profile');
         Route::get('/settings', function () {
             // Landlord accounts do not have hospital settings; their real
