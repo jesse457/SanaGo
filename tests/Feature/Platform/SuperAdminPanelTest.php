@@ -15,7 +15,6 @@ use Database\Seeders\SuperAdminRoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
-use Stancl\Tenancy\Features\UserImpersonation;
 
 use function Tests\Helpers\resolveCentralToDefault;
 
@@ -198,15 +197,21 @@ describe('tenant lifecycle', function () {
     });
 
     it('records a support-access audit entry when impersonating', function () {
-        config(['tenancy.features' => [UserImpersonation::class]]);
-
         $this->tenant->domains()->create(['domain' => 'bertoua.localhost']);
 
         $response = $this->actingAs($this->superAdmin)
             ->post(route('tenants.impersonate', $this->tenant), ['user_id' => 7]);
 
         $response->assertRedirect();
-        expect($response->headers->get('Location'))->toContain('/impersonate/');
+        expect($response->headers->get('Location'))
+            ->toContain('bertoua.localhost')
+            ->toContain('/impersonate/');
+
+        // The token is created through stancl/tenancy's impersonation macro.
+        $this->assertDatabaseHas('tenant_user_impersonation_tokens', [
+            'tenant_id' => 'hopital-berton',
+            'user_id' => '7',
+        ]);
 
         $this->assertDatabaseHas('platform_audit_logs', [
             'action' => 'tenant.impersonation_started',

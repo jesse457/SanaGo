@@ -127,19 +127,23 @@ it('accumulates cash payments towards the paid threshold', function () {
     $shift = shiftForBilling();
     $service = app(BillingService::class);
 
+    // The first partial payment is real money with a balance still owed,
+    // so the invoice goes overdue rather than staying silently pending.
     $service->recordPayment($invoice, 10000, $shift->id);
-    expect($invoice->fresh()->status)->toBe(InvoiceStatus::PENDING);
+    expect($invoice->fresh()->status)->toBe(InvoiceStatus::OVERDUE);
 
     $service->recordPayment($invoice, 20000, $shift->id);
     expect($invoice->fresh()->status)->toBe(InvoiceStatus::PAID);
 });
 
-it('moves a draft invoice to pending on a partial cash payment', function () {
+it('marks a draft invoice overdue on a partial cash payment', function () {
     $invoice = invoiceFor(40000);
     $invoice->update(['status' => InvoiceStatus::DRAFT->value]);
 
     $service = app(BillingService::class);
     $service->recordPayment($invoice, 10000, shiftForBilling()->id);
 
-    expect($invoice->fresh()->status)->toBe(InvoiceStatus::PENDING);
+    // Money moved, the rest is owed: the bill surfaces as overdue in the
+    // Invoices ledger instead of hiding in the draft bucket.
+    expect($invoice->fresh()->status)->toBe(InvoiceStatus::OVERDUE);
 });

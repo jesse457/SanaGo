@@ -82,8 +82,7 @@ Tenant models use the default connection, which `stancl/tenancy` swaps when a te
 
 Observers create financial and notification side effects:
 
-- `AppointmentObserver` — bills a consultation when an appointment is booked.
-- `MedicalRecordObserver` — attaches the consultation charge and notifies staff.
+- `MedicalRecordObserver` — attaches the consultation charge (honouring any negotiated fee stored on the matching appointment) and notifies staff. The appointment module stays decoupled from billing.
 - Other observers cover admissions and related workflows.
 
 If a new action should create a charge or notification, check whether it belongs in an observer or an explicit service call.

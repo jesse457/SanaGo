@@ -109,6 +109,26 @@ it('factory has radiology state', function () {
     expect($service->category)->toBe(ServiceCategory::Radiology);
 });
 
+it('maps every catalog category to a billing module', function () {
+    expect(ServiceCategory::Consultation->module())->toBe('consultation')
+        ->and(ServiceCategory::Lab->module())->toBe('laboratory')
+        ->and(ServiceCategory::Radiology->module())->toBe('radiology')
+        ->and(ServiceCategory::Imaging->module())->toBe('radiology')
+        ->and(ServiceCategory::Medication->module())->toBe('pharmacy')
+        ->and(ServiceCategory::Bed->module())->toBe('admission')
+        ->and(ServiceCategory::Procedure->module())->toBe('surgery')
+        ->and(ServiceCategory::Other->module())->toBe('other');
+});
+
+it('exposes the module labels the counter works with', function () {
+    $modules = ServiceCategory::modules();
+
+    expect(array_column($modules, 'value'))->toBe([
+        'consultation', 'laboratory', 'radiology', 'pharmacy',
+        'admission', 'surgery', 'other',
+    ]);
+});
+
 it('enforces unique code constraint', function () {
     Service::create([
         'name' => 'Test 1',

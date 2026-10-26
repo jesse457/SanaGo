@@ -57,6 +57,40 @@ it('rejects the singular dosage_unit key that the form no longer sends', functio
     expect(Medication::where('name', 'Old Key Drug')->exists())->toBeFalse();
 });
 
+it('stores a drug with its first batch from the create form payload', function () {
+    $this->actingAs($this->pharma)
+        ->post(route('drugs.store'), [
+            'name' => 'Cetirizine',
+            'dosage_units' => 'ml',
+            'min_stock_level' => '12',
+            'description' => '',
+            'batches' => [
+                [
+                    'batch_number' => 'CDC23',
+                    'expiry_date' => '2026-09-28',
+                    'quantity' => '34',
+                    'purchase_price' => '2.50',
+                    'sale_price' => '4.00',
+                    'manufactured_date' => '',
+                    'notes' => '',
+                ],
+            ],
+        ])
+        ->assertRedirect(route('drugs.index'))
+        ->assertSessionHasNoErrors();
+
+    $medication = Medication::where('name', 'Cetirizine')->firstOrFail();
+
+    expect($medication->dosage_units)->toBe('ml')
+        ->and($medication->min_stock_level)->toBe(12)
+        ->and($medication->total_stock)->toBe(34);
+
+    $batch = $medication->batches()->firstOrFail();
+
+    expect($batch->batch_number)->toBe('CDC23')
+        ->and($batch->current_quantity)->toBe(34);
+});
+
 it('maps dosage_units explicitly when the inventory service creates a medication', function () {
     $medication = app(InventoryService::class)->createMedication([
         'name' => 'Artemether',

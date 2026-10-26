@@ -126,3 +126,25 @@ describe('Demo Request Validation', function () {
             $response->assertSessionHasErrors($expectedErrors);
         });
 });
+
+// ─── Tenant Subdomains ────────────────────────────────────────
+
+describe('Tenant Subdomains', function () {
+    it('sends hospital visitors from the marketing pages into the app')
+        ->with(['/', '/features', '/pricing', '/about', '/contact'])
+        ->expect(function (string $uri) {
+            $response = $this->get('http://city-hospital.example.test'.$uri);
+
+            $response->assertRedirect('http://city-hospital.example.test/dashboard');
+        });
+
+    it('does not accept demo requests on a hospital subdomain', function () {
+        $response = $this->post('http://city-hospital.example.test/contact', [
+            'name' => 'Dr. Jane Smith',
+            'email' => 'jane@hospital.com',
+        ]);
+
+        $response->assertRedirect('http://city-hospital.example.test/dashboard');
+        $this->assertDatabaseCount('demo_requests', 0);
+    });
+});

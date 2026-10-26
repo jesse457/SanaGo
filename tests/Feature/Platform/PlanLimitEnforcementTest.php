@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\PlanFeature;
 use App\Enums\SubscriptionStatus;
+use App\Models\Patient;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
@@ -95,6 +96,33 @@ describe('quota enforcement', function () {
         $this->service->updateOverrides($this->tenant, ['users' => 10]);
 
         expect(app(PlanLimitService::class)->exceeded('users'))->toBeFalse();
+    });
+
+    it('tells the hospital clearly when the patient quota is reached', function () {
+        $this->withoutMiddleware([
+            InitializeTenancyBySubdomain::class,
+            PreventAccessFromCentralDomains::class,
+        ]);
+
+        $admin = tap(User::factory()->create())->assignRole('admin');
+        Patient::factory()->count(2)->create();
+
+        actAsTenant($this->tenant);
+
+        $response = $this->actingAs($admin)
+            ->from(route('patients.create'))
+            ->post(route('patients.store'), [
+                'first_name' => 'Awa',
+                'last_name' => 'Nkeng',
+            ]);
+
+        $response->assertRedirect(route('patients.create'));
+        $response->assertSessionHas('error', fn (string $message) => str_contains($message, 'Plan limit reached')
+            && str_contains($message, '2 patients'));
+
+        $response->assertSessionHasErrors(['patients']);
+
+        expect(Patient::query()->count())->toBe(2);
     });
 
     it('reports usage against every quota', function () {
@@ -193,6 +221,27 @@ describe('subscription status gate', function () {
 
         $this->actingAs($admin)
             ->get(route('tenant.billing'))
+            ->assertOk();
+    });
+
+    it('blocks shared account pages while a tenant is suspended', function () {
+        $this->withoutMiddleware([
+            InitializeTenancyBySubdomain::class,
+            PreventAccessFromCentralDomains::class,
+        ]);
+
+        $admin = tap(User::factory()->create())->assignRole('admin');
+
+        app(TenantService::class)->suspend($this->tenant, 'Unpaid balance');
+        actAsTenant($this->tenant->fresh());
+
+        $this->actingAs($admin)
+            ->get(route('settings'))
+            ->assertStatus(403);
+
+        // Profile stays in the middleware's allowlist for suspended tenants.
+        $this->actingAs($admin)
+            ->get(route('profile'))
             ->assertOk();
     });
 

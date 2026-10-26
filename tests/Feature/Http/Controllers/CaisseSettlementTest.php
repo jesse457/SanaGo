@@ -13,6 +13,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\LabRequest;
 use App\Models\LabTestDefinition;
+use App\Models\Medication;
 use App\Models\Patient;
 use App\Models\Service;
 use App\Models\User;
@@ -51,11 +52,46 @@ function shiftOn(CashPoint $point, User $user, float $float = 10000): CashShift
     ]);
 }
 
-/** A patient with one unpaid lab charge, as the doctor's order leaves it. */
+/**
+ * A patient with one unpaid laboratory charge — what the counter writes by
+ * hand now that lab orders no longer bill themselves.
+ */
 function patientWithLabCharge(float $price = 5000): array
 {
     $patient = Patient::factory()->create();
     $definition = LabTestDefinition::factory()->create(['price' => $price]);
+
+    LabRequest::factory()->create([
+        'patient_id' => $patient->id,
+        'test_definition_id' => $definition->id,
+        'status' => LabRequestStatus::PENDING,
+    ]);
+
+    $invoice = Invoice::create([
+        'invoice_number' => 'INV-LAB-1',
+        'patient_id' => $patient->id,
+        'invoice_date' => now()->toDateString(),
+        'subtotal' => $price,
+        'tax_amount' => 0,
+        'total_amount' => $price,
+        'status' => InvoiceStatus::DRAFT->value,
+    ]);
+
+    $item = $invoice->items()->create([
+        'item_type' => 'lab_test',
+        'item_id' => null,
+        'description' => 'Lab Test: '.$definition->test_name,
+        'quantity' => 1,
+        'unit_price' => $price,
+        'total_price' => $price,
+    ]);
+
+    return [$patient, $item];
+}
+
+it('records a lab order without billing anything', function () {
+    $patient = Patient::factory()->create();
+    $definition = LabTestDefinition::factory()->create(['price' => 5000]);
 
     $request = LabRequest::factory()->create([
         'patient_id' => $patient->id,
@@ -63,28 +99,12 @@ function patientWithLabCharge(float $price = 5000): array
         'status' => LabRequestStatus::PENDING,
     ]);
 
-    return [$patient, $request];
-}
-
-it('bills a lab test when it is ordered, not when the result is ready', function () {
-    [$patient, $request] = patientWithLabCharge(5000);
-
-    $item = InvoiceItem::where('item_type', 'lab_test')
-        ->where('item_id', $request->id)
-        ->first();
-
-    expect($item)->not->toBeNull()
-        ->and((float) $item->total_price)->toEqual(5000.0)
-        ->and($item->settled_at)->toBeNull()
-        ->and($item->invoice->patient_id)->toBe($patient->id);
-});
-
-it('does not bill the same lab test twice when it completes', function () {
-    [$patient, $request] = patientWithLabCharge(5000);
-
+    // Order and completion are clinical events: a charge exists only once the
+    // counter writes one.
     $request->update(['status' => LabRequestStatus::COMPLETED]);
 
-    expect(InvoiceItem::where('item_type', 'lab_test')->where('item_id', $request->id)->count())->toBe(1);
+    expect(InvoiceItem::where('item_type', 'lab_test')->count())->toBe(0)
+        ->and(Invoice::count())->toBe(0);
 });
 
 it('lists the outstanding services for a patient', function () {
@@ -149,7 +169,7 @@ it('settles the selected services and marks them paid', function () {
         ->and($item->invoice->fresh()->status)->toBe(InvoiceStatus::PAID);
 });
 
-it('refuses to take less money than the selected services cost', function () {
+it('records a partial payment and leaves the charge partially paid', function () {
     [$patient] = patientWithLabCharge(5000);
     $shift = shiftOn(CashPoint::primary(), $this->cashier);
     $item = InvoiceItem::where('item_type', 'lab_test')->firstOrFail();
@@ -161,10 +181,17 @@ it('refuses to take less money than the selected services cost', function () {
             'payment_method' => PaymentMethod::Cash->value,
             'amount_tendered' => 2000,
         ])
-        ->assertSessionHasErrors(['amount_tendered']);
+        ->assertRedirect();
 
-    expect($item->fresh()->settled_at)->toBeNull()
-        ->and($shift->payments()->count())->toBe(0);
+    $item->refresh();
+
+    expect($item->settled_at)->toBeNull()
+        ->and($item->payment_status->value)->toBe('partially_paid')
+        ->and((float) $item->paid_amount)->toEqual(2000.0)
+        ->and((float) $shift->payments()->sum('amount_paid'))->toEqual(2000.0)
+        // Money moved but the bill is not covered: it shows up as overdue
+        // instead of hiding in the draft bucket while the patient owes the rest.
+        ->and($item->invoice->fresh()->status)->toBe(InvoiceStatus::OVERDUE);
 });
 
 it('treats a re-sent payment as the same payment', function () {
@@ -216,7 +243,7 @@ it('bills a catalogue service on the spot and settles it in one step', function 
         ->post(route('caisse.settle'), [
             'patient_id' => $patient->id,
             'item_ids' => [],
-            'service_ids' => [$service->id],
+            'picks' => [['source' => 'service', 'id' => $service->id]],
             'payment_method' => PaymentMethod::Cash->value,
             'amount_tendered' => 5000,
         ])
@@ -229,10 +256,15 @@ it('bills a catalogue service on the spot and settles it in one step', function 
         ->and((float) $shift->payments()->sum('amount_paid'))->toEqual(3000.0);
 });
 
-it('refuses a pharmacy charge at the main till', function () {
+it('refuses a pharmacy charge at a laboratory till', function () {
     $patient = Patient::factory()->create();
-    $mainPoint = CashPoint::primary();
-    shiftOn($mainPoint, $this->cashier);
+    $labPoint = CashPoint::create([
+        'name' => 'Laboratoire',
+        'code' => 'lab-till',
+        'module' => 'laboratory',
+        'receipt_prefix' => 'LAB',
+    ]);
+    shiftOn($labPoint, $this->cashier);
 
     $invoice = Invoice::create([
         'invoice_number' => 'INV-PHARM-1',
@@ -262,6 +294,34 @@ it('refuses a pharmacy charge at the main till', function () {
         ->assertSessionHasErrors(['item_ids']);
 
     expect($drugs->fresh()->settled_at)->toBeNull();
+});
+
+it('takes the money for a drug charge at the main till', function () {
+    $patient = Patient::factory()->create();
+    $shift = shiftOn(CashPoint::primary(), $this->cashier);
+    $medication = Medication::factory()->create([
+        'name' => 'Amoxicillin',
+        'strength' => '250mg',
+        'unit_cost' => 1200,
+    ]);
+
+    $this->actingAs($this->cashier)
+        ->post(route('caisse.settle'), [
+            'patient_id' => $patient->id,
+            'item_ids' => [],
+            'picks' => [['source' => 'medication', 'id' => $medication->id, 'quantity' => 2]],
+            'payment_method' => PaymentMethod::Cash->value,
+            'amount_tendered' => 2400,
+        ])
+        ->assertRedirect();
+
+    $item = InvoiceItem::where('item_type', 'pharmacy')
+        ->where('item_id', $medication->id)
+        ->firstOrFail();
+
+    expect((float) $item->total_price)->toEqual(2400.0)
+        ->and($item->settled_at)->not->toBeNull()
+        ->and((float) $shift->payments()->sum('amount_paid'))->toEqual(2400.0);
 });
 
 it('requires an open shift before taking money', function () {

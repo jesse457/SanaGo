@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\Gender;
 use App\Enums\PlanFeature;
+use App\Enums\ServiceCategory;
 use Illuminate\Support\Facades\Session;
 
 /**
@@ -79,7 +80,11 @@ function dynamicTranslationKeys(): array
         $keys[] = "finance.invoices.index.status_{$status}";
     }
 
-    foreach (['scheduled', 'waiting', 'in_consultation', 'pending', 'completed', 'cancelled'] as $status) {
+    foreach (['all', ...ServiceCategory::values()] as $category) {
+        $keys[] = "finance.services.index.category_{$category}";
+    }
+
+    foreach (['scheduled', 'in_consultation', 'pending', 'completed', 'cancelled'] as $status) {
         $keys[] = "page.appointment_calendar.status.{$status}";
     }
 

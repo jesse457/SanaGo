@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\Patient;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
@@ -60,10 +62,10 @@ it('lets a doctor update their own appointment status', function () {
     $appointment = Appointment::factory()->scheduled()->create(['doctor_id' => $doctor->id]);
 
     $this->actingAs($doctor)
-        ->patch(route('appointments.update', $appointment), ['status' => 'waiting'])
+        ->patch(route('appointments.update', $appointment), ['status' => 'pending'])
         ->assertRedirect();
 
-    expect(Appointment::find($appointment->id)->status)->toBe(AppointmentStatus::WAITING);
+    expect(Appointment::find($appointment->id)->status)->toBe(AppointmentStatus::PENDING);
 });
 
 it('prevents a doctor from updating another doctor appointment', function () {
@@ -71,7 +73,7 @@ it('prevents a doctor from updating another doctor appointment', function () {
     $appointment = Appointment::factory()->scheduled()->create();
 
     $this->actingAs($doctor)
-        ->patch(route('appointments.update', $appointment), ['status' => 'waiting'])
+        ->patch(route('appointments.update', $appointment), ['status' => 'pending'])
         ->assertForbidden();
 });
 
@@ -86,6 +88,24 @@ it('creates an appointment', function () {
         'reason_for_visit' => 'Routine checkup',
     ])->assertRedirect()->assertSessionHas('success');
     $this->assertDatabaseHas('appointments', ['patient_id' => $patient->id]);
+});
+
+it('books appointments as scheduled visits without touching billing', function () {
+    $patient = Patient::factory()->create();
+
+    $this->actingAs($this->admin)->post(route('appointments.store'), [
+        'patient_id' => $patient->id,
+        'doctor_id' => $this->admin->id,
+        'appointment_date' => now()->addDays(3)->toDateString(),
+        'appointment_time' => '10:00',
+        'reason_for_visit' => 'Routine checkup',
+    ])->assertRedirect()->assertSessionHas('success');
+
+    $appointment = Appointment::latest('id')->first();
+
+    expect($appointment->status)->toBe(AppointmentStatus::SCHEDULED)
+        ->and(Invoice::count())->toBe(0)
+        ->and(InvoiceItem::count())->toBe(0);
 });
 
 it('validates required fields on store', function () {

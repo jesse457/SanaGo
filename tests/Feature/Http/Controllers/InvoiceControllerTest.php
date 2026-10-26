@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Models\Patient;
 use App\Models\User;
@@ -49,4 +50,47 @@ it('validates required fields on store', function () {
 
 it('blocks unauthorized users', function () {
     $this->actingAs(User::factory()->create())->get(route('finance.invoices.index'))->assertForbidden();
+});
+
+it('renders the printable invoice detail', function () {
+    $patient = Patient::factory()->create();
+    $invoice = Invoice::factory()->create([
+        'patient_id' => $patient->id,
+        'status' => InvoiceStatus::OVERDUE->value,
+        'subtotal' => 12000,
+        'tax_amount' => 0,
+        'total_amount' => 12000,
+    ]);
+    $invoice->items()->create([
+        'item_type' => 'consultation',
+        'item_id' => null,
+        'description' => 'General consultation',
+        'quantity' => 1,
+        'unit_price' => 12000,
+        'total_price' => 12000,
+    ]);
+
+    $this->actingAs($this->admin)->get(route('finance.invoices.show', $invoice->id))
+        ->assertOk()
+        ->assertInertia(fn ($p) => $p
+            ->component('Finance/Invoices/Show')
+            ->where('invoice.invoice_number', $invoice->invoice_number)
+            ->where('invoice.status', 'overdue')
+            ->where('invoice.total_amount', 12000)
+            ->where('invoice.patient.patient_uid', $patient->patient_uid)
+            ->has('invoice.items', 1)
+            ->where('invoice.items.0.description', 'General consultation')
+            ->has('invoice.payments', 0)
+            ->where('invoice.claim', null)
+        );
+});
+
+it('closes an overdue invoice', function () {
+    $invoice = Invoice::factory()->create(['status' => InvoiceStatus::OVERDUE->value]);
+
+    $this->actingAs($this->admin)
+        ->patch(route('finance.invoices.status', $invoice->id), ['status' => 'cancelled'])
+        ->assertRedirect();
+
+    expect($invoice->fresh()->status)->toBe(InvoiceStatus::CANCELLED);
 });

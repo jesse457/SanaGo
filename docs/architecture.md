@@ -77,11 +77,9 @@ Permissions use `spatie/laravel-permission`:
 
 ### Observers and billing
 
-Some financial behavior is event-driven:
+Consultations and lab orders are purely clinical: `MedicalRecordObserver` and `LabRequestObserver` only notify staff; the charges a patient pays are written at the caisse, from the record that owns each module — drugs from the pharmacy stock, lab tests from the laboratory catalogue, the bed day of an open stay from its admission, everything else from the Service catalogue (`CounterCatalogue`, `SettlementService`). The cashier never types an amount.
 
-- `AppointmentObserver` creates a consultation charge when an appointment is booked, using the doctor's tariff.
-- `MedicalRecordObserver` attaches the consultation charge when a record is created and notifies staff.
-- `AdmissionObserver`, `PrescriptionObserver`, `LabRequestObserver`, `SurgeryObserver`, and `EmergencyCaseObserver` handle their own billing/notification side effects.
+- `AdmissionObserver`, `PrescriptionObserver`, `SurgeryObserver`, and `EmergencyCaseObserver` still attach charges as automatic side effects when their module records an event.
 - `BillingService` owns invoice numbering, draft invoice reuse, billable items, payments, and totals.
 
 When adding a new billable workflow, decide whether it belongs in an observer (automatic side effect) or an explicit service call (user-initiated action). Avoid duplicating pricing logic outside `Billing`.
