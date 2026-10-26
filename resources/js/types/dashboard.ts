@@ -28,7 +28,7 @@ export interface AdminDashboardMetrics {
     };
     appointment_stats?: {
         total: number;
-        waiting: number;
+        scheduled: number;
         completed: number;
         cancelled: number;
     };

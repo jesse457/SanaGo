@@ -19,16 +19,31 @@ const Ziggy = {
         about: { uri: 'about', methods: ['GET', 'HEAD'] },
         contact: { uri: 'contact', methods: ['GET', 'HEAD'] },
         'contact.submit': { uri: 'contact', methods: ['POST'] },
+        privacy: { uri: 'privacy', methods: ['GET', 'HEAD'] },
+        terms: { uri: 'terms', methods: ['GET', 'HEAD'] },
         login: { uri: 'login', methods: ['GET', 'HEAD'] },
         'password.request': {
             uri: 'forgot-password',
             methods: ['GET', 'HEAD'],
         },
+        'password.email': { uri: 'forgot-password', methods: ['POST'] },
+        'password.reset': {
+            uri: 'reset-password\/{token}',
+            methods: ['GET', 'HEAD'],
+            parameters: ['token'],
+        },
+        'password.update': { uri: 'reset-password', methods: ['POST'] },
         'password.confirm': {
             uri: 'confirm-password',
             methods: ['GET', 'HEAD'],
         },
         logout: { uri: 'logout', methods: ['POST'] },
+        'login.transfer': {
+            uri: 'login\/transfer\/{token?}',
+            methods: ['GET', 'HEAD'],
+            parameters: ['token'],
+        },
+        'locale.switch': { uri: 'locale', methods: ['POST'] },
         profile: { uri: 'profile', methods: ['GET', 'HEAD'] },
         settings: { uri: 'settings', methods: ['GET', 'HEAD'] },
         'dashboard.super-admin': {
@@ -62,23 +77,39 @@ const Ziggy = {
             parameters: ['tenant'],
             bindings: { tenant: 'id' },
         },
+        'tenants.toggle-active': {
+            uri: 'tenants\/{tenant}\/toggle-active',
+            methods: ['PATCH'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'plans.index': { uri: 'plans', methods: ['GET', 'HEAD'] },
+        'plans.create': { uri: 'plans\/create', methods: ['GET', 'HEAD'] },
+        'plans.store': { uri: 'plans', methods: ['POST'] },
+        'plans.edit': {
+            uri: 'plans\/{plan}\/edit',
+            methods: ['GET', 'HEAD'],
+            parameters: ['plan'],
+            bindings: { plan: 'id' },
+        },
+        'plans.update': {
+            uri: 'plans\/{plan}',
+            methods: ['PUT'],
+            parameters: ['plan'],
+            bindings: { plan: 'id' },
+        },
+        'plans.destroy': {
+            uri: 'plans\/{plan}',
+            methods: ['DELETE'],
+            parameters: ['plan'],
+            bindings: { plan: 'id' },
+        },
         'subscriptions.index': {
             uri: 'subscriptions',
             methods: ['GET', 'HEAD'],
         },
-        'subscriptions.create': {
-            uri: 'subscriptions\/create',
-            methods: ['GET', 'HEAD'],
-        },
-        'subscriptions.store': { uri: 'subscriptions', methods: ['POST'] },
         'subscriptions.show': {
             uri: 'subscriptions\/{subscription}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['subscription'],
-            bindings: { subscription: 'id' },
-        },
-        'subscriptions.edit': {
-            uri: 'subscriptions\/{subscription}\/edit',
             methods: ['GET', 'HEAD'],
             parameters: ['subscription'],
             bindings: { subscription: 'id' },
@@ -95,22 +126,281 @@ const Ziggy = {
             parameters: ['subscription'],
             bindings: { subscription: 'id' },
         },
+        'demo-requests.index': {
+            uri: 'demo-requests',
+            methods: ['GET', 'HEAD'],
+        },
+        'demo-requests.show': {
+            uri: 'demo-requests\/{demoRequest}',
+            methods: ['GET', 'HEAD'],
+            parameters: ['demoRequest'],
+            bindings: { demoRequest: 'id' },
+        },
+        'demo-requests.update-status': {
+            uri: 'demo-requests\/{demoRequest}\/status',
+            methods: ['PATCH'],
+            parameters: ['demoRequest'],
+            bindings: { demoRequest: 'id' },
+        },
+        'demo-requests.add-note': {
+            uri: 'demo-requests\/{demoRequest}\/notes',
+            methods: ['POST'],
+            parameters: ['demoRequest'],
+            bindings: { demoRequest: 'id' },
+        },
+        'support-tickets.index': {
+            uri: 'support-tickets',
+            methods: ['GET', 'HEAD'],
+        },
+        'support-tickets.create': {
+            uri: 'support-tickets\/create',
+            methods: ['GET', 'HEAD'],
+        },
+        'support-tickets.show': {
+            uri: 'support-tickets\/{supportTicket}',
+            methods: ['GET', 'HEAD'],
+            parameters: ['supportTicket'],
+            bindings: { supportTicket: 'id' },
+        },
+        'support-tickets.store': { uri: 'support-tickets', methods: ['POST'] },
+        'support-tickets.add-message': {
+            uri: 'support-tickets\/{supportTicket}\/messages',
+            methods: ['POST'],
+            parameters: ['supportTicket'],
+            bindings: { supportTicket: 'id' },
+        },
+        'support-tickets.update-status': {
+            uri: 'support-tickets\/{supportTicket}\/status',
+            methods: ['PATCH'],
+            parameters: ['supportTicket'],
+            bindings: { supportTicket: 'id' },
+        },
+        'announcements.index': {
+            uri: 'announcements',
+            methods: ['GET', 'HEAD'],
+        },
+        'announcements.create': {
+            uri: 'announcements\/create',
+            methods: ['GET', 'HEAD'],
+        },
+        'announcements.store': { uri: 'announcements', methods: ['POST'] },
+        'announcements.update': {
+            uri: 'announcements\/{announcement}',
+            methods: ['PUT'],
+            parameters: ['announcement'],
+            bindings: { announcement: 'id' },
+        },
+        'announcements.destroy': {
+            uri: 'announcements\/{announcement}',
+            methods: ['DELETE'],
+            parameters: ['announcement'],
+            bindings: { announcement: 'id' },
+        },
+        'landlord-users.index': {
+            uri: 'landlord-users',
+            methods: ['GET', 'HEAD'],
+        },
+        'landlord-users.create': {
+            uri: 'landlord-users\/create',
+            methods: ['GET', 'HEAD'],
+        },
+        'landlord-users.store': { uri: 'landlord-users', methods: ['POST'] },
+        'landlord-users.edit': {
+            uri: 'landlord-users\/{user}\/edit',
+            methods: ['GET', 'HEAD'],
+            parameters: ['user'],
+            bindings: { user: 'id' },
+        },
+        'landlord-users.update': {
+            uri: 'landlord-users\/{user}',
+            methods: ['PUT'],
+            parameters: ['user'],
+            bindings: { user: 'id' },
+        },
+        'landlord-users.destroy': {
+            uri: 'landlord-users\/{user}',
+            methods: ['DELETE'],
+            parameters: ['user'],
+            bindings: { user: 'id' },
+        },
+        'landlord-roles.index': {
+            uri: 'landlord-roles',
+            methods: ['GET', 'HEAD'],
+        },
+        'landlord-roles.create': {
+            uri: 'landlord-roles\/create',
+            methods: ['GET', 'HEAD'],
+        },
+        'landlord-roles.store': { uri: 'landlord-roles', methods: ['POST'] },
+        'landlord-roles.edit': {
+            uri: 'landlord-roles\/{role}\/edit',
+            methods: ['GET', 'HEAD'],
+            parameters: ['role'],
+            bindings: { role: 'id' },
+        },
+        'landlord-roles.update': {
+            uri: 'landlord-roles\/{role}',
+            methods: ['PUT'],
+            parameters: ['role'],
+            bindings: { role: 'id' },
+        },
+        'landlord-roles.destroy': {
+            uri: 'landlord-roles\/{role}',
+            methods: ['DELETE'],
+            parameters: ['role'],
+            bindings: { role: 'id' },
+        },
+        'tenants.suspend': {
+            uri: 'tenants\/{tenant}\/suspend',
+            methods: ['POST'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'tenants.reactivate': {
+            uri: 'tenants\/{tenant}\/reactivate',
+            methods: ['POST'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'tenants.archive': {
+            uri: 'tenants\/{tenant}\/archive',
+            methods: ['POST'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'tenants.restore': {
+            uri: 'tenants\/{tenant}\/restore',
+            methods: ['POST'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'tenants.add-note': {
+            uri: 'tenants\/{tenant}\/notes',
+            methods: ['POST'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'tenants.impersonate': {
+            uri: 'tenants\/{tenant}\/impersonate',
+            methods: ['POST'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'tenants.subscription.assign': {
+            uri: 'tenants\/{tenant}\/subscription',
+            methods: ['POST'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'tenants.subscription.change-plan': {
+            uri: 'tenants\/{tenant}\/subscription\/plan',
+            methods: ['POST'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'tenants.subscription.renew': {
+            uri: 'tenants\/{tenant}\/subscription\/renew',
+            methods: ['POST'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'tenants.subscription.extend': {
+            uri: 'tenants\/{tenant}\/subscription\/extend',
+            methods: ['POST'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'tenants.subscription.cancel': {
+            uri: 'tenants\/{tenant}\/subscription\/cancel',
+            methods: ['POST'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'tenants.subscription.resume': {
+            uri: 'tenants\/{tenant}\/subscription\/resume',
+            methods: ['POST'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'tenants.subscription.expire': {
+            uri: 'tenants\/{tenant}\/subscription\/expire',
+            methods: ['POST'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'tenants.subscription.overrides': {
+            uri: 'tenants\/{tenant}\/subscription\/overrides',
+            methods: ['PUT'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'tenants.subscription.preview': {
+            uri: 'tenants\/{tenant}\/subscription\/preview',
+            methods: ['GET', 'HEAD'],
+            parameters: ['tenant'],
+            bindings: { tenant: 'id' },
+        },
+        'tenants.subscription.pay-invoice': {
+            uri: 'tenants\/{tenant}\/subscription\/invoices\/{invoice}\/pay',
+            methods: ['POST'],
+            parameters: ['tenant', 'invoice'],
+            bindings: { tenant: 'id', invoice: 'id' },
+        },
+        'platform.settings': {
+            uri: 'platform\/settings',
+            methods: ['GET', 'HEAD'],
+        },
+        'platform.settings.update': {
+            uri: 'platform\/settings',
+            methods: ['PUT'],
+        },
+        'platform.billing': {
+            uri: 'platform\/billing',
+            methods: ['GET', 'HEAD'],
+        },
+        'platform.audit': { uri: 'platform\/audit', methods: ['GET', 'HEAD'] },
+        'platform.health': {
+            uri: 'platform\/health',
+            methods: ['GET', 'HEAD'],
+        },
+        'landlord.notifications.index': {
+            uri: 'platform\/notifications',
+            methods: ['GET', 'HEAD'],
+        },
+        'landlord.notifications.latest': {
+            uri: 'platform\/notifications\/latest',
+            methods: ['GET', 'HEAD'],
+        },
+        'landlord.notifications.read': {
+            uri: 'platform\/notifications\/{id}\/read',
+            methods: ['POST'],
+            parameters: ['id'],
+        },
+        'landlord.notifications.mark-all-read': {
+            uri: 'platform\/notifications\/mark-all-read',
+            methods: ['POST'],
+        },
         analytics: { uri: 'analytics', methods: ['GET', 'HEAD'] },
+        'storage.local': {
+            uri: 'storage\/{path}',
+            methods: ['GET', 'HEAD'],
+            wheres: { path: '.*' },
+            parameters: ['path'],
+        },
+        'storage.local.upload': {
+            uri: 'storage\/{path}',
+            methods: ['PUT'],
+            wheres: { path: '.*' },
+            parameters: ['path'],
+        },
+        'impersonate.accept': {
+            uri: 'impersonate\/{token}',
+            methods: ['GET', 'HEAD'],
+            parameters: ['token'],
+        },
+        dashboard: { uri: 'dashboard', methods: ['GET', 'HEAD'] },
         'dashboard.admin': {
             uri: 'dashboard\/admin',
-            methods: ['GET', 'HEAD'],
-        },
-        'dashboard.doctor': {
-            uri: 'dashboard\/doctor',
-            methods: ['GET', 'HEAD'],
-        },
-        'dashboard.reception': {
-            uri: 'dashboard\/reception',
-            methods: ['GET', 'HEAD'],
-        },
-        'dashboard.lab': { uri: 'dashboard\/lab', methods: ['GET', 'HEAD'] },
-        'dashboard.pharma': {
-            uri: 'dashboard\/pharma',
             methods: ['GET', 'HEAD'],
         },
         'patients.index': { uri: 'patients', methods: ['GET', 'HEAD'] },
@@ -123,11 +413,7 @@ const Ziggy = {
             uri: 'patients\/{patient}',
             methods: ['GET', 'HEAD'],
             parameters: ['patient'],
-        },
-        'patients.edit': {
-            uri: 'patients\/{patient}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['patient'],
+            bindings: { patient: 'id' },
         },
         'patients.update': {
             uri: 'patients\/{patient}',
@@ -135,24 +421,13 @@ const Ziggy = {
             parameters: ['patient'],
             bindings: { patient: 'id' },
         },
-        'patients.destroy': {
-            uri: 'patients\/{patient}',
-            methods: ['DELETE'],
+        'vitals.create': {
+            uri: 'vitals\/create\/{patient}',
+            methods: ['GET', 'HEAD'],
             parameters: ['patient'],
+            bindings: { patient: 'id' },
         },
-        'vitals.index': { uri: 'vitals', methods: ['GET', 'HEAD'] },
-        'vitals.create': { uri: 'vitals\/create', methods: ['GET', 'HEAD'] },
         'vitals.store': { uri: 'vitals', methods: ['POST'] },
-        'vitals.show': {
-            uri: 'vitals\/{vital}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['vital'],
-        },
-        'vitals.edit': {
-            uri: 'vitals\/{vital}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['vital'],
-        },
         'vitals.update': {
             uri: 'vitals\/{vital}',
             methods: ['PUT', 'PATCH'],
@@ -165,34 +440,30 @@ const Ziggy = {
             parameters: ['vital'],
             bindings: { vital: 'id' },
         },
+        'vitals.index': {
+            uri: 'patients\/{patient}\/vitals',
+            methods: ['GET', 'HEAD'],
+            parameters: ['patient'],
+            bindings: { patient: 'id' },
+        },
         'admissions.index': { uri: 'admissions', methods: ['GET', 'HEAD'] },
-        'admissions.store': { uri: 'admissions', methods: ['POST'] },
         'admissions.show': {
             uri: 'admissions\/{admission}',
             methods: ['GET', 'HEAD'],
             parameters: ['admission'],
             bindings: { admission: 'id' },
         },
-        'admissions.edit': {
-            uri: 'admissions\/{admission}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['admission'],
-        },
         'admissions.update': {
             uri: 'admissions\/{admission}',
             methods: ['PUT', 'PATCH'],
             parameters: ['admission'],
-        },
-        'admissions.destroy': {
-            uri: 'admissions\/{admission}',
-            methods: ['DELETE'],
-            parameters: ['admission'],
+            bindings: { admission: 'id' },
         },
         'admissions.create': {
-            uri: 'admissions\/create\/{patient}',
+            uri: 'admissions\/create\/{admission}',
             methods: ['GET', 'HEAD'],
-            parameters: ['patient'],
-            bindings: { patient: 'id' },
+            parameters: ['admission'],
+            bindings: { admission: 'id' },
         },
         'request-admission': {
             uri: 'request-admission\/{patient}',
@@ -217,33 +488,50 @@ const Ziggy = {
             parameters: ['consultation'],
             bindings: { consultation: 'id' },
         },
-        'consultations.edit': {
-            uri: 'consultations\/{consultation}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['consultation'],
-        },
-        'consultations.update': {
-            uri: 'consultations\/{consultation}',
-            methods: ['PUT', 'PATCH'],
-            parameters: ['consultation'],
-        },
-        'consultations.destroy': {
-            uri: 'consultations\/{consultation}',
-            methods: ['DELETE'],
-            parameters: ['consultation'],
-        },
-        'consultation.detail': {
-            uri: 'consultation-detail\/{id}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['id'],
-        },
         'patients.consultations.index': {
             uri: 'patients\/{patient}\/consultations',
             methods: ['GET', 'HEAD'],
             parameters: ['patient'],
             bindings: { patient: 'id' },
         },
-        'medical.records': { uri: 'medical-records', methods: ['GET', 'HEAD'] },
+        'prescriptions.index': {
+            uri: 'prescriptions',
+            methods: ['GET', 'HEAD'],
+        },
+        'prescriptions.create': {
+            uri: 'prescriptions\/create',
+            methods: ['GET', 'HEAD'],
+        },
+        'prescriptions.store': { uri: 'prescriptions', methods: ['POST'] },
+        'prescriptions.show': {
+            uri: 'prescriptions\/{prescription}',
+            methods: ['GET', 'HEAD'],
+            parameters: ['prescription'],
+            bindings: { prescription: 'id' },
+        },
+        'prescriptions.destroy': {
+            uri: 'prescriptions\/{prescription}',
+            methods: ['DELETE'],
+            parameters: ['prescription'],
+            bindings: { prescription: 'id' },
+        },
+        'prescriptions.dispense': {
+            uri: 'prescriptions\/{prescription}\/dispense',
+            methods: ['POST'],
+            parameters: ['prescription'],
+            bindings: { prescription: 'id' },
+        },
+        'certificates.create': {
+            uri: 'certificates',
+            methods: ['GET', 'HEAD'],
+        },
+        'certificates.store': { uri: 'certificates', methods: ['POST'] },
+        'certificates.print': {
+            uri: 'certificates\/{certificate}\/print',
+            methods: ['GET', 'HEAD'],
+            parameters: ['certificate'],
+            bindings: { certificate: 'id' },
+        },
         'surgeries.index': { uri: 'surgeries', methods: ['GET', 'HEAD'] },
         'surgeries.create': {
             uri: 'surgeries\/create',
@@ -274,34 +562,8 @@ const Ziggy = {
             parameters: ['surgery'],
             bindings: { surgery: 'id' },
         },
-        'emergencies.index': { uri: 'emergencies', methods: ['GET', 'HEAD'] },
-        'emergencies.create': {
-            uri: 'emergencies\/create',
-            methods: ['GET', 'HEAD'],
-        },
-        'emergencies.store': { uri: 'emergencies', methods: ['POST'] },
-        'emergencies.show': {
-            uri: 'emergencies\/{emergency}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['emergency'],
-        },
-        'emergencies.edit': {
-            uri: 'emergencies\/{emergency}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['emergency'],
-        },
-        'emergencies.update': {
-            uri: 'emergencies\/{emergency}',
-            methods: ['PUT', 'PATCH'],
-            parameters: ['emergency'],
-        },
-        'emergencies.destroy': {
-            uri: 'emergencies\/{emergency}',
-            methods: ['DELETE'],
-            parameters: ['emergency'],
-        },
-        'appointments.book': {
-            uri: 'appointments-book',
+        'appointments.calendar': {
+            uri: 'appointments\/calendar',
             methods: ['GET', 'HEAD'],
         },
         'appointments.index': { uri: 'appointments', methods: ['GET', 'HEAD'] },
@@ -310,40 +572,15 @@ const Ziggy = {
             methods: ['GET', 'HEAD'],
         },
         'appointments.store': { uri: 'appointments', methods: ['POST'] },
-        'appointments.show': {
-            uri: 'appointments\/{appointment}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['appointment'],
-        },
-        'appointments.edit': {
-            uri: 'appointments\/{appointment}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['appointment'],
-        },
         'appointments.update': {
             uri: 'appointments\/{appointment}',
             methods: ['PUT', 'PATCH'],
             parameters: ['appointment'],
             bindings: { appointment: 'id' },
         },
-        'appointments.destroy': {
-            uri: 'appointments\/{appointment}',
-            methods: ['DELETE'],
-            parameters: ['appointment'],
-        },
         'tests.index': { uri: 'lab\/tests', methods: ['GET', 'HEAD'] },
         'tests.create': { uri: 'lab\/tests\/create', methods: ['GET', 'HEAD'] },
         'tests.store': { uri: 'lab\/tests', methods: ['POST'] },
-        'tests.show': {
-            uri: 'lab\/tests\/{test}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['test'],
-        },
-        'tests.edit': {
-            uri: 'lab\/tests\/{test}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['test'],
-        },
         'tests.update': {
             uri: 'lab\/tests\/{test}',
             methods: ['PUT', 'PATCH'],
@@ -362,37 +599,12 @@ const Ziggy = {
             methods: ['GET', 'HEAD'],
         },
         'requests.store': { uri: 'lab\/requests', methods: ['POST'] },
-        'requests.show': {
-            uri: 'lab\/requests\/{request}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['request'],
-        },
-        'requests.edit': {
-            uri: 'lab\/requests\/{request}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['request'],
-        },
-        'requests.update': {
-            uri: 'lab\/requests\/{request}',
-            methods: ['PUT', 'PATCH'],
-            parameters: ['request'],
-        },
-        'requests.destroy': {
-            uri: 'lab\/requests\/{request}',
-            methods: ['DELETE'],
-            parameters: ['request'],
-        },
         'results.index': { uri: 'lab\/results', methods: ['GET', 'HEAD'] },
         'results.create': {
             uri: 'lab\/results\/create',
             methods: ['GET', 'HEAD'],
         },
         'results.store': { uri: 'lab\/results', methods: ['POST'] },
-        'results.show': {
-            uri: 'lab\/results\/{result}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['result'],
-        },
         'results.edit': {
             uri: 'lab\/results\/{result}\/edit',
             methods: ['GET', 'HEAD'],
@@ -403,11 +615,94 @@ const Ziggy = {
             uri: 'lab\/results\/{result}',
             methods: ['PUT', 'PATCH'],
             parameters: ['result'],
+            bindings: { result: 'id' },
         },
         'results.destroy': {
             uri: 'lab\/results\/{result}',
             methods: ['DELETE'],
             parameters: ['result'],
+            bindings: { result: 'id' },
+        },
+        'radiology.requests.index': {
+            uri: 'radiology\/requests',
+            methods: ['GET', 'HEAD'],
+        },
+        'radiology.requests.create': {
+            uri: 'radiology\/requests\/create',
+            methods: ['GET', 'HEAD'],
+        },
+        'radiology.requests.store': {
+            uri: 'radiology\/requests',
+            methods: ['POST'],
+        },
+        'radiology.requests.show': {
+            uri: 'radiology\/requests\/{request}',
+            methods: ['GET', 'HEAD'],
+            parameters: ['request'],
+            bindings: { request: 'id' },
+        },
+        'radiology.requests.destroy': {
+            uri: 'radiology\/requests\/{request}',
+            methods: ['DELETE'],
+            parameters: ['request'],
+            bindings: { request: 'id' },
+        },
+        'radiology.requests.print': {
+            uri: 'radiology\/requests\/{request}\/print',
+            methods: ['GET', 'HEAD'],
+            parameters: ['request'],
+            bindings: { request: 'id' },
+        },
+        'radiology.results.index': {
+            uri: 'radiology\/results',
+            methods: ['GET', 'HEAD'],
+        },
+        'radiology.results.create': {
+            uri: 'radiology\/results\/create',
+            methods: ['GET', 'HEAD'],
+        },
+        'radiology.results.store': {
+            uri: 'radiology\/results',
+            methods: ['POST'],
+        },
+        'radiology.results.edit': {
+            uri: 'radiology\/results\/{result}\/edit',
+            methods: ['GET', 'HEAD'],
+            parameters: ['result'],
+            bindings: { result: 'id' },
+        },
+        'radiology.results.update': {
+            uri: 'radiology\/results\/{result}',
+            methods: ['PUT', 'PATCH'],
+            parameters: ['result'],
+            bindings: { result: 'id' },
+        },
+        'radiology.results.validate': {
+            uri: 'radiology\/results\/{result}\/validate',
+            methods: ['POST'],
+            parameters: ['result'],
+            bindings: { result: 'id' },
+        },
+        'emergencies.index': { uri: 'emergencies', methods: ['GET', 'HEAD'] },
+        'emergencies.create': {
+            uri: 'emergencies\/create',
+            methods: ['GET', 'HEAD'],
+        },
+        'emergencies.store': { uri: 'emergencies', methods: ['POST'] },
+        'emergencies.show': {
+            uri: 'emergencies\/{emergency}',
+            methods: ['GET', 'HEAD'],
+            parameters: ['emergency'],
+        },
+        'emergencies.update': {
+            uri: 'emergencies\/{emergency}',
+            methods: ['PUT', 'PATCH'],
+            parameters: ['emergency'],
+        },
+        'emergencies.destroy': {
+            uri: 'emergencies\/{emergency}',
+            methods: ['DELETE'],
+            parameters: ['emergency'],
         },
         'drugs.index': { uri: 'pharmacy\/drugs', methods: ['GET', 'HEAD'] },
         'drugs.create': {
@@ -415,16 +710,6 @@ const Ziggy = {
             methods: ['GET', 'HEAD'],
         },
         'drugs.store': { uri: 'pharmacy\/drugs', methods: ['POST'] },
-        'drugs.show': {
-            uri: 'pharmacy\/drugs\/{drug}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['drug'],
-        },
-        'drugs.edit': {
-            uri: 'pharmacy\/drugs\/{drug}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['drug'],
-        },
         'drugs.update': {
             uri: 'pharmacy\/drugs\/{drug}',
             methods: ['PUT', 'PATCH'],
@@ -447,76 +732,12 @@ const Ziggy = {
             uri: 'pharmacy\/dispensation',
             methods: ['GET', 'HEAD'],
         },
-        'dispensation.create': {
-            uri: 'pharmacy\/dispensation\/create',
-            methods: ['GET', 'HEAD'],
-        },
         'dispensation.store': {
             uri: 'pharmacy\/dispensation',
             methods: ['POST'],
         },
-        'dispensation.show': {
-            uri: 'pharmacy\/dispensation\/{dispensation}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['dispensation'],
-        },
-        'dispensation.edit': {
-            uri: 'pharmacy\/dispensation\/{dispensation}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['dispensation'],
-        },
-        'dispensation.update': {
-            uri: 'pharmacy\/dispensation\/{dispensation}',
-            methods: ['PUT', 'PATCH'],
-            parameters: ['dispensation'],
-        },
-        'dispensation.destroy': {
-            uri: 'pharmacy\/dispensation\/{dispensation}',
-            methods: ['DELETE'],
-            parameters: ['dispensation'],
-        },
-        'infrastructure.index': {
-            uri: 'infrastructure',
-            methods: ['GET', 'HEAD'],
-        },
-        'infrastructure.create': {
-            uri: 'infrastructure\/create',
-            methods: ['GET', 'HEAD'],
-        },
-        'infrastructure.store': { uri: 'infrastructure', methods: ['POST'] },
-        'infrastructure.show': {
-            uri: 'infrastructure\/{infrastructure}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['infrastructure'],
-        },
-        'infrastructure.edit': {
-            uri: 'infrastructure\/{infrastructure}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['infrastructure'],
-        },
-        'infrastructure.update': {
-            uri: 'infrastructure\/{infrastructure}',
-            methods: ['PUT', 'PATCH'],
-            parameters: ['infrastructure'],
-        },
-        'infrastructure.destroy': {
-            uri: 'infrastructure\/{infrastructure}',
-            methods: ['DELETE'],
-            parameters: ['infrastructure'],
-        },
         'wards.index': { uri: 'wards', methods: ['GET', 'HEAD'] },
-        'wards.create': { uri: 'wards\/create', methods: ['GET', 'HEAD'] },
         'wards.store': { uri: 'wards', methods: ['POST'] },
-        'wards.show': {
-            uri: 'wards\/{ward}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['ward'],
-        },
-        'wards.edit': {
-            uri: 'wards\/{ward}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['ward'],
-        },
         'wards.update': {
             uri: 'wards\/{ward}',
             methods: ['PUT', 'PATCH'],
@@ -530,18 +751,7 @@ const Ziggy = {
             bindings: { ward: 'id' },
         },
         'beds.index': { uri: 'beds', methods: ['GET', 'HEAD'] },
-        'beds.create': { uri: 'beds\/create', methods: ['GET', 'HEAD'] },
         'beds.store': { uri: 'beds', methods: ['POST'] },
-        'beds.show': {
-            uri: 'beds\/{bed}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['bed'],
-        },
-        'beds.edit': {
-            uri: 'beds\/{bed}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['bed'],
-        },
         'beds.update': {
             uri: 'beds\/{bed}',
             methods: ['PUT', 'PATCH'],
@@ -555,21 +765,7 @@ const Ziggy = {
             bindings: { bed: 'id' },
         },
         'bed-types.index': { uri: 'bed-types', methods: ['GET', 'HEAD'] },
-        'bed-types.create': {
-            uri: 'bed-types\/create',
-            methods: ['GET', 'HEAD'],
-        },
         'bed-types.store': { uri: 'bed-types', methods: ['POST'] },
-        'bed-types.show': {
-            uri: 'bed-types\/{bed_type}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['bed_type'],
-        },
-        'bed-types.edit': {
-            uri: 'bed-types\/{bed_type}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['bed_type'],
-        },
         'bed-types.update': {
             uri: 'bed-types\/{bed_type}',
             methods: ['PUT', 'PATCH'],
@@ -592,11 +788,6 @@ const Ziggy = {
             methods: ['GET', 'HEAD'],
         },
         'supplies.store': { uri: 'supplies', methods: ['POST'] },
-        'supplies.show': {
-            uri: 'supplies\/{supply}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['supply'],
-        },
         'supplies.edit': {
             uri: 'supplies\/{supply}\/edit',
             methods: ['GET', 'HEAD'],
@@ -622,21 +813,7 @@ const Ziggy = {
             bindings: { supply: 'id' },
         },
         'departments.index': { uri: 'departments', methods: ['GET', 'HEAD'] },
-        'departments.create': {
-            uri: 'departments\/create',
-            methods: ['GET', 'HEAD'],
-        },
         'departments.store': { uri: 'departments', methods: ['POST'] },
-        'departments.show': {
-            uri: 'departments\/{department}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['department'],
-        },
-        'departments.edit': {
-            uri: 'departments\/{department}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['department'],
-        },
         'departments.update': {
             uri: 'departments\/{department}',
             methods: ['PUT', 'PATCH'],
@@ -681,11 +858,115 @@ const Ziggy = {
             parameters: ['invoice'],
             bindings: { invoice: 'id' },
         },
+        'invoices.record-payment': {
+            uri: 'finance\/invoices\/{invoice}\/record-payment',
+            methods: ['POST'],
+            parameters: ['invoice'],
+            bindings: { invoice: 'id' },
+        },
         'finance.invoices.destroy': {
             uri: 'finance\/invoices\/{invoice}',
             methods: ['DELETE'],
             parameters: ['invoice'],
             bindings: { invoice: 'id' },
+        },
+        'payers.index': { uri: 'finance\/payers', methods: ['GET', 'HEAD'] },
+        'payers.store': { uri: 'finance\/payers', methods: ['POST'] },
+        'payers.update': {
+            uri: 'finance\/payers\/{payer}',
+            methods: ['PUT', 'PATCH'],
+            parameters: ['payer'],
+            bindings: { payer: 'id' },
+        },
+        'patient-insurances.index': {
+            uri: 'finance\/patient-insurances',
+            methods: ['GET', 'HEAD'],
+        },
+        'patient-insurances.create': {
+            uri: 'finance\/patient-insurances\/create',
+            methods: ['GET', 'HEAD'],
+        },
+        'patient-insurances.store': {
+            uri: 'finance\/patient-insurances',
+            methods: ['POST'],
+        },
+        'patient-insurances.edit': {
+            uri: 'finance\/patient-insurances\/{patient_insurance}\/edit',
+            methods: ['GET', 'HEAD'],
+            parameters: ['patient_insurance'],
+        },
+        'patient-insurances.update': {
+            uri: 'finance\/patient-insurances\/{patient_insurance}',
+            methods: ['PUT', 'PATCH'],
+            parameters: ['patient_insurance'],
+        },
+        'patient-insurances.destroy': {
+            uri: 'finance\/patient-insurances\/{patient_insurance}',
+            methods: ['DELETE'],
+            parameters: ['patient_insurance'],
+        },
+        'invoices.claim': {
+            uri: 'finance\/invoices\/{invoice}\/submit-claim',
+            methods: ['POST'],
+            parameters: ['invoice'],
+            bindings: { invoice: 'id' },
+        },
+        'finance.claims.index': {
+            uri: 'finance\/claims',
+            methods: ['GET', 'HEAD'],
+        },
+        'finance.claims.show': {
+            uri: 'finance\/claims\/{claim}',
+            methods: ['GET', 'HEAD'],
+            parameters: ['claim'],
+            bindings: { claim: 'id' },
+        },
+        'finance.claims.store': { uri: 'finance\/claims', methods: ['POST'] },
+        'finance.claims.update': {
+            uri: 'finance\/claims\/{claim}',
+            methods: ['PATCH'],
+            parameters: ['claim'],
+            bindings: { claim: 'id' },
+        },
+        'finance.services.index': {
+            uri: 'finance\/services',
+            methods: ['GET', 'HEAD'],
+        },
+        'finance.services.create': {
+            uri: 'finance\/services\/create',
+            methods: ['GET', 'HEAD'],
+        },
+        'finance.services.store': {
+            uri: 'finance\/services',
+            methods: ['POST'],
+        },
+        'finance.services.edit': {
+            uri: 'finance\/services\/{service}\/edit',
+            methods: ['GET', 'HEAD'],
+            parameters: ['service'],
+            bindings: { service: 'id' },
+        },
+        'finance.services.update': {
+            uri: 'finance\/services\/{service}',
+            methods: ['PUT', 'PATCH'],
+            parameters: ['service'],
+            bindings: { service: 'id' },
+        },
+        'finance.services.destroy': {
+            uri: 'finance\/services\/{service}',
+            methods: ['DELETE'],
+            parameters: ['service'],
+            bindings: { service: 'id' },
+        },
+        'finance.services.price': {
+            uri: 'finance\/services\/{service}\/price',
+            methods: ['PUT'],
+            parameters: ['service'],
+            bindings: { service: 'id' },
+        },
+        'finance.reports.rpm': {
+            uri: 'finance\/reports\/rpm',
+            methods: ['GET', 'HEAD'],
         },
         'expenditures.store': {
             uri: 'api\/finance\/expenditures',
@@ -703,45 +984,44 @@ const Ziggy = {
             parameters: ['expenditure'],
             bindings: { expenditure: 'id' },
         },
-        'feedback.index': { uri: 'feedback', methods: ['GET', 'HEAD'] },
-        'feedback.create': {
-            uri: 'feedback\/create',
+        'caisse.index': { uri: 'caisse', methods: ['GET', 'HEAD'] },
+        'caisse.shifts': { uri: 'caisse\/shifts', methods: ['GET', 'HEAD'] },
+        'caisse.patients': {
+            uri: 'caisse\/patients',
             methods: ['GET', 'HEAD'],
         },
-        'feedback.store': { uri: 'feedback', methods: ['POST'] },
-        'feedback.show': {
-            uri: 'feedback\/{feedback}',
+        'caisse.outstanding': {
+            uri: 'caisse\/outstanding\/{patient}',
             methods: ['GET', 'HEAD'],
-            parameters: ['feedback'],
+            parameters: ['patient'],
+            bindings: { patient: 'id' },
         },
-        'feedback.edit': {
-            uri: 'feedback\/{feedback}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['feedback'],
+        'caisse.charges.store': { uri: 'caisse\/charges', methods: ['POST'] },
+        'caisse.charges.update': {
+            uri: 'caisse\/charges\/{item}',
+            methods: ['PATCH'],
+            parameters: ['item'],
+            bindings: { item: 'id' },
         },
-        'feedback.update': {
-            uri: 'feedback\/{feedback}',
-            methods: ['PUT', 'PATCH'],
-            parameters: ['feedback'],
-        },
-        'feedback.destroy': {
-            uri: 'feedback\/{feedback}',
+        'caisse.charges.destroy': {
+            uri: 'caisse\/charges\/{item}',
             methods: ['DELETE'],
-            parameters: ['feedback'],
+            parameters: ['item'],
+            bindings: { item: 'id' },
+        },
+        'caisse.settle': { uri: 'caisse\/settle', methods: ['POST'] },
+        'caisse.open': { uri: 'caisse\/open-shift', methods: ['POST'] },
+        'caisse.close': { uri: 'caisse\/close-shift', methods: ['POST'] },
+        'caisse.pay': { uri: 'caisse\/pay', methods: ['POST'] },
+        'caisse.receipt': {
+            uri: 'caisse\/receipt\/{payment}',
+            methods: ['GET', 'HEAD'],
+            parameters: ['payment'],
+            bindings: { payment: 'id' },
         },
         'users.index': { uri: 'users', methods: ['GET', 'HEAD'] },
         'users.create': { uri: 'users\/create', methods: ['GET', 'HEAD'] },
         'users.store': { uri: 'users', methods: ['POST'] },
-        'users.show': {
-            uri: 'users\/{user}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['user'],
-        },
-        'users.edit': {
-            uri: 'users\/{user}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['user'],
-        },
         'users.update': {
             uri: 'users\/{user}',
             methods: ['PUT', 'PATCH'],
@@ -755,19 +1035,7 @@ const Ziggy = {
             bindings: { user: 'id' },
         },
         'shifts.index': { uri: 'shifts', methods: ['GET', 'HEAD'] },
-        'shifts.create': { uri: 'shifts\/create', methods: ['GET', 'HEAD'] },
         'shifts.store': { uri: 'shifts', methods: ['POST'] },
-        'shifts.show': {
-            uri: 'shifts\/{shift}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['shift'],
-        },
-        'shifts.edit': {
-            uri: 'shifts\/{shift}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['shift'],
-            bindings: { shift: 'id' },
-        },
         'shifts.update': {
             uri: 'shifts\/{shift}',
             methods: ['PUT', 'PATCH'],
@@ -781,18 +1049,7 @@ const Ziggy = {
             bindings: { shift: 'id' },
         },
         'roles.index': { uri: 'roles', methods: ['GET', 'HEAD'] },
-        'roles.create': { uri: 'roles\/create', methods: ['GET', 'HEAD'] },
         'roles.store': { uri: 'roles', methods: ['POST'] },
-        'roles.show': {
-            uri: 'roles\/{role}',
-            methods: ['GET', 'HEAD'],
-            parameters: ['role'],
-        },
-        'roles.edit': {
-            uri: 'roles\/{role}\/edit',
-            methods: ['GET', 'HEAD'],
-            parameters: ['role'],
-        },
         'roles.update': {
             uri: 'roles\/{role}',
             methods: ['PUT', 'PATCH'],
@@ -806,23 +1063,45 @@ const Ziggy = {
             bindings: { role: 'id' },
         },
         'audit.logs': { uri: 'audit-logs', methods: ['GET', 'HEAD'] },
-        'storage.local': {
-            uri: 'storage\/{path}',
+        'notifications.index': {
+            uri: 'notifications',
             methods: ['GET', 'HEAD'],
-            wheres: { path: '.*' },
-            parameters: ['path'],
         },
-        'storage.local.upload': {
-            uri: 'storage\/{path}',
-            methods: ['PUT'],
-            wheres: { path: '.*' },
-            parameters: ['path'],
+        'notifications.latest': {
+            uri: 'notifications\/latest',
+            methods: ['GET', 'HEAD'],
+        },
+        'notifications.read': {
+            uri: 'notifications\/{id}\/read',
+            methods: ['POST'],
+            parameters: ['id'],
+        },
+        'notifications.mark-all-read': {
+            uri: 'notifications\/mark-all-read',
+            methods: ['POST'],
+        },
+        'tenant.billing': { uri: 'billing', methods: ['GET', 'HEAD'] },
+        'tenant.tickets.index': { uri: 'support', methods: ['GET', 'HEAD'] },
+        'tenant.tickets.create': {
+            uri: 'support\/create',
+            methods: ['GET', 'HEAD'],
+        },
+        'tenant.tickets.store': { uri: 'support', methods: ['POST'] },
+        'tenant.tickets.show': {
+            uri: 'support\/{supportTicket}',
+            methods: ['GET', 'HEAD'],
+            parameters: ['supportTicket'],
+            bindings: { supportTicket: 'id' },
+        },
+        'tenant.tickets.reply': {
+            uri: 'support\/{supportTicket}\/reply',
+            methods: ['POST'],
+            parameters: ['supportTicket'],
+            bindings: { supportTicket: 'id' },
         },
     },
 };
-
 if (typeof window !== 'undefined' && typeof window.Ziggy !== 'undefined') {
     Object.assign(Ziggy.routes, window.Ziggy.routes);
 }
-
 export { Ziggy };

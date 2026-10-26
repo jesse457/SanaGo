@@ -9,7 +9,29 @@ import {
     ServerStackIcon,
 } from '@heroicons/react/24/outline';
 import { Head, Link } from '@inertiajs/react';
-import { Button } from '@/Components/ui';
+import {
+    Badge,
+    Button,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/Components/ui';
+import { cn } from '@/lib/utils';
+
+/**
+ * What the server attaches to this page when `app.debug` is on — see
+ * `App\Support\ErrorReport`. Absent in production.
+ */
+interface DebugDetails {
+    exception: string;
+    message: string;
+    location: string | null;
+    previous: string | null;
+    request: string | null;
+    trace: Array<{ call: string; location: string | null }>;
+}
 
 interface Props {
     status: number;
@@ -22,6 +44,8 @@ interface Props {
     message?: string;
     /** The plan feature key that is missing, e.g. `radiology`. */
     feature?: string;
+    /** Technical detail of the failure. Local builds only. */
+    debug?: DebugDetails | null;
 }
 
 type ErrorCopy = {
@@ -87,7 +111,13 @@ const FALLBACK: ErrorCopy = {
  * the Inertia exception handler in `bootstrap/app.php`, so users never land on
  * a bare Laravel error page.
  */
-export default function Error({ status, title, message, feature }: Props) {
+export default function Error({
+    status,
+    title,
+    message,
+    feature,
+    debug,
+}: Props) {
     const copy = COPY[status] ?? FALLBACK;
 
     // Backend copy wins where present: a 402 knows which plan lapsed, and a 403
@@ -126,7 +156,13 @@ export default function Error({ status, title, message, feature }: Props) {
                 </header>
 
                 <main className="flex flex-1 items-center justify-center px-5 pb-20 sm:px-8">
-                    <div className="w-full max-w-lg">
+                    {/* The debug panel needs room for stack frames. */}
+                    <div
+                        className={cn(
+                            'w-full',
+                            debug ? 'max-w-3xl' : 'max-w-lg',
+                        )}
+                    >
                         <p
                             data-numeric
                             className="text-[64px] leading-none font-semibold tracking-[-0.04em] text-ink-subtle/45 tabular-nums sm:text-[80px]"
@@ -190,9 +226,104 @@ export default function Error({ status, title, message, feature }: Props) {
                             </span>{' '}
                             when you contact support.
                         </p>
+
+                        {debug && <DebugPanel details={debug} />}
                     </div>
                 </main>
             </div>
         </>
+    );
+}
+
+/**
+ * The failure itself, for whoever is building this: what threw, where from and
+ * what the request was. Only ever rendered when the backend sends `debug`,
+ * which it does for `APP_DEBUG=true` builds alone — a production visitor must
+ * never read our file paths.
+ */
+function DebugPanel({ details }: { details: DebugDetails }) {
+    const { exception, message, location, previous, request, trace } = details;
+
+    return (
+        <Card className="mt-6">
+            <CardHeader
+                actions={
+                    <Badge tone="warning" size="sm">
+                        Debug
+                    </Badge>
+                }
+            >
+                <CardTitle>Why this failed</CardTitle>
+                <CardDescription>
+                    Shown because <code className="font-mono">APP_DEBUG</code>{' '}
+                    is on. Turn it off before this build reaches a real
+                    hospital.
+                </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+                <div>
+                    <p className="font-mono text-[11.5px] break-words text-ink">
+                        {exception}
+                    </p>
+                    <p className="mt-1.5 font-mono text-[12px] leading-relaxed break-words whitespace-pre-wrap text-critical-ink">
+                        {message}
+                    </p>
+                    {previous && (
+                        <p className="mt-2 font-mono text-[11px] leading-relaxed break-words whitespace-pre-wrap text-ink-subtle">
+                            {previous}
+                        </p>
+                    )}
+                </div>
+
+                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 border-t border-line pt-3 text-[11.5px]">
+                    {location && (
+                        <>
+                            <dt className="text-ink-subtle">Thrown at</dt>
+                            <dd className="font-mono break-all text-ink-muted">
+                                {location}
+                            </dd>
+                        </>
+                    )}
+                    {request && (
+                        <>
+                            <dt className="text-ink-subtle">Request</dt>
+                            <dd className="font-mono break-all text-ink-muted">
+                                {request}
+                            </dd>
+                        </>
+                    )}
+                </dl>
+
+                {trace.length > 0 && (
+                    <div className="border-t border-line pt-3">
+                        <p className="text-[11px] font-medium tracking-wide text-ink-subtle uppercase">
+                            Stack trace
+                        </p>
+                        <ol className="mt-2 space-y-1">
+                            {trace.map((frame, index) => (
+                                <li
+                                    key={`${index}-${frame.call}`}
+                                    className="flex gap-2 font-mono text-[11px] leading-relaxed"
+                                >
+                                    <span className="w-4 shrink-0 text-right text-ink-subtle/70 tabular-nums">
+                                        {index + 1}
+                                    </span>
+                                    <span className="min-w-0 break-all text-ink-muted">
+                                        {frame.call}
+                                        {frame.location && (
+                                            <span className="text-ink-subtle">
+                                                {' — '}
+                                                {frame.location}
+                                            </span>
+                                        )}
+                                    </span>
+                                </li>
+                            ))}
+                        </ol>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
 }

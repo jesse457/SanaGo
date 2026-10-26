@@ -1,8 +1,13 @@
 import { createInertiaApp } from '@inertiajs/react';
 import { createRoot } from 'react-dom/client';
-// Side-effect import: initialises `window.Echo` when VITE_REVERB_APP_KEY is
-// set, and leaves it undefined (polling fallback) when it is not.
-import '@/echo';
+
+// Real-time is opt-in. Keep Echo/Pusher out of the entry bundle unless Reverb
+// is actually configured; consumers fall back to polling when it is absent.
+if (import.meta.env.VITE_REVERB_APP_KEY) {
+    void import('@/echo')
+        .then(({ initEcho }) => initEcho())
+        .catch(() => undefined);
+}
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

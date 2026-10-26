@@ -1,4 +1,5 @@
 import type { ComponentType, SVGProps, TextareaHTMLAttributes } from 'react';
+import { useControlInvalid } from '@/Components/ui/FieldContext';
 import { controlBase, controlState } from '@/Components/ui/Input';
 import { cn } from '@/lib/utils';
 
@@ -9,12 +10,14 @@ export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
 }
 
 export function Textarea({
-    invalid = false,
+    invalid,
     icon: Icon,
     className,
     rows = 3,
     ...props
 }: TextareaProps) {
+    const isInvalid = useControlInvalid(invalid, props.name, props.id);
+
     const field = (
         <textarea
             rows={rows}
@@ -24,10 +27,10 @@ export function Textarea({
                 // same border/inset/focus treatment and only pad vertically.
                 'min-h-20 resize-y py-2.5 leading-relaxed',
                 Icon && 'pl-9',
-                invalid ? controlState.invalid : controlState.default,
+                isInvalid ? controlState.invalid : controlState.default,
                 className,
             )}
-            aria-invalid={invalid || undefined}
+            aria-invalid={isInvalid || undefined}
             {...props}
         />
     );

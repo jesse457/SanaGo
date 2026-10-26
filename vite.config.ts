@@ -23,6 +23,18 @@ export default defineConfig({
                     subsets: ['latin', 'latin-ext'],
                     display: 'swap',
                 }),
+                /*
+                 * Instrument Serif is the marketing voice: it carries only the
+                 * display lines of the public site (`--font-editorial`), so it
+                 * is not preloaded and never touches the product UI.
+                 */
+                bunny('Instrument Serif', {
+                    weights: [400],
+                    styles: ['normal', 'italic'],
+                    subsets: ['latin'],
+                    display: 'swap',
+                    preload: false,
+                }),
             ],
         }),
         inertia(),

@@ -1,4 +1,5 @@
 import type { ComponentType, InputHTMLAttributes, SVGProps } from 'react';
+import { useControlInvalid } from '@/Components/ui/FieldContext';
 import { cn } from '@/lib/utils';
 
 /**
@@ -29,21 +30,23 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export function Input({
-    invalid = false,
+    invalid,
     icon: Icon,
     className,
     ...props
 }: InputProps) {
+    const isInvalid = useControlInvalid(invalid, props.name, props.id);
+
     if (!Icon) {
         return (
             <input
                 className={cn(
                     controlBase,
                     'h-10',
-                    invalid ? controlState.invalid : controlState.default,
+                    isInvalid ? controlState.invalid : controlState.default,
                     className,
                 )}
-                aria-invalid={invalid || undefined}
+                aria-invalid={isInvalid || undefined}
                 {...props}
             />
         );
@@ -56,10 +59,10 @@ export function Input({
                 className={cn(
                     controlBase,
                     'h-10 pl-9',
-                    invalid ? controlState.invalid : controlState.default,
+                    isInvalid ? controlState.invalid : controlState.default,
                     className,
                 )}
-                aria-invalid={invalid || undefined}
+                aria-invalid={isInvalid || undefined}
                 {...props}
             />
         </div>

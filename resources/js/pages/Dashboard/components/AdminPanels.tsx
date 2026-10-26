@@ -27,10 +27,10 @@ export interface MetricCardConfig {
     trend?: StatTrend;
     /** Bottom occupancy bar (0–100). */
     occupancy?: { percentage: number };
-    /** Completed / waiting / cancelled split. */
+    /** Completed / scheduled / cancelled split. */
     composition?: {
         completed: number;
-        waiting: number;
+        scheduled: number;
         cancelled: number;
         total: number;
     };
@@ -113,7 +113,7 @@ export function AdminMetricCard({
                                     <div
                                         className="bg-warning transition-[width] duration-500 ease-premium"
                                         style={{
-                                            width: `${(composition.waiting / Math.max(composition.total, 1)) * 100}%`,
+                                            width: `${(composition.scheduled / Math.max(composition.total, 1)) * 100}%`,
                                         }}
                                     />
                                     <div
@@ -130,7 +130,7 @@ export function AdminMetricCard({
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <span className="h-1.5 w-1.5 rounded-full bg-warning" />
-                                        Wait {composition.waiting}
+                                        Upcoming {composition.scheduled}
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <span className="h-1.5 w-1.5 rounded-full bg-critical" />

@@ -1,4 +1,5 @@
 import type { SelectHTMLAttributes } from 'react';
+import { useControlInvalid } from '@/Components/ui/FieldContext';
 import { controlBase, controlState } from '@/Components/ui/Input';
 import { cn } from '@/lib/utils';
 
@@ -20,19 +21,21 @@ export const selectChevronDark =
     "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237d838a' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")";
 
 export function Select({
-    invalid = false,
+    invalid,
     placeholder,
     className,
     children,
     ...props
 }: SelectProps) {
+    const isInvalid = useControlInvalid(invalid, props.name, props.id);
+
     return (
         <div className="relative min-w-0">
             <select
                 className={cn(
                     controlBase,
                     'h-10 cursor-pointer appearance-none pr-9',
-                    invalid ? controlState.invalid : controlState.default,
+                    isInvalid ? controlState.invalid : controlState.default,
                     className,
                 )}
                 style={{
@@ -40,7 +43,7 @@ export function Select({
                     backgroundRepeat: 'no-repeat',
                     backgroundPosition: 'right 0.65rem center',
                 }}
-                aria-invalid={invalid || undefined}
+                aria-invalid={isInvalid || undefined}
                 {...props}
             >
                 {placeholder && (

@@ -14,6 +14,7 @@ interface FormTextareaProps {
     onChange: (value: string) => void;
     rows?: number;
     className?: string;
+    invalid?: boolean;
 }
 
 /**
@@ -33,6 +34,7 @@ export default function FormTextarea({
     onChange,
     rows = 4,
     className = '',
+    invalid,
 }: FormTextareaProps) {
     const error = errors?.[name];
 
@@ -52,7 +54,7 @@ export default function FormTextarea({
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
                 rows={rows}
-                invalid={Boolean(error)}
+                invalid={invalid ?? Boolean(error)}
             />
         </Field>
     );

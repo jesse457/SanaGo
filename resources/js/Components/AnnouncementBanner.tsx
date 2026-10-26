@@ -2,11 +2,11 @@ import {
     CheckCircleIcon,
     ExclamationTriangleIcon,
     MegaphoneIcon,
+    XMarkIcon,
 } from '@heroicons/react/20/solid';
 import type { PageProps } from '@inertiajs/core';
 import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import { Alert } from '@/Components/ui';
 
 interface Announcement {
     id: number;
@@ -23,10 +23,16 @@ interface CustomPageProps extends PageProps {
     announcements?: Announcement[];
 }
 
+/*
+ * Solid tones rather than the soft ones: an announcement is a full-bleed strip
+ * across the top of the shell, so it needs to read as a band, not a card. Each
+ * tone pairs with `text-ink-inverse`, which flips with the theme and keeps
+ * contrast on both the dark and the light ends of the palette.
+ */
 const TONE_BY_TYPE = {
-    info: 'info',
-    warning: 'warning',
-    success: 'positive',
+    info: 'bg-accent',
+    warning: 'bg-warning',
+    success: 'bg-positive',
 } as const;
 
 const ICON_BY_TYPE = {
@@ -36,8 +42,8 @@ const ICON_BY_TYPE = {
 } as const;
 
 /**
- * AnnouncementBanner — system-wide notices above the shell. Uses the shared
- * Alert tones, one row per announcement, dismissible and persisted locally.
+ * AnnouncementBanner — system-wide notices as a single-line strip above the
+ * shell. One bar per announcement, dismissible and persisted locally.
  */
 export default function AnnouncementBanner() {
     const { props } = usePage<CustomPageProps>();
@@ -91,7 +97,7 @@ export default function AnnouncementBanner() {
         <div
             role="region"
             aria-label="System announcements"
-            className="relative z-40 flex w-full shrink-0 flex-col gap-2 border-b border-line bg-canvas px-4 py-2.5 lg:px-6"
+            className="relative z-40 flex w-full shrink-0 flex-col"
         >
             {visible.map((announcement) => {
                 const type = announcement.type ?? 'info';
@@ -102,40 +108,56 @@ export default function AnnouncementBanner() {
                     <div
                         key={announcement.id}
                         aria-live="polite"
-                        className={`origin-top transition-[opacity,transform] duration-300 ease-premium ${
+                        className={`origin-top overflow-hidden transition-[opacity,transform] duration-300 ease-premium ${
                             isDismissing
-                                ? 'pointer-events-none scale-y-95 opacity-0'
-                                : 'scale-y-100 opacity-100'
+                                ? 'pointer-events-none max-h-0 scale-y-95 opacity-0'
+                                : 'max-h-24 scale-y-100 opacity-100'
                         }`}
                     >
-                        <Alert
-                            tone={TONE_BY_TYPE[type] ?? 'info'}
-                            title={announcement.title}
-                            action={
-                                <div className="flex items-center gap-2">
-                                    {announcement.link_url && (
-                                        <a
-                                            href={announcement.link_url}
-                                            className="inline-flex items-center rounded-md border border-line-strong bg-surface px-2 py-1 text-[11.5px] font-semibold text-ink transition-colors duration-150 hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none"
-                                        >
-                                            {announcement.link_text ??
-                                                'Learn more'}
-                                        </a>
-                                    )}
-                                    <button
-                                        onClick={() =>
-                                            handleDismiss(announcement.id)
-                                        }
-                                        aria-label={`Dismiss announcement: ${announcement.title}`}
-                                        className="rounded-md p-1 text-ink-subtle transition-colors duration-150 hover:bg-surface-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none active:scale-90"
-                                    >
-                                        <Icon className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            }
+                        <div
+                            className={`flex items-center gap-2.5 px-4 py-2 text-ink-inverse lg:px-6 ${
+                                TONE_BY_TYPE[type] ?? TONE_BY_TYPE.info
+                            }`}
                         >
-                            {announcement.body}
-                        </Alert>
+                            <Icon
+                                className="h-4 w-4 shrink-0"
+                                aria-hidden="true"
+                            />
+                            <p className="min-w-0 flex-1 truncate text-[12.5px] leading-tight">
+                                <span className="font-semibold">
+                                    {announcement.title}
+                                </span>
+                                {announcement.body && (
+                                    <>
+                                        <span className="mx-2 opacity-40">
+                                            ·
+                                        </span>
+                                        <span className="opacity-85">
+                                            {announcement.body}
+                                        </span>
+                                    </>
+                                )}
+                                {announcement.link_url && (
+                                    <a
+                                        href={announcement.link_url}
+                                        className="ml-2 rounded-sm font-semibold underline decoration-ink-inverse/50 underline-offset-2 transition-opacity duration-150 hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ink-inverse/60 focus-visible:outline-none"
+                                    >
+                                        {announcement.link_text ?? 'Learn more'}
+                                    </a>
+                                )}
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => handleDismiss(announcement.id)}
+                                aria-label={`Dismiss announcement: ${announcement.title}`}
+                                className="shrink-0 cursor-pointer rounded-md p-1 text-ink-inverse/70 transition-[color,background-color] duration-150 ease-premium hover:bg-ink-inverse/15 hover:text-ink-inverse focus-visible:ring-2 focus-visible:ring-ink-inverse/60 focus-visible:outline-none active:scale-90"
+                            >
+                                <XMarkIcon
+                                    className="h-4 w-4"
+                                    aria-hidden="true"
+                                />
+                            </button>
+                        </div>
                     </div>
                 );
             })}

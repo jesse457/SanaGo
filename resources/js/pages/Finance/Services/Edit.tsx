@@ -5,6 +5,7 @@ import FormSelect from '@/Components/FormSelect';
 import FormTextarea from '@/Components/FormTextarea';
 import PageBreadcrumb from '@/Components/PageBreadcrumb';
 import PageSection from '@/Components/PageSection';
+import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 
 interface Service {
@@ -18,20 +19,21 @@ interface Service {
     requires_upfront_payment: boolean;
 }
 
-const CATEGORY_OPTIONS = [
-    { value: 'consultation', label: 'Consultation' },
-    { value: 'procedure', label: 'Procédure' },
-    { value: 'lab', label: 'Laboratoire' },
-    { value: 'radiology', label: 'Radiologie' },
-    { value: 'imaging', label: 'Imagerie' },
-    { value: 'medication', label: 'Médicament' },
-    { value: 'bed', label: 'Lit' },
-    { value: 'nursing', label: 'Soins Infirmiers' },
-    { value: 'emergency', label: 'Urgence' },
-    { value: 'other', label: 'Autre' },
-];
+export default function ServicesEdit({
+    service,
+    categories,
+}: {
+    service: Service;
+    /** `ServiceCategory` values, so the options are never a second list to keep. */
+    categories: string[];
+}) {
+    const { t } = useTranslation();
 
-export default function ServicesEdit({ service }: { service: Service }) {
+    const categoryOptions = categories.map((value) => ({
+        value,
+        label: t(`finance.services.index.category_${value}`),
+    }));
+
     const { data, setData, put, processing, errors } = useForm({
         name: service.name,
         code: service.code,
@@ -49,29 +51,38 @@ export default function ServicesEdit({ service }: { service: Service }) {
 
     return (
         <AppLayout
-            headerTitle="Modifier le Service"
-            headerSubtitle={`Modifier ${service.name}`}
+            headerTitle={t('finance.services.edit.title')}
+            headerSubtitle={t('finance.services.edit.subtitle', {
+                name: service.name,
+            })}
         >
-            <Head title={`Modifier ${service.name}`} />
+            <Head
+                title={t('finance.services.edit.subtitle', {
+                    name: service.name,
+                })}
+            />
 
             <div className="mx-auto max-w-3xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 <PageBreadcrumb
                     items={[
-                        { label: 'Accueil', href: route('dashboard') },
+                        { label: t('nav.home'), href: route('dashboard') },
                         {
-                            label: 'Services',
+                            label: t('nav.services_catalog'),
                             href: route('finance.services.index'),
                         },
                         { label: service.name },
                     ]}
                 />
 
-                <PageSection title="Détails du Service" icon={TagIcon}>
+                <PageSection
+                    title={t('finance.services.edit.details')}
+                    icon={TagIcon}
+                >
                     <form onSubmit={handleSubmit} className="space-y-6 p-6">
                         <div className="grid gap-6 sm:grid-cols-2">
                             <FormInput
                                 name="name"
-                                label="Nom du service"
+                                label={t('finance.services.edit.name')}
                                 required
                                 errors={errors}
                                 value={data.name}
@@ -79,7 +90,7 @@ export default function ServicesEdit({ service }: { service: Service }) {
                             />
                             <FormInput
                                 name="code"
-                                label="Code"
+                                label={t('finance.services.index.code')}
                                 required
                                 errors={errors}
                                 value={data.code}
@@ -89,16 +100,16 @@ export default function ServicesEdit({ service }: { service: Service }) {
 
                         <FormSelect
                             name="category"
-                            label="Catégorie"
+                            label={t('finance.services.index.category')}
                             required
                             value={data.category}
                             onChange={(v) => setData('category', v)}
-                            options={CATEGORY_OPTIONS}
+                            options={categoryOptions}
                         />
 
                         <FormInput
                             name="default_price"
-                            label="Prix par défaut (XAF)"
+                            label={t('finance.services.edit.price')}
                             type="number"
                             required
                             errors={errors}
@@ -110,7 +121,7 @@ export default function ServicesEdit({ service }: { service: Service }) {
 
                         <FormTextarea
                             name="description"
-                            label="Description"
+                            label={t('finance.services.edit.description')}
                             errors={errors}
                             value={data.description}
                             onChange={(v) => setData('description', v)}
@@ -132,7 +143,7 @@ export default function ServicesEdit({ service }: { service: Service }) {
                                     htmlFor="is_active"
                                     className="text-sm font-medium text-ink-muted"
                                 >
-                                    Service actif
+                                    {t('finance.services.edit.active')}
                                 </label>
                             </div>
 
@@ -153,7 +164,7 @@ export default function ServicesEdit({ service }: { service: Service }) {
                                     htmlFor="requires_upfront_payment"
                                     className="text-sm font-medium text-ink-muted"
                                 >
-                                    Paiement avant service requis
+                                    {t('finance.services.edit.upfront')}
                                 </label>
                             </div>
                         </div>
@@ -163,7 +174,7 @@ export default function ServicesEdit({ service }: { service: Service }) {
                                 href={route('finance.services.index')}
                                 className="rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-hover"
                             >
-                                Annuler
+                                {t('common.cancel')}
                             </Link>
                             <button
                                 type="submit"
@@ -173,12 +184,12 @@ export default function ServicesEdit({ service }: { service: Service }) {
                                 {processing ? (
                                     <span className="flex items-center gap-2">
                                         <ArrowPathIcon className="h-4 w-4 animate-spin" />{' '}
-                                        Enregistrement...
+                                        {t('finance.services.edit.saving')}
                                     </span>
                                 ) : (
                                     <span className="flex items-center gap-2">
                                         <CheckIcon className="h-4 w-4" />{' '}
-                                        Enregistrer
+                                        {t('finance.services.edit.save')}
                                     </span>
                                 )}
                             </button>

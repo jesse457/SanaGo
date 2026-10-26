@@ -6,7 +6,8 @@
  * consumer (the notification bell, activity feeds) falls back to polling. That
  * keeps local/dev and Reverb-less deployments working with zero configuration.
  *
- * Imported once, for its side effect, from `resources/js/app.tsx`.
+ * Dynamically imported from `resources/js/app.tsx` only when Reverb is
+ * configured, so Pusher never reaches the initial bundle otherwise.
  */
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
@@ -60,7 +61,5 @@ export function initEcho(): Echo<'reverb'> | undefined {
 
     return echo;
 }
-
-initEcho();
 
 export default initEcho;

@@ -43,7 +43,6 @@ export interface CalendarAppointment {
     appointment_date: string;
     appointment_time: string;
     status: string;
-    queue_position?: number | null;
     consultation_fee?: number | string | null;
     reason_for_visit?: string | null;
 }
@@ -598,24 +597,27 @@ export function AppointmentCalendar({ appointments }: Props) {
 
                 <div className="flex flex-wrap items-center gap-3">
                     <div className="hidden items-center gap-3 md:flex">
-                        {['scheduled', 'waiting', 'completed', 'cancelled'].map(
-                            (status) => (
+                        {[
+                            'scheduled',
+                            'in_consultation',
+                            'completed',
+                            'cancelled',
+                        ].map((status) => (
+                            <span
+                                key={status}
+                                className="flex items-center gap-1.5 text-[11px] font-medium text-ink-subtle"
+                            >
                                 <span
-                                    key={status}
-                                    className="flex items-center gap-1.5 text-[11px] font-medium text-ink-subtle"
-                                >
-                                    <span
-                                        className={cn(
-                                            'h-1.5 w-1.5 rounded-full',
-                                            statusDotClass(status),
-                                        )}
-                                    />
-                                    {t(
-                                        `page.appointment_calendar.status.${status}`,
+                                    className={cn(
+                                        'h-1.5 w-1.5 rounded-full',
+                                        statusDotClass(status),
                                     )}
-                                </span>
-                            ),
-                        )}
+                                />
+                                {t(
+                                    `page.appointment_calendar.status.${status}`,
+                                )}
+                            </span>
+                        ))}
                     </div>
                     <SegmentedControl
                         value={view}
@@ -720,16 +722,6 @@ export function AppointmentCalendar({ appointments }: Props) {
                                         'MMM d, yyyy',
                                     )}{' '}
                                     · {timeLabel(selected.appointment_time)}
-                                </dd>
-                            </div>
-                            <div>
-                                <dt className="text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
-                                    {t(
-                                        'page.appointment_calendar.details.queue_position',
-                                    )}
-                                </dt>
-                                <dd className="mt-0.5 text-[13px] font-medium text-ink tabular-nums">
-                                    {selected.queue_position ?? '—'}
                                 </dd>
                             </div>
                             <div>

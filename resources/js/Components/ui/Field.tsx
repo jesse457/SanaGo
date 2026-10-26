@@ -1,4 +1,8 @@
 import type { FieldsetHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
+import {
+    FieldErrorContext,
+    usePageFieldError,
+} from '@/Components/ui/FieldContext';
 import { cn } from '@/lib/utils';
 
 export interface FieldProps extends Omit<
@@ -32,6 +36,9 @@ export function Field({
     className,
     ...props
 }: FieldProps) {
+    const pageError = usePageFieldError(htmlFor);
+    const resolvedError = error ?? pageError;
+
     return (
         <div
             className={cn('flex min-w-0 flex-col gap-1.5', className)}
@@ -63,10 +70,18 @@ export function Field({
                     {labelAction}
                 </div>
             )}
-            {children}
-            {error ? (
+            <FieldErrorContext.Provider
+                value={
+                    resolvedError
+                        ? { invalid: true, error: resolvedError }
+                        : null
+                }
+            >
+                {children}
+            </FieldErrorContext.Provider>
+            {resolvedError ? (
                 <p className="animate-fade-in text-[12px] leading-snug font-medium text-critical-ink">
-                    {error}
+                    {resolvedError}
                 </p>
             ) : (
                 hint && (

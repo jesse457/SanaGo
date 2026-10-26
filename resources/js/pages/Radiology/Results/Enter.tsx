@@ -24,6 +24,7 @@ import {
 } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
+import { cn } from '@/lib/utils';
 import {
     humanise,
     imagingTypeLabel,
@@ -303,7 +304,12 @@ export default function EnterRadiologyResult({
                                     );
                                 }
                             }}
-                            className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-line-strong bg-surface-muted px-6 py-8 text-center transition-colors duration-200 ease-premium focus-within:border-accent hover:border-accent"
+                            className={cn(
+                                'flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed bg-surface-muted px-6 py-8 text-center transition-colors duration-200 ease-premium focus-within:border-accent hover:border-accent',
+                                errors.attachments
+                                    ? 'border-critical/70'
+                                    : 'border-line-strong',
+                            )}
                         >
                             <CloudArrowUpIcon className="mb-2 h-8 w-8 text-ink-subtle" />
                             <p className="text-[13px] font-medium text-ink">
@@ -321,6 +327,9 @@ export default function EnterRadiologyResult({
                                 id="attachments"
                                 type="file"
                                 multiple
+                                aria-invalid={
+                                    Boolean(errors.attachments) || undefined
+                                }
                                 accept="application/pdf,image/jpeg,image/png,image/webp"
                                 className="sr-only"
                                 onChange={(event) =>

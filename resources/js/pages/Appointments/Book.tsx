@@ -98,8 +98,8 @@ export default function BookAppointment({ doctors, patients }: Props) {
 
     return (
         <AppLayout
-            headerTitle={t('queueManagement')}
-            headerSubtitle={t('assigningPatientsToStreams')}
+            headerTitle={t('manageAppointments')}
+            headerSubtitle={t('schedulePatientVisits')}
         >
             <Head title={t('bookAppointment')} />
 
@@ -147,6 +147,7 @@ export default function BookAppointment({ doctors, patients }: Props) {
                                             onChange={(value) =>
                                                 setPatientSearch(value)
                                             }
+                                            invalid={Boolean(errors.patient_id)}
                                         />
 
                                         {foundPatients.length > 0 && (
@@ -365,7 +366,7 @@ export default function BookAppointment({ doctors, patients }: Props) {
                             ) : (
                                 <ClipboardDocumentCheckIcon className="h-6 w-6" />
                             )}
-                            {t('confirmAndQueuePatient')}
+                            {t('bookAppointment')}
                         </button>
                     </div>
                 </form>

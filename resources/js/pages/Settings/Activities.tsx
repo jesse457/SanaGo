@@ -6,7 +6,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Head, router } from '@inertiajs/react';
 import debounce from 'lodash/debounce';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pagination } from '@/Components/Pagination';
 import {
     Alert,
@@ -111,7 +111,17 @@ export default function UserActivities({ activities, filters }: Props) {
         [],
     );
 
+    // The server already returned a filtered first page; don't refetch it on
+    // mount just to land on the same URL.
+    const hasMounted = useRef(false);
+
     useEffect(() => {
+        if (!hasMounted.current) {
+            hasMounted.current = true;
+
+            return;
+        }
+
         updateFilters({ search, date: dateFilter, type: filterType });
     }, [updateFilters, search, dateFilter, filterType]);
 

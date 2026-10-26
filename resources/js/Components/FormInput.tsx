@@ -14,6 +14,7 @@ interface FormInputProps {
     value: string | number;
     onChange: (value: string) => void;
     className?: string;
+    invalid?: boolean;
     autoComplete?: string;
     step?: string;
     min?: string | number;
@@ -37,6 +38,7 @@ export default function FormInput({
     value,
     onChange,
     className = '',
+    invalid,
     autoComplete,
     step,
     min,
@@ -65,7 +67,7 @@ export default function FormInput({
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
                 icon={Icon}
-                invalid={Boolean(error)}
+                invalid={invalid ?? Boolean(error)}
             />
         </Field>
     );

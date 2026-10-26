@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import type { InputHTMLAttributes, ReactNode } from 'react';
+import { useControlInvalid } from '@/Components/ui/FieldContext';
 import { cn } from '@/lib/utils';
 
 export interface CheckboxProps extends Omit<
@@ -8,26 +9,31 @@ export interface CheckboxProps extends Omit<
 > {
     label?: ReactNode;
     description?: ReactNode;
+    invalid?: boolean;
 }
 
 export function Checkbox({
     label,
     description,
+    invalid,
     className,
     id,
     ...props
 }: CheckboxProps) {
     const autoId = useId();
     const inputId = id ?? autoId;
+    const isInvalid = useControlInvalid(invalid, props.name, id);
 
     const control = (
         <input
             id={inputId}
             type="checkbox"
+            aria-invalid={isInvalid || undefined}
             className={cn(
                 'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-xs border border-line-strong bg-surface accent-accent',
                 'transition-colors duration-150 ease-premium focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface focus-visible:outline-none',
                 'disabled:cursor-not-allowed disabled:opacity-50',
+                isInvalid && 'border-critical focus-visible:ring-critical/40',
                 className,
             )}
             {...props}
@@ -66,11 +72,13 @@ export interface SwitchProps extends Omit<
 > {
     label?: ReactNode;
     description?: ReactNode;
+    invalid?: boolean;
 }
 
 export function Switch({
     label,
     description,
+    invalid,
     className,
     id,
     checked,
@@ -78,6 +86,7 @@ export function Switch({
 }: SwitchProps) {
     const autoId = useId();
     const inputId = id ?? autoId;
+    const isInvalid = useControlInvalid(invalid, props.name, id);
 
     const control = (
         <span
@@ -86,6 +95,7 @@ export function Switch({
                 checked
                     ? 'border-accent bg-accent'
                     : 'border-line-strong bg-surface-inset',
+                isInvalid && 'border-critical',
                 className,
             )}
         >
@@ -93,6 +103,7 @@ export function Switch({
                 id={inputId}
                 type="checkbox"
                 role="switch"
+                aria-invalid={isInvalid || undefined}
                 checked={checked}
                 className="peer sr-only"
                 {...props}

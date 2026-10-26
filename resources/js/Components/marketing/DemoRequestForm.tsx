@@ -70,7 +70,7 @@ export default function DemoRequestForm({ className }: DemoRequestFormProps) {
                             icon={UserIcon}
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
-                            placeholder="Dr. Jane Smith"
+                            placeholder="Dr. Aïcha Ngo Bassong"
                             autoComplete="name"
                             invalid={Boolean(errors.name)}
                             required
@@ -90,7 +90,7 @@ export default function DemoRequestForm({ className }: DemoRequestFormProps) {
                             icon={EnvelopeIcon}
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
-                            placeholder="jane@hospital.com"
+                            placeholder="a.ngo@clinique-bastos.cm"
                             autoComplete="email"
                             invalid={Boolean(errors.email)}
                             required
@@ -111,7 +111,7 @@ export default function DemoRequestForm({ className }: DemoRequestFormProps) {
                         icon={BuildingOffice2Icon}
                         value={data.company}
                         onChange={(e) => setData('company', e.target.value)}
-                        placeholder="City General Hospital"
+                        placeholder="Clinique de la Cathédrale"
                         autoComplete="organization"
                         invalid={Boolean(errors.company)}
                     />
@@ -130,7 +130,7 @@ export default function DemoRequestForm({ className }: DemoRequestFormProps) {
                         rows={4}
                         value={data.message}
                         onChange={(e) => setData('message', e.target.value)}
-                        placeholder="Tell us about your hospital's needs..."
+                        placeholder="Wards, beds and which of the desks above hurt most today."
                         invalid={Boolean(errors.message)}
                     />
                 </Field>

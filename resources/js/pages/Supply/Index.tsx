@@ -20,6 +20,7 @@ import PageBreadcrumb from '@/Components/PageBreadcrumb';
 import StatCard from '@/Components/StatCard';
 import StatusBadge from '@/Components/StatusBadge';
 import {
+    Input,
     Table,
     TableBody,
     TableHeader,
@@ -502,7 +503,8 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                                 <label className="mb-1.5 block text-xs font-bold tracking-wide text-ink-muted uppercase">
                                     Quantity to Add
                                 </label>
-                                <input
+                                <Input
+                                    id="add_amount"
                                     type="number"
                                     min="1"
                                     autoFocus
@@ -510,7 +512,7 @@ export default function SupplyManagement({ supplies }: { supplies: Supply[] }) {
                                     onChange={(e) =>
                                         setData('add_amount', e.target.value)
                                     }
-                                    className="w-full rounded-lg border border-line-strong bg-surface-inset px-4 py-2.5 text-ink shadow-surface focus:ring-2 focus:ring-blue-500"
+                                    invalid={Boolean(errors.add_amount)}
                                     placeholder="Enter amount..."
                                 />
                                 {errors.add_amount && (

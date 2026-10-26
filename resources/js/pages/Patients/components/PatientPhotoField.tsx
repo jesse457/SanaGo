@@ -1,6 +1,7 @@
 import { PhotoIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Field } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
+import { cn } from '@/lib/utils';
 
 interface PatientPhotoFieldProps {
     previewUrl: string | null;
@@ -39,7 +40,10 @@ export function PatientPhotoField({
             <div
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={handleDrop}
-                className="flex flex-col items-start gap-4 rounded-lg border border-line bg-surface-muted p-4 sm:flex-row sm:items-center sm:gap-5"
+                className={cn(
+                    'flex flex-col items-start gap-4 rounded-lg border bg-surface-muted p-4 transition-colors duration-200 ease-premium sm:flex-row sm:items-center sm:gap-5',
+                    error ? 'border-critical/70' : 'border-line',
+                )}
             >
                 <div className="relative shrink-0">
                     {previewUrl ? (

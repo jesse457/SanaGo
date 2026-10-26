@@ -443,14 +443,14 @@ export default function Dashboard({
                         value={todaysAppointments.toLocaleString()}
                         subtitle={t('page.admin_dashboard.appointment_status', {
                             completed: appointment_stats?.completed ?? 0,
-                            waiting: appointment_stats?.waiting ?? 0,
+                            scheduled: appointment_stats?.scheduled ?? 0,
                         })}
                         icon={CalendarIcon}
                         accent={accent}
                         trend={{ value: '8%', direction: 'up' }}
                         composition={{
                             completed: appointment_stats?.completed ?? 0,
-                            waiting: appointment_stats?.waiting ?? 0,
+                            scheduled: appointment_stats?.scheduled ?? 0,
                             cancelled: appointment_stats?.cancelled ?? 0,
                             total: appointment_stats?.total || 1,
                         }}
@@ -602,13 +602,13 @@ export default function Dashboard({
                     />
                 );
             }
-            case 'reception_waiting': {
+            case 'reception_appointments': {
                 const rs = (metrics as any).reception_stats;
 
                 return (
                     <AdminMetricCard
-                        label={t('Waiting Patients')}
-                        value={rs ? String(rs.waiting_patients) : '0'}
+                        label={t("Today's Appointments")}
+                        value={rs ? String(rs.todays_appointments) : '0'}
                         subtitle={
                             rs
                                 ? t('{count} checked in today', {
@@ -772,9 +772,11 @@ export default function Dashboard({
                                     tone={
                                         d.status === 'completed'
                                             ? 'positive'
-                                            : d.status === 'waiting'
+                                            : d.status === 'in_consultation'
                                               ? 'warning'
-                                              : 'neutral'
+                                              : d.status === 'scheduled'
+                                                ? 'accent'
+                                                : 'neutral'
                                     }
                                     dot
                                 >
@@ -815,26 +817,28 @@ export default function Dashboard({
                     className="grid grid-cols-1 gap-5 lg:grid-cols-2"
                 >
                     <DashboardTable
-                        title={t('Waiting Patients')}
+                        title={t("Today's Appointments")}
                         icon={ClockIcon}
                         columns={[
                             { label: 'Patient' },
                             { label: 'Time' },
                             { label: 'Doctor' },
                         ]}
-                        rows={(recData.waiting || []).map((d: any) => [
-                            <span>
-                                <span className="font-medium">
-                                    {d.patient_name}
-                                </span>
-                                <span className="ml-2 font-mono text-[11px] text-ink-subtle">
-                                    {d.patient_uid}
-                                </span>
-                            </span>,
-                            d.time,
-                            d.doctor_name,
-                        ])}
-                        emptyTitle={t('No patients waiting')}
+                        rows={(recData.todays_appointments || []).map(
+                            (d: any) => [
+                                <span>
+                                    <span className="font-medium">
+                                        {d.patient_name}
+                                    </span>
+                                    <span className="ml-2 font-mono text-[11px] text-ink-subtle">
+                                        {d.patient_uid}
+                                    </span>
+                                </span>,
+                                d.time,
+                                d.doctor_name,
+                            ],
+                        )}
+                        emptyTitle={t('No appointments today')}
                     />
                     <DashboardTable
                         title={t('Recent Registrations')}

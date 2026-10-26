@@ -1,105 +1,113 @@
 import {
-    DocumentTextIcon,
-    CheckCircleIcon,
-    XCircleIcon,
-    ArrowLeftIcon,
-    CalendarDaysIcon,
-    ClockIcon,
-    ShieldCheckIcon,
-    CreditCardIcon,
     BanknotesIcon,
+    CheckCircleIcon,
+    PrinterIcon,
+    ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import React, { useState } from 'react';
-import DetailItem from '@/Components/DetailItem';
-import PageBreadcrumb from '@/Components/PageBreadcrumb';
-import PageSection from '@/Components/PageSection';
-import StatusBadge from '@/Components/StatusBadge';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHeader,
-    TableHeaderCell,
-    TableRow,
+    Alert,
+    Button,
+    Dialog,
+    Input,
+    KeyValue,
+    KeyValueGrid,
+    PageHeader,
+    Select,
+    SegmentedControl,
 } from '@/Components/ui';
+import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
+import { InvoiceStatusBadge } from '@/pages/Finance/components/FinanceStatusBadges';
+import { formatDate, formatMoney } from '@/pages/Finance/components/format';
 
-interface InvoiceItem {
+interface DocumentPatient {
+    first_name: string;
+    last_name: string;
+    patient_uid: string;
+    dob: string | null;
+    gender: string | null;
+    address: string;
+}
+
+interface DocumentItem {
     id: number;
-    item_type: string;
     description: string;
+    item_type: string;
     quantity: number;
     unit_price: number;
     total_price: number;
+    paid_amount: number;
+    settled: boolean;
 }
 
-interface CashPayment {
+interface DocumentPayment {
     id: number;
-    amount_paid: number;
-    payment_method: string;
-    created_at: string;
+    amount: number;
+    method: string;
+    paid_at: string | null;
 }
 
-interface Claim {
+interface DocumentClaim {
     id: number;
-    claim_amount: number;
     status: string;
-    payer?: {
-        id: number;
-        name: string;
-        coverage_percentage: number;
-    } | null;
+    claim_amount: number;
+    payer: string | null;
+    coverage: number;
 }
 
-interface InvoiceDetail {
+interface InvoiceDocument {
     id: number;
     invoice_number: string;
-    invoice_date: string;
+    status: string;
+    invoice_date: string | null;
     due_date: string | null;
+    paid_at: string | null;
     subtotal: number;
     tax_amount: number;
     total_amount: number;
-    status: string;
-    paid_at: string | null;
-    notes: string | null;
     total_paid: number;
     remaining_balance: number;
-    is_fully_paid: boolean;
-    patient: {
-        id: number;
-        first_name: string;
-        last_name: string;
-        patient_uid: string;
-    } | null;
-    items: InvoiceItem[];
-    cash_payments: CashPayment[];
-    claim: Claim | null;
+    notes: string | null;
+    patient: DocumentPatient | null;
+    items: DocumentItem[];
+    payments: DocumentPayment[];
+    claim: DocumentClaim | null;
 }
 
-interface Props {
-    invoice: InvoiceDetail;
-}
+/** Locales whose scripts flow right to left; the printed document follows. */
+const RTL_LOCALES = new Set(['ar', 'he', 'fa', 'ur']);
 
-const STATUS_BADGE_MAP: Record<string, 'gray' | 'amber' | 'emerald' | 'red'> = {
-    draft: 'gray',
-    pending: 'amber',
-    paid: 'emerald',
-    overdue: 'red',
-    cancelled: 'gray',
-};
+type PaperFormat = 'a4' | 'receipt';
 
-const CLAIM_STATUS_MAP: Record<string, 'gray' | 'amber' | 'emerald' | 'red'> = {
-    draft: 'gray',
-    submitted: 'amber',
-    approved: 'emerald',
-    rejected: 'red',
-    paid: 'emerald',
-};
+const A4_TABS = [
+    { value: 'a4', label: 'A4 sheet' },
+    { value: 'receipt', label: 'Till receipt' },
+];
 
-export default function InvoiceShow({ invoice }: Props) {
-    const canPay = invoice.status !== 'paid' && invoice.status !== 'cancelled';
+/**
+ * An invoice as a document. The eye icon on the ledger lands here: the bill is
+ * rendered as a printable sheet (A4 or till receipt) plus the controls beside
+ * it. Printing captures only the `.print-document` block, never the app
+ * chrome, and the sheet respects RTL for right-to-left locales.
+ */
+export default function InvoiceShow({ invoice }: { invoice: InvoiceDocument }) {
+    const { t, locale } = useTranslation();
+    const appName = usePage().props.name as string;
+    const dir = RTL_LOCALES.has(locale) ? 'rtl' : 'ltr';
+
+    const [format, setFormat] = useState<PaperFormat>('a4');
     const [showPaymentForm, setShowPaymentForm] = useState(false);
+    const [confirm, setConfirm] = useState<'paid' | 'close' | null>(null);
+
+    // Scoped print isolation: when the page is printing, only the document
+    // shows. The class is added while the page is mounted and removed on exit.
+    useEffect(() => {
+        document.body.classList.add('print-document-printing');
+
+        return () => document.body.classList.remove('print-document-printing');
+    }, []);
 
     const {
         data: paymentData,
@@ -109,12 +117,19 @@ export default function InvoiceShow({ invoice }: Props) {
         errors: paymentErrors,
         reset: resetPayment,
     } = useForm({
-        amount: invoice.remaining_balance,
+        amount: Math.ceil(invoice.remaining_balance),
         payment_method: 'cash',
     });
 
-    const handleRecordPayment = (e: React.FormEvent) => {
-        e.preventDefault();
+    const collectible = ['draft', 'pending', 'overdue'].includes(
+        invoice.status,
+    );
+    // Overdue debt is closed (written off) rather than cancelled ad hoc.
+    const outstanding = invoice.remaining_balance > 0;
+
+    const handlePrint = () => window.print();
+
+    const handleRecordPayment = () => {
         postPayment(route('invoices.record-payment', invoice.id), {
             onSuccess: () => {
                 setShowPaymentForm(false);
@@ -123,488 +138,566 @@ export default function InvoiceShow({ invoice }: Props) {
         });
     };
 
-    const insuranceCovered = invoice.claim?.claim_amount
-        ? Number(invoice.claim.claim_amount)
-        : 0;
+    const changeStatus = (
+        status: 'paid' | 'cancelled',
+        onDone?: () => void,
+    ) => {
+        router.patch(
+            route('finance.invoices.status', invoice.id),
+            { status },
+            { onFinish: () => onDone?.() },
+        );
+    };
+
+    const labels = A4_TABS.map((tab) => ({
+        value: tab.value,
+        label: t(tab.label),
+    }));
+
+    const isA4 = format === 'a4';
+    const headingClass = isA4
+        ? 'text-[22px] font-bold tracking-tight'
+        : 'text-[12px] font-bold tracking-tight';
+    const labelClass = isA4
+        ? 'text-[11px] font-semibold tracking-wide text-neutral-500'
+        : 'text-[8.5px] font-semibold tracking-wide text-neutral-500';
 
     return (
         <AppLayout
-            headerTitle={`Facture ${invoice.invoice_number}`}
-            headerSubtitle="Détail de la facture"
+            headerTitle={invoice.invoice_number}
+            headerSubtitle={t('finance.invoices.index.subtitle')}
         >
-            <Head title={`Facture ${invoice.invoice_number}`} />
+            <Head title={invoice.invoice_number} />
 
-            <div className="mx-auto max-w-6xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
-                <PageBreadcrumb
-                    items={[
-                        { label: 'Accueil', href: route('dashboard') },
-                        {
-                            label: 'Finance',
-                            href: route('finance.invoices.index'),
-                        },
+            <div className="space-y-5">
+                <PageHeader
+                    title={invoice.invoice_number}
+                    description={t('finance.invoices.index.subtitle')}
+                    breadcrumbs={[
+                        { label: t('finance.invoices.index.finance') },
+                        { label: t('finance.invoices.index.invoices') },
                         { label: invoice.invoice_number },
                     ]}
+                    actions={
+                        <>
+                            <SegmentedControl
+                                size="sm"
+                                value={format}
+                                onChange={(value) =>
+                                    setFormat(value as PaperFormat)
+                                }
+                                options={labels}
+                            />
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                icon={PrinterIcon}
+                                onClick={handlePrint}
+                            >
+                                {t('Print invoice')}
+                            </Button>
+                        </>
+                    }
                 />
 
-                <div className="flex items-center justify-between">
-                    <Link
-                        href={route('finance.invoices.index')}
-                        className="flex items-center gap-1.5 text-sm font-medium text-ink-subtle transition-colors hover:text-ink"
-                    >
-                        <ArrowLeftIcon className="h-4 w-4" /> Retour
-                    </Link>
-                    <div className="flex items-center gap-2">
-                        {canPay && (
-                            <>
-                                <button
-                                    onClick={() =>
-                                        setShowPaymentForm(!showPaymentForm)
-                                    }
-                                    className="flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-bold text-ink-inverse transition-colors hover:bg-accent-hover"
+                {/* Document controls stay on screen only */}
+                <div
+                    className="print-hide flex flex-wrap items-center gap-2"
+                    role="group"
+                    aria-label={t('Invoice actions')}
+                >
+                    {collectible && (
+                        <>
+                            <Button
+                                variant="accent"
+                                size="sm"
+                                icon={BanknotesIcon}
+                                onClick={() => setShowPaymentForm(true)}
+                            >
+                                {t('Record a payment')}
+                            </Button>
+                            {invoice.status === 'overdue' ? (
+                                <Button
+                                    variant="danger"
+                                    size="sm"
+                                    onClick={() => setConfirm('close')}
                                 >
-                                    <BanknotesIcon className="h-4 w-4" />{' '}
-                                    Enregistrer un paiement
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        if (confirm('Marquer comme payée ?')) {
-                                            router.patch(
-                                                route(
-                                                    'finance.invoices.status',
-                                                    invoice.id,
-                                                ),
-                                                { status: 'paid' },
-                                            );
-                                        }
-                                    }}
-                                    className="flex items-center gap-1.5 rounded-lg bg-positive px-4 py-2 text-sm font-bold text-ink-inverse transition-colors hover:bg-positive"
-                                >
-                                    <CheckCircleIcon className="h-4 w-4" />{' '}
-                                    Marquer payée
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        if (
-                                            confirm('Annuler cette facture ?')
-                                        ) {
-                                            router.patch(
-                                                route(
-                                                    'finance.invoices.status',
-                                                    invoice.id,
-                                                ),
-                                                { status: 'cancelled' },
-                                            );
-                                        }
-                                    }}
-                                    className="flex items-center gap-1.5 rounded-lg border border-line bg-surface px-4 py-2 text-sm font-bold text-ink-muted transition-colors hover:bg-critical-soft"
-                                >
-                                    <XCircleIcon className="h-4 w-4" /> Annuler
-                                </button>
-                            </>
-                        )}
-                    </div>
+                                    {t('Close invoice')}
+                                </Button>
+                            ) : (
+                                <>
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        icon={CheckCircleIcon}
+                                        onClick={() => setConfirm('paid')}
+                                    >
+                                        {t('Mark invoice paid')}
+                                    </Button>
+                                    <Button
+                                        variant="danger"
+                                        size="sm"
+                                        onClick={() => setConfirm('close')}
+                                    >
+                                        {t('Cancel invoice')}
+                                    </Button>
+                                </>
+                            )}
+                        </>
+                    )}
                 </div>
 
-                {/* Record Payment Drawer */}
-                {showPaymentForm && (
-                    <div className="rounded-xl border border-accent/30 bg-accent-soft p-6">
-                        <h3 className="mb-4 text-sm font-bold text-accent-ink">
-                            Enregistrer un paiement partiel
-                        </h3>
-                        <form
-                            onSubmit={handleRecordPayment}
-                            className="flex items-end gap-4"
-                        >
-                            <div className="flex-1">
-                                <label className="mb-1 block text-xs font-semibold text-ink-muted uppercase">
-                                    Montant (XAF)
-                                </label>
-                                <input
-                                    type="number"
-                                    value={paymentData.amount}
-                                    onChange={(e) =>
-                                        setPaymentData(
-                                            'amount',
-                                            Number(e.target.value),
-                                        )
-                                    }
-                                    min={1}
-                                    max={invoice.remaining_balance}
-                                    className="w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-ink focus:ring-2 focus:ring-blue-500"
-                                />
-                                {paymentErrors.amount && (
-                                    <p className="mt-1 text-xs text-red-500">
-                                        {paymentErrors.amount}
-                                    </p>
+                {collectible && showPaymentForm && (
+                    <div className="print-hide">
+                        <Alert tone="info" title={t('Record a payment')}>
+                            <p className="text-[12.5px] text-accent-ink">
+                                {t(
+                                    'The payment is filed on the open cash shift of the cashier taking it.',
                                 )}
-                            </div>
-                            <div>
-                                <label className="mb-1 block text-xs font-semibold text-ink-muted uppercase">
-                                    Mode
-                                </label>
-                                <select
-                                    value={paymentData.payment_method}
-                                    onChange={(e) =>
-                                        setPaymentData(
-                                            'payment_method',
-                                            e.target.value,
-                                        )
-                                    }
-                                    className="rounded-lg border border-line-strong bg-surface px-3 py-2 text-ink focus:ring-2 focus:ring-blue-500"
-                                >
-                                    <option value="cash">Espèces</option>
-                                    <option value="mobile_money">
-                                        Mobile Money
-                                    </option>
-                                    <option value="bank_transfer">
-                                        Virement
-                                    </option>
-                                </select>
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    type="submit"
-                                    disabled={paymentProcessing}
-                                    className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-ink-inverse hover:bg-accent-hover disabled:opacity-50"
-                                >
-                                    {paymentProcessing
-                                        ? 'En cours...'
-                                        : 'Enregistrer'}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPaymentForm(false)}
-                                    className="rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-muted"
-                                >
-                                    Annuler
-                                </button>
-                            </div>
-                        </form>
+                            </p>
+                            <form
+                                className="mt-4 grid gap-4 sm:grid-cols-[1fr_1fr_auto]"
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    handleRecordPayment();
+                                }}
+                            >
+                                <div>
+                                    <label className="mb-1 block text-xs font-semibold tracking-wide text-ink-muted uppercase">
+                                        {t('Amount')}
+                                    </label>
+                                    <Input
+                                        id="payment_amount"
+                                        type="number"
+                                        min={1}
+                                        max={invoice.remaining_balance}
+                                        value={paymentData.amount}
+                                        onChange={(e) =>
+                                            setPaymentData(
+                                                'amount',
+                                                Number(e.target.value),
+                                            )
+                                        }
+                                        invalid={Boolean(paymentErrors.amount)}
+                                    />
+                                    {paymentErrors.amount && (
+                                        <p className="mt-1 text-xs text-critical-ink">
+                                            {paymentErrors.amount}
+                                        </p>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-xs font-semibold tracking-wide text-ink-muted uppercase">
+                                        {t('Method')}
+                                    </label>
+                                    <Select
+                                        id="payment_method"
+                                        value={paymentData.payment_method}
+                                        onChange={(e) =>
+                                            setPaymentData(
+                                                'payment_method',
+                                                e.target.value,
+                                            )
+                                        }
+                                        invalid={Boolean(
+                                            paymentErrors.payment_method,
+                                        )}
+                                    >
+                                        <option value="cash">
+                                            {t('Cash')}
+                                        </option>
+                                        <option value="mobile_money">
+                                            {t('Mobile money')}
+                                        </option>
+                                        <option value="bank_transfer">
+                                            {t('Bank transfer')}
+                                        </option>
+                                    </Select>
+                                    {paymentErrors.payment_method && (
+                                        <p className="mt-1 text-xs text-critical-ink">
+                                            {paymentErrors.payment_method}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex items-end gap-2">
+                                    <Button
+                                        type="submit"
+                                        variant="accent"
+                                        loading={paymentProcessing}
+                                    >
+                                        {t('Save')}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        onClick={() =>
+                                            setShowPaymentForm(false)
+                                        }
+                                    >
+                                        {t('Dismiss')}
+                                    </Button>
+                                </div>
+                            </form>
+                        </Alert>
                     </div>
                 )}
 
-                {/* Main Invoice Card */}
-                <PageSection
-                    icon={DocumentTextIcon}
-                    title={`Facture ${invoice.invoice_number}`}
+                {collectible && !showPaymentForm && outstanding && (
+                    <Alert
+                        tone="warning"
+                        className="print-hide"
+                        title={t('Money is still owed on this bill')}
+                    >
+                        <p className="text-[12.5px] text-warning-ink">
+                            {t(
+                                'Remaining: :amount. Partial payments already made mark the bill overdue.',
+                                {
+                                    amount: formatMoney(
+                                        invoice.remaining_balance,
+                                    ),
+                                },
+                            )}
+                        </p>
+                    </Alert>
+                )}
+
+                {/* The printable document */}
+                <div
+                    dir={dir}
+                    className={
+                        'print-document mx-auto bg-white text-neutral-950 shadow-surface ring-1 ring-neutral-950/10 ' +
+                        (isA4
+                            ? 'w-full max-w-[210mm] px-14 py-12 text-[13px] leading-relaxed'
+                            : 'w-[80mm] px-4 py-5 text-[10px] leading-snug')
+                    }
                 >
-                    <div className="p-6">
-                        <div className="mb-6 flex items-start justify-between">
-                            <div>
-                                <div className="mb-2 flex items-center gap-3">
-                                    <StatusBadge
-                                        label={invoice.status}
-                                        color={
-                                            STATUS_BADGE_MAP[invoice.status] ||
-                                            'gray'
-                                        }
-                                    />
-                                    {invoice.is_fully_paid &&
-                                        invoice.status !== 'paid' && (
-                                            <span className="text-xs text-positive-ink">
-                                                (Payé intégralement)
-                                            </span>
-                                        )}
-                                </div>
-                                {invoice.patient && (
-                                    <div>
-                                        <p className="text-sm font-bold text-ink">
-                                            {invoice.patient.first_name}{' '}
-                                            {invoice.patient.last_name}
-                                        </p>
-                                        <p className="text-xs text-ink-subtle">
-                                            {invoice.patient.patient_uid}
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="text-right">
-                                <p className="text-3xl font-black text-ink">
-                                    {Number(
-                                        invoice.total_amount,
-                                    ).toLocaleString()}{' '}
-                                    FCFA
-                                </p>
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <p
+                                className={
+                                    isA4
+                                        ? 'text-[15px] font-bold tracking-tight'
+                                        : 'text-[11px] font-bold tracking-tight'
+                                }
+                            >
+                                {appName}
+                            </p>
+                            <p
+                                className={
+                                    isA4
+                                        ? 'text-[11px] text-neutral-500'
+                                        : 'text-[8.5px] text-neutral-500'
+                                }
+                            >
+                                {t('Invoice')} {invoice.invoice_number}
+                            </p>
+                        </div>
+                        <div className="text-end">
+                            <p className={headingClass}>
+                                {formatMoney(invoice.total_amount)}
+                            </p>
+                            <div className="mt-1 flex justify-end">
+                                <BadgeSoft status={invoice.status} />
                             </div>
                         </div>
+                    </div>
 
-                        {/* Insurance & Payment Summary */}
-                        <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                            <DetailItem
-                                icon={CalendarDaysIcon}
-                                label="Date"
-                                value={new Date(
-                                    invoice.invoice_date,
-                                ).toLocaleDateString()}
-                            />
+                    <div
+                        className={
+                            'mt-6 grid gap-6 sm:grid-cols-2 ' +
+                            (isA4 ? '' : 'text-[10px]')
+                        }
+                    >
+                        <div>
+                            <p className={labelClass}>
+                                {t('Billed to').toUpperCase()}
+                            </p>
+                            {invoice.patient ? (
+                                <>
+                                    <p className="mt-1 font-semibold">
+                                        {invoice.patient.last_name}{' '}
+                                        {invoice.patient.first_name}
+                                    </p>
+                                    <p
+                                        className={
+                                            isA4
+                                                ? 'font-mono text-[11px] text-neutral-500'
+                                                : 'font-mono text-[8.5px] text-neutral-500'
+                                        }
+                                    >
+                                        {invoice.patient.patient_uid}
+                                    </p>
+                                    {invoice.patient.address && (
+                                        <p className="mt-1 text-neutral-600">
+                                            {invoice.patient.address}
+                                        </p>
+                                    )}
+                                </>
+                            ) : (
+                                <p className="mt-1 text-neutral-500">—</p>
+                            )}
+                        </div>
+                        <div className="sm:text-end">
+                            <p className={labelClass}>
+                                {t('Dates').toUpperCase()}
+                            </p>
+                            <p className={isA4 ? 'mt-1' : 'mt-0.5'}>
+                                {t('Invoiced')}:{' '}
+                                {invoice.invoice_date
+                                    ? formatDate(invoice.invoice_date)
+                                    : '—'}
+                            </p>
                             {invoice.due_date && (
-                                <DetailItem
-                                    icon={ClockIcon}
-                                    label="Échéance"
-                                    value={new Date(
-                                        invoice.due_date,
-                                    ).toLocaleDateString()}
-                                />
+                                <p>
+                                    {t('Due')}: {formatDate(invoice.due_date)}
+                                </p>
                             )}
                             {invoice.paid_at && (
-                                <DetailItem
-                                    icon={CheckCircleIcon}
-                                    label="Payée le"
-                                    value={new Date(
-                                        invoice.paid_at,
-                                    ).toLocaleDateString()}
-                                />
-                            )}
-                        </div>
-
-                        {/* Insurance & Payment Bars */}
-                        <div className="space-y-3 rounded-lg bg-surface-muted p-4">
-                            {/* Total Amount */}
-                            <div>
-                                <div className="mb-1 flex justify-between text-sm">
-                                    <span className="text-ink-subtle">
-                                        Total
-                                    </span>
-                                    <span className="font-bold text-ink">
-                                        {Number(
-                                            invoice.total_amount,
-                                        ).toLocaleString()}{' '}
-                                        FCFA
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Insurance Covered */}
-                            {invoice.claim && (
-                                <div>
-                                    <div className="mb-1 flex justify-between text-sm">
-                                        <span className="flex items-center gap-1 text-accent">
-                                            <ShieldCheckIcon className="h-4 w-4" />{' '}
-                                            Assurance (
-                                            {invoice.claim.payer?.name ?? 'N/A'}
-                                            )
-                                        </span>
-                                        <span className="font-bold text-accent">
-                                            {insuranceCovered.toLocaleString()}{' '}
-                                            FCFA
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <StatusBadge
-                                            label={invoice.claim.status}
-                                            color={
-                                                CLAIM_STATUS_MAP[
-                                                    invoice.claim.status
-                                                ] || 'gray'
-                                            }
-                                        />
-                                        {invoice.claim.payer
-                                            ?.coverage_percentage && (
-                                            <span className="text-xs text-ink-subtle">
-                                                {
-                                                    invoice.claim.payer
-                                                        .coverage_percentage
-                                                }
-                                                % de couverture
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Patient Responsibility */}
-                            <div className="border-t border-line pt-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-ink-muted">
-                                        Reste à charge patient
-                                    </span>
-                                    <span className="font-bold text-ink">
-                                        {Number(
-                                            invoice.remaining_balance,
-                                        ).toLocaleString()}{' '}
-                                        FCFA
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Payments Received */}
-                            <div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-positive-ink">
-                                        Déjà payé
-                                    </span>
-                                    <span className="font-bold text-positive-ink">
-                                        {Number(
-                                            invoice.total_paid,
-                                        ).toLocaleString()}{' '}
-                                        FCFA
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Progress Bar */}
-                            <div className="h-2 overflow-hidden rounded-full bg-surface-inset">
-                                <div
-                                    className="h-full rounded-full bg-positive transition-all"
-                                    style={{
-                                        width: `${Math.min(100, (invoice.total_paid / invoice.total_amount) * 100)}%`,
-                                    }}
-                                />
-                            </div>
-                        </div>
-
-                        {invoice.notes && (
-                            <div className="mt-4 rounded-lg bg-surface-muted p-3">
-                                <p className="text-xs text-ink-subtle">
-                                    {invoice.notes}
+                                <p className="text-neutral-700">
+                                    {t('Paid')}: {formatDate(invoice.paid_at)}
                                 </p>
-                            </div>
-                        )}
-                    </div>
-                </PageSection>
-
-                {/* Line Items */}
-                <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-surface">
-                    <div className="border-b border-line bg-surface-muted px-6 py-4">
-                        <h3 className="text-sm font-bold text-ink uppercase">
-                            Lignes de facturation
-                        </h3>
-                    </div>
-                    <Table bare containerClassName="pt-1">
-                        <TableHeader>
-                            <TableRow className="hover:bg-transparent">
-                                <TableHeaderCell>Service</TableHeaderCell>
-                                <TableHeaderCell>Type</TableHeaderCell>
-                                <TableHeaderCell numeric>Qté</TableHeaderCell>
-                                <TableHeaderCell numeric>
-                                    Prix unitaire
-                                </TableHeaderCell>
-                                <TableHeaderCell numeric>Total</TableHeaderCell>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {invoice.items.map((item) => (
-                                <TableRow key={item.id}>
-                                    <TableCell className="text-[13px] font-semibold text-ink">
-                                        {item.description}
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className="rounded bg-surface-inset px-2 py-0.5 text-xs font-medium text-ink-subtle capitalize">
-                                            {item.item_type.replace('_', ' ')}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell numeric muted>
-                                        {item.quantity}
-                                    </TableCell>
-                                    <TableCell numeric muted>
-                                        {Number(
-                                            item.unit_price,
-                                        ).toLocaleString()}{' '}
-                                        FCFA
-                                    </TableCell>
-                                    <TableCell
-                                        numeric
-                                        className="font-semibold text-ink"
-                                    >
-                                        {Number(
-                                            item.total_price,
-                                        ).toLocaleString()}{' '}
-                                        FCFA
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                {/* Payments History */}
-                {invoice.cash_payments && invoice.cash_payments.length > 0 && (
-                    <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-surface">
-                        <div className="border-b border-line bg-surface-muted px-6 py-4">
-                            <h3 className="flex items-center gap-2 text-sm font-bold text-ink uppercase">
-                                <CreditCardIcon className="h-4 w-4" /> Paiements
-                                reçus
-                            </h3>
+                            )}
                         </div>
-                        <Table bare containerClassName="pt-1">
-                            <TableHeader>
-                                <TableRow className="hover:bg-transparent">
-                                    <TableHeaderCell>Date</TableHeaderCell>
-                                    <TableHeaderCell>Mode</TableHeaderCell>
-                                    <TableHeaderCell numeric>
-                                        Montant
-                                    </TableHeaderCell>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {invoice.cash_payments.map((payment) => (
-                                    <TableRow key={payment.id}>
-                                        <TableCell muted>
-                                            {new Date(
-                                                payment.created_at,
-                                            ).toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className="rounded bg-surface-inset px-2 py-0.5 text-xs font-medium text-ink-subtle capitalize">
-                                                {payment.payment_method.replace(
+                    </div>
+
+                    <div className="mt-6 overflow-hidden rounded-md border border-neutral-200">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-neutral-200 bg-neutral-100 text-start font-semibold">
+                                    <th className="px-3 py-1.5 text-start">
+                                        {t('Description')}
+                                    </th>
+                                    <th className="px-3 py-1.5 text-end">
+                                        {t('Quantity')}
+                                    </th>
+                                    <th className="px-3 py-1.5 text-end">
+                                        {t('Unit price')}
+                                    </th>
+                                    <th className="px-3 py-1.5 text-end">
+                                        {t('Total')}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {invoice.items.map((item) => (
+                                    <tr
+                                        key={item.id}
+                                        className="border-b border-neutral-100 last:border-b-0"
+                                    >
+                                        <td className="px-3 py-1.5">
+                                            {item.description}
+                                        </td>
+                                        <td className="px-3 py-1.5 text-end tabular-nums">
+                                            {item.quantity}
+                                        </td>
+                                        <td className="px-3 py-1.5 text-end tabular-nums">
+                                            {formatMoney(item.unit_price)}
+                                        </td>
+                                        <td className="px-3 py-1.5 text-end font-semibold tabular-nums">
+                                            {formatMoney(item.total_price)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {invoice.claim && (
+                        <div className="mt-4 rounded-md bg-neutral-100 px-3 py-2">
+                            <div className="flex items-start justify-between gap-3">
+                                <span className="flex items-center gap-1 font-semibold text-neutral-700">
+                                    <ShieldCheckIcon className="h-3.5 w-3.5 shrink-0 rtl:-scale-x-100" />
+                                    {invoice.claim.payer ?? t('Payer')}
+                                </span>
+                                <span className="font-semibold text-neutral-700 tabular-nums">
+                                    {formatMoney(invoice.claim.claim_amount)}
+                                </span>
+                            </div>
+                            <p className="mt-1 text-neutral-500">
+                                {t('Claim')} {invoice.claim.status} ·{' '}
+                                {invoice.claim.coverage}%
+                            </p>
+                        </div>
+                    )}
+
+                    <div
+                        className={
+                            'mt-6 ml-auto space-y-1 ' +
+                            (isA4 ? 'max-w-[240px]' : 'text-[10px]')
+                        }
+                    >
+                        <TotalRow
+                            label={t('Subtotal')}
+                            value={formatMoney(invoice.subtotal)}
+                        />
+                        <TotalRow
+                            label={t('Tax')}
+                            value={formatMoney(invoice.tax_amount)}
+                        />
+                        <div className="flex justify-between border-t border-neutral-300 pt-1 font-bold">
+                            <span>{t('Total')}</span>
+                            <span className="tabular-nums">
+                                {formatMoney(invoice.total_amount)}
+                            </span>
+                        </div>
+                        <TotalRow
+                            label={t('Paid')}
+                            value={formatMoney(invoice.total_paid)}
+                        />
+                        <div
+                            className={
+                                'flex justify-between font-bold ' +
+                                (outstanding ? 'text-red-700' : '')
+                            }
+                        >
+                            <span>{t('Outstanding')}</span>
+                            <span className="tabular-nums">
+                                {formatMoney(invoice.remaining_balance)}
+                            </span>
+                        </div>
+                    </div>
+
+                    {invoice.payments.length > 0 && (
+                        <div className="mt-6">
+                            <p className={labelClass}>
+                                {t('Payments').toUpperCase()}
+                            </p>
+                            <ul className="mt-1 space-y-0.5">
+                                {invoice.payments.map((payment) => (
+                                    <li
+                                        key={payment.id}
+                                        className="flex justify-between text-neutral-700"
+                                    >
+                                        <span>
+                                            {payment.paid_at
+                                                ? formatDate(payment.paid_at)
+                                                : '—'}
+                                            {' · '}
+                                            <span className="capitalize">
+                                                {payment.method.replace(
                                                     '_',
                                                     ' ',
                                                 )}
                                             </span>
-                                        </TableCell>
-                                        <TableCell
-                                            numeric
-                                            className="font-semibold text-positive-ink"
-                                        >
-                                            {Number(
-                                                payment.amount_paid,
-                                            ).toLocaleString()}{' '}
-                                            FCFA
-                                        </TableCell>
-                                    </TableRow>
+                                        </span>
+                                        <span className="font-semibold tabular-nums">
+                                            {formatMoney(payment.amount)}
+                                        </span>
+                                    </li>
                                 ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                )}
-
-                {/* Totals */}
-                <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-surface">
-                    <div className="p-6">
-                        <div className="ml-auto max-w-sm space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-ink-subtle">
-                                    Sous-total
-                                </span>
-                                <span className="font-bold text-ink">
-                                    {Number(invoice.subtotal).toLocaleString()}{' '}
-                                    FCFA
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-ink-subtle">Taxe</span>
-                                <span className="font-bold text-ink">
-                                    {Number(
-                                        invoice.tax_amount,
-                                    ).toLocaleString()}{' '}
-                                    FCFA
-                                </span>
-                            </div>
-                            <div className="flex justify-between border-t border-line pt-2 text-lg">
-                                <span className="font-bold text-ink">
-                                    Total
-                                </span>
-                                <span className="font-black text-ink">
-                                    {Number(
-                                        invoice.total_amount,
-                                    ).toLocaleString()}{' '}
-                                    FCFA
-                                </span>
-                            </div>
+                            </ul>
                         </div>
-                    </div>
+                    )}
+
+                    {invoice.notes && (
+                        <div className="mt-5 rounded-md bg-neutral-100 px-3 py-2 text-neutral-600">
+                            <p className={labelClass}>
+                                {t('Notes').toUpperCase()}
+                            </p>
+                            <p>{invoice.notes}</p>
+                        </div>
+                    )}
+
+                    <p
+                        className={
+                            'mt-8 text-center text-neutral-400 ' +
+                            (isA4 ? '' : 'text-[8.5px]')
+                        }
+                    >
+                        {appName} · {new Date().toISOString().slice(0, 10)} ·{' '}
+                        {t('Thank you for trusting our care.')}
+                    </p>
                 </div>
+
+                {/* Settlement summary stays on screen */}
+                <KeyValueGrid className="print-hide" columns={4} tile>
+                    <KeyValue
+                        label={t('Invoiced')}
+                        value={formatMoney(invoice.total_amount)}
+                    />
+                    <KeyValue
+                        label={t('Paid')}
+                        value={formatMoney(invoice.total_paid)}
+                    />
+                    <KeyValue
+                        label={t('Outstanding')}
+                        value={
+                            <span
+                                className={
+                                    outstanding
+                                        ? 'text-critical-ink'
+                                        : 'text-positive-ink'
+                                }
+                            >
+                                {formatMoney(invoice.remaining_balance)}
+                            </span>
+                        }
+                    />
+                    <KeyValue
+                        label={t('Status')}
+                        value={<InvoiceStatusBadge status={invoice.status} />}
+                    />
+                </KeyValueGrid>
+
+                <Dialog
+                    open={confirm !== null}
+                    onClose={() => setConfirm(null)}
+                    title={
+                        confirm === 'paid'
+                            ? t('Mark invoice paid')
+                            : t('Close invoice')
+                    }
+                    size="sm"
+                    footer={
+                        <>
+                            <Button
+                                variant="ghost"
+                                onClick={() => setConfirm(null)}
+                            >
+                                {t('Dismiss')}
+                            </Button>
+                            <Button
+                                variant={
+                                    confirm === 'paid' ? 'accent' : 'danger'
+                                }
+                                onClick={() => {
+                                    changeStatus(
+                                        confirm === 'paid'
+                                            ? 'paid'
+                                            : 'cancelled',
+                                        () => setConfirm(null),
+                                    );
+                                }}
+                            >
+                                {confirm === 'paid'
+                                    ? t('Mark paid')
+                                    : t('Close invoice')}
+                            </Button>
+                        </>
+                    }
+                >
+                    <p className="text-[13px] text-ink-muted">
+                        {confirm === 'paid'
+                            ? t('Marks this bill as fully collected.')
+                            : t(
+                                  'The bill is written off: it stops being collectable at the desk and the money owed stops counting.',
+                              )}
+                    </p>
+                </Dialog>
             </div>
         </AppLayout>
+    );
+}
+
+function BadgeSoft({ status }: { status: string }) {
+    return <InvoiceStatusBadge status={status} />;
+}
+
+function TotalRow({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="flex justify-between">
+            <span className="text-neutral-500">{label}</span>
+            <span className="tabular-nums">{value}</span>
+        </div>
     );
 }

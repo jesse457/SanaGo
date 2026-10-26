@@ -19,6 +19,7 @@ interface FormSelectProps {
     options: SelectOption[];
     placeholder?: string;
     className?: string;
+    invalid?: boolean;
 }
 
 /**
@@ -38,6 +39,7 @@ export default function FormSelect({
     options,
     placeholder,
     className = '',
+    invalid,
 }: FormSelectProps) {
     const error = errors?.[name];
 
@@ -55,7 +57,7 @@ export default function FormSelect({
                 disabled={disabled}
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
-                invalid={Boolean(error)}
+                invalid={invalid ?? Boolean(error)}
             >
                 {placeholder && <option value="">{placeholder}</option>}
                 {options.map((option) => (

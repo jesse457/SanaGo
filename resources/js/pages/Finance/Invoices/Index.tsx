@@ -1,12 +1,7 @@
-import {
-    CheckCircleIcon,
-    DocumentTextIcon,
-    EyeIcon,
-    PlusIcon,
-    TrashIcon,
-} from '@heroicons/react/24/outline';
+import { DocumentTextIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import debounce from 'lodash/debounce';
+import { useEffect, useMemo, useState } from 'react';
 import { Pagination } from '@/Components/Pagination';
 import {
     Button,
@@ -19,7 +14,6 @@ import {
     TableHeaderCell,
     TableRow,
     Toolbar,
-    ToolbarGroup,
     ToolbarSearch,
     ToolbarSpacer,
 } from '@/Components/ui';
@@ -28,26 +22,21 @@ import AppLayout from '@/Layouts/AppLayout';
 import { InvoiceStatusBadge } from '@/pages/Finance/components/FinanceStatusBadges';
 import { formatDate, formatMoney } from '@/pages/Finance/components/format';
 
-interface InvoiceItem {
+interface InvoiceRow {
     id: number;
     invoice_number: string;
-    patient: {
-        id: number;
-        first_name: string;
-        last_name: string;
-        patient_uid: string;
-    } | null;
-    invoice_date: string;
-    due_date: string | null;
+    patient_name: string;
+    patient_uid: string | null;
+    invoice_date: string | null;
+    status: string;
     total_amount: number;
-    status: 'draft' | 'pending' | 'paid' | 'overdue' | 'cancelled';
-    paid_at: string | null;
+    remaining_balance: number;
     items_count: number;
 }
 
 interface Props {
     invoices: {
-        data: InvoiceItem[];
+        data: InvoiceRow[];
         links: { url: string | null; label: string; active: boolean }[];
         current_page: number;
         last_page: number;
@@ -55,42 +44,58 @@ interface Props {
         to: number;
         total: number;
     };
-    filters: { search?: string; status?: string };
+    filters: { search: string; status: string };
 }
 
-const STATUSES = ['all', 'draft', 'pending', 'paid', 'overdue', 'cancelled'];
+const STATUS_TABS = [
+    { value: 'all', label: 'All' },
+    { value: 'draft', label: 'Draft' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'paid', label: 'Paid' },
+    { value: 'overdue', label: 'Overdue' },
+    { value: 'cancelled', label: 'Cancelled' },
+];
 
-export default function InvoiceIndex({ invoices, filters }: Props) {
+/**
+ * The invoices ledger: every bill in the system with its status, what was
+ * paid and what remains. Bills are opened and settled at the desk — this
+ * screen reads, so an open bill links straight back into the counter.
+ */
+export default function InvoicesIndex({ invoices, filters }: Props) {
     const { t } = useTranslation();
-    const [search, setSearch] = useState(filters.search || '');
-    const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
+    const [search, setSearch] = useState(filters.search ?? '');
+    const [status, setStatus] = useState(filters.status || 'all');
 
-    const applyFilters = (newStatus: string, newSearch: string) => {
-        router.get(
-            route('finance.invoices.index'),
-            {
-                status: newStatus !== 'all' ? newStatus : undefined,
-                search: newSearch || undefined,
-            },
-            { preserveState: true, preserveScroll: true, replace: true },
-        );
-    };
+    const applyFilters = useMemo(
+        () =>
+            debounce((nextStatus: string, nextSearch: string) => {
+                router.get(
+                    route('finance.invoices.index'),
+                    {
+                        status: nextStatus !== 'all' ? nextStatus : undefined,
+                        search: nextSearch || undefined,
+                    },
+                    {
+                        preserveState: true,
+                        preserveScroll: true,
+                        replace: true,
+                    },
+                );
+            }, 300),
+        [],
+    );
+
+    useEffect(() => () => applyFilters.cancel(), [applyFilters]);
 
     const handleSearch = (value: string) => {
         setSearch(value);
-        applyFilters(statusFilter, value);
+        applyFilters(status, value);
     };
 
     const handleStatus = (value: string) => {
-        setStatusFilter(value);
+        setStatus(value);
         applyFilters(value, search);
     };
-
-    const paginationLinks = invoices.links?.map((link) => ({
-        url: link.url,
-        label: link.label,
-        active: link.active,
-    }));
 
     const hasRows = invoices.data.length > 0;
 
@@ -109,36 +114,29 @@ export default function InvoiceIndex({ invoices, filters }: Props) {
                         { label: t('finance.invoices.index.finance') },
                         { label: t('finance.invoices.index.invoices') },
                     ]}
-                    actions={
-                        <Button
-                            icon={PlusIcon}
-                            href={route('finance.invoices.create')}
-                        >
-                            {t('finance.invoices.index.new_invoice')}
-                        </Button>
-                    }
                 />
 
                 <Toolbar>
-                    <ToolbarGroup>
-                        {STATUSES.map((status) => {
-                            const active = statusFilter === status;
-
-                            return (
+                    <div className="min-w-0 flex-1 overflow-x-auto sm:flex-none">
+                        <div className="flex items-center gap-1">
+                            {STATUS_TABS.map((tab) => (
                                 <Button
-                                    key={status}
+                                    key={tab.value}
                                     size="sm"
-                                    variant={active ? 'secondary' : 'ghost'}
-                                    aria-pressed={active}
-                                    onClick={() => handleStatus(status)}
+                                    variant={
+                                        status === tab.value
+                                            ? 'secondary'
+                                            : 'ghost'
+                                    }
+                                    aria-pressed={status === tab.value}
+                                    onClick={() => handleStatus(tab.value)}
+                                    className="whitespace-nowrap"
                                 >
-                                    {t(
-                                        `finance.invoices.index.status_${status}`,
-                                    )}
+                                    {t(tab.label)}
                                 </Button>
-                            );
-                        })}
-                    </ToolbarGroup>
+                            ))}
+                        </div>
+                    </div>
                     <ToolbarSpacer />
                     <ToolbarSearch
                         value={search}
@@ -154,182 +152,117 @@ export default function InvoiceIndex({ invoices, filters }: Props) {
                         <TableHeader>
                             <TableRow>
                                 <TableHeaderCell>
-                                    {t('finance.invoices.index.invoice_number')}
+                                    {t('Invoice')}
                                 </TableHeaderCell>
                                 <TableHeaderCell>
-                                    {t('finance.invoices.index.patient')}
+                                    {t('Patient')}
                                 </TableHeaderCell>
-                                <TableHeaderCell>
-                                    {t('finance.invoices.index.date')}
+                                <TableHeaderCell>{t('Date')}</TableHeaderCell>
+                                <TableHeaderCell numeric>
+                                    {t('Lines')}
                                 </TableHeaderCell>
                                 <TableHeaderCell numeric>
-                                    {t('finance.invoices.index.items')}
+                                    {t('Total')}
                                 </TableHeaderCell>
                                 <TableHeaderCell numeric>
-                                    {t('finance.invoices.index.amount')}
+                                    {t('Outstanding')}
                                 </TableHeaderCell>
-                                <TableHeaderCell>
-                                    {t('finance.invoices.index.status')}
-                                </TableHeaderCell>
+                                <TableHeaderCell>{t('Status')}</TableHeaderCell>
                                 <TableHeaderCell numeric>
-                                    {t('common.actions')}
+                                    <span className="sr-only">
+                                        {t('Actions')}
+                                    </span>
                                 </TableHeaderCell>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {invoices.data.map((invoice) => {
-                                const canMarkPaid =
-                                    invoice.status !== 'paid' &&
-                                    invoice.status !== 'cancelled';
-
-                                return (
-                                    <TableRow key={invoice.id}>
-                                        <TableCell>
-                                            <span className="font-mono text-[12.5px] font-medium tracking-tight text-ink">
-                                                {invoice.invoice_number}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell muted>
-                                            {invoice.patient ? (
-                                                <div className="min-w-0">
-                                                    <p className="truncate text-[13px] font-medium text-ink">
-                                                        {
-                                                            invoice.patient
-                                                                .first_name
-                                                        }{' '}
-                                                        {
-                                                            invoice.patient
-                                                                .last_name
-                                                        }
-                                                    </p>
-                                                    <p className="mt-0.5 text-[11.5px] text-ink-subtle tabular-nums">
-                                                        {
-                                                            invoice.patient
-                                                                .patient_uid
-                                                        }
-                                                    </p>
-                                                </div>
-                                            ) : (
-                                                '—'
-                                            )}
-                                        </TableCell>
-                                        <TableCell muted>
-                                            {formatDate(invoice.invoice_date)}
-                                        </TableCell>
-                                        <TableCell numeric muted>
+                            {invoices.data.map((invoice) => (
+                                <TableRow key={invoice.id}>
+                                    <TableCell>
+                                        <span className="font-mono text-[12px] font-medium tracking-tight text-ink">
+                                            {invoice.invoice_number}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <p className="max-w-[16rem] truncate text-[13px] font-medium text-ink">
+                                            {invoice.patient_name}
+                                        </p>
+                                        {invoice.patient_uid && (
+                                            <p className="font-mono text-[11px] text-ink-subtle">
+                                                {invoice.patient_uid}
+                                            </p>
+                                        )}
+                                    </TableCell>
+                                    <TableCell muted>
+                                        <span className="text-[12.5px] tabular-nums">
+                                            {invoice.invoice_date
+                                                ? formatDate(
+                                                      invoice.invoice_date,
+                                                  )
+                                                : '—'}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell numeric muted>
+                                        <span className="text-[12.5px] tabular-nums">
                                             {invoice.items_count}
-                                        </TableCell>
-                                        <TableCell numeric>
-                                            <span className="font-semibold text-ink">
-                                                {formatMoney(
-                                                    invoice.total_amount,
-                                                )}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <InvoiceStatusBadge
-                                                status={invoice.status}
-                                                label={t(
-                                                    `finance.invoices.index.status_${invoice.status}`,
-                                                )}
-                                            />
-                                        </TableCell>
-                                        <TableCell numeric>
-                                            <div className="flex items-center justify-end gap-1">
-                                                <Link
-                                                    href={route(
-                                                        'finance.invoices.show',
-                                                        invoice.id,
-                                                    )}
-                                                    aria-label={t(
-                                                        'common.view_details',
-                                                    )}
-                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle transition-colors duration-150 ease-premium hover:bg-surface-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none"
-                                                >
-                                                    <EyeIcon className="h-4 w-4" />
-                                                </Link>
-                                                {canMarkPaid && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        icon={CheckCircleIcon}
-                                                        aria-label={t(
-                                                            'finance.invoices.index.mark_paid_confirm',
-                                                        )}
-                                                        onClick={() => {
-                                                            if (
-                                                                confirm(
-                                                                    t(
-                                                                        'finance.invoices.index.mark_paid_confirm',
-                                                                    ),
-                                                                )
-                                                            ) {
-                                                                router.patch(
-                                                                    route(
-                                                                        'finance.invoices.status',
-                                                                        invoice.id,
-                                                                    ),
-                                                                    {
-                                                                        status: 'paid',
-                                                                    },
-                                                                    {
-                                                                        preserveScroll: true,
-                                                                    },
-                                                                );
-                                                            }
-                                                        }}
-                                                    />
-                                                )}
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    icon={TrashIcon}
-                                                    aria-label={t(
-                                                        'common.delete',
-                                                    )}
-                                                    onClick={() => {
-                                                        if (
-                                                            confirm(
-                                                                t(
-                                                                    'finance.invoices.index.delete_confirm',
-                                                                ),
-                                                            )
-                                                        ) {
-                                                            router.delete(
-                                                                route(
-                                                                    'finance.invoices.destroy',
-                                                                    invoice.id,
-                                                                ),
-                                                                {
-                                                                    preserveScroll: true,
-                                                                },
-                                                            );
-                                                        }
-                                                    }}
-                                                />
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell numeric>
+                                        <span className="text-[12.5px] font-semibold text-ink tabular-nums">
+                                            {formatMoney(invoice.total_amount)}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell numeric>
+                                        <span
+                                            className={
+                                                invoice.remaining_balance > 0
+                                                    ? 'text-[12.5px] font-semibold text-critical-ink tabular-nums'
+                                                    : 'text-[12.5px] text-ink-subtle tabular-nums'
+                                            }
+                                        >
+                                            {formatMoney(
+                                                invoice.remaining_balance,
+                                            )}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <InvoiceStatusBadge
+                                            status={invoice.status}
+                                        />
+                                    </TableCell>
+                                    <TableCell numeric>
+                                        <Link
+                                            href={route(
+                                                'finance.invoices.show',
+                                                invoice.id,
+                                            )}
+                                            aria-label={t(
+                                                'Open invoice document',
+                                            )}
+                                            title={t('Open invoice document')}
+                                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle transition-colors duration-150 ease-premium hover:bg-surface-hover hover:text-ink"
+                                        >
+                                            <EyeIcon className="h-4 w-4" />
+                                        </Link>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
                         </TableBody>
                     </Table>
                 ) : (
                     <EmptyState
                         icon={DocumentTextIcon}
                         title={t('finance.invoices.index.no_invoices')}
-                        description={t('finance.invoices.index.subtitle')}
+                        description="Bills are opened at the cash desk when a patient pays."
                         action={{
-                            label: t(
-                                'finance.invoices.index.create_first_invoice',
-                            ),
-                            href: route('finance.invoices.create'),
+                            label: 'Go to the desk',
+                            href: route('caisse.index'),
                         }}
                     />
                 )}
 
                 <Pagination
-                    links={paginationLinks}
+                    links={invoices.links ?? []}
                     meta={{
                         from: invoices.from,
                         to: invoices.to,

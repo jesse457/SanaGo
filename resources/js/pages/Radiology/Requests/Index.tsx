@@ -8,7 +8,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Head, router } from '@inertiajs/react';
 import debounce from 'lodash/debounce';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pagination } from '@/Components/Pagination';
 import {
     Button,
@@ -80,7 +80,17 @@ export default function RadiologyRequestsIndex({
         [],
     );
 
+    // The first render already has the server-filtered rows; only fire a
+    // visit when the user actually changes a filter.
+    const hasMounted = useRef(false);
+
     useEffect(() => {
+        if (!hasMounted.current) {
+            hasMounted.current = true;
+
+            return;
+        }
+
         handleFilter(search, statusFilter);
     }, [handleFilter, search, statusFilter]);
 

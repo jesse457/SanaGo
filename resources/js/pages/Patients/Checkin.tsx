@@ -47,7 +47,7 @@ interface Admission {
     patient: { first_name: string; last_name: string; patient_uid: string };
     bed: { code: string; ward: { name: string } };
     attending_doctor: { name: string };
-    status: 'Pending' | 'Admitted' | 'Discharged';
+    status: 'pending' | 'admitted' | 'discharged';
     admission_date: string;
     reason_for_admission: string;
 }
@@ -69,7 +69,7 @@ interface Props {
     filters: { search?: string; status?: string };
 }
 
-const statusFilters = ['Admitted', 'Pending', 'Discharged'] as const;
+const statusFilters = ['admitted', 'pending', 'discharged'] as const;
 
 export default function AdmissionsIndex({ admissions, stats, filters }: Props) {
     const { t } = useTranslation();
@@ -118,9 +118,9 @@ export default function AdmissionsIndex({ admissions, stats, filters }: Props) {
     };
 
     const statusLabel = (status: string) =>
-        status === 'Admitted'
+        status === 'admitted'
             ? t('page.checkin.admitted')
-            : status === 'Pending'
+            : status === 'pending'
               ? t('page.checkin.pending')
               : t('page.checkin.discharged');
 
@@ -318,19 +318,21 @@ export default function AdmissionsIndex({ admissions, stats, filters }: Props) {
                                                     'View details'
                                                 }
                                             />
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                icon={ArrowRightIcon}
-                                                href={route(
-                                                    'admissions.create',
-                                                    admission.id,
-                                                )}
-                                                aria-label={
-                                                    t('common.manage') ||
-                                                    'Manage'
-                                                }
-                                            />
+                                            {admission.status == 'pending' && (
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    icon={ArrowRightIcon}
+                                                    href={route(
+                                                        'admissions.create',
+                                                        admission.id,
+                                                    )}
+                                                    aria-label={
+                                                        t('common.manage') ||
+                                                        'Manage'
+                                                    }
+                                                />
+                                            )}
                                         </div>
                                     </CardFooter>
                                 </Card>
@@ -432,20 +434,26 @@ export default function AdmissionsIndex({ admissions, stats, filters }: Props) {
                                                             ) || 'View details'
                                                         }
                                                     />
-                                                    <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        icon={ArrowRightIcon}
-                                                        href={route(
-                                                            'admissions.create',
-                                                            admission.id,
-                                                        )}
-                                                        aria-label={
-                                                            t(
-                                                                'common.manage',
-                                                            ) || 'Manage'
-                                                        }
-                                                    />
+
+                                                    {admission.status ==
+                                                        'pending' && (
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            icon={
+                                                                ArrowRightIcon
+                                                            }
+                                                            href={route(
+                                                                'admissions.create',
+                                                                admission.id,
+                                                            )}
+                                                            aria-label={
+                                                                t(
+                                                                    'common.manage',
+                                                                ) || 'Manage'
+                                                            }
+                                                        />
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>

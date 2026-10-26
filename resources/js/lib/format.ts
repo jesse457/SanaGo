@@ -15,6 +15,56 @@
 /** Narrow no-break space — the French thousands separator. */
 const NNBSP = '\u202F';
 
+/**
+ * `Intl` formatters are comparatively expensive to construct, and these helpers
+ * run for every table row and stat card. Reuse one instance per locale/options
+ * combination instead of allocating a new one on every call.
+ */
+const numberFormats = new Map<string, Intl.NumberFormat>();
+const dateFormats = new Map<string, Intl.DateTimeFormat>();
+const relativeFormats = new Map<string, Intl.RelativeTimeFormat>();
+
+function numberFormat(
+    locale: string,
+    options: Intl.NumberFormatOptions,
+): Intl.NumberFormat {
+    const key = `${locale}|${JSON.stringify(options)}`;
+    let formatter = numberFormats.get(key);
+
+    if (!formatter) {
+        formatter = new Intl.NumberFormat(locale, options);
+        numberFormats.set(key, formatter);
+    }
+
+    return formatter;
+}
+
+function dateFormat(
+    locale: string,
+    options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+    const key = `${locale}|${JSON.stringify(options)}`;
+    let formatter = dateFormats.get(key);
+
+    if (!formatter) {
+        formatter = new Intl.DateTimeFormat(locale, options);
+        dateFormats.set(key, formatter);
+    }
+
+    return formatter;
+}
+
+function relativeFormat(locale: string): Intl.RelativeTimeFormat {
+    let formatter = relativeFormats.get(locale);
+
+    if (!formatter) {
+        formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+        relativeFormats.set(locale, formatter);
+    }
+
+    return formatter;
+}
+
 /** Currency labels that render as a trailing unit instead of a symbol. */
 const SUFFIX_CURRENCIES: Record<string, string> = {
     XAF: 'FCFA',
@@ -52,7 +102,7 @@ export function formatCurrency(
 
     const code = (currency || 'XAF').toUpperCase();
     const hasFraction = !Number.isInteger(amount);
-    const grouped = new Intl.NumberFormat('fr-FR', {
+    const grouped = numberFormat('fr-FR', {
         minimumFractionDigits: hasFraction ? 2 : 0,
         maximumFractionDigits: hasFraction ? 2 : 0,
         useGrouping: true,
@@ -120,6 +170,28 @@ function toDate(value: Date | string | number | null | undefined): Date | null {
     return Number.isNaN(date.getTime()) ? null : date;
 }
 
+const DATE_PRESETS: Record<
+    'short' | 'long' | 'numeric',
+    Intl.DateTimeFormatOptions
+> = {
+    numeric: { day: '2-digit', month: '2-digit', year: 'numeric' },
+    short: { day: 'numeric', month: 'short', year: 'numeric' },
+    long: {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    },
+};
+
+const DATE_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+};
+
 /**
  * Absolute, human date. `short` gives `14 mars 2026` style output; `long` adds
  * the weekday. Locale defaults to French because that is the primary language
@@ -139,18 +211,7 @@ export function formatDate(
 
     const { locale = 'fr-FR', style = 'short' } = options;
 
-    const presets: Record<typeof style, Intl.DateTimeFormatOptions> = {
-        numeric: { day: '2-digit', month: '2-digit', year: 'numeric' },
-        short: { day: 'numeric', month: 'short', year: 'numeric' },
-        long: {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-        },
-    };
-
-    return new Intl.DateTimeFormat(locale, presets[style]).format(date);
+    return dateFormat(locale, DATE_PRESETS[style]).format(date);
 }
 
 /** Date + time, e.g. `14 mars 2026, 09:30`. */
@@ -164,13 +225,9 @@ export function formatDateTime(
         return '—';
     }
 
-    return new Intl.DateTimeFormat(options.locale ?? 'fr-FR', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    }).format(date);
+    return dateFormat(options.locale ?? 'fr-FR', DATE_TIME_OPTIONS).format(
+        date,
+    );
 }
 
 const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
@@ -208,7 +265,7 @@ export function formatDateRelative(
     const locale = options.locale ?? 'fr-FR';
     const diffMs = date.getTime() - Date.now();
     const absMs = Math.abs(diffMs);
-    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+    const rtf = relativeFormat(locale);
 
     if (absMs < 45_000) {
         return locale.startsWith('fr') ? "à l'instant" : 'just now';
@@ -263,7 +320,7 @@ export function formatNumber(
         return '—';
     }
 
-    return new Intl.NumberFormat(locale)
+    return numberFormat(locale, {})
         .format(amount)
         .replace(/[\s\u00A0\u202F]/g, NNBSP);
 }

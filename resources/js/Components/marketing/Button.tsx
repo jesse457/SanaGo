@@ -20,6 +20,12 @@ export interface MarketingButtonProps {
     href?: string;
     className?: string;
     children?: ReactNode;
+    /** Leading glyph, forwarded to the kit button. */
+    icon?: ButtonProps['icon'];
+    /** Trailing glyph, forwarded to the kit button. */
+    trailingIcon?: ButtonProps['trailingIcon'];
+    loading?: boolean;
+    fullWidth?: boolean;
 }
 
 const variantMap = {
@@ -41,6 +47,10 @@ export default function Button({
     href,
     className,
     children,
+    icon,
+    trailingIcon,
+    loading,
+    fullWidth,
     ...props
 }: MarketingButtonProps &
     Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'children'>) {
@@ -49,6 +59,10 @@ export default function Button({
         size: sizeMap[size],
         className:
             size === 'xl' ? `px-6 text-[15px] ${className ?? ''}` : className,
+        icon,
+        trailingIcon,
+        loading,
+        fullWidth,
         children,
     };
 

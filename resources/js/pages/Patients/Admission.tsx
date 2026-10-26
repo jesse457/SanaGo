@@ -50,15 +50,17 @@ interface Props {
     patient: Patient;
     availableBeds: Bed[];
     doctors: Doctor[];
+    admission_id: number;
 }
 
 export default function PatientAdmission({
     patient,
     availableBeds,
     doctors,
+    admission_id,
 }: Props) {
     const { t } = useTranslation();
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, put, processing, errors } = useForm({
         patient_id: patient.id,
         bed_id: '',
         attending_doctor_id: '',
@@ -69,7 +71,7 @@ export default function PatientAdmission({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('admissions.store'));
+        put(route('admissions.update', admission_id));
     };
 
     return (

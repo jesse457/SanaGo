@@ -17,6 +17,11 @@ export interface FeatureCardProps {
     className?: string;
     /** Optional footer line (e.g. the module's role scope). */
     footer?: ReactNode;
+    /**
+     * Evidence rendered under the copy: a product shot or a photograph. In a
+     * bento grid this is what makes one cell tell a longer story than another.
+     */
+    children?: ReactNode;
 }
 
 const tintWell: Record<FeatureTint, string> = {
@@ -43,6 +48,7 @@ export default function FeatureCard({
     index,
     className,
     footer,
+    children,
 }: FeatureCardProps) {
     const resolvedTint: FeatureTint =
         tint ?? (color && color in tintWell ? (color as FeatureTint) : 'blue');
@@ -80,8 +86,15 @@ export default function FeatureCard({
                 {description}
             </p>
 
+            {children && <div className="mt-auto pt-6">{children}</div>}
+
             {footer && (
-                <div className="mt-auto border-t border-line pt-4 text-[12px] text-ink-subtle">
+                <div
+                    className={cn(
+                        'border-t border-line pt-4 text-[12px] text-ink-subtle',
+                        children ? 'mt-5' : 'mt-auto',
+                    )}
+                >
                     {footer}
                 </div>
             )}

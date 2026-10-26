@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
+import { SanaGoMark, SanaGoWordmark } from '@/Components/brand/SanaGoLogo';
 import { Card } from '@/Components/ui';
-import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
 
 interface AuthShellProps {
@@ -15,21 +15,15 @@ interface AuthShellProps {
     className?: string;
 }
 
-/** The product wordmark. One glyph, one word — no stock imagery on this screen. */
+/** The product lockup. One glyph, one word — no stock imagery on this screen. */
 function BrandMark() {
-    const { t } = useTranslation();
-
     return (
         <Link
             href="/"
-            className="group inline-flex items-center gap-2.5 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-4 focus-visible:ring-offset-canvas focus-visible:outline-none"
+            className="group inline-flex items-center gap-2.5 rounded-md focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-4 focus-visible:ring-offset-canvas focus-visible:outline-none"
         >
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-[13px] font-bold tracking-tight text-ink-inverse transition-transform duration-200 ease-premium group-hover:-translate-y-px">
-                SG
-            </span>
-            <span className="text-[15px] font-semibold tracking-tight text-ink">
-                {t('site.title')}
-            </span>
+            <SanaGoMark className="h-9 w-auto shrink-0 transition-transform duration-200 ease-premium group-hover:-translate-y-px" />
+            <SanaGoWordmark size="lg" />
         </Link>
     );
 }

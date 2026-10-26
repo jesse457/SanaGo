@@ -3,7 +3,6 @@ import type { BadgeTone } from '@/Components/ui';
 /** Appointment statuses are stored as the lowercase Enum values. */
 export type AppointmentStatus =
     | 'scheduled'
-    | 'waiting'
     | 'in_consultation'
     | 'pending'
     | 'completed'
@@ -15,7 +14,6 @@ export type AppointmentStatus =
  */
 export function statusTone(status: string): BadgeTone {
     switch (status.toLowerCase()) {
-        case 'waiting':
         case 'in_consultation':
         case 'pending':
             return 'warning';
