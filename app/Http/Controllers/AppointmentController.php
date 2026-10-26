@@ -59,7 +59,7 @@ class AppointmentController extends Controller
             })
             ->when($request->status, fn ($q, $status) => $q->where('status', $status))
             ->when($request->doctor_id, fn ($q, $id) => $q->where('doctor_id', $id))
-            ->when($request->date, fn ($q, $date) => $q->whereDate('appointment_date', $date))
+            ->when($request->date, fn ($q, $date) => $q->where('appointment_date', $date))
             ->orderBy('appointment_date', 'desc')
             ->orderBy('appointment_time', 'desc')
             ->paginate(10)
@@ -74,22 +74,28 @@ class AppointmentController extends Controller
             ->orderBy('appointment_time')
             ->get();
 
-        $statsBase = Appointment::query()->tap(fn ($q) => $this->scopeAppointments($q));
+        $today = today()->toDateString();
+
+        $statsRow = Appointment::query()
+            ->tap(fn ($q) => $this->scopeAppointments($q))
+            ->selectRaw('count(*) as total')
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as scheduled', [AppointmentStatus::SCHEDULED->value])
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as completed', [AppointmentStatus::COMPLETED->value])
+            ->selectRaw('sum(case when appointment_date = ? then 1 else 0 end) as today', [$today])
+            ->selectRaw(
+                'sum(case when appointment_date >= ? and status not in (?, ?) then 1 else 0 end) as upcoming',
+                [$today, AppointmentStatus::COMPLETED->value, AppointmentStatus::CANCELLED->value],
+            )
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as cancelled', [AppointmentStatus::CANCELLED->value])
+            ->first();
 
         $stats = [
-            'total' => (clone $statsBase)->count(),
-            'waiting' => (clone $statsBase)->where('status', AppointmentStatus::WAITING->value)->count(),
-            'scheduled' => (clone $statsBase)->where('status', AppointmentStatus::SCHEDULED->value)->count(),
-            'completed' => (clone $statsBase)->where('status', AppointmentStatus::COMPLETED->value)->count(),
-            'today' => (clone $statsBase)->whereDate('appointment_date', today())->count(),
-            'upcoming' => (clone $statsBase)
-                ->where('appointment_date', '>=', today())
-                ->whereNotIn('status', [
-                    AppointmentStatus::COMPLETED->value,
-                    AppointmentStatus::CANCELLED->value,
-                ])
-                ->count(),
-            'cancelled' => (clone $statsBase)->where('status', AppointmentStatus::CANCELLED->value)->count(),
+            'total' => (int) ($statsRow->total ?? 0),
+            'scheduled' => (int) ($statsRow->scheduled ?? 0),
+            'completed' => (int) ($statsRow->completed ?? 0),
+            'today' => (int) ($statsRow->today ?? 0),
+            'upcoming' => (int) ($statsRow->upcoming ?? 0),
+            'cancelled' => (int) ($statsRow->cancelled ?? 0),
         ];
 
         $view = $request->string('view')->toString() === 'calendar' ? 'calendar' : 'table';
@@ -120,7 +126,7 @@ class AppointmentController extends Controller
         try {
             $appointment = $service->book($request->validated());
 
-            return redirect()->route('appointments.index')->with('success', "Booked! Queue Position: #{$appointment->queue_position}");
+            return redirect()->route('appointments.index')->with('success', 'Appointment booked successfully.');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }

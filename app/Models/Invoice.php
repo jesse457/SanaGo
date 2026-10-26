@@ -56,8 +56,17 @@ class Invoice extends Model
      */
     public function getTotalPaidAttribute(): float
     {
-        $cashPaid = (float) $this->cashPayments()->sum('amount_paid');
-        $claimPaid = (float) $this->claim()->where('status', ClaimStatus::Paid->value)->sum('claim_amount');
+        $cashPaid = $this->relationLoaded('cashPayments')
+            ? (float) $this->cashPayments->sum('amount_paid')
+            : (float) $this->cashPayments()->sum('amount_paid');
+
+        if ($this->relationLoaded('claim')) {
+            $claimPaid = $this->claim?->status === ClaimStatus::Paid
+                ? (float) $this->claim->claim_amount
+                : 0.0;
+        } else {
+            $claimPaid = (float) $this->claim()->where('status', ClaimStatus::Paid->value)->sum('claim_amount');
+        }
 
         return $cashPaid + $claimPaid;
     }

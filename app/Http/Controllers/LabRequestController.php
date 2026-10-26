@@ -2,12 +2,59 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UrgencyLevel;
+use App\Http\Requests\StoreLabRequestRequest;
 use App\Models\LabRequest;
+use App\Models\LabTestDefinition;
+use App\Models\Patient;
+use App\Services\Laboratory\LabRequestService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class LabRequestController extends Controller
 {
+    /**
+     * The lab order form: pick the patient, the test, the urgency. It is a
+     * stand-alone clinical order — it does not need a consultation to exist.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('LabTests/Requests/Create', [
+            'patients' => Patient::query()
+                ->orderBy('first_name')
+                ->orderBy('last_name')
+                ->get(['id', 'first_name', 'last_name', 'patient_uid']),
+            'tests' => LabTestDefinition::query()
+                ->where('is_active', true)
+                ->orderBy('test_name')
+                ->get(['id', 'test_name', 'code', 'price', 'units']),
+            'urgencies' => array_map(
+                fn (UrgencyLevel $level): array => [
+                    'value' => $level->value,
+                    'label' => ucfirst($level->value),
+                ],
+                UrgencyLevel::cases(),
+            ),
+        ]);
+    }
+
+    /**
+     * File the order. The ordering doctor is the person raising it unless an
+     * explicit doctor_id was sent; billing stays at the counter, so nothing
+     * here touches money.
+     */
+    public function store(StoreLabRequestRequest $request, LabRequestService $service)
+    {
+        $validated = $request->validated();
+        $validated['doctor_id'] ??= (int) auth()->id();
+
+        $service->createRequest($validated);
+
+        return redirect()->route('requests.index')
+            ->with('success', 'Lab request created successfully.');
+    }
+
     public function index(Request $request)
     {
         // 1. Build Query with Eager Loading

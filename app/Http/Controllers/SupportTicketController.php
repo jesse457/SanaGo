@@ -126,7 +126,7 @@ class SupportTicketController extends Controller
     public function tenantIndex(Request $request): Response
     {
         $tenantId = tenant()?->id;
-        $tickets = SupportTicket::with(['user', 'messages'])
+        $tickets = SupportTicket::with('user')
             ->where('tenant_id', $tenantId)
             ->latest()
             ->get()

@@ -16,11 +16,13 @@ class StoreUserShiftRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => ['required', 'exists:users,id'],
+            'staff' => ['nullable', 'array', 'max:50'],
+            'staff.*.user_id' => ['nullable', 'integer', 'exists:users,id', 'required_without:staff.*.name'],
+            'staff.*.name' => ['nullable', 'string', 'max:255', 'required_without:staff.*.user_id'],
             'shift_date' => ['required', 'date'],
             'shift_type' => ['required', Rule::enum(ShiftType::class)],
             'start_time' => ['required', 'date_format:H:i'],
-            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
+            'end_time' => ['required', 'date_format:H:i'],
         ];
     }
 }

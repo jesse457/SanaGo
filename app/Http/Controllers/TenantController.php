@@ -19,7 +19,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Stancl\Tenancy\Database\Models\ImpersonationToken;
 
 /**
  * Landlord tenant management: list, provision, inspect, suspend, archive and
@@ -58,7 +57,7 @@ class TenantController extends Controller
         $status = (string) $request->query('status', 'all');
 
         $tenants = Tenant::query()
-            ->with(['domains', 'subscription.plan'])
+            ->with(['domains', 'subscription'])
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($inner) use ($search) {
                     $inner->where('id', 'like', "%{$search}%")
@@ -146,7 +145,7 @@ class TenantController extends Controller
 
     public function show(Tenant $tenant): Response
     {
-        $tenant->load(['domains', 'subscription.plan', 'notes']);
+        $tenant->load(['domains', 'subscription.plan', 'notes.user:id,name']);
 
         $subscription = $tenant->subscription;
         $snapshot = $this->tenants->snapshot($tenant);
@@ -374,13 +373,21 @@ class TenantController extends Controller
             return redirect()->back()->with('error', 'This hospital has no domain configured.');
         }
 
+        $host = $this->browserHostFor($request, $domain);
+
+        $port = $request->getPort();
+        $portSuffix = in_array($port, [80, 443], true) ? '' : ':'.$port;
+        $tenantUrl = sprintf('%s://%s%s', $request->getScheme(), $host, $portSuffix);
+
         // One-time token consumed by the tenant domain (see routes/tenant.php).
-        $token = ImpersonationToken::create([
-            'tenant_id' => $tenant->getTenantKey(),
-            'user_id' => (string) $userId,
-            'redirect_url' => url('/dashboard'),
-            'auth_guard' => config('auth.defaults.guard'),
-        ]);
+        // The macro is registered by stancl/tenancy's UserImpersonation
+        // feature; TTL and token model stay owned by the package.
+        $token = tenancy()->impersonate(
+            $tenant,
+            (string) $userId,
+            $tenantUrl.'/dashboard',
+            config('auth.defaults.guard'),
+        );
 
         $this->audit->log(
             action: 'tenant.impersonation_started',
@@ -392,16 +399,41 @@ class TenantController extends Controller
 
         $request->session()->put('impersonated_by', $request->user()->id);
 
-        $port = $request->getPort();
-        $portSuffix = in_array($port, [80, 443], true) ? '' : ':'.$port;
+        // CrossDomainRedirect (stancl/tenancy) rewrites the generated central
+        // URL onto the hospital's host while keeping scheme and port.
+        return redirect()->route('impersonate.accept', $token->token)->domain($host);
+    }
 
-        return redirect()->away(sprintf(
-            '%s://%s%s/impersonate/%s',
-            $request->getScheme(),
-            $domain,
-            $portSuffix,
-            $token->token,
-        ));
+    /**
+     * Turn a stored domain into the host a browser can actually open.
+     *
+     * Tenants are identified by their subdomain fragment (`city-hospital`),
+     * but a bare fragment is not a reachable host. When the operator has
+     * stored a full host we honour it; otherwise the fragment is expanded
+     * against the central domain serving the request (`city-hospital` →
+     * `city-hospital.localhost`).
+     */
+    private function browserHostFor(Request $request, string $domain): string
+    {
+        if (str_contains($domain, '.')) {
+            return $domain;
+        }
+
+        $centralDomains = config('tenancy.central_domains', []);
+        $requestHost = $request->getHost();
+
+        $baseHost = in_array($requestHost, $centralDomains, true)
+            && filter_var($requestHost, FILTER_VALIDATE_IP) === false
+                ? $requestHost
+                : null;
+
+        $baseHost ??= collect($centralDomains)
+            ->first(fn (string $candidate): bool => filter_var($candidate, FILTER_VALIDATE_IP) === false);
+
+        $baseHost ??= parse_url((string) config('app.url'), PHP_URL_HOST);
+        $baseHost ??= 'localhost';
+
+        return $domain.'.'.$baseHost;
     }
 
     /**

@@ -23,7 +23,6 @@ class AppointmentFactory extends Factory
             'appointment_date' => fake()->dateTimeBetween('-1 month', '+2 months')->format('Y-m-d'),
             'appointment_time' => fake()->time('H:i:s'),
             'status' => fake()->randomElement(AppointmentStatus::cases()),
-            'queue_position' => fake()->numberBetween(1, 15),
             'consultation_fee' => fake()->randomFloat(2, 2000, 15000),
         ];
     }

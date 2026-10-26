@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['invoice_id', 'item_type', 'item_id', 'description', 'quantity', 'unit_price', 'total_price', 'settled_at'])]
+#[Fillable(['invoice_id', 'item_type', 'item_id', 'consultation_id', 'doctor_id', 'description', 'quantity', 'unit_price', 'total_price', 'paid_amount', 'payment_status', 'settled_at'])]
 class InvoiceItem extends Model
 {
     use HasFactory;
@@ -19,6 +20,8 @@ class InvoiceItem extends Model
             'quantity' => 'integer',
             'unit_price' => 'decimal:2',
             'total_price' => 'decimal:2',
+            'paid_amount' => 'decimal:2',
+            'payment_status' => PaymentStatus::class,
             'settled_at' => 'datetime',
         ];
     }
@@ -26,6 +29,19 @@ class InvoiceItem extends Model
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    /**
+     * The consultation that ordered this charge, when there is one.
+     */
+    public function consultation(): BelongsTo
+    {
+        return $this->belongsTo(MedicalRecord::class, 'consultation_id');
+    }
+
+    public function doctor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'doctor_id');
     }
 
     /**

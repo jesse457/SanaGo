@@ -29,8 +29,14 @@ class PlatformBillingController extends Controller
     {
         $status = (string) $request->query('status', 'all');
 
+        $outstandingByTenant = SubscriptionInvoice::query()
+            ->outstanding()
+            ->selectRaw('tenant_id, sum(total) as outstanding')
+            ->groupBy('tenant_id')
+            ->pluck('outstanding', 'tenant_id');
+
         $rows = Subscription::query()
-            ->with(['tenant.domains', 'plan'])
+            ->with('tenant')
             ->orderBy('tenant_id')
             ->get()
             ->map(function (Subscription $subscription) {
@@ -52,10 +58,7 @@ class PlatformBillingController extends Controller
                     'users' => ['used' => $usage['users'], 'limit' => $limits['users'] ?? null],
                     'patients' => ['used' => $usage['patients'], 'limit' => $limits['patients'] ?? null],
                     'storage_gb' => ['used' => 0, 'limit' => $limits['storage_gb'] ?? null],
-                    'outstanding' => (float) SubscriptionInvoice::query()
-                        ->where('tenant_id', $subscription->tenant_id)
-                        ->outstanding()
-                        ->sum('total'),
+                    'outstanding' => (float) ($outstandingByTenant[$subscription->tenant_id] ?? 0),
                 ];
             })
             ->filter(fn (array $row) => $status === 'all' || $row['status'] === $status)
@@ -64,7 +67,7 @@ class PlatformBillingController extends Controller
         $invoiceStatus = (string) $request->query('invoice_status', 'all');
 
         $invoices = SubscriptionInvoice::query()
-            ->with('tenant.domains')
+            ->with('tenant')
             ->when(
                 $invoiceStatus !== 'all',
                 fn ($query) => $query->where('status', $invoiceStatus),

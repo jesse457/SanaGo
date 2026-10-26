@@ -18,7 +18,7 @@ class SurgeryController extends Controller
     public function index(): Response
     {
         return Inertia::render('Surgeries/Index', [
-            'surgeries' => Surgery::with(['patient', 'surgeon', 'anesthetist', 'bed'])
+            'surgeries' => Surgery::with(['patient', 'surgeon', 'anesthetist'])
                 ->orderBy('scheduled_at', 'desc')
                 ->paginate(20),
         ]);
@@ -84,7 +84,7 @@ class SurgeryController extends Controller
     public function show(Surgery $surgery): Response
     {
         return Inertia::render('Surgeries/Show', [
-            'surgery' => $surgery->load(['patient', 'surgeon', 'anesthetist', 'bed']),
+            'surgery' => $surgery->load(['patient', 'surgeon', 'anesthetist', 'bed.ward']),
         ]);
     }
 

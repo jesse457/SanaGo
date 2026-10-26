@@ -152,13 +152,22 @@ return new class extends Migration
         // 6. user_shifts (FK -> users)
         Schema::create('user_shifts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
             $table->date('shift_date');
             $table->string('shift_type')->index();
             $table->time('start_time');
             $table->time('end_time');
             $table->unique(['user_id', 'shift_date', 'shift_type']);
             $table->index('shift_date');
+            $table->timestamps();
+        });
+
+        // staff of a shift: either a system user or a free-text name
+        Schema::create('user_shift_staff', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_shift_id')->constrained('user_shifts')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete()->index();
+            $table->string('name')->nullable();
             $table->timestamps();
         });
 
@@ -312,7 +321,6 @@ return new class extends Migration
             $table->string('status', 20)->index();
             $table->string('reason_for_visit')->nullable();
             $table->decimal('consultation_fee', 10, 2)->nullable()->default(0);
-            $table->unsignedInteger('queue_position')->nullable();
             $table->timestamps();
         });
 

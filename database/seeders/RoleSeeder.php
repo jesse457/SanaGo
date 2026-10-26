@@ -36,6 +36,7 @@ class RoleSeeder extends Seeder
             'record-vitals',
 
             // Lab
+            'request-lab-tests',
             'view-lab-tests',
             'manage-lab-tests',
             'view-lab-results',
@@ -67,6 +68,7 @@ class RoleSeeder extends Seeder
             'view-audit-logs',
 
             // Radiology
+            'request-radiology',
             'view-radiology',
             'validate-radiology',
 
@@ -107,6 +109,8 @@ class RoleSeeder extends Seeder
             'create-consultations',
             'view-vitals',
             'record-vitals',
+            // Doctors raise lab orders — on their own or from a consultation.
+            'request-lab-tests',
             'view-lab-tests',
             'view-lab-results',
             'view-radiology',

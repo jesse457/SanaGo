@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Models\Tenant;
-use Stancl\Tenancy\Contracts\TenantDatabaseManager;
+use Stancl\Tenancy\DatabaseConfig;
 use Throwable;
 
 /**
@@ -21,8 +21,12 @@ final class TenantDatabase
     public static function exists(Tenant $tenant): bool
     {
         try {
-            /** @var TenantDatabaseManager $manager */
-            $manager = app(TenantDatabaseManager::class);
+            // The package resolves its database manager through DatabaseConfig,
+            // not the container: `TenantDatabaseManager` has no binding on its
+            // own. Resolving the interface here made every existence check fall
+            // through to the catch block, so cross-tenant screens (including
+            // support impersonation) believed no database existed.
+            $manager = (new DatabaseConfig($tenant))->manager();
 
             return (bool) $manager->databaseExists((string) $tenant->getTenantKey());
         } catch (Throwable) {

@@ -30,7 +30,6 @@ class AppointmentSeeder extends Seeder
                 'status' => $statuses[array_rand($statuses)]->value,
                 'reason_for_visit' => fake()->randomElement(['Routine checkup', 'Follow-up', 'New complaint', 'Lab review']),
                 'consultation_fee' => rand(2000, 15000),
-                'queue_position' => rand(1, 15),
             ]);
         }
     }

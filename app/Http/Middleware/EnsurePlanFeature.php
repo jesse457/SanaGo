@@ -18,8 +18,12 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * Permissions answer "may this user?"; plan features answer "did this
  * hospital pay for it?". Both must pass, so this sits next to `can:` checks.
+ *
+ * Additionally enforces the tenant's quota counters (users / patients /
+ * storage) — a plan that "includes" a feature is useless if the account is
+ * already over its limits.
  */
-class EnsurePlanFeature
+final class EnsurePlanFeature
 {
     public function handle(Request $request, Closure $next, string $feature): Response
     {
@@ -29,13 +33,24 @@ class EnsurePlanFeature
             return $next($request);
         }
 
-        if (PlatformContext::featureEnabled($tenant, $feature)) {
-            return $next($request);
+        $context = PlatformContext::forTenant($tenant);
+
+        if (! ($context['features'][$feature] ?? false)) {
+            $label = PlanFeature::tryFrom($feature)?->label()
+                ?? ucfirst(str_replace('_', ' ', $feature));
+
+            return $this->upgrade(
+                $request,
+                sprintf('%s is not included in your current plan.', $label),
+                $feature,
+            );
         }
 
-        $label = PlanFeature::tryFrom($feature)?->label() ?? ucfirst(str_replace('_', ' ', $feature));
-        $message = sprintf('%s is not included in your current plan.', $label);
+        return $next($request);
+    }
 
+    private function upgrade(Request $request, string $message, string $feature): Response
+    {
         if ($request->expectsJson() && ! $request->header('X-Inertia')) {
             abort(403, $message);
         }

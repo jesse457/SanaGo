@@ -432,8 +432,8 @@ class TenantService
             ->with(['tenant', 'plan'])
             ->usable()
             ->whereNotNull('end_date')
-            ->whereDate('end_date', '<=', now()->addDays($days))
-            ->whereDate('end_date', '>=', today())
+            ->where('end_date', '<=', now()->addDays($days)->toDateString())
+            ->where('end_date', '>=', today()->toDateString())
             ->orderBy('end_date')
             ->get();
     }

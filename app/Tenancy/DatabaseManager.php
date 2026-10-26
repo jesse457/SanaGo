@@ -37,13 +37,6 @@ class DatabaseManager implements TenantDatabaseManager
 
     public function databaseExists(string $name): bool
     {
-        $tenant = tenancy()->tenant;
-
-        if ($tenant) {
-            return file_exists($this->databasePath($tenant));
-        }
-
-        // Fallback: check if DB file exists for a tenant with this key
         return file_exists(database_path('tenants/'.$name.'/database.sqlite'));
     }
 

@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\MedicalRecord;
+use App\Policies\ConsultationPolicy;
 use App\Support\PlatformContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -49,6 +51,10 @@ class AppServiceProvider extends ServiceProvider
 
     protected function configureGates(): void
     {
+        // The clinical model is `MedicalRecord`; the policy speaks the domain
+        // language ("consultation") used by the billing flow.
+        Gate::policy(MedicalRecord::class, ConsultationPolicy::class);
+
         Gate::before(function ($user) {
             /*
              * Only the platform super-admin role bypasses the permission

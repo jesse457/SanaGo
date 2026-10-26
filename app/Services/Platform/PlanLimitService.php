@@ -83,6 +83,22 @@ class PlanLimitService
     }
 
     /**
+     * Human-readable explanation of an exhausted quota.
+     */
+    public function exceededMessage(string $key, ?Tenant $tenant = null): string
+    {
+        $limit = (int) $this->limit($key, $tenant);
+        $label = $key === 'users' ? 'user seats' : str_replace('_', ' ', $key);
+
+        return sprintf(
+            'Plan limit reached: your plan includes %d %s and you are already using %d. Upgrade your plan to add more.',
+            $limit,
+            $label,
+            $this->usage($key, $tenant),
+        );
+    }
+
+    /**
      * Throw a validation error when the quota would be exceeded.
      *
      * @throws ValidationException
@@ -95,16 +111,8 @@ class PlanLimitService
             return;
         }
 
-        $limit = $this->limit($key, $tenant);
-        $label = $key === 'users' ? 'user seats' : $key;
-
         throw ValidationException::withMessages([
-            $key => sprintf(
-                'Your plan allows %d %s and you are already using %d. Upgrade your plan to add more.',
-                (int) $limit,
-                $label,
-                $this->usage($key, $tenant),
-            ),
+            $key => $this->exceededMessage($key, $tenant),
         ]);
     }
 

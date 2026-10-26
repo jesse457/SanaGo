@@ -23,11 +23,6 @@ class UpdateUserRequest extends FormRequest
             'is_active' => 'boolean',
             'password' => 'nullable|string|min:8',
             'profile_picture' => 'nullable|image|max:2048',
-            'shifts' => 'nullable|array',
-            'shifts.*.shift_date' => 'required|date',
-            'shifts.*.shift_type' => 'required|string|in:morning,afternoon,night',
-            'shifts.*.start_time' => 'nullable',
-            'shifts.*.end_time' => 'nullable',
         ];
     }
 }

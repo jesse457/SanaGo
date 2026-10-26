@@ -3,14 +3,12 @@
 namespace App\Providers;
 
 use App\Models\Admission;
-use App\Models\Appointment;
 use App\Models\EmergencyCase;
 use App\Models\LabRequest;
 use App\Models\MedicalRecord;
 use App\Models\Prescription;
 use App\Models\Surgery;
 use App\Observers\AdmissionObserver;
-use App\Observers\AppointmentObserver;
 use App\Observers\EmergencyCaseObserver;
 use App\Observers\LabRequestObserver;
 use App\Observers\MedicalRecordObserver;
@@ -25,7 +23,6 @@ class EventServiceProvider extends ServiceProvider
         Surgery::observe(SurgeryObserver::class);
         EmergencyCase::observe(EmergencyCaseObserver::class);
         Admission::observe(AdmissionObserver::class);
-        Appointment::observe(AppointmentObserver::class);
         LabRequest::observe(LabRequestObserver::class);
         Prescription::observe(PrescriptionObserver::class);
         MedicalRecord::observe(MedicalRecordObserver::class);

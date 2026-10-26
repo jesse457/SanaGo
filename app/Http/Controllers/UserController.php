@@ -6,9 +6,7 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\Department;
 use App\Models\User;
-use App\Services\Billing\PriceListService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
@@ -20,7 +18,7 @@ class UserController extends Controller
         $role = $request->input('role');
 
         // Build query with conditional search and role filters
-        $query = User::with(['department:id,name', 'roles', 'shifts'])
+        $query = User::with(['department:id,name', 'roles'])
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -82,27 +80,12 @@ class UserController extends Controller
         }
 
         $role = $validated['role'] ?? null;
-        $shifts = $validated['shifts'] ?? [];
-        unset($validated['role'], $validated['shifts']);
+        unset($validated['role']);
 
         $user->update($validated);
 
         if ($role) {
             $user->syncRoles($role);
-        }
-
-        // Sync shifts: replace the stored set with the submitted one. The
-        // submitted shift keys are optional, so read them defensively.
-        $user->shifts()->delete();
-        foreach ($shifts as $shift) {
-            if (! empty($shift['shift_date']) && ! empty($shift['shift_type'])) {
-                $user->shifts()->create([
-                    'shift_date' => $shift['shift_date'],
-                    'shift_type' => $shift['shift_type'],
-                    'start_time' => ($shift['start_time'] ?? null) ?: '08:00',
-                    'end_time' => ($shift['end_time'] ?? null) ?: '17:00',
-                ]);
-            }
         }
 
         if ($request->hasFile('profile_picture')) {
@@ -123,48 +106,5 @@ class UserController extends Controller
         $user->delete();
 
         return back()->with('success', 'User deleted.');
-    }
-
-    /**
-     * Price list of one doctor: catalogue default vs what this doctor charges.
-     *
-     * Doctors do not share tariffs, so their prices live beside their account
-     * instead of forcing one hospital-wide rate.
-     */
-    public function pricing(User $user, PriceListService $prices)
-    {
-        Gate::authorize('manage-users');
-
-        $user->load('roles');
-
-        return Inertia::render('Users/Pricing', [
-            'doctor' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'roles' => $user->getRoleNames()->values()->toArray(),
-            ],
-            'prices' => $prices->priceListFor($user),
-            'consultationService' => $prices->consultationService()?->only(['id', 'name', 'code']),
-        ]);
-    }
-
-    /**
-     * Save the doctor's overrides. Sending the catalogue price removes the
-     * override, so the list only shows real differences.
-     */
-    public function updatePricing(Request $request, User $user, PriceListService $prices)
-    {
-        Gate::authorize('manage-users');
-
-        $validated = $request->validate([
-            'prices' => ['required', 'array'],
-            'prices.*' => ['nullable', 'numeric', 'min:0'],
-        ]);
-
-        $prices->syncPrices($user, $validated['prices']);
-
-        return redirect()
-            ->route('users.pricing', $user->id)
-            ->with('success', 'Doctor prices updated.');
     }
 }

@@ -6,45 +6,48 @@ use App\Enums\InvoiceStatus;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Models\CashShift;
 use App\Models\Invoice;
-use App\Models\Patient;
 use App\Models\Payer;
 use App\Services\Billing\BillingService;
 use App\Services\Billing\ClaimService;
+use App\Services\Billing\SettlementService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
+/**
+ * Invoice actions that outlive the old invoices screen.
+ *
+ * Bills are read and settled at the cash desk (CaisseController). This
+ * controller keeps the status-focused view over the invoices ledger next to
+ * the desk's targeted actions — record a payment, change a status, submit a
+ * tiers payant claim, void an invoice.
+ */
 class InvoiceController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * The invoices ledger: every bill with its status, what was paid and what
+     * remains. Billing stays at the desk; this screen reads.
+     */
+    public function index(Request $request, SettlementService $settlement): Response
     {
-        $query = Invoice::with(['patient:id,first_name,last_name,patient_uid'])
-            ->withCount('items');
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('invoice_number', 'like', "%{$request->search}%")
-                    ->orWhereHas('patient', function ($sq) use ($request) {
-                        $sq->where('first_name', 'like', "%{$request->search}%")
-                            ->orWhere('last_name', 'like', "%{$request->search}%");
-                    });
-            });
-        }
+        $filters = [
+            'search' => trim((string) $request->string('search')),
+            'status' => (string) $request->string('status', 'all'),
+        ];
 
         return Inertia::render('Finance/Invoices/Index', [
-            'invoices' => $query->latest()->paginate(20)->withQueryString(),
-            'filters' => $request->only(['search', 'status']),
+            'invoices' => $settlement->billList($filters),
+            'filters' => $filters,
         ]);
     }
 
-    public function create()
+    /**
+     * A bill is opened from the desk: pick the patient, write the charges.
+     */
+    public function create(): RedirectResponse
     {
-        return Inertia::render('Finance/Invoices/Create', [
-            'patients' => Patient::select('id', 'first_name', 'last_name', 'patient_uid')->orderBy('first_name')->get(),
-        ]);
+        return redirect()->route('caisse.index');
     }
 
     public function store(StoreInvoiceRequest $request, BillingService $service)
@@ -59,12 +62,15 @@ class InvoiceController extends Controller
             ->with('success', 'Invoice created successfully.');
     }
 
-    public function show(Invoice $invoice)
+    /**
+     * The printable invoice document: A4 sheet or till receipt, with the
+     * close-the-debt actions beside it. Printing must carry only this
+     * document, never the surrounding app chrome.
+     */
+    public function show(Invoice $invoice, SettlementService $settlement): Response
     {
-        $invoice->load(['patient', 'items', 'claim.payer', 'cashPayments']);
-
         return Inertia::render('Finance/Invoices/Show', [
-            'invoice' => $invoice,
+            'invoice' => $settlement->invoiceDetail($invoice),
         ]);
     }
 

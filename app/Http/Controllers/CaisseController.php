@@ -3,16 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CashShiftStatus;
+use App\Enums\PlanFeature;
 use App\Http\Requests\CloseCashShiftRequest;
 use App\Http\Requests\StoreCashPaymentRequest;
 use App\Http\Requests\StoreCashShiftRequest;
+use App\Http\Requests\StoreChargeRequest;
 use App\Http\Requests\StoreSettlementRequest;
+use App\Http\Requests\UpdateChargeRequest;
 use App\Models\CashPayment;
 use App\Models\CashPoint;
 use App\Models\CashShift;
+use App\Models\InvoiceItem;
 use App\Models\Patient;
 use App\Services\Billing\BillingService;
 use App\Services\Billing\SettlementService;
+use App\Support\PlatformContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,25 +25,28 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The cash desk.
+ * The cash desk — bills and money in one screen.
+ *
+ * There is no separate invoice module: the bill a patient owes, the charges
+ * written on it (catalogue services, module charges, and what was consumed
+ * during the stay), the payments against it and the receipt all live here.
  *
  * The counter flow is: open a shift on a till, find or register the patient,
- * show what they still owe, take the money for the selected services and print
- * a receipt. Money always settles named charges — never a free amount.
+ * read the bill, add what they consumed, take the money for the selected lines
+ * and print a receipt. Money always settles named charges — never a free
+ * amount.
  */
 class CaisseController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, SettlementService $settlement): Response
     {
-        $activeShift = CashShift::where('status', CashShiftStatus::Open)
-            ->where('user_id', auth()->id())
-            ->with(['payments.patient:id,first_name,last_name', 'payments.invoice:id,invoice_number', 'cashPoint:id,name'])
-            ->first();
+        $activeShift = $this->activeShift();
+        $billFilters = $request->only(['search', 'status']);
 
         $todayPayments = CashPayment::whereHas('cashShift', function ($q) {
-            $q->whereDate('opened_at', today());
+            $q->whereBetween('opened_at', [today()->startOfDay(), today()->endOfDay()]);
         })
-            ->with(['patient:id,first_name,last_name', 'invoice:id,invoice_number', 'cashPoint:id,name'])
+            ->with(['patient:id,first_name,last_name', 'invoice:id,invoice_number'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -74,16 +82,55 @@ class CaisseController extends Controller
             'cashPoints' => CashPoint::options(),
             'defaultCashPointId' => CashPoint::primary()->id,
             'selectedPatient' => $selectedPatient,
+            // Deep link from the bills list: open that patient's bill.
+            'focusInvoiceId' => $request->integer('invoice_id') ?: null,
+            'bills' => $settlement->billList($billFilters),
+            'billFilters' => $billFilters,
+        ]);
+    }
+
+    /**
+     * The till ledger: every shift opened on every cash point, with its
+     * counted balance and variance. A separate screen from the desk so
+     * reconciling the money never requires walking through the counter.
+     */
+    public function shifts(Request $request): Response
+    {
+        $status = (string) $request->string('status', 'all');
+
+        $shifts = CashShift::query()
+            ->with(['user:id,name', 'cashPoint:id,name,module'])
+            ->withCount('payments')
+            ->withSum('payments as collected', 'amount_paid')
+            ->when(in_array($status, ['open', 'closed'], true), fn ($query) => $query->where('status', $status))
+            ->orderByDesc('opened_at')
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn (CashShift $shift): array => [
+                'id' => $shift->id,
+                'payment_point' => $shift->payment_point,
+                'cashier' => $shift->user?->name ?? '—',
+                'cash_point' => $shift->cashPoint?->name ?? $shift->payment_point,
+                'status' => $shift->status->value,
+                'opened_at' => $shift->opened_at?->format('Y-m-d H:i'),
+                'closed_at' => $shift->closed_at?->format('Y-m-d H:i'),
+                'opening_balance' => (float) $shift->opening_balance,
+                'closing_balance' => $shift->closing_balance === null ? null : (float) $shift->closing_balance,
+                'expected_total' => $shift->expected_total === null ? null : (float) $shift->expected_total,
+                'variance' => $shift->variance === null ? null : (float) $shift->variance,
+                'payments_count' => (int) $shift->payments_count,
+                'collected' => (float) ($shift->collected ?? 0),
+            ]);
+
+        return Inertia::render('Caisse/Shifts', [
+            'shifts' => $shifts,
+            'filters' => ['status' => $status],
         ]);
     }
 
     public function openShift(StoreCashShiftRequest $request): RedirectResponse
     {
-        $existing = CashShift::where('status', CashShiftStatus::Open)
-            ->where('user_id', auth()->id())
-            ->exists();
-
-        if ($existing) {
+        if ($this->activeShift() !== null) {
             return back()->with('error', 'You already have an open shift. Close it before opening a new one.');
         }
 
@@ -103,9 +150,7 @@ class CaisseController extends Controller
 
     public function closeShift(CloseCashShiftRequest $request): RedirectResponse
     {
-        $shift = CashShift::where('status', CashShiftStatus::Open)
-            ->where('user_id', auth()->id())
-            ->first();
+        $shift = $this->activeShift();
 
         if (! $shift) {
             return back()->with('error', 'No open shift found.');
@@ -163,20 +208,60 @@ class CaisseController extends Controller
     }
 
     /**
-     * What this patient still owes, plus the priced catalogue for ad-hoc sales.
+     * What this patient owes and what is already on their bill, plus the
+     * priced catalogue and the headings for hand-written charges.
      */
-    public function outstanding(Patient $patient, SettlementService $settlement): JsonResponse
+    public function outstanding(Request $request, Patient $patient, SettlementService $settlement): JsonResponse
     {
         // The list is scoped to the cashier's till: the main caisse must not
         // offer pharmacy charges, and the pharmacy counter sees only its own.
-        $shift = CashShift::where('status', CashShiftStatus::Open)
-            ->where('user_id', auth()->id())
-            ->with('cashPoint')
-            ->first();
+        $shift = $this->activeShift();
 
-        return response()->json(
-            $settlement->counterPayload($patient, $shift?->cashPoint),
+        return response()->json([
+            ...$settlement->counterPayload($patient, $shift?->cashPoint),
+            'claim_context' => $settlement->claimContext(
+                $patient,
+                $this->canReachClaims($request),
+            ),
+        ]);
+    }
+
+    /**
+     * Write hand-written charges (what the patient consumed during the stay)
+     * onto their running bill.
+     */
+    public function storeCharge(StoreChargeRequest $request, SettlementService $settlement): RedirectResponse
+    {
+        $validated = $request->validated();
+        $patient = Patient::findOrFail($validated['patient_id']);
+
+        $settlement->addCharges(
+            $patient,
+            $validated['lines'],
+            $this->activeShift()?->cashPoint,
         );
+
+        return back()->with('success', 'Charge added to the bill.');
+    }
+
+    /**
+     * Correct a hand-written charge before it is paid.
+     */
+    public function updateCharge(UpdateChargeRequest $request, InvoiceItem $item, SettlementService $settlement): RedirectResponse
+    {
+        $settlement->updateCharge($item, $request->validated());
+
+        return back()->with('success', 'Charge updated.');
+    }
+
+    /**
+     * Take a hand-written charge back off the bill.
+     */
+    public function destroyCharge(InvoiceItem $item, SettlementService $settlement): RedirectResponse
+    {
+        $settlement->voidCharge($item);
+
+        return back()->with('success', 'Charge removed from the bill.');
     }
 
     /**
@@ -184,9 +269,7 @@ class CaisseController extends Controller
      */
     public function settle(StoreSettlementRequest $request, SettlementService $settlement): RedirectResponse
     {
-        $shift = CashShift::where('status', CashShiftStatus::Open)
-            ->where('user_id', auth()->id())
-            ->first();
+        $shift = $this->activeShift();
 
         if (! $shift) {
             return back()->with('error', 'Open a shift before taking payments.');
@@ -198,13 +281,16 @@ class CaisseController extends Controller
         $itemIds = $validated['item_ids'] ?? [];
 
         // Services billed on the spot are added to the running bill first, then
-        // settled together with the charges the patient already had.
-        if (! empty($validated['service_ids'])) {
+        // settled together with the charges the patient already had. A pick
+        // names the record behind the line (a drug, a lab test, a bed day of
+        // the open stay, a price-list service) so the price always comes from
+        // the catalogue.
+        if (! empty($validated['picks'])) {
             $itemIds = [
                 ...$itemIds,
-                ...$settlement->billServices(
+                ...$settlement->billPicks(
                     $patient,
-                    $validated['service_ids'],
+                    $validated['picks'],
                     $shift->cashPoint,
                 ),
             ];
@@ -236,9 +322,7 @@ class CaisseController extends Controller
      */
     public function pay(StoreCashPaymentRequest $request, BillingService $billing): RedirectResponse
     {
-        $shift = CashShift::where('status', CashShiftStatus::Open)
-            ->where('user_id', auth()->id())
-            ->first();
+        $shift = $this->activeShift();
 
         if (! $shift) {
             return back()->with('error', 'No open shift found. Please open a shift first.');
@@ -279,5 +363,36 @@ class CaisseController extends Controller
                 'invoice:id,invoice_number,total_amount',
             ]),
         ]);
+    }
+
+    /**
+     * The till the signed-in cashier is currently working.
+     *
+     * Owned by the cashier, never looked up by id: money must land on the shift
+     * that took it, not on somebody else's.
+     */
+    private function activeShift(): ?CashShift
+    {
+        return CashShift::where('status', CashShiftStatus::Open)
+            ->where('user_id', auth()->id())
+            ->with('cashPoint')
+            ->latest()
+            ->first();
+    }
+
+    /**
+     * Whether this cashier may start an insurance claim from a bill: it needs
+     * the finance permission and the plan's tiers payant capability.
+     */
+    private function canReachClaims(Request $request): bool
+    {
+        if (! $request->user()?->can('view-finance')) {
+            return false;
+        }
+
+        $tenant = tenant();
+
+        return $tenant === null
+            || PlatformContext::featureEnabled($tenant, PlanFeature::InsuranceClaims);
     }
 }

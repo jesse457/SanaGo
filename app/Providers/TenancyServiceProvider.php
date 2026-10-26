@@ -10,9 +10,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Stancl\JobPipeline\JobPipeline;
 use Stancl\Tenancy\Events;
+use Stancl\Tenancy\Features\UserImpersonation;
 use Stancl\Tenancy\Jobs;
 use Stancl\Tenancy\Listeners;
 use Stancl\Tenancy\Middleware;
+use Stancl\Tenancy\Resolvers\DomainTenantResolver;
 
 class TenancyServiceProvider extends ServiceProvider
 {
@@ -96,10 +98,27 @@ class TenancyServiceProvider extends ServiceProvider
 
     public function boot()
     {
+        $this->configurePackageFeatures();
         $this->bootEvents();
         $this->mapRoutes();
 
         $this->makeTenancyMiddlewareHighestPriority();
+    }
+
+    /**
+     * Wire stancl/tenancy's package-level features to this application.
+     *
+     * - UserImpersonation uses a static TTL; the platform exposes the same
+     *   value in config/platform.php so support links cannot outlive it.
+     * - DomainTenantResolver can cache the domain → tenant lookup. The
+     *   package's model traits invalidate the cache whenever a tenant or
+     *   domain changes, so this only removes a central query per request.
+     */
+    protected function configurePackageFeatures(): void
+    {
+        UserImpersonation::$ttl = (int) config('platform.impersonation.ttl', 60);
+
+        DomainTenantResolver::$shouldCache = true;
     }
 
     protected function bootEvents()

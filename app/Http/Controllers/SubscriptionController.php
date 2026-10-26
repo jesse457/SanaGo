@@ -32,7 +32,7 @@ class SubscriptionController extends Controller
         $status = (string) $request->query('status', 'all');
 
         $subscriptions = Subscription::query()
-            ->with(['tenant.domains', 'plan'])
+            ->with('tenant')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($inner) use ($search) {
                     $inner->where('plan_name', 'like', "%{$search}%")

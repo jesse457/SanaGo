@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('user_shifts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
             $table->date('shift_date');
             $table->string('shift_type');
             $table->time('start_time');

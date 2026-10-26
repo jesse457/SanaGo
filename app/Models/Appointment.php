@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['patient_id', 'doctor_id', 'appointment_date', 'appointment_time', 'status', 'queue_position', 'consultation_fee'])]
+#[Fillable(['patient_id', 'doctor_id', 'appointment_date', 'appointment_time', 'status', 'consultation_fee'])]
 class Appointment extends Model
 {
     /** @use HasFactory<AppointmentFactory> */
@@ -20,7 +20,6 @@ class Appointment extends Model
         return [
             'appointment_date' => 'date:Y-m-d',
             'appointment_time' => 'string',
-            'queue_position' => 'integer',
             'status' => AppointmentStatus::class,
         ];
     }

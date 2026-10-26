@@ -9,6 +9,8 @@ use Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper;
 use Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper;
 use Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper;
 use Stancl\Tenancy\Database\Models\Domain;
+use Stancl\Tenancy\Features\CrossDomainRedirect;
+use Stancl\Tenancy\Features\UniversalRoutes;
 use Stancl\Tenancy\Features\UserImpersonation;
 use Stancl\Tenancy\TenantDatabaseManagers\MySQLDatabaseManager;
 use Stancl\Tenancy\TenantDatabaseManagers\PostgreSQLDatabaseManager;
@@ -24,6 +26,7 @@ return [
         '127.0.0.1',
         'localhost',
         'sanago.local',
+        'sanago.cm',
     ],
 
     'bootstrappers' => [
@@ -77,10 +80,10 @@ return [
 
     'features' => [
         UserImpersonation::class,
+        UniversalRoutes::class,
+        CrossDomainRedirect::class,
         // Stancl\Tenancy\Features\TelescopeTags::class,
-        // Stancl\Tenancy\Features\UniversalRoutes::class,
         // Stancl\Tenancy\Features\TenantConfig::class,
-        // Stancl\Tenancy\Features\CrossDomainRedirect::class,
         // Stancl\Tenancy\Features\ViteBundler::class,
     ],
 

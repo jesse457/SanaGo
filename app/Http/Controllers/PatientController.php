@@ -100,12 +100,19 @@ class PatientController extends Controller
     {
         $patient->load([
             'latestAdmission.bed.ward',
-            'admissions' => fn ($query) => $query->with('bed.ward')->latest('admission_date')->limit(10),
+            'latestAdmission.attendingDoctor:id,name',
+            'admissions' => fn ($query) => $query->with(['bed.ward', 'attendingDoctor:id,name'])->latest('admission_date')->limit(10),
             'vitals' => fn ($query) => $query->with('recordedBy:id,name')->latest('recorded_at')->limit(20),
             'medicalRecords' => fn ($query) => $query->latest('record_date')->limit(10),
             'appointments' => fn ($query) => $query->latest('appointment_date')->limit(10),
             'invoices' => fn ($query) => $query->latest('invoice_date')->limit(10),
             'prescriptions' => fn ($query) => $query->latest()->limit(10),
+        ]);
+
+        $patient->invoices->each->makeHidden([
+            'total_paid',
+            'remaining_balance',
+            'is_fully_paid',
         ]);
 
         return Inertia::render('Patients/Profile', [

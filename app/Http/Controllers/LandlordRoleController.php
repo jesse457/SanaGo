@@ -16,11 +16,11 @@ class LandlordRoleController extends Controller
 {
     public function index(): Response
     {
-        $roles = Role::with('permissions')->get()->map(fn (Role $r) => [
+        $roles = Role::with('permissions')->withCount('users')->get()->map(fn (Role $r) => [
             'id' => $r->id,
             'name' => $r->name,
             'permissions' => $r->permissions->pluck('name'),
-            'users_count' => $r->users()->count(),
+            'users_count' => $r->users_count,
         ]);
 
         return Inertia::render('LandlordRoles/Index', ['roles' => $roles]);

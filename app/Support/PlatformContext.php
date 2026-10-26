@@ -11,23 +11,21 @@ use App\Models\PlatformSetting;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
- * Request-scoped read model for platform + tenant plan context.
+ * Read model for platform + tenant plan context.
  *
- * Everything here degrades gracefully: a missing central table, an
- * unreachable tenant database or an unconfigured plan must never take the
- * application down, it only removes a capability.
+ * Every result is backed by the application cache (see ::flush() for
+ * invalidation). All lookups degrade gracefully: a missing central table,
+ * an unreachable tenant DB or an unconfigured plan only removes a
+ * capability, it never throws.
  */
 final class PlatformContext
 {
-    /**
-     * Defaults for every platform setting. Stored values override these.
-     *
-     * @var array<string, mixed>
-     */
+    /** @var array<string, mixed> */
     private const DEFAULTS = [
         'platform_name' => 'SanaGo',
         'platform_tagline' => 'Hospital management for Cameroon',
@@ -45,37 +43,39 @@ final class PlatformContext
         'maintenance_message' => null,
     ];
 
-    /** @var array<string, mixed>|null */
-    private static ?array $settings = null;
+    private const SETTINGS_CACHE_KEY = 'platform_context:settings';
 
-    /** @var array<string, array<string, mixed>|null> */
-    private static array $tenantCache = [];
+    private const VERSION_CACHE_KEY = 'platform_context:version';
 
-    /**
-     * @return array<string, mixed>
-     */
+    // ---------------------------------------------------------------------
+    // Settings
+    // ---------------------------------------------------------------------
+
+    /** @return array<string, mixed> */
     public static function settings(): array
     {
-        if (self::$settings !== null) {
-            return self::$settings;
-        }
+        return Cache::remember(
+            self::SETTINGS_CACHE_KEY,
+            now()->addHour(),
+            static function (): array {
+                $stored = [];
 
-        $stored = [];
+                try {
+                    if (Schema::connection('central')->hasTable('platform_settings')) {
+                        // The model already casts `value` to JSON — do not
+                        // decode a second time.
+                        $stored = PlatformSetting::query()
+                            ->get()
+                            ->mapWithKeys(static fn (PlatformSetting $s) => [$s->key => $s->value])
+                            ->all();
+                    }
+                } catch (Throwable) {
+                    // No landlord DB — use defaults.
+                }
 
-        try {
-            if (Schema::connection('central')->hasTable('platform_settings')) {
-                // The model casts `value` to JSON already — do not decode a
-                // second time or plain strings become null.
-                $stored = PlatformSetting::query()
-                    ->get()
-                    ->mapWithKeys(fn (PlatformSetting $setting) => [$setting->key => $setting->value])
-                    ->all();
-            }
-        } catch (Throwable) {
-            // No landlord database (tenant-only deployment) — use defaults.
-        }
-
-        return self::$settings = array_merge(self::DEFAULTS, $stored);
+                return array_merge(self::DEFAULTS, $stored);
+            },
+        );
     }
 
     public static function setting(string $key, mixed $default = null): mixed
@@ -88,11 +88,7 @@ final class PlatformContext
         return (string) self::setting('currency', 'XAF');
     }
 
-    /**
-     * Payload shared with every Inertia page (central and tenant contexts).
-     *
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public static function toArray(): array
     {
         return [
@@ -112,19 +108,16 @@ final class PlatformContext
         ];
     }
 
+    // ---------------------------------------------------------------------
+    // Tenant / plan context
+    // ---------------------------------------------------------------------
+
     public static function subscription(?Tenant $tenant): ?Subscription
     {
-        if ($tenant === null) {
-            return null;
-        }
-
-        return self::forTenant($tenant)['subscription_model'];
+        return $tenant === null ? null : self::forTenant($tenant)['subscription_model'];
     }
 
     /**
-     * Plan context for a tenant: subscription summary, quotas, features and
-     * current usage.
-     *
      * @return array{
      *     subscription: array<string, mixed>|null,
      *     subscription_model: Subscription|null,
@@ -136,69 +129,82 @@ final class PlatformContext
      */
     public static function forTenant(Tenant $tenant): array
     {
-        $key = (string) $tenant->getTenantKey();
+        $tenantKey = (string) $tenant->getTenantKey();
 
-        if (isset(self::$tenantCache[$key])) {
-            /** @var array{subscription: array<string, mixed>|null, subscription_model: Subscription|null, limits: array<string, int|null>, features: array<string, bool>, usage: array<string, int>, plan: Plan|null} */
-            return self::$tenantCache[$key];
-        }
+        /** @var array{
+         *     subscription: array<string, mixed>|null,
+         *     subscription_model: Subscription|null,
+         *     limits: array<string, int|null>,
+         *     features: array<string, bool>,
+         *     plan: Plan|null
+         * } $context
+         */
+        $context = Cache::remember(
+            self::tenantCacheKey($tenantKey),
+            now()->addMinutes(10),
+            static function () use ($tenant): array {
+                $subscription = null;
 
-        $subscription = null;
+                try {
+                    $subscription = Subscription::query()
+                        ->with('plan')
+                        ->where('tenant_id', $tenant->getTenantKey())
+                        ->first();
+                } catch (Throwable) {
+                    $subscription = null;
+                }
 
-        try {
-            $subscription = Subscription::query()
-                ->with('plan')
-                ->where('tenant_id', $tenant->getTenantKey())
-                ->first();
-        } catch (Throwable) {
-            $subscription = null;
-        }
+                $plan = $subscription?->plan;
 
-        $plan = $subscription?->plan;
+                $limits = $subscription?->limits()
+                    ?? $plan?->limits()
+                    ?? ['users' => null, 'patients' => null, 'storage_gb' => null];
 
-        $limits = $subscription?->limits()
-            ?? $plan?->limits()
-            ?? ['users' => null, 'patients' => null, 'storage_gb' => null];
+                $features = $subscription?->featureFlags()
+                    ?? $plan?->featureFlags()
+                    ?? array_fill_keys(PlanFeature::core(), true);
 
-        $features = $subscription?->featureFlags()
-            ?? $plan?->featureFlags()
-            ?? array_fill_keys(PlanFeature::core(), true);
+                return [
+                    'subscription' => $subscription === null ? null : [
+                        'id' => $subscription->id,
+                        'plan_id' => $subscription->plan_id,
+                        'plan_name' => $subscription->plan_name ?? $plan?->name,
+                        'status' => $subscription->effectiveStatus()->value,
+                        'status_label' => $subscription->effectiveStatus()->label(),
+                        'status_tone' => $subscription->effectiveStatus()->tone(),
+                        'billing_cycle' => $subscription->billing_cycle,
+                        'price' => (float) $subscription->price,
+                        'currency' => $subscription->currency ?? self::currency(),
+                        'start_date' => $subscription->start_date?->toDateString(),
+                        'end_date' => $subscription->end_date?->toDateString(),
+                        'trial_ends_at' => $subscription->trial_ends_at?->toDateString(),
+                        'days_remaining' => $subscription->daysRemaining(),
+                        'auto_renew' => $subscription->auto_renew,
+                        'cancel_at_period_end' => $subscription->cancel_at_period_end,
+                        'is_on_trial' => $subscription->isOnTrial(),
+                        'grants_access' => $subscription->grantsAccess(),
+                    ],
+                    'subscription_model' => $subscription,
+                    'limits' => $limits,
+                    'features' => $features,
+                    'plan' => $plan,
+                ];
+            },
+        );
 
-        return self::$tenantCache[$key] = [
-            'subscription' => $subscription === null ? null : [
-                'id' => $subscription->id,
-                'plan_id' => $subscription->plan_id,
-                'plan_name' => $subscription->plan_name ?? $plan?->name,
-                'status' => $subscription->effectiveStatus()->value,
-                'status_label' => $subscription->effectiveStatus()->label(),
-                'status_tone' => $subscription->effectiveStatus()->tone(),
-                'billing_cycle' => $subscription->billing_cycle,
-                'price' => (float) $subscription->price,
-                'currency' => $subscription->currency ?? self::currency(),
-                'start_date' => $subscription->start_date?->toDateString(),
-                'end_date' => $subscription->end_date?->toDateString(),
-                'trial_ends_at' => $subscription->trial_ends_at?->toDateString(),
-                'days_remaining' => $subscription->daysRemaining(),
-                'auto_renew' => $subscription->auto_renew,
-                'cancel_at_period_end' => $subscription->cancel_at_period_end,
-                'is_on_trial' => $subscription->isOnTrial(),
-                'grants_access' => $subscription->grantsAccess(),
-            ],
-            'subscription_model' => $subscription,
-            'limits' => $limits,
-            'features' => $features,
-            'usage' => self::usage($tenant, $limits),
-            'plan' => $plan,
-        ];
+        // Usage depends on the *current* request's tenancy — compute (or
+        // fetch a short-lived cache entry) outside the long-lived context.
+        $context['usage'] = self::usage($tenant);
+
+        return $context;
     }
 
+    /** @return array<string, bool> */
     public static function features(?Tenant $tenant): array
     {
-        if ($tenant === null) {
-            return array_fill_keys(PlanFeature::core(), true);
-        }
-
-        return self::forTenant($tenant)['features'];
+        return $tenant === null
+            ? array_fill_keys(PlanFeature::core(), true)
+            : self::forTenant($tenant)['features'];
     }
 
     public static function featureEnabled(?Tenant $tenant, PlanFeature|string $feature): bool
@@ -210,50 +216,91 @@ final class PlatformContext
 
     public static function limit(?Tenant $tenant, string $key): ?int
     {
-        if ($tenant === null) {
-            return null;
-        }
-
-        return self::forTenant($tenant)['limits'][$key] ?? null;
+        return $tenant === null ? null : (self::forTenant($tenant)['limits'][$key] ?? null);
     }
 
     /**
-     * Cheap usage counters used for quota enforcement and the usage meters.
-     * Counts run against the tenant database (tenant requests) and are
-     * memoised per request.
+     * Cheap usage counters used for quota enforcement and usage meters.
      *
-     * @param  array<string, int|null>  $limits
+     * Only computed when the given tenant is the *current* tenancy — a
+     * non-tenant request always reports zeros (and never caches them).
+     *
      * @return array<string, int>
      */
-    public static function usage(Tenant $tenant, array $limits = []): array
+    public static function usage(Tenant $tenant): array
     {
-        $usage = ['users' => 0, 'patients' => 0, 'storage_gb' => 0];
-
-        if (tenancy()->tenant === null || tenancy()->tenant->getTenantKey() !== $tenant->getTenantKey()) {
-            return $usage;
+        if (tenancy()->tenant === null
+            || tenancy()->tenant->getTenantKey() !== $tenant->getTenantKey()) {
+            return ['users' => 0, 'patients' => 0, 'storage_gb' => 0];
         }
 
-        try {
-            if (Schema::hasTable('users')) {
-                $usage['users'] = (int) User::query()->count();
-            }
+        return Cache::remember(
+            self::tenantCacheKey((string) $tenant->getTenantKey(), 'usage'),
+            now()->addMinutes(2),
+            static function (): array {
+                $usage = ['users' => 0, 'patients' => 0, 'storage_gb' => 0];
 
-            if (Schema::hasTable('patients')) {
-                $usage['patients'] = (int) Patient::query()->count();
-            }
-        } catch (Throwable) {
-            // Tenant database not ready — report zero rather than crashing.
-        }
+                try {
+                    if (Schema::hasTable('users')) {
+                        $usage['users'] = (int) User::query()->count();
+                    }
+                    if (Schema::hasTable('patients')) {
+                        $usage['patients'] = (int) Patient::query()->count();
+                    }
+                } catch (Throwable) {
+                    // Tenant DB not ready — report zeros.
+                }
 
-        return $usage;
+                return $usage;
+            },
+        );
     }
 
+    // ---------------------------------------------------------------------
+    // Invalidation
+    // ---------------------------------------------------------------------
+
     /**
-     * Forget memoised context (tests, tenant switches, settings updates).
+     * Forget cached context.
+     *
+     * - Pass a tenant to forget just that tenant.
+     * - Pass nothing to forget settings *and* every tenant (via a version bump
+     *   so stale entries become unreachable — works on any cache driver,
+     *   no cache tags required).
      */
-    public static function flush(): void
+    public static function flush(?Tenant $tenant = null): void
     {
-        self::$settings = null;
-        self::$tenantCache = [];
+        Cache::forget(self::SETTINGS_CACHE_KEY);
+
+        if ($tenant !== null) {
+            $key = (string) $tenant->getTenantKey();
+            Cache::forget(self::tenantCacheKey($key));
+            Cache::forget(self::tenantCacheKey($key, 'usage'));
+
+            return;
+        }
+
+        Cache::forever(self::VERSION_CACHE_KEY, self::version() + 1);
+    }
+
+    // ---------------------------------------------------------------------
+    // Internals
+    // ---------------------------------------------------------------------
+
+    private static function version(): int
+    {
+        return (int) Cache::get(self::VERSION_CACHE_KEY, 0);
+    }
+
+    private static function tenantCacheKey(string $tenantKey, string $suffix = ''): string
+    {
+        $suffix = $suffix === '' ? '' : ':'.$suffix;
+
+        return sprintf(
+            'platform_context:tenant:%d:%s%s',
+            self::version(),
+            $tenantKey,
+            $suffix,
+        );
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserShiftRequest;
 use App\Http\Requests\UpdateUserShiftRequest;
+use App\Models\User;
 use App\Models\UserShift;
 use App\Services\System\ShiftService;
 use Illuminate\Http\RedirectResponse;
@@ -12,19 +13,19 @@ use Inertia\Response;
 
 class UserShiftController extends Controller
 {
-    public function index(ShiftService $service): Response
+    public function index(): Response
     {
         return Inertia::render('Shifts/Index', [
-            'shifts' => UserShift::with('user.department')
+            'shifts' => UserShift::with('staffAssignments.user.department')
                 ->orderBy('shift_date', 'desc')
                 ->orderBy('shift_type')
                 ->paginate(50),
+            'users' => User::with('department:id,name')
+                ->select('id', 'name', 'department_id')
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(),
         ]);
-    }
-
-    public function create(): Response
-    {
-        return Inertia::render('Shifts/Create');
     }
 
     public function store(StoreUserShiftRequest $request, ShiftService $service): RedirectResponse
@@ -33,13 +34,6 @@ class UserShiftController extends Controller
 
         return redirect()->route('shifts.index')
             ->with('success', 'Shift created successfully.');
-    }
-
-    public function edit(UserShift $shift): Response
-    {
-        return Inertia::render('Shifts/Edit', [
-            'shift' => $shift->load('user'),
-        ]);
     }
 
     public function update(UpdateUserShiftRequest $request, UserShift $shift, ShiftService $service): RedirectResponse

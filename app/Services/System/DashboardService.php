@@ -147,7 +147,7 @@ class DashboardService
         }
 
         if ($p['canViewAppointments'] && ! $p['canViewFinance'] && ! $p['canCreateConsultations']) {
-            $metricCards[] = ['type' => 'reception_waiting', 'accent' => 'amber'];
+            $metricCards[] = ['type' => 'reception_appointments', 'accent' => 'amber'];
             $metricCards[] = ['type' => 'reception_new_patients', 'accent' => 'blue'];
             $metricCards[] = ['type' => 'reception_beds', 'accent' => 'violet'];
         }
@@ -347,26 +347,26 @@ class DashboardService
         if ($p['canCreateConsultations'] && ! $p['canViewFinance']) {
             $metrics['doctor_stats'] = [
                 'consultations_today' => MedicalRecord::where('doctor_id', auth()->id())
-                    ->whereDate('record_date', $today)->count(),
+                    ->where('record_date', $today)->count(),
                 'my_pending_lab' => LabRequest::where('doctor_id', auth()->id())
                     ->where('status', 'pending')->count(),
                 'my_active_surgeries' => Surgery::where('surgeon_id', auth()->id())
                     ->where('status', 'in_progress')->count(),
                 'my_appointments_today' => Appointment::where('doctor_id', auth()->id())
-                    ->whereDate('appointment_date', $today)->count(),
+                    ->where('appointment_date', $today)->count(),
             ];
         }
 
         // Reception-specific stats
         if ($p['canViewAppointments'] && ! $p['canViewFinance'] && ! $p['canCreateConsultations']) {
-            $waitingCount = Appointment::whereDate('appointment_date', $today)
-                ->where('status', 'waiting')->count();
+            $scheduledToday = Appointment::where('appointment_date', $today)
+                ->where('status', '!=', 'cancelled')->count();
             $metrics['reception_stats'] = [
-                'waiting_patients' => $waitingCount,
+                'todays_appointments' => $scheduledToday,
                 'new_patients_today' => Patient::whereDate('created_at', $today)->count(),
                 'available_beds' => Bed::where('status', BedStatus::Available)->count(),
                 'total_beds' => Bed::count(),
-                'todays_check_ins' => Appointment::whereDate('appointment_date', $today)
+                'todays_check_ins' => Appointment::where('appointment_date', $today)
                     ->where('status', 'completed')->count(),
             ];
         }
@@ -454,7 +454,7 @@ class DashboardService
         return [
             'today_appointments' => Appointment::with(['patient:id,first_name,last_name,patient_uid'])
                 ->where('doctor_id', $doctorId)
-                ->whereDate('appointment_date', today())
+                ->where('appointment_date', today())
                 ->orderBy('appointment_time')
                 ->take(5)
                 ->get()
@@ -483,9 +483,9 @@ class DashboardService
     private function getReceptionPanelData(string $today): array
     {
         return [
-            'waiting' => Appointment::with(['patient:id,first_name,last_name,patient_uid', 'doctor:id,name'])
-                ->whereDate('appointment_date', $today)
-                ->where('status', 'waiting')
+            'todays_appointments' => Appointment::with(['patient:id,first_name,last_name,patient_uid', 'doctor:id,name'])
+                ->where('appointment_date', $today)
+                ->where('status', '!=', 'cancelled')
                 ->orderBy('appointment_time')
                 ->take(8)
                 ->get()
@@ -508,7 +508,7 @@ class DashboardService
     {
         return [
             'upcoming' => Appointment::with(['patient:id,first_name,last_name', 'doctor:id,name'])
-                ->whereDate('appointment_date', '>=', $today)
+                ->where('appointment_date', '>=', $today)
                 ->where('status', '!=', 'cancelled')
                 ->orderBy('appointment_date')
                 ->orderBy('appointment_time')
@@ -539,11 +539,19 @@ class DashboardService
 
     private function getAppointmentStats(string $today): array
     {
+        $row = Appointment::query()
+            ->where('appointment_date', $today)
+            ->selectRaw('count(*) as total')
+            ->selectRaw("sum(case when status = 'scheduled' then 1 else 0 end) as scheduled")
+            ->selectRaw("sum(case when status = 'completed' then 1 else 0 end) as completed")
+            ->selectRaw("sum(case when status = 'cancelled' then 1 else 0 end) as cancelled")
+            ->first();
+
         return [
-            'total' => Appointment::whereDate('appointment_date', $today)->count(),
-            'waiting' => Appointment::whereDate('appointment_date', $today)->where('status', 'waiting')->count(),
-            'completed' => Appointment::whereDate('appointment_date', $today)->where('status', 'completed')->count(),
-            'cancelled' => Appointment::whereDate('appointment_date', $today)->where('status', 'cancelled')->count(),
+            'total' => (int) ($row->total ?? 0),
+            'scheduled' => (int) ($row->scheduled ?? 0),
+            'completed' => (int) ($row->completed ?? 0),
+            'cancelled' => (int) ($row->cancelled ?? 0),
         ];
     }
 

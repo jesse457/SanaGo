@@ -134,6 +134,9 @@ class BillingService
         );
     }
 
+    /**
+     * @param  array<string, mixed>  $attributes  extra columns for the line
+     */
     public function addBillableItem(
         Invoice $invoice,
         string $itemType,
@@ -141,6 +144,7 @@ class BillingService
         string $description,
         float $unitPrice,
         int $quantity = 1,
+        array $attributes = [],
     ): ?InvoiceItem {
         if ($itemId !== null) {
             $existing = $invoice->items()
@@ -159,6 +163,7 @@ class BillingService
             'description' => $description,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
+            ...$attributes,
         ]);
     }
 
@@ -198,6 +203,10 @@ class BillingService
 
             if ($settledInFull || $cashPaid >= $amountDue) {
                 $this->updateStatus($invoice, InvoiceStatus::PAID);
+            } elseif ($cashPaid > 0) {
+                // Money moved but a balance remains: the bill is overdue, not
+                // silently pending forever.
+                $this->updateStatus($invoice, InvoiceStatus::OVERDUE);
             } elseif ($invoice->status === InvoiceStatus::DRAFT) {
                 $this->updateStatus($invoice, InvoiceStatus::PENDING);
             }
@@ -229,8 +238,18 @@ class BillingService
                 'notes' => self::admissionInvoiceNote($admission),
             ]);
 
+            // The counter bills a stay while it is running, so anything it
+            // already took money for must not be billed a second time here:
+            // only what is still unbilled reaches the discharge invoice.
+            $billedServiceIds = $this->billedLineIds('admission_service');
+            $billedNights = $this->billedBedNights($admission);
+
             // Add admission services as invoice items
             foreach ($admissionServices as $as) {
+                if (in_array($as->id, $billedServiceIds, true)) {
+                    continue;
+                }
+
                 $service = $as->service;
                 $invoice->items()->create([
                     'item_type' => 'admission_service',
@@ -246,14 +265,16 @@ class BillingService
             if ($admission->bed && $admission->bed->bedType) {
                 $admissionDate = $admission->admission_date ?? now()->startOfDay();
                 $dischargeDate = $admission->discharge_date ?? now();
-                $nights = max(1, (int) $admissionDate->diffInDays($dischargeDate));
+                $nights = max(1, (int) $admissionDate->diffInDays($dischargeDate)) - $billedNights;
                 $dailyRate = (float) ($admission->bed->bedType->daily_rate ?? 0);
 
-                if ($dailyRate > 0) {
+                if ($nights > 0 && $dailyRate > 0) {
                     $bedTotal = $nights * $dailyRate;
                     $invoice->items()->create([
                         'item_type' => 'bed',
-                        'item_id' => $admission->bed_id,
+                        // The stay owns the line, so both the counter and this
+                        // invoice count the same nights.
+                        'item_id' => $admission->id,
                         'description' => "Lit: {$admission->bed->bedType->name} ({$nights} nuit(s) × {$dailyRate} XAF)",
                         'quantity' => $nights,
                         'unit_price' => $dailyRate,
@@ -262,11 +283,12 @@ class BillingService
                 }
             }
 
-            // Add observation fee if set
-            if ((float) $admission->observation_fee > 0) {
+            // Add observation fee if set, once per stay
+            if ((float) $admission->observation_fee > 0
+                && ! $this->stayLineBilled('observation', $admission->id)) {
                 $invoice->items()->create([
                     'item_type' => 'observation',
-                    'item_id' => null,
+                    'item_id' => $admission->id,
                     'description' => 'Frais d\'observation médicale',
                     'quantity' => 1,
                     'unit_price' => (float) $admission->observation_fee,
@@ -303,5 +325,42 @@ class BillingService
 
             return $invoice->fresh(['items', 'claim', 'cashPayments']);
         });
+    }
+
+    /**
+     * Ids of the `admission_service` records already on a bill.
+     *
+     * @return array<int, int>
+     */
+    private function billedLineIds(string $itemType): array
+    {
+        return InvoiceItem::query()
+            ->where('item_type', $itemType)
+            ->whereNotNull('item_id')
+            ->pluck('item_id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+    }
+
+    /**
+     * Nights of this stay the counter already put on a bill.
+     */
+    private function billedBedNights(Admission $admission): int
+    {
+        return (int) InvoiceItem::query()
+            ->where('item_type', 'bed')
+            ->where('item_id', $admission->id)
+            ->sum('quantity');
+    }
+
+    /**
+     * Whether that stay is already on a bill.
+     */
+    private function stayLineBilled(string $itemType, int $admissionId): bool
+    {
+        return InvoiceItem::query()
+            ->where('item_type', $itemType)
+            ->where('item_id', $admissionId)
+            ->exists();
     }
 }

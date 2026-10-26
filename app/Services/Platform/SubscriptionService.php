@@ -551,7 +551,7 @@ class SubscriptionService
             ->with(['plan', 'tenant'])
             ->usable()
             ->whereNotNull('end_date')
-            ->whereDate('end_date', '<', Carbon::today())
+            ->where('end_date', '<', Carbon::today()->toDateString())
             ->get()
             ->each(function (Subscription $subscription) use (&$count) {
                 if ($subscription->isBeyondGrace() || $subscription->cancel_at_period_end) {
@@ -578,7 +578,7 @@ class SubscriptionService
             ->where('cancel_at_period_end', false)
             ->usable()
             ->whereNotNull('end_date')
-            ->whereDate('end_date', '<', Carbon::today())
+            ->where('end_date', '<', Carbon::today()->toDateString())
             ->get()
             ->each(function (Subscription $subscription) use (&$count) {
                 if ($subscription->tenant === null) {

@@ -8,7 +8,7 @@ class StoreRadiologyRequestRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('view-radiology');
+        return $this->user()->can('request-radiology');
     }
 
     public function rules(): array

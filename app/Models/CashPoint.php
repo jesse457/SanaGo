@@ -51,11 +51,12 @@ class CashPoint extends Model
     /**
      * Invoice line types this till is allowed to collect.
      *
-     * The pharmacy runs its own counter and its own money, so the main caisse
-     * must never offer drug charges: a patient could otherwise pay the same
-     * prescription twice, once here and once at the pharmacy.
+     * A dedicated counter takes money for its own module only: the laboratory
+     * desk must not collect a surgery fee. The catch-all desk (`module` null)
+     * is the hospital's main caisse and collects anything, drugs included, so a
+     * patient never has to queue at a second till to pay one bill.
      *
-     * @return array<int, string>|null null means "everything except pharmacy"
+     * @return array<int, string>|null null means "any line type"
      */
     public function collectableItemTypes(): ?array
     {
@@ -76,8 +77,7 @@ class CashPoint extends Model
         $allowed = $this->collectableItemTypes();
 
         if ($allowed === null) {
-            // The main caisse handles everything except the pharmacy's money.
-            return ! in_array($itemType, ['pharmacy', 'medication'], true);
+            return true;
         }
 
         return in_array($itemType, $allowed, true);

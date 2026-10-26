@@ -98,22 +98,30 @@ class AdmissionController extends Controller
         return back()->with('success', 'Admission request sent to nursing staff.');
     }
 
-    public function create(Patient $patient)
+    public function create(Admission $admission)
     {
-        // dd(tenant());
+        // The admission form only renders identity fields; age derives from date_of_birth.
+        $admission->load(['patient:id,first_name,last_name,patient_uid,date_of_birth,gender']);
+
         return Inertia::render('Patients/Admission', [
-            'patient' => $patient,
-            'availableBeds' => Bed::with(['ward', 'bedType'])
+            'patient' => $admission->patient,
+            'availableBeds' => Bed::query()
+                ->with('ward:id,name')
+                ->select('id', 'code', 'ward_id')
                 ->where('status', BedStatus::Available->value)
+                ->orderBy('code')
                 ->get(),
-            'doctors' => User::role('doctor')->get(['id', 'name']),
+            'doctors' => User::role('doctor')
+                ->orderBy('name')
+                ->get(['id', 'name']),
+            'admission_id' => $admission->id,
         ]);
     }
 
-    public function store(StoreAdmissionRequest $request, AdmissionService $service)
+    public function update(StoreAdmissionRequest $request, Admission $admission, AdmissionService $service)
     {
         try {
-            $service->admit($request->validated());
+            $service->admit($request->validated(), $admission);
 
             return redirect()->route('patients.show', $request->validated()['patient_id'])
                 ->with('success', 'Patient admitted successfully.');

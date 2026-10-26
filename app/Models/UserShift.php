@@ -8,8 +8,10 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['user_id', 'shift_date', 'shift_type', 'start_time', 'end_time'])]
+#[Fillable(['shift_date', 'shift_type', 'start_time', 'end_time'])]
 class UserShift extends Model
 {
     /** @use HasFactory<UserShiftFactory> */
@@ -28,5 +30,16 @@ class UserShift extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function staffAssignments(): HasMany
+    {
+        return $this->hasMany(UserShiftStaff::class, 'user_shift_id');
+    }
+
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'user_shift_staff', 'user_shift_id', 'user_id')
+            ->withPivot('name');
     }
 }

@@ -13,13 +13,11 @@ use Illuminate\Support\Facades\DB;
 
 class AdmissionService
 {
-    public function admit(array $validated): Admission
+    public function admit(array $validated, Admission $admission): Admission
     {
-        return DB::transaction(function () use ($validated) {
-            $admission = Admission::create([
-                ...$validated,
-                'status' => AdmissionStatus::Admitted->value,
-            ]);
+        return DB::transaction(function () use ($validated, $admission) {
+            $admission->update([...$validated,
+                'status' => AdmissionStatus::Admitted->value, ]);
 
             Bed::where('id', $validated['bed_id'])
                 ->update(['status' => BedStatus::Occupied->value]);

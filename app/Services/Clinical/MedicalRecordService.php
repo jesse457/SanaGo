@@ -64,7 +64,9 @@ class MedicalRecordService
                 }
             }
 
-            // ── 4. Create Lab Requests ──
+            // ── 4. Lab Requests ──
+            // The consultation-originated orders; requests may also be raised
+            // on their own from the lab form (LabRequestController@store).
             if (! empty($validated['lab_requests'])) {
                 foreach ($validated['lab_requests'] as $lab) {
                     LabRequest::create([

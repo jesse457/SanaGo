@@ -25,7 +25,7 @@ class PlatformHealthController extends Controller
 
     public function index(Request $request): Response
     {
-        $tenants = Tenant::query()->with(['domains', 'subscription.plan'])->orderBy('id')->get();
+        $tenants = Tenant::query()->with(['domains', 'subscription'])->orderBy('id')->get();
 
         $rows = $tenants->map(function (Tenant $tenant) {
             $health = $this->tenants->health($tenant);
