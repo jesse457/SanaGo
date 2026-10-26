@@ -6,11 +6,10 @@ import {
     CpuChipIcon,
     DocumentCheckIcon,
     DocumentTextIcon,
-    LinkIcon,
     XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
     Button,
     Field,
@@ -23,6 +22,8 @@ import {
 } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
+import { cn } from '@/lib/utils';
+import { AnalyzerImport } from '@/pages/LabTests/components/AnalyzerImport';
 import {
     ParameterResultsSummary,
     ParameterResultsTable,
@@ -61,27 +62,21 @@ export default function EnterResults({ labRequest, labResult, isEdit }: Props) {
         attachments: [] as File[],
     });
 
-    // --- 2. Machine Integration Logic ---
-    const [isConnecting, setIsConnecting] = useState(false);
-    const [selectedMachine, setSelectedMachine] = useState('');
+    // --- 2. Analyzer integration ---
+    // The frame is read by the server (`lab.analyzer.preview`) and copied into
+    // this form; the tech still verifies and saves it like a typed result.
+    const applyAnalyzerValues = ({
+        resultsText,
+        status,
+    }: {
+        resultsText: string;
+        status?: string;
+    }) => {
+        setData('results_text', resultsText);
 
-    const handleMachineFetch = async () => {
-        if (!selectedMachine) {
-            return;
+        if (status !== undefined) {
+            setData('status', status);
         }
-
-        setIsConnecting(true);
-        // Simulation
-        await new Promise((resolve) => setTimeout(resolve, 1200));
-        const mockData = {
-            sysmex: 'WBC: 6.8 x10^3/uL\nRBC: 4.10 x10^6/uL\nHGB: 12.5 g/dL',
-            roche: 'Glucose: 105 mg/dL\nBUN: 12 mg/dL',
-        };
-        setData(
-            'results_text',
-            (mockData as any)[selectedMachine] || 'No data.',
-        );
-        setIsConnecting(false);
     };
 
     // --- 3. Submit Handler ---
@@ -201,45 +196,7 @@ export default function EnterResults({ labRequest, labResult, isEdit }: Props) {
                             'lab_tests.results.enter.integration_description',
                         )}
                     >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                            <Field
-                                label={t(
-                                    'lab_tests.results.enter.select_hardware',
-                                )}
-                                htmlFor="selected_machine"
-                                className="flex-1"
-                            >
-                                <Select
-                                    id="selected_machine"
-                                    value={selectedMachine}
-                                    onChange={(e) =>
-                                        setSelectedMachine(e.target.value)
-                                    }
-                                >
-                                    <option value="">
-                                        {t(
-                                            'lab_tests.results.enter.select_hardware',
-                                        )}
-                                    </option>
-                                    <option value="sysmex">
-                                        Sysmex Analyzer (LIMS-HL7)
-                                    </option>
-                                    <option value="roche">
-                                        Roche Cobas (Direct Link)
-                                    </option>
-                                </Select>
-                            </Field>
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                icon={LinkIcon}
-                                loading={isConnecting}
-                                disabled={!selectedMachine || isConnecting}
-                                onClick={handleMachineFetch}
-                            >
-                                {t('lab_tests.results.enter.fetch_data')}
-                            </Button>
-                        </div>
+                        <AnalyzerImport onApply={applyAnalyzerValues} />
                     </SectionCard>
 
                     <SectionCard
@@ -396,7 +353,12 @@ export default function EnterResults({ labRequest, labResult, isEdit }: Props) {
                                     );
                                 }
                             }}
-                            className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-line-strong bg-surface-muted px-6 py-8 text-center transition-colors duration-200 ease-premium focus-within:border-accent hover:border-accent"
+                            className={cn(
+                                'flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed bg-surface-muted px-6 py-8 text-center transition-colors duration-200 ease-premium focus-within:border-accent hover:border-accent',
+                                errors.attachments
+                                    ? 'border-critical/70'
+                                    : 'border-line-strong',
+                            )}
                         >
                             <CloudArrowUpIcon className="mb-2 h-8 w-8 text-ink-subtle" />
                             <p className="text-[13px] font-medium text-ink">
@@ -416,6 +378,9 @@ export default function EnterResults({ labRequest, labResult, isEdit }: Props) {
                                 id="attachments"
                                 type="file"
                                 multiple
+                                aria-invalid={
+                                    Boolean(errors.attachments) || undefined
+                                }
                                 className="sr-only"
                                 onChange={(e) =>
                                     setData(
@@ -425,6 +390,12 @@ export default function EnterResults({ labRequest, labResult, isEdit }: Props) {
                                 }
                             />
                         </label>
+
+                        {errors.attachments && (
+                            <p className="mt-2 text-[12px] text-critical-ink">
+                                {errors.attachments}
+                            </p>
+                        )}
 
                         {data.attachments.length > 0 && (
                             <ul className="mt-3 space-y-1.5">

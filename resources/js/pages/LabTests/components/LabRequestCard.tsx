@@ -7,8 +7,13 @@ import { ResultStatusBadge } from '@/pages/LabTests/components/ResultStatusBadge
 export interface LabRequestRow {
     id: number;
     status: string;
+    /** Sample id printed on the tube; analyzers echo it back on a run. */
+    accession_number?: string | null;
     request_date?: string;
     result_date?: string;
+    /** analyzer | manual — where the stored values came from. */
+    source?: string | null;
+    analyzer_name?: string | null;
     /** Null when the patient record was removed after the request was filed. */
     patient: {
         first_name: string;
@@ -72,6 +77,28 @@ export function LabPatientIdentity({
             <Avatar name={labPatientName(request)} size={avatarSize} />
             {identity}
         </div>
+    );
+}
+
+/** The accession number, monospaced, with a dash when the order has none. */
+export function LabAccessionCell({ request }: { request: LabRequestRow }) {
+    return (
+        <span className="font-mono text-[11.5px] whitespace-nowrap text-ink-muted">
+            {request.accession_number ?? '—'}
+        </span>
+    );
+}
+
+/** Marks a result that came off an analyzer rather than a keyboard. */
+export function LabSourceBadge({ request }: { request: LabRequestRow }) {
+    if (request.source !== 'analyzer') {
+        return null;
+    }
+
+    return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-semibold tracking-[0.06em] text-accent-ink uppercase">
+            {request.analyzer_name ?? 'Analyzer'}
+        </span>
     );
 }
 
@@ -161,6 +188,8 @@ interface LabRequestTableRowProps {
     /** Adds a date column before the status, as the result archive needs. */
     date?: string;
     dateIcon?: ReactNode;
+    /** Extra cells a page injects (the sample/accession column). */
+    extraCells?: ReactNode;
 }
 
 /** The table twin of `LabRequestCard`. */
@@ -171,6 +200,7 @@ export function LabRequestTableRow({
     statusLabel,
     date,
     dateIcon,
+    extraCells,
 }: LabRequestTableRowProps) {
     return (
         <TableRow>
@@ -188,6 +218,8 @@ export function LabRequestTableRow({
                     </span>
                 </TableCell>
             )}
+            {/* Columns a page adds without forking the row (sample id). */}
+            {extraCells}
             <TableCell>
                 <ResultStatusBadge
                     status={request.status}

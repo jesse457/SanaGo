@@ -91,6 +91,7 @@ return new class extends Migration
             $table->id();
             $table->string('test_name', 200)->index();
             $table->string('code', 50)->nullable()->unique();
+            $table->string('analyzer_code', 40)->nullable()->index();
             $table->decimal('price', 10, 2)->nullable();
             $table->string('units', 50);
             $table->text('description')->nullable();
@@ -169,7 +170,6 @@ return new class extends Migration
             $table->time('appointment_time');
             $table->string('status', 20)->index();
             $table->decimal('consultation_fee', 10, 2)->nullable()->default(0);
-            $table->unsignedInteger('queue_position')->nullable();
             $table->timestamps();
         });
         Schema::create('prescriptions', function (Blueprint $table) {
@@ -199,6 +199,7 @@ return new class extends Migration
         });
         Schema::create('lab_requests', function (Blueprint $table) {
             $table->id();
+            $table->string('accession_number', 40)->nullable()->unique();
             $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
             $table->foreignId('test_definition_id')->constrained('lab_test_definitions')->cascadeOnDelete();
             $table->foreignId('doctor_id')->nullable()->constrained('users')->nullOnDelete();
@@ -216,6 +217,27 @@ return new class extends Migration
             $table->date('result_date')->index();
             $table->text('results_text')->nullable();
             $table->text('analysis_comments')->nullable();
+            $table->string('source', 20)->default('manual')->index();
+            $table->string('analyzer_name', 120)->nullable();
+            $table->string('analyzer_sample_id', 60)->nullable()->index();
+            $table->json('analyzer_analytes')->nullable();
+            $table->timestamps();
+        });
+        Schema::create('lab_analyzer_messages', function (Blueprint $table) {
+            $table->id();
+            $table->string('message_hash', 64)->unique();
+            $table->string('format', 20);
+            $table->string('analyzer_name', 120)->nullable();
+            $table->string('analyzer_serial', 80)->nullable();
+            $table->string('sample_id', 60)->nullable()->index();
+            $table->string('status', 20)->default('received')->index();
+            $table->longText('raw_payload');
+            $table->json('parsed')->nullable();
+            $table->text('notes')->nullable();
+            $table->foreignId('lab_request_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('lab_result_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('imported_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('received_at')->index();
             $table->timestamps();
         });
         // Radiology tables — drop the central stubs first, then create the
@@ -292,11 +314,16 @@ return new class extends Migration
             $table->foreignId('invoice_id')->constrained()->cascadeOnDelete();
             $table->string('item_type');
             $table->unsignedBigInteger('item_id')->nullable();
+            $table->unsignedBigInteger('consultation_id')->nullable();
+            $table->foreignId('doctor_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('description');
             $table->integer('quantity')->default(1);
             $table->decimal('unit_price', 10, 2);
             $table->decimal('total_price', 10, 2);
+            $table->decimal('paid_amount', 12, 2)->default(0);
+            $table->string('payment_status', 20)->default('pending');
             $table->dateTime('settled_at')->nullable()->index();
+            $table->index(['doctor_id', 'payment_status']);
             $table->timestamps();
         });
         Schema::create('supply_usages', function (Blueprint $table) {
@@ -465,15 +492,6 @@ return new class extends Migration
             $table->string('payment_method')->default('cash');
             $table->string('client_uuid', 64)->nullable()->unique();
             $table->timestamps();
-        });
-
-        Schema::create('doctor_service_prices', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('service_id')->constrained()->cascadeOnDelete();
-            $table->decimal('price', 10, 2)->default(0);
-            $table->timestamps();
-            $table->unique(['user_id', 'service_id']);
         });
 
         Schema::create('claims', function (Blueprint $table) {

@@ -3,12 +3,14 @@ import {
     ClipboardDocumentListIcon,
     ClockIcon,
     ExclamationTriangleIcon,
+    PlusIcon,
 } from '@heroicons/react/24/outline';
 import { Head, router } from '@inertiajs/react';
 import debounce from 'lodash/debounce';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pagination } from '@/Components/Pagination';
 import {
+    Button,
     EmptyState,
     PageHeader,
     SegmentedControl,
@@ -18,6 +20,7 @@ import {
     Table,
     TableBody,
     TableHeader,
+    TableCell,
     TableHeaderCell,
     TableRow,
     Toolbar,
@@ -28,6 +31,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 import {
     formatLabDate,
+    LabAccessionCell,
     LabRequestCard,
     LabRequestTableRow,
 } from '@/pages/LabTests/components/LabRequestCard';
@@ -69,7 +73,7 @@ export default function LabRequests({ requests, filters, stats }: Props) {
         () =>
             debounce((searchVal: string, statusVal: string) => {
                 router.get(
-                    route('lab.test-requests'),
+                    route('requests.index'),
                     { search: searchVal, status: statusVal },
                     { preserveState: true, replace: true },
                 );
@@ -77,7 +81,17 @@ export default function LabRequests({ requests, filters, stats }: Props) {
         [],
     );
 
+    // The first render already has the server-filtered rows; only fire a
+    // visit when the user actually changes a filter.
+    const hasMounted = useRef(false);
+
     useEffect(() => {
+        if (!hasMounted.current) {
+            hasMounted.current = true;
+
+            return;
+        }
+
         handleFilter(search, statusFilter);
     }, [handleFilter, search, statusFilter]);
 
@@ -101,6 +115,16 @@ export default function LabRequests({ requests, filters, stats }: Props) {
                     breadcrumbs={[
                         { label: t('lab_tests.requests.lab_requests') },
                     ]}
+                    actions={
+                        <Button
+                            href={route('requests.create')}
+                            variant="primary"
+                            size="sm"
+                            icon={PlusIcon}
+                        >
+                            {t('lab_tests.requests.order_new')}
+                        </Button>
+                    }
                 />
 
                 <StatGrid>
@@ -214,6 +238,12 @@ export default function LabRequests({ requests, filters, stats }: Props) {
                                     {t('lab_tests.requests.test_definition')}
                                 </TableHeaderCell>
                                 <TableHeaderCell>
+                                    {t(
+                                        'lab_tests.requests.accession',
+                                        'Sample',
+                                    )}
+                                </TableHeaderCell>
+                                <TableHeaderCell>
                                     {t('lab_tests.requests.status')}
                                 </TableHeaderCell>
                                 <TableHeaderCell numeric>
@@ -228,6 +258,13 @@ export default function LabRequests({ requests, filters, stats }: Props) {
                                 <LabRequestTableRow
                                     key={request.id}
                                     request={request}
+                                    extraCells={
+                                        <TableCell muted>
+                                            <LabAccessionCell
+                                                request={request}
+                                            />
+                                        </TableCell>
+                                    }
                                     statusLabel={statusLabel(request.status)}
                                     actionLabel={t(
                                         'lab_tests.requests.process_result',

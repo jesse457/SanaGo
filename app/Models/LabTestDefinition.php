@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['test_name', 'code', 'price', 'units', 'description', 'is_active', 'service_id'])]
+#[Fillable(['test_name', 'code', 'analyzer_code', 'price', 'units', 'description', 'is_active', 'service_id'])]
 class LabTestDefinition extends Model
 {
     /** @use HasFactory<LabTestDefinitionFactory> */

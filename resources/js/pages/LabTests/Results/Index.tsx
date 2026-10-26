@@ -23,6 +23,7 @@ import {
     Table,
     TableBody,
     TableHeader,
+    TableCell,
     TableHeaderCell,
     TableRow,
     Toolbar,
@@ -33,6 +34,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
 import {
     formatLabDate,
+    LabSourceBadge,
     labTestName,
     LabPatientIdentity,
     LabRequestTableRow,
@@ -323,6 +325,14 @@ export default function ResultsIndex({ results, filters }: Props) {
                                     {t('lab_tests.results.index.test_profile')}
                                 </TableHeaderCell>
                                 <TableHeaderCell>
+                                    <span className="sr-only">
+                                        {t(
+                                            'lab_tests.results.index.source',
+                                            'Source',
+                                        )}
+                                    </span>
+                                </TableHeaderCell>
+                                <TableHeaderCell>
                                     {t('lab_tests.results.index.result_date')}
                                 </TableHeaderCell>
                                 <TableHeaderCell>
@@ -340,6 +350,11 @@ export default function ResultsIndex({ results, filters }: Props) {
                                 <LabRequestTableRow
                                     key={result.id}
                                     request={result}
+                                    extraCells={
+                                        <TableCell muted>
+                                            <LabSourceBadge request={result} />
+                                        </TableCell>
+                                    }
                                     date={result.result_date}
                                     dateIcon={
                                         <CalendarIcon className="h-3.5 w-3.5 text-ink-subtle" />

@@ -117,6 +117,11 @@ class LabResultController extends Controller
             'id' => $result->id,
             'lab_request_id' => $result->lab_request_id,
             'status' => $result->status?->value,
+            // Provenance: a result filed by an analyzer is traceable to the
+            // instrument that produced it.
+            'source' => $result->source,
+            'analyzer_name' => $result->analyzer_name,
+            'accession_number' => $labRequest?->accession_number,
             'request_date' => $labRequest?->request_date?->toDateString(),
             'result_date' => $result->result_date?->toDateString(),
             'patient' => $patient === null ? null : [

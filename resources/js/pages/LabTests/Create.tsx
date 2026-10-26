@@ -6,11 +6,9 @@ import {
     HashtagIcon,
     ScaleIcon,
 } from '@heroicons/react/24/outline';
-import { Head } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { useState } from 'react';
 import {
-    Alert,
     Button,
     Card,
     CardFooter,
@@ -44,26 +42,22 @@ const EMPTY_FORM: LabTestForm = {
 
 export default function CreateLabTest() {
     const { t } = useTranslation();
-    const [formData, setFormData] = useState<LabTestForm>(EMPTY_FORM);
-    const [formErrors] = useState<Record<string, string>>({});
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    const handleInputChange = <K extends keyof LabTestForm>(
-        field: K,
-        value: LabTestForm[K],
-    ) => {
-        setFormData((previous) => ({ ...previous, [field]: value }));
-    };
+    /* This form used to fake a save — a timer, then a page-local "Success"
+       banner. It now posts to `tests.store`, which validates the same fields
+       and redirects to the catalogue with a flash. Feedback is global: the
+       flash becomes an animated SweetAlert toast, and a 422 opens the
+       validation alert, so nothing is rendered here. */
+    const { data, setData, post, processing, errors, reset } =
+        useForm<LabTestForm>(EMPTY_FORM);
 
-    const handleSubmit = async (event: FormEvent) => {
+    const handleSubmit = (event: FormEvent) => {
         event.preventDefault();
-        setIsSubmitting(true);
-        setErrorMessage(null);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setSuccessMessage(t('lab_tests.create.success_message'));
-        setIsSubmitting(false);
+
+        post(route('tests.store'), {
+            preserveScroll: true,
+            onSuccess: () => reset(),
+        });
     };
 
     return (
@@ -88,44 +82,6 @@ export default function CreateLabTest() {
                     ]}
                 />
 
-                {successMessage && (
-                    <Alert
-                        tone="positive"
-                        title={t('common.success')}
-                        action={
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setSuccessMessage(null)}
-                            >
-                                {t('common.dismiss', 'Dismiss')}
-                            </Button>
-                        }
-                    >
-                        {successMessage}
-                    </Alert>
-                )}
-
-                {(errorMessage || Object.keys(formErrors).length > 0) && (
-                    <Alert
-                        tone="critical"
-                        title={t('common.error')}
-                        action={
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setErrorMessage(null)}
-                            >
-                                {t('common.dismiss', 'Dismiss')}
-                            </Button>
-                        }
-                    >
-                        {errorMessage || t('common.someFieldsRequireAttention')}
-                    </Alert>
-                )}
-
                 <Card>
                     <form onSubmit={handleSubmit}>
                         <div className="space-y-8 px-5 py-6 sm:px-6">
@@ -139,18 +95,18 @@ export default function CreateLabTest() {
                                     )}
                                     htmlFor="test_name"
                                     required
-                                    error={formErrors.test_name}
+                                    error={errors.test_name}
                                 >
                                     <Input
                                         id="test_name"
                                         icon={ClipboardDocumentListIcon}
-                                        value={formData.test_name}
-                                        invalid={Boolean(formErrors.test_name)}
+                                        value={data.test_name}
+                                        invalid={Boolean(errors.test_name)}
                                         placeholder={t(
                                             'lab_tests.create.test_name_placeholder',
                                         )}
                                         onChange={(event) =>
-                                            handleInputChange(
+                                            setData(
                                                 'test_name',
                                                 event.target.value,
                                             )
@@ -162,21 +118,18 @@ export default function CreateLabTest() {
                                     label={t('lab_tests.create.internal_code')}
                                     htmlFor="code"
                                     required
-                                    error={formErrors.code}
+                                    error={errors.code}
                                 >
                                     <Input
                                         id="code"
                                         icon={HashtagIcon}
-                                        value={formData.code}
-                                        invalid={Boolean(formErrors.code)}
+                                        value={data.code}
+                                        invalid={Boolean(errors.code)}
                                         placeholder={t(
                                             'lab_tests.create.code_placeholder',
                                         )}
                                         onChange={(event) =>
-                                            handleInputChange(
-                                                'code',
-                                                event.target.value,
-                                            )
+                                            setData('code', event.target.value)
                                         }
                                     />
                                 </Field>
@@ -185,22 +138,19 @@ export default function CreateLabTest() {
                                     label={t('lab_tests.create.unit_price')}
                                     htmlFor="price"
                                     required
-                                    error={formErrors.price}
+                                    error={errors.price}
                                 >
                                     <Input
                                         id="price"
                                         type="number"
                                         icon={CurrencyDollarIcon}
-                                        value={formData.price}
-                                        invalid={Boolean(formErrors.price)}
+                                        value={data.price}
+                                        invalid={Boolean(errors.price)}
                                         placeholder={t(
                                             'lab_tests.create.price_placeholder',
                                         )}
                                         onChange={(event) =>
-                                            handleInputChange(
-                                                'price',
-                                                event.target.value,
-                                            )
+                                            setData('price', event.target.value)
                                         }
                                     />
                                 </Field>
@@ -209,21 +159,18 @@ export default function CreateLabTest() {
                                     label={t('lab_tests.create.result_units')}
                                     htmlFor="units"
                                     required
-                                    error={formErrors.units}
+                                    error={errors.units}
                                 >
                                     <Input
                                         id="units"
                                         icon={ScaleIcon}
-                                        value={formData.units}
-                                        invalid={Boolean(formErrors.units)}
+                                        value={data.units}
+                                        invalid={Boolean(errors.units)}
                                         placeholder={t(
                                             'lab_tests.create.units_placeholder',
                                         )}
                                         onChange={(event) =>
-                                            handleInputChange(
-                                                'units',
-                                                event.target.value,
-                                            )
+                                            setData('units', event.target.value)
                                         }
                                     />
                                 </Field>
@@ -237,12 +184,10 @@ export default function CreateLabTest() {
                                     <Select
                                         id="is_active"
                                         value={
-                                            formData.is_active
-                                                ? 'true'
-                                                : 'false'
+                                            data.is_active ? 'true' : 'false'
                                         }
                                         onChange={(event) =>
-                                            handleInputChange(
+                                            setData(
                                                 'is_active',
                                                 event.target.value === 'true',
                                             )
@@ -264,20 +209,18 @@ export default function CreateLabTest() {
                                     )}
                                     htmlFor="description"
                                     optional
-                                    error={formErrors.description}
+                                    error={errors.description}
                                 >
                                     <Textarea
                                         id="description"
                                         rows={4}
-                                        value={formData.description}
-                                        invalid={Boolean(
-                                            formErrors.description,
-                                        )}
+                                        value={data.description}
+                                        invalid={Boolean(errors.description)}
                                         placeholder={t(
                                             'lab_tests.create.description_placeholder',
                                         )}
                                         onChange={(event) =>
-                                            handleInputChange(
+                                            setData(
                                                 'description',
                                                 event.target.value,
                                             )
@@ -296,12 +239,10 @@ export default function CreateLabTest() {
                             </Button>
                             <Button
                                 type="submit"
-                                loading={isSubmitting}
-                                icon={
-                                    isSubmitting ? undefined : CheckCircleIcon
-                                }
+                                loading={processing}
+                                icon={processing ? undefined : CheckCircleIcon}
                             >
-                                {isSubmitting
+                                {processing
                                     ? `${t('lab_tests.create.saving')}…`
                                     : t('lab_tests.create.publish')}
                             </Button>

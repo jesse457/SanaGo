@@ -14,6 +14,7 @@ use App\Http\Controllers\DispensationController;
 use App\Http\Controllers\EmergencyCaseController;
 use App\Http\Controllers\ExpenditureController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\LabAnalyzerController;
 use App\Http\Controllers\LabRequestController;
 use App\Http\Controllers\LabResultController;
 use App\Http\Controllers\LabTestDefinitionController;
@@ -38,6 +39,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserShiftController;
 use App\Http\Controllers\VitalController;
 use App\Http\Controllers\WardController;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Features\UserImpersonation;
 use Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain;
@@ -76,6 +78,19 @@ Route::middleware([
 
     /*
     |--------------------------------------------------------------------------
+    | LAB ANALYZER INGESTION (hospital hardware)
+    |--------------------------------------------------------------------------
+    | A bench analyzer — or the serial-to-HTTP bridge next to it — has no
+    | session, so this route sits outside `auth` and authenticates with the
+    | shared LAB_ANALYZER_TOKEN instead. Tenancy still resolves from the
+    | subdomain, so a frame lands in the right hospital's database.
+    */
+    Route::post('/lab/analyzer/ingest', [LabAnalyzerController::class, 'ingest'])
+        ->name('lab.analyzer.ingest')
+        ->withoutMiddleware([ValidateCsrfToken::class]);
+
+    /*
+    |--------------------------------------------------------------------------
     | AUTHENTICATED HOSPITAL ROUTES
     |--------------------------------------------------------------------------
     */
@@ -95,8 +110,8 @@ Route::middleware([
         });
 
         /*
-| Patient Management & Admissions
-*/
+        Patient Management & Admissions
+        */
         Route::middleware('can:view-patients')->group(function () {
             Route::resource('patients', PatientController::class)
                 ->except(['edit', 'destroy'])
@@ -109,9 +124,9 @@ Route::middleware([
             // list is a patient sub-resource instead of a bare index.
             Route::get('patients/{patient}/vitals', [VitalController::class, 'index'])->name('vitals.index');
             Route::resource('admissions', AdmissionController::class)
-                ->only(['index', 'show', 'store'])
+                ->only(['index', 'show', 'update'])
                 ->parameters(['admissions' => 'admission']);
-            Route::get('admissions/create/{patient}', [AdmissionController::class, 'create'])->name('admissions.create');
+            Route::get('admissions/create/{admission}', [AdmissionController::class, 'create'])->name('admissions.create');
             Route::post('request-admission/{patient}', [AdmissionController::class, 'requestPatientAdmission'])->name('request-admission');
             Route::post('/patients/{admission}/discharge', [AdmissionController::class, 'discharge'])
                 ->name('admissions.discharge')
@@ -164,8 +179,23 @@ Route::middleware([
                 Route::resource('requests', LabRequestController::class)->only(['index']);
             });
 
+            // Ordering a test is a clinical act: doctors (and anyone else with
+            // request-lab-tests) raise lab orders directly, no consultation
+            // required — the request may later carry one as its origin.
+            Route::middleware('can:request-lab-tests')->group(function () {
+                Route::get('/requests/create', [LabRequestController::class, 'create'])->name('requests.create');
+                Route::post('/requests', [LabRequestController::class, 'store'])->name('requests.store');
+            });
+
             Route::middleware('can:view-lab-results')->group(function () {
                 Route::resource('results', LabResultController::class)->except(['show']);
+            });
+
+            // Reading a frame from an analyzer is part of filing a result, so
+            // it needs the same permission the result form does.
+            Route::middleware('can:create-lab-results')->group(function () {
+                Route::post('/analyzer/preview', [LabAnalyzerController::class, 'preview'])
+                    ->name('lab.analyzer.preview');
             });
         });
 
@@ -278,6 +308,8 @@ Route::middleware([
                         'update' => 'finance.services.update',
                         'destroy' => 'finance.services.destroy',
                     ]);
+                Route::put('/services/{service}/price', [ServiceController::class, 'updatePrice'])
+                    ->name('finance.services.price');
 
                 // MINSANTE Reporting (Legally required in Cameroon)
                 Route::middleware('feature:reports')->group(function () {
@@ -292,11 +324,16 @@ Route::middleware([
             });
         });
 
-        // Cash Register / Caisse (Needs strict permission separation from viewing finance)
+        // Cash Register / Caisse — the desk owns bills, charges and money.
+        // There is no separate invoice screen: /finance/invoices redirects here.
         Route::middleware(['can:manage-caisse', 'feature:cash_register'])->group(function () {
             Route::get('/caisse', [CaisseController::class, 'index'])->name('caisse.index');
+            Route::get('/caisse/shifts', [CaisseController::class, 'shifts'])->name('caisse.shifts');
             Route::get('/caisse/patients', [CaisseController::class, 'searchPatients'])->name('caisse.patients');
             Route::get('/caisse/outstanding/{patient}', [CaisseController::class, 'outstanding'])->name('caisse.outstanding');
+            Route::post('/caisse/charges', [CaisseController::class, 'storeCharge'])->name('caisse.charges.store');
+            Route::patch('/caisse/charges/{item}', [CaisseController::class, 'updateCharge'])->name('caisse.charges.update');
+            Route::delete('/caisse/charges/{item}', [CaisseController::class, 'destroyCharge'])->name('caisse.charges.destroy');
             Route::post('/caisse/settle', [CaisseController::class, 'settle'])->name('caisse.settle');
             Route::post('/caisse/open-shift', [CaisseController::class, 'openShift'])->name('caisse.open');
             Route::post('/caisse/close-shift', [CaisseController::class, 'closeShift'])->name('caisse.close');
@@ -307,12 +344,10 @@ Route::middleware([
         /*
         | System Administration (Users, Roles, Shifts, Logs)
         */
-        Route::middleware('can:manage-users')->group(function () {
+        Route::middleware(['can:manage-users', 'plan.limit:users'])->group(function () {
             Route::resource('users', UserController::class)
                 ->except(['show', 'edit'])
                 ->middlewareFor(['store'], 'plan.limit:users');
-            Route::get('/users/{user}/pricing', [UserController::class, 'pricing'])->name('users.pricing');
-            Route::put('/users/{user}/pricing', [UserController::class, 'updatePricing'])->name('users.pricing.update');
             Route::resource('shifts', UserShiftController::class)->only(['index', 'store', 'update', 'destroy']);
         });
 

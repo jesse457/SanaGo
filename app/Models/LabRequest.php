@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['patient_id', 'test_definition_id', 'doctor_id', 'consultation_id', 'request_date', 'status', 'reason_for_test', 'urgency'])]
+#[Fillable(['accession_number', 'patient_id', 'test_definition_id', 'doctor_id', 'consultation_id', 'request_date', 'status', 'reason_for_test', 'urgency'])]
 class LabRequest extends Model
 {
     /** @use HasFactory<LabRequestFactory> */

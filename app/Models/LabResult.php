@@ -8,10 +8,21 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-#[Fillable(['lab_request_id', 'status', 'result_date', 'results_text', 'analysis_comments'])]
+#[Fillable([
+    'lab_request_id',
+    'status',
+    'result_date',
+    'results_text',
+    'analysis_comments',
+    'source',
+    'analyzer_name',
+    'analyzer_sample_id',
+    'analyzer_analytes',
+])]
 class LabResult extends Model implements HasMedia
 {
     /** @use HasFactory<LabResultFactory> */
@@ -22,6 +33,7 @@ class LabResult extends Model implements HasMedia
         return [
             'result_date' => 'date',
             'status' => LabResultStatus::class,
+            'analyzer_analytes' => 'array',
         ];
     }
 
@@ -38,5 +50,17 @@ class LabResult extends Model implements HasMedia
     public function labRequest(): BelongsTo
     {
         return $this->belongsTo(LabRequest::class);
+    }
+
+    /** True when the values came off an analyzer rather than a keyboard. */
+    public function isFromAnalyzer(): bool
+    {
+        return $this->source === 'analyzer';
+    }
+
+    /** The frames that produced this result, newest first. */
+    public function analyzerMessages(): HasMany
+    {
+        return $this->hasMany(LabAnalyzerMessage::class)->latest('received_at');
     }
 }
