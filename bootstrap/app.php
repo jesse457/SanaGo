@@ -53,27 +53,27 @@ return Application::configure(basePath: dirname(__DIR__))
          * (`debug`), because "something went wrong" is useless to the person
          * looking at a local 500 on the cash desk.
          */
-        // $exceptions->respond(function (Response $response, Throwable $error, Request $request): Response {
-        //     $status = $response->getStatusCode();
+        $exceptions->respond(function (Response $response, Throwable $error, Request $request): Response {
+            $status = $response->getStatusCode();
 
-        //     if (! in_array($status, [403, 404, 419, 429, 500, 503], true)) {
-        //         return $response;
-        //     }
+            if (! in_array($status, [403, 404, 419, 429, 500, 503], true)) {
+                return $response;
+            }
 
-        //     /*
-        //      * JSON / API consumers keep the framework response; browsers and
-        //      * Inertia visits get the branded page (Inertia returns the full
-        //      * HTML shell for a first load, and JSON for an XHR visit).
-        //      */
-        //     if ($request->expectsJson() && ! $request->header('X-Inertia')) {
-        //         return $response;
-        //     }
+            /*
+             * JSON / API consumers keep the framework response; browsers and
+             * Inertia visits get the branded page (Inertia returns the full
+             * HTML shell for a first load, and JSON for an XHR visit).
+             */
+            if ($request->expectsJson() && ! $request->header('X-Inertia')) {
+                return $response;
+            }
 
-        //     return Inertia::render('Error', [
-        //         'status' => $status,
-        //         'debug' => config('app.debug') ? ErrorReport::collect($error, $request) : null,
-        //     ])
-        //         ->toResponse($request)
-        //         ->setStatusCode($status);
-        // });
+            return Inertia::render('Error', [
+                'status' => $status,
+                'debug' => config('app.debug') ? ErrorReport::collect($error, $request) : null,
+            ])
+                ->toResponse($request)
+                ->setStatusCode($status);
+        });
     })->create();
