@@ -74,7 +74,6 @@ export default function EmergencyCreate({ patients }: Props) {
             <Head title={t('newEmergency')} />
             <div className="max-w-8xl mx-auto space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 <PageHeader
-                    icon={HeartIcon}
                     eyebrow={t('emergencies')}
                     title={t('newEmergency')}
                     description={t('registerEmergencyCase')}

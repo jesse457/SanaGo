@@ -1,4 +1,3 @@
-import { CreditCardIcon } from '@heroicons/react/24/outline';
 import { Head } from '@inertiajs/react';
 import { PageHeader } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -52,7 +51,6 @@ export default function PlansCreate({
                 <PageHeader
                     title={t('createPlan')}
                     description="Define a subscription tier: its price, the quotas it enforces and the modules it unlocks."
-                    icon={CreditCardIcon}
                     breadcrumbs={[
                         { label: t('plans'), href: '/plans' },
                         { label: t('createPlan') },

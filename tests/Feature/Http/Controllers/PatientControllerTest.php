@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Models\LabRequest;
+use App\Models\LabResult;
+use App\Models\MedicalRecord;
 use App\Models\Patient;
 use App\Models\User;
+use App\Models\Vital;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain;
@@ -345,6 +349,105 @@ describe('update', function () {
                 'first_name' => 'New',
                 'last_name' => 'Name',
             ])
+            ->assertForbidden();
+    });
+
+});
+
+// ─── Show ──────────────────────────────────────────────────────────────────
+
+describe('show', function () {
+
+    it('renders the patient profile shell without loading history', function () {
+        $patient = Patient::factory()->create();
+        MedicalRecord::factory()->count(3)->for($patient)->create();
+        LabRequest::factory()->for($patient)->has(LabResult::factory())->create();
+
+        $this->actingAs($this->admin)
+            ->get(route('patients.show', $patient))
+            ->assertOk()
+            ->assertInertia(fn ($p) => $p->component('Patients/Profile')
+                ->where('patient.id', $patient->id)
+                ->where('stats.consultations', 3)
+                ->where('stats.labResults', 1)
+                ->missing('vitals')
+                ->missing('admissions')
+                ->missing('medicalRecords')
+                ->missing('prescriptions')
+                ->missing('appointments')
+                ->missing('invoices')
+                ->missing('labResults')
+            );
+    });
+
+    it('lazy-loads vitals eight at a time', function () {
+        $patient = Patient::factory()->create();
+        Vital::factory()->count(10)->for($patient)->create();
+
+        $this->actingAs($this->admin)
+            ->withHeaders([
+                'X-Inertia-Partial-Component' => 'Patients/Profile',
+                'X-Inertia-Partial-Data' => 'vitals',
+            ])
+            ->get(route('patients.show', $patient))
+            ->assertOk()
+            ->assertInertia(fn ($p) => $p->component('Patients/Profile')
+                ->has('vitals.data', 8)
+                ->where('vitals.total', 10)
+                ->missing('labResults')
+            );
+    });
+
+    it('returns the next page of a lazy section', function () {
+        $patient = Patient::factory()->create();
+        Vital::factory()->count(10)->for($patient)->create();
+
+        $this->actingAs($this->admin)
+            ->withHeaders([
+                'X-Inertia-Partial-Component' => 'Patients/Profile',
+                'X-Inertia-Partial-Data' => 'vitals',
+            ])
+            ->get(route('patients.show', [
+                'patient' => $patient,
+                'vitals_page' => 2,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn ($p) => $p->component('Patients/Profile')
+                ->has('vitals.data', 2)
+                ->where('vitals.current_page', 2)
+            );
+    });
+
+    it('lazy-loads lab results eight at a time', function () {
+        $patient = Patient::factory()->create();
+        LabRequest::factory()->count(10)->for($patient)->has(LabResult::factory())->create();
+
+        $this->actingAs($this->admin)
+            ->withHeaders([
+                'X-Inertia-Partial-Component' => 'Patients/Profile',
+                'X-Inertia-Partial-Data' => 'labResults',
+            ])
+            ->get(route('patients.show', $patient))
+            ->assertOk()
+            ->assertInertia(fn ($p) => $p->component('Patients/Profile')
+                ->has('labResults.data', 8)
+                ->has('labResults.data.0.lab_request.test_definition.test_name')
+                ->where('labResults.total', 10)
+                ->missing('vitals')
+            );
+    });
+
+    it('redirects show for unauthenticated users', function () {
+        $patient = Patient::factory()->create();
+
+        $this->get(route('patients.show', $patient))->assertRedirect(route('login'));
+    });
+
+    it('blocks show for users without view-patients permission', function () {
+        $patient = Patient::factory()->create();
+
+        $this->actingAs(unauthorizedUser())
+            ->get(route('patients.show', $patient))
             ->assertForbidden();
     });
 

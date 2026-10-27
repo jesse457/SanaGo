@@ -195,9 +195,8 @@ export default function ResultsIndex({ results, filters }: Props) {
         >
             <Head title={t('lab_tests.results.index.head_title')} />
 
-            <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
+            <div className="space-y-6 pb-12">
                 <PageHeader
-                    icon={BeakerIcon}
                     eyebrow={t('lab_tests.results.index.results_archive')}
                     title={t('lab_tests.results.index.title')}
                     description={t('lab_tests.results.index.subtitle')}

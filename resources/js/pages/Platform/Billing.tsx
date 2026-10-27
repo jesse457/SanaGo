@@ -128,7 +128,6 @@ export default function PlatformBilling({
                 <PageHeader
                     title="Billing & usage"
                     description="Recurring revenue, what each hospital consumes against its plan, and every invoice the platform has raised."
-                    icon={BanknotesIcon}
                     breadcrumbs={[{ label: 'Billing' }, { label: 'Usage' }]}
                     meta={
                         <>

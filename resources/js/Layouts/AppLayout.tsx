@@ -44,9 +44,10 @@ import { SanaGoMark, SanaGoWordmark } from '@/Components/brand/SanaGoLogo';
 import { LocaleSwitcher } from '@/Components/LocaleSwitcher';
 import { NotificationHandler } from '@/Components/NotificationHandler';
 import { AlertModal, Button, Dialog, Skeleton } from '@/Components/ui';
-import type { BreadcrumbItem } from '@/Components/ui/Breadcrumbs';
 import { BreadcrumbTrailProvider } from '@/Components/ui/PageHeader';
 import { useTranslation, TranslationProvider } from '@/hooks/useTranslation';
+import { deriveBreadcrumbTrail } from '@/lib/breadcrumbs';
+import type { TrailNavGroup } from '@/lib/breadcrumbs';
 import { formatCurrency, formatDateRelative } from '@/lib/format';
 import { fetchJson } from '@/lib/http';
 import { cn } from '@/lib/utils';
@@ -1361,118 +1362,52 @@ const UserMenuDropdown = memo(function UserMenuDropdown({
     );
 });
 
-// ─── Breadcrumb derivation ──────────────────────────────────────────────────
-
-const SEGMENT_LABELS: Record<string, string> = {
-    create: 'New',
-    edit: 'Edit',
-    show: 'Details',
-    calendar: 'Calendar',
-    requests: 'Requests',
-    results: 'Results',
-    index: 'Overview',
-    analytics: 'Analytics',
-    settings: 'Settings',
-};
-
-function titleCase(segment: string): string {
-    return segment
-        .split('-')
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ');
-}
+// ─── Breadcrumb extras ──────────────────────────────────────────────────────
 
 /**
- * Derives a breadcrumb trail from the current URL, using NAV_CONFIG as the
- * source of truth for module labels.
- *
- * This is the fallback for pages that never pass `breadcrumbs` to
- * `<PageHeader>`: the layout publishes the result through
- * `BreadcrumbTrailProvider`, so every screen gets a trail (and a way back)
- * without touching page markup. Trailing segments that are numeric ids or
- * UUIDs are dropped; `create` / `edit` are translated into a readable label.
+ * Pages that exist but are not in the sidebar (account, support, prescriptions).
+ * They still get a module › page trail instead of a lone, module-less crumb.
+ * See `deriveBreadcrumbTrail()` in `@/lib/breadcrumbs`.
  */
-function deriveBreadcrumbs(
-    url: string,
-    t: (key: string, fallback?: string) => string,
-): BreadcrumbItem[] {
-    const path = url.split('?')[0].split('#')[0];
-    const segments = path.split('/').filter(Boolean);
-
-    if (segments.length === 0) {
-        return [];
-    }
-
-    // Match the longest NAV_CONFIG href that prefixes the current path.
-    const trail: BreadcrumbItem[] = [];
-    const navItem = NAV_CONFIG.flatMap((group) =>
-        group.items.map((item) => ({ ...item, category: group.categoryKey })),
-    )
-        .filter(
-            (item) => path === item.href || path.startsWith(item.href + '/'),
-        )
-        .sort((a, b) => b.href.length - a.href.length)[0];
-
-    if (navItem) {
-        const parent = navItem.href.split('/').filter(Boolean)[0];
-        trail.push({
-            label: t(
-                `nav.category.${navItem.category.split('.').pop()}`,
-                titleCase(parent ?? ''),
-            ),
-            href: `/${parent}`,
-        });
-        trail.push({
-            label: t(navItem.labelKey, navItem.label),
-            href: navItem.href,
-        });
-
-        // Only the "sub-page" remainder is appended (e.g. /patients/42/notes).
-        const rest = segments.slice(
-            navItem.href.split('/').filter(Boolean).length,
-        );
-
-        rest.forEach((segment, i) => {
-            if (/^[0-9a-f-]{8,}$/i.test(segment) || /^\d+$/.test(segment)) {
-                return;
-            }
-
-            const label = SEGMENT_LABELS[segment] ?? titleCase(segment);
-
-            trail.push({
-                label,
-                href:
-                    '/' +
-                    segments
-                        .slice(0, segments.length - rest.length + i + 1)
-                        .join('/'),
-            });
-        });
-
-        return trail;
-    }
-
-    // No nav entry: build module → page from the raw segments.
-    const moduleSegment = segments[0];
-
-    trail.push({
-        label: titleCase(moduleSegment),
-        href: `/${moduleSegment}`,
-    });
-
-    segments.slice(1).forEach((segment) => {
-        if (/^\d+$/.test(segment)) {
-            return;
-        }
-
-        trail.push({
-            label: SEGMENT_LABELS[segment] ?? titleCase(segment),
-        });
-    });
-
-    // Suppress a single-segment trail; the title already says it.
-    return trail.length > 1 ? trail : [];
-}
+const BREADCRUMB_EXTRAS: TrailNavGroup[] = [
+    {
+        category: 'Account',
+        categoryKey: 'breadcrumb.account',
+        items: [
+            {
+                label: 'Settings',
+                labelKey: 'nav.settings',
+                href: '/settings',
+            },
+            {
+                label: 'Notifications',
+                labelKey: 'nav.notifications',
+                href: '/notifications',
+            },
+            {
+                label: 'My Profile',
+                labelKey: 'nav.my_profile',
+                href: '/profile',
+            },
+            {
+                label: 'Support',
+                labelKey: 'nav.support',
+                href: '/support',
+            },
+        ],
+    },
+    {
+        category: 'Clinical',
+        categoryKey: 'nav.category.clinical',
+        items: [
+            {
+                label: 'Prescriptions',
+                labelKey: 'nav.prescriptions',
+                href: '/prescriptions',
+            },
+        ],
+    },
+];
 
 // ─── Main App Layout ────────────────────────────────────────────────────────
 
@@ -1684,7 +1619,7 @@ export default function AppLayout({
      * themselves — see `BreadcrumbTrailProvider` in ui/PageHeader.
      */
     const derivedBreadcrumbs = useMemo(
-        () => deriveBreadcrumbs(url, t),
+        () => deriveBreadcrumbTrail(url, NAV_CONFIG, t, BREADCRUMB_EXTRAS),
         [url, t],
     );
 

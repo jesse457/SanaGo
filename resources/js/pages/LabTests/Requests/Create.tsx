@@ -1,5 +1,4 @@
 import {
-    BeakerIcon,
     CheckBadgeIcon,
     ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
@@ -91,7 +90,6 @@ export default function CreateLabRequest({
 
             <div className="mx-auto max-w-4xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 <PageHeader
-                    icon={BeakerIcon}
                     eyebrow={t('lab_tests.requests.lab_requests')}
                     title={t('lab_tests.requests.order_title')}
                     description={t('lab_tests.requests.order_subtitle')}

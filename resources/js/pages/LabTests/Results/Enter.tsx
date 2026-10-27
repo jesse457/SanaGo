@@ -1,5 +1,4 @@
 import {
-    BeakerIcon,
     ChatBubbleLeftEllipsisIcon,
     CheckIcon,
     CloudArrowUpIcon,
@@ -160,7 +159,6 @@ export default function EnterResults({ labRequest, labResult, isEdit }: Props) {
 
             <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 <PageHeader
-                    icon={BeakerIcon}
                     eyebrow={t('lab_tests.results.enter.breadcrumb')}
                     title={title}
                     description={t('lab_tests.results.enter.subtitle')}

@@ -239,11 +239,7 @@ export default function TenantsIndex({
                 <PageHeader
                     title="Hospitals"
                     description="Every tenant running on this platform: lifecycle state, plan and billing health. Suspending a hospital blocks all of its users immediately."
-                    icon={BuildingOfficeIcon}
-                    breadcrumbs={[
-                        { label: 'Platform' },
-                        { label: 'Hospitals' },
-                    ]}
+                    breadcrumbs={[{ label: 'Tenants' }, { label: 'Hospitals' }]}
                     actions={
                         <Button href="/tenants/create" icon={PlusIcon}>
                             New hospital

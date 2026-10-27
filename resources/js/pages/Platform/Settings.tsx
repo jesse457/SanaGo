@@ -2,7 +2,6 @@ import {
     BanknotesIcon,
     CheckCircleIcon,
     ClockIcon,
-    Cog6ToothIcon,
     GlobeAltIcon,
     InformationCircleIcon,
     LanguageIcon,
@@ -110,7 +109,6 @@ export default function PlatformSettingsPage({
                 <PageHeader
                     title="Platform settings"
                     description="The platform's identity, its billing currency and the defaults applied to every new hospital."
-                    icon={Cog6ToothIcon}
                     breadcrumbs={[{ label: 'Platform' }, { label: 'Settings' }]}
                 />
 

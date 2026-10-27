@@ -59,7 +59,6 @@ export default function AnnouncementsIndex({
                 <PageHeader
                     title="Announcements"
                     description="System-wide messages shown to every tenant on their dashboard."
-                    icon={MegaphoneIcon}
                     breadcrumbs={[{ label: 'Announcements' }]}
                     actions={
                         <Button href="/announcements/create" icon={PlusIcon}>

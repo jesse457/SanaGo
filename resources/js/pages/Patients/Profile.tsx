@@ -16,9 +16,10 @@ import {
     UserGroupIcon,
     UserIcon,
 } from '@heroicons/react/24/outline';
-import { Head } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { Head, router } from '@inertiajs/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { Pagination } from '@/Components/Pagination';
 import {
     Badge,
     Button,
@@ -27,6 +28,8 @@ import {
     KeyValueGrid,
     PageHeader,
     SectionCard,
+    SkeletonRows,
+    SkeletonText,
     StatCard,
     StatGrid,
     Table,
@@ -40,6 +43,7 @@ import {
 import type { BadgeTone, TabItem } from '@/Components/ui';
 import { useTranslation } from '@/hooks/useTranslation';
 import AppLayout from '@/Layouts/AppLayout';
+import { ResultStatusBadge } from '@/pages/LabTests/components/ResultStatusBadge';
 import { AdmissionStatusBadge } from '@/pages/Patients/components/AdmissionStatusBadge';
 import { PatientIdentity } from '@/pages/Patients/components/PatientIdentity';
 import type { AdmissionRecord, VitalRecord } from '@/types';
@@ -47,12 +51,53 @@ import type { AdmissionRecord, VitalRecord } from '@/types';
 /**
  * The dossier consumes the props `PatientController@show` sends:
  *
- *   patient, stats, admissions, vitals, medicalRecords, appointments,
- *   invoices, prescriptions
+ *   patient, stats, admissions, vitals, medicalRecords, prescriptions,
+ *   appointments, invoices, labResults
  *
- * Every collection is optional so the screen still renders if the controller
- * stops eager-loading a relation.
+ * Every history collection is an optional Inertia prop: the shell renders
+ * immediately, then each tab asks for its own paginated slice (8 rows) the
+ * first time it is opened. That keeps the initial payload small and lets a
+ * patient with years of history stay responsive.
  */
+
+interface Paginated<T> {
+    data: T[];
+    links: { url: string | null; label: string; active: boolean }[];
+    current_page: number;
+    last_page: number;
+    from: number | null;
+    to: number | null;
+    total: number;
+}
+
+type SectionKey =
+    | 'vitals'
+    | 'admissions'
+    | 'consultations'
+    | 'prescriptions'
+    | 'appointments'
+    | 'invoices'
+    | 'labResults';
+
+const SECTION_PAGE_NAMES: Record<SectionKey, string> = {
+    vitals: 'vitals_page',
+    admissions: 'admissions_page',
+    consultations: 'consultations_page',
+    prescriptions: 'prescriptions_page',
+    appointments: 'appointments_page',
+    invoices: 'invoices_page',
+    labResults: 'lab_results_page',
+};
+
+const SECTION_PROPS: Record<SectionKey, string> = {
+    vitals: 'vitals',
+    admissions: 'admissions',
+    consultations: 'medicalRecords',
+    prescriptions: 'prescriptions',
+    appointments: 'appointments',
+    invoices: 'invoices',
+    labResults: 'labResults',
+};
 
 interface ProfilePatient {
     id: number;
@@ -112,22 +157,37 @@ interface PrescriptionRecord {
     doctor?: { id: number; name: string } | null;
 }
 
+interface LabResultRecord {
+    id: number;
+    status: string;
+    result_date: string;
+    lab_request?: {
+        test_definition?: { test_name: string; code?: string | null } | null;
+        doctor?: { id: number; name: string } | null;
+    } | null;
+}
+
 interface ProfileStats {
     admissions?: number;
     vitals?: number;
     consultations?: number;
+    prescriptions?: number;
+    appointments?: number;
+    invoices?: number;
+    labResults?: number;
     outstanding?: number;
 }
 
 interface Props {
     patient: ProfilePatient;
     stats?: ProfileStats;
-    admissions?: AdmissionRecord[];
-    vitals?: VitalRecord[];
-    medicalRecords?: ConsultationRecord[];
-    appointments?: AppointmentRecord[];
-    invoices?: InvoiceRecord[];
-    prescriptions?: PrescriptionRecord[];
+    admissions?: Paginated<AdmissionRecord>;
+    vitals?: Paginated<VitalRecord>;
+    medicalRecords?: Paginated<ConsultationRecord>;
+    appointments?: Paginated<AppointmentRecord>;
+    invoices?: Paginated<InvoiceRecord>;
+    prescriptions?: Paginated<PrescriptionRecord>;
+    labResults?: Paginated<LabResultRecord>;
 }
 
 const INVOICE_TONES: Record<string, BadgeTone> = {
@@ -243,26 +303,158 @@ function SectionEmpty({
 }
 
 /**
+ * One lazily requested history tab. Until the server returns the first page
+ * the section shows row skeletons; page changes keep the current rows visible
+ * at reduced opacity while the next slice is in flight.
+ */
+function LazySection<T>({
+    section,
+    pageParam,
+    loading,
+    onNavigate,
+    columns,
+    children,
+}: {
+    section?: Paginated<T>;
+    pageParam: string;
+    loading: boolean;
+    onNavigate: (page: number) => void;
+    columns: number;
+    children: (records: T[]) => ReactNode;
+}) {
+    if (!section) {
+        return <SkeletonRows rows={8} columns={columns} />;
+    }
+
+    return (
+        <div
+            aria-busy={loading}
+            className={
+                loading
+                    ? 'pointer-events-none opacity-60 transition-opacity duration-200'
+                    : 'transition-opacity duration-200'
+            }
+        >
+            {children(section.data)}
+            <Pagination
+                links={section.links}
+                meta={
+                    section.from !== null && section.to !== null
+                        ? {
+                              from: section.from,
+                              to: section.to,
+                              total: section.total,
+                          }
+                        : undefined
+                }
+                onNavigate={onNavigate}
+                pageParam={pageParam}
+                className="mt-4"
+            />
+        </div>
+    );
+}
+
+/**
  * Patients/Profile — the full patient dossier: identity, live admission,
  * vitals, admissions, consultations, prescriptions, appointments and billing.
  */
 export default function PatientProfile({
     patient,
     stats,
-    admissions = [],
-    vitals = [],
-    medicalRecords = [],
-    appointments = [],
-    invoices = [],
-    prescriptions = [],
+    admissions,
+    vitals,
+    medicalRecords,
+    appointments,
+    invoices,
+    prescriptions,
+    labResults,
 }: Props) {
     const { t } = useTranslation();
-    const [tab, setTab] = useState('vitals');
+    const [tab, setTab] = useState<SectionKey>('vitals');
+    const [pages, setPages] = useState<Record<SectionKey, number>>({
+        vitals: 1,
+        admissions: 1,
+        consultations: 1,
+        prescriptions: 1,
+        appointments: 1,
+        invoices: 1,
+        labResults: 1,
+    });
+    const [loadingSection, setLoadingSection] = useState<SectionKey | null>(
+        vitals ? null : 'vitals',
+    );
+    const requestId = useRef(0);
+    const requestedInitialSection = useRef(false);
+
+    const hasSection = (section: SectionKey): boolean => {
+        switch (section) {
+            case 'vitals':
+                return Boolean(vitals);
+            case 'admissions':
+                return Boolean(admissions);
+            case 'consultations':
+                return Boolean(medicalRecords);
+            case 'prescriptions':
+                return Boolean(prescriptions);
+            case 'appointments':
+                return Boolean(appointments);
+            case 'invoices':
+                return Boolean(invoices);
+            case 'labResults':
+                return Boolean(labResults);
+        }
+    };
+
+    const fetchSection = (section: SectionKey, page: number) => {
+        const id = ++requestId.current;
+
+        router.reload({
+            only: [SECTION_PROPS[section]],
+            data: { [SECTION_PAGE_NAMES[section]]: page },
+            onFinish: () => {
+                if (requestId.current === id) {
+                    setLoadingSection(null);
+                }
+            },
+        });
+    };
+
+    const requestSection = (section: SectionKey, page: number) => {
+        setPages((current) => ({ ...current, [section]: page }));
+        setLoadingSection(section);
+        fetchSection(section, page);
+    };
+
+    useEffect(() => {
+        if (requestedInitialSection.current) {
+            return;
+        }
+
+        requestedInitialSection.current = true;
+
+        if (!vitals) {
+            fetchSection('vitals', 1);
+        }
+        // The initial request is intentionally one-shot; later fetches are
+        // driven by tab changes and pagination.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const handleTabChange = (value: string) => {
+        const next = value as SectionKey;
+
+        setTab(next);
+
+        if (!hasSection(next)) {
+            requestSection(next, pages[next]);
+        }
+    };
 
     const fullName = `${patient.first_name} ${patient.last_name}`.trim();
     const currentAdmission =
         patient.latest_admission ??
-        admissions.find((admission) => admission.status === 'admitted') ??
+        admissions?.data.find((admission) => admission.status === 'admitted') ??
         null;
 
     const outstanding = useMemo(() => {
@@ -270,7 +462,7 @@ export default function PatientProfile({
             return stats.outstanding;
         }
 
-        return invoices
+        return (invoices?.data ?? [])
             .filter(
                 (invoice) =>
                     invoice.status !== 'paid' && invoice.status !== 'cancelled',
@@ -295,37 +487,43 @@ export default function PatientProfile({
             value: 'vitals',
             label: t('page.patient_profile.tab_vitals'),
             icon: HeartIcon,
-            count: stats?.vitals ?? vitals.length,
+            count: stats?.vitals ?? vitals?.total ?? 0,
         },
         {
             value: 'admissions',
             label: t('page.patient_profile.tab_admissions'),
             icon: ClipboardDocumentListIcon,
-            count: stats?.admissions ?? admissions.length,
+            count: stats?.admissions ?? admissions?.total ?? 0,
         },
         {
             value: 'consultations',
             label: t('page.patient_profile.tab_consultations'),
             icon: DocumentTextIcon,
-            count: stats?.consultations ?? medicalRecords.length,
+            count: stats?.consultations ?? medicalRecords?.total ?? 0,
         },
         {
             value: 'prescriptions',
             label: t('page.patient_profile.tab_prescriptions'),
             icon: ClipboardDocumentListIcon,
-            count: prescriptions.length,
+            count: stats?.prescriptions ?? prescriptions?.total ?? 0,
         },
         {
             value: 'appointments',
             label: t('page.patient_profile.tab_appointments'),
             icon: CalendarDaysIcon,
-            count: appointments.length,
+            count: stats?.appointments ?? appointments?.total ?? 0,
         },
         {
             value: 'invoices',
             label: t('page.patient_profile.tab_invoices'),
             icon: BanknotesIcon,
-            count: invoices.length,
+            count: stats?.invoices ?? invoices?.total ?? 0,
+        },
+        {
+            value: 'labResults',
+            label: t('page.patient_profile.tab_lab_results'),
+            icon: BeakerIcon,
+            count: stats?.labResults ?? labResults?.total ?? 0,
         },
     ];
 
@@ -424,19 +622,21 @@ export default function PatientProfile({
                 <StatGrid columns={4}>
                     <StatCard
                         label={t('page.patient_profile.stat_admissions')}
-                        value={stats?.admissions ?? admissions.length}
+                        value={stats?.admissions ?? admissions?.total ?? 0}
                         icon={ClipboardDocumentListIcon}
                         tone="accent"
                     />
                     <StatCard
                         label={t('page.patient_profile.stat_vitals')}
-                        value={stats?.vitals ?? vitals.length}
+                        value={stats?.vitals ?? vitals?.total ?? 0}
                         icon={HeartIcon}
                         tone="positive"
                     />
                     <StatCard
                         label={t('page.patient_profile.stat_consultations')}
-                        value={stats?.consultations ?? medicalRecords.length}
+                        value={
+                            stats?.consultations ?? medicalRecords?.total ?? 0
+                        }
                         icon={DocumentTextIcon}
                         tone="neutral"
                     />
@@ -567,39 +767,156 @@ export default function PatientProfile({
                                 <Tabs
                                     items={tabs}
                                     value={tab}
-                                    onChange={setTab}
+                                    onChange={handleTabChange}
                                 />
                             </div>
 
                             <div className="px-5 py-4 sm:px-6">
                                 {tab === 'vitals' && (
-                                    <VitalsSection
-                                        vitals={vitals}
-                                        patientId={patient.id}
-                                    />
+                                    <LazySection
+                                        section={vitals}
+                                        pageParam={SECTION_PAGE_NAMES.vitals}
+                                        loading={loadingSection === 'vitals'}
+                                        onNavigate={(page) =>
+                                            requestSection('vitals', page)
+                                        }
+                                        columns={6}
+                                    >
+                                        {(records) => (
+                                            <VitalsSection
+                                                vitals={records}
+                                                patientId={patient.id}
+                                            />
+                                        )}
+                                    </LazySection>
                                 )}
                                 {tab === 'admissions' && (
-                                    <AdmissionsSection
-                                        admissions={admissions}
-                                    />
+                                    <LazySection
+                                        section={admissions}
+                                        pageParam={
+                                            SECTION_PAGE_NAMES.admissions
+                                        }
+                                        loading={
+                                            loadingSection === 'admissions'
+                                        }
+                                        onNavigate={(page) =>
+                                            requestSection('admissions', page)
+                                        }
+                                        columns={4}
+                                    >
+                                        {(records) => (
+                                            <AdmissionsSection
+                                                admissions={records}
+                                            />
+                                        )}
+                                    </LazySection>
                                 )}
                                 {tab === 'consultations' && (
-                                    <ConsultationsSection
-                                        records={medicalRecords}
-                                    />
+                                    <LazySection
+                                        section={medicalRecords}
+                                        pageParam={
+                                            SECTION_PAGE_NAMES.consultations
+                                        }
+                                        loading={
+                                            loadingSection === 'consultations'
+                                        }
+                                        onNavigate={(page) =>
+                                            requestSection(
+                                                'consultations',
+                                                page,
+                                            )
+                                        }
+                                        columns={3}
+                                    >
+                                        {(records) => (
+                                            <ConsultationsSection
+                                                records={records}
+                                            />
+                                        )}
+                                    </LazySection>
                                 )}
                                 {tab === 'prescriptions' && (
-                                    <PrescriptionsSection
-                                        records={prescriptions}
-                                    />
+                                    <LazySection
+                                        section={prescriptions}
+                                        pageParam={
+                                            SECTION_PAGE_NAMES.prescriptions
+                                        }
+                                        loading={
+                                            loadingSection === 'prescriptions'
+                                        }
+                                        onNavigate={(page) =>
+                                            requestSection(
+                                                'prescriptions',
+                                                page,
+                                            )
+                                        }
+                                        columns={4}
+                                    >
+                                        {(records) => (
+                                            <PrescriptionsSection
+                                                records={records}
+                                            />
+                                        )}
+                                    </LazySection>
                                 )}
                                 {tab === 'appointments' && (
-                                    <AppointmentsSection
-                                        records={appointments}
-                                    />
+                                    <LazySection
+                                        section={appointments}
+                                        pageParam={
+                                            SECTION_PAGE_NAMES.appointments
+                                        }
+                                        loading={
+                                            loadingSection === 'appointments'
+                                        }
+                                        onNavigate={(page) =>
+                                            requestSection('appointments', page)
+                                        }
+                                        columns={4}
+                                    >
+                                        {(records) => (
+                                            <AppointmentsSection
+                                                records={records}
+                                            />
+                                        )}
+                                    </LazySection>
                                 )}
                                 {tab === 'invoices' && (
-                                    <InvoicesSection invoices={invoices} />
+                                    <LazySection
+                                        section={invoices}
+                                        pageParam={SECTION_PAGE_NAMES.invoices}
+                                        loading={loadingSection === 'invoices'}
+                                        onNavigate={(page) =>
+                                            requestSection('invoices', page)
+                                        }
+                                        columns={5}
+                                    >
+                                        {(records) => (
+                                            <InvoicesSection
+                                                invoices={records}
+                                            />
+                                        )}
+                                    </LazySection>
+                                )}
+                                {tab === 'labResults' && (
+                                    <LazySection
+                                        section={labResults}
+                                        pageParam={
+                                            SECTION_PAGE_NAMES.labResults
+                                        }
+                                        loading={
+                                            loadingSection === 'labResults'
+                                        }
+                                        onNavigate={(page) =>
+                                            requestSection('labResults', page)
+                                        }
+                                        columns={4}
+                                    >
+                                        {(records) => (
+                                            <LabResultsSection
+                                                records={records}
+                                            />
+                                        )}
+                                    </LazySection>
                                 )}
                             </div>
                         </SectionCard>
@@ -707,38 +1024,40 @@ export default function PatientProfile({
                                 </Button>
                             }
                         >
-                            {vitals.length > 0 ? (
+                            {!vitals ? (
+                                <SkeletonText lines={4} />
+                            ) : vitals.data.length > 0 ? (
                                 <KeyValueGrid columns={2}>
                                     <KeyValue
                                         label={t(
                                             'page.vitals_index.col_temperature',
                                         )}
                                         value={
-                                            vitals[0].temperature
-                                                ? `${vitals[0].temperature} °C`
+                                            vitals.data[0].temperature
+                                                ? `${vitals.data[0].temperature} °C`
                                                 : null
                                         }
                                     />
                                     <KeyValue
                                         label={t('page.vitals_index.col_bp')}
                                         value={
-                                            vitals[0].systolic_bp ||
-                                            vitals[0].diastolic_bp
-                                                ? `${vitals[0].systolic_bp ?? '—'}/${vitals[0].diastolic_bp ?? '—'}`
+                                            vitals.data[0].systolic_bp ||
+                                            vitals.data[0].diastolic_bp
+                                                ? `${vitals.data[0].systolic_bp ?? '—'}/${vitals.data[0].diastolic_bp ?? '—'}`
                                                 : null
                                         }
                                     />
                                     <KeyValue
                                         label={t('page.vitals_index.col_pulse')}
-                                        value={vitals[0].heart_rate}
+                                        value={vitals.data[0].heart_rate}
                                     />
                                     <KeyValue
                                         label={t(
                                             'page.vitals_index.col_oxygen',
                                         )}
                                         value={
-                                            vitals[0].oxygen_saturation
-                                                ? `${vitals[0].oxygen_saturation} %`
+                                            vitals.data[0].oxygen_saturation
+                                                ? `${vitals.data[0].oxygen_saturation} %`
                                                 : null
                                         }
                                     />
@@ -747,7 +1066,7 @@ export default function PatientProfile({
                                             'page.patient_profile.recorded_at',
                                         )}
                                         value={formatDateTime(
-                                            vitals[0].recorded_at,
+                                            vitals.data[0].recorded_at,
                                         )}
                                         className="sm:col-span-2"
                                     />
@@ -1086,6 +1405,65 @@ function AppointmentsSection({ records }: { records: AppointmentRecord[] }) {
                             >
                                 {humanise(record.status)}
                             </Badge>
+                        </TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    );
+}
+
+function LabResultsSection({ records }: { records: LabResultRecord[] }) {
+    const { t } = useTranslation();
+
+    if (records.length === 0) {
+        return (
+            <SectionEmpty
+                icon={BeakerIcon}
+                title={t('page.patient_profile.no_lab_results')}
+                description={t('page.patient_profile.no_lab_results_desc')}
+            />
+        );
+    }
+
+    return (
+        <Table bare scroll>
+            <TableHeader>
+                <TableRow>
+                    <TableHeaderCell>
+                        {t('page.patient_profile.result_date')}
+                    </TableHeaderCell>
+                    <TableHeaderCell>
+                        {t('page.patient_profile.test')}
+                    </TableHeaderCell>
+                    <TableHeaderCell>
+                        {t('page.patient_profile.doctor')}
+                    </TableHeaderCell>
+                    <TableHeaderCell>
+                        {t('page.patient_profile.status')}
+                    </TableHeaderCell>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {records.map((record) => (
+                    <TableRow key={record.id}>
+                        <TableCell>{formatDate(record.result_date)}</TableCell>
+                        <TableCell>
+                            <span className="font-medium text-ink">
+                                {record.lab_request?.test_definition
+                                    ?.test_name ?? '—'}
+                            </span>
+                            {record.lab_request?.test_definition?.code && (
+                                <span className="ml-1.5 font-mono text-[10.5px] text-ink-subtle uppercase">
+                                    {record.lab_request.test_definition.code}
+                                </span>
+                            )}
+                        </TableCell>
+                        <TableCell muted>
+                            {record.lab_request?.doctor?.name ?? '—'}
+                        </TableCell>
+                        <TableCell>
+                            <ResultStatusBadge status={record.status} />
                         </TableCell>
                     </TableRow>
                 ))}

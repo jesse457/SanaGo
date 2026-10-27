@@ -5,7 +5,6 @@ import {
     ClockIcon,
     CpuChipIcon,
     ExclamationTriangleIcon,
-    HeartIcon,
     ServerStackIcon,
     XCircleIcon,
 } from '@heroicons/react/24/outline';
@@ -126,7 +125,6 @@ export default function PlatformHealth({
                 <PageHeader
                     title="Health & monitoring"
                     description="Live reachability of every hospital database, the platform's own services, and the subscriptions that need an operator's attention."
-                    icon={HeartIcon}
                     breadcrumbs={[{ label: 'Platform' }, { label: 'Health' }]}
                     actions={
                         <Button

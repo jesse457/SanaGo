@@ -69,7 +69,6 @@ const Dashboard = () => {
                 <PageHeader
                     title={t('page.pharmacy_dashboard.title')}
                     description={t('page.pharmacy_dashboard.subtitle')}
-                    icon={BeakerIcon}
                     actions={
                         <>
                             <Button

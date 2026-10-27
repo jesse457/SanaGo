@@ -145,7 +145,6 @@ export default function CertificatesCreate({ patients }: Props) {
                     title={t('certificates')}
                     eyebrow={t('clinical')}
                     description={active.description}
-                    icon={DocumentTextIcon}
                     actions={
                         <SegmentedControl
                             value={data.type}

@@ -57,6 +57,21 @@ App-level pieces in `resources/js/Components`:
 
 A success is a `swal.toast(...)` raised by `NotificationHandler` from the server flash — pages must not toast or banner it themselves, that is what produced double notifications.
 
+## Breadcrumbs
+
+Every screen reads `module › page › deeper step` (`Patient Management › Patient Directory › Amine Ibekwe`). The trail is **derived**, not authored: each layout derives it from the current URL plus its own `NAV_CONFIG` and publishes it through `BreadcrumbTrailProvider` (`resources/js/lib/breadcrumbs.ts`).
+
+So a page normally passes nothing. Pass `breadcrumbs` only when the trail needs something the URL cannot know — a record name, an invoice number:
+
+```tsx
+<PageHeader
+    title={patient.name}
+    breadcrumbs={[{ label: 'Patient Directory', href: '/patients' }, { label: patient.name }]}
+/>
+```
+
+An explicit trail is a *continuation*: the module crumb is prepended when missing, crumbs pointing at a nav page inherit that page's nav label, and a lone `[{ label: title }]` is ignored in favour of the derived `module › page` trail.
+
 Never use `window.confirm`, `window.alert` or `window.prompt`. Ask with the sweet alert instead, and gate the destructive work on its answer:
 
 ```tsx

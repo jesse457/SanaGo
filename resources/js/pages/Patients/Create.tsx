@@ -160,7 +160,6 @@ export default function CreatePatient() {
                     eyebrow={t('page.patients_create.new_registration')}
                     title={t('page.patients_create.title')}
                     description={t('page.patients_create.subtitle')}
-                    icon={UserPlusIcon}
                     breadcrumbs={[
                         {
                             label: t('page.patients_create.patient_management'),

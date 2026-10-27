@@ -72,7 +72,6 @@ export default function RadiologyRequestsCreate({ patients }: Props) {
 
             <div className="mx-auto flex max-w-5xl flex-col gap-6">
                 <PageHeader
-                    icon={CameraIcon}
                     eyebrow={t('radiology.requests.imaging_requests')}
                     title={t('radiology.newRequest')}
                     description={t('radiology.requestImaging')}

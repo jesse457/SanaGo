@@ -52,7 +52,6 @@ export default function TenantsEdit({ tenant }: TenantEditProps) {
                 <PageHeader
                     title="Edit hospital"
                     description="The display name and primary domain. The slug is the tenant key and cannot change."
-                    icon={BuildingOfficeIcon}
                     breadcrumbs={[
                         { label: 'Hospitals', href: '/tenants' },
                         { label: tenant.name, href: `/tenants/${tenant.id}` },

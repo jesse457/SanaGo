@@ -101,7 +101,6 @@ export default function RadiologyRequestsShow({ request }: Props) {
 
             <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 pb-12 sm:px-6 lg:px-8">
                 <PageHeader
-                    icon={CameraIcon}
                     eyebrow={t('radiology.requests.imaging_requests')}
                     title={t('radiology.requests.detail_title')}
                     description={`${imagingTypeLabel(request.imaging_type)} · ${humanise(request.body_part)}`}

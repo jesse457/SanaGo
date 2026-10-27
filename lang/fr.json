@@ -876,7 +876,10 @@
         "billing_settings": "Paramètres de facturation",
         "new_ticket": "Nouveau ticket",
         "radiology_results": "Résultats de radiologie",
-        "sign_out_confirm": "Votre session se termine et vous revenez à la page de connexion."
+        "sign_out_confirm": "Votre session se termine et vous revenez à la page de connexion.",
+        "prescriptions": "Ordonnances",
+        "support": "Assistance",
+        "notifications": "Notifications"
     },
     "marketing": {
         "modules": {
@@ -2017,6 +2020,8 @@
             "no_consultations_desc": "Aucune consultation n’a encore été enregistrée pour ce patient.",
             "no_invoices": "Aucune facture",
             "no_invoices_desc": "Aucune facture n’a été émise pour ce patient.",
+            "no_lab_results": "Aucun résultat de laboratoire",
+            "no_lab_results_desc": "Aucun résultat de laboratoire n’a été enregistré pour ce patient.",
             "no_prescriptions": "Aucune ordonnance",
             "no_prescriptions_desc": "Aucune ordonnance n’a été rédigée pour ce patient.",
             "no_vitals": "Aucun signe vital",
@@ -2029,6 +2034,7 @@
             "recorded_at": "Relevé le",
             "recorded_by": "Relevé par",
             "registered_on": "Inscrit le",
+            "result_date": "Date du résultat",
             "stat_admissions": "Admissions",
             "stat_consultations": "Consultations",
             "stat_outstanding": "Solde dû",
@@ -2039,8 +2045,10 @@
             "tab_appointments": "Rendez-vous",
             "tab_consultations": "Consultations",
             "tab_invoices": "Factures",
+            "tab_lab_results": "Résultats de laboratoire",
             "tab_prescriptions": "Ordonnances",
             "tab_vitals": "Signes vitaux",
+            "test": "Examen",
             "title": "Dossier du patient",
             "total": "Total",
             "view_vitals": "Voir les signes vitaux",
@@ -2942,5 +2950,17 @@
                 "line": "Ouvrir une vacation, encaisser en espèces ou par mobile money, clôturer sur une caisse comptée et garder à chaque vacation son propre journal."
             }
         }
+    },
+    "breadcrumb": {
+        "account": "Compte",
+        "create": "Nouveau",
+        "edit": "Modifier",
+        "details": "Détails",
+        "print": "Imprimer",
+        "calendar": "Calendrier",
+        "checkin": "Enregistrement",
+        "profile": "Profil",
+        "enter": "Saisir les résultats",
+        "receipt": "Reçu"
     }
 }

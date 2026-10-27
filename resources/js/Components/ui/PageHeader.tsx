@@ -1,28 +1,30 @@
 import { createContext, useContext } from 'react';
-import type { ComponentType, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Breadcrumbs } from '@/Components/ui/Breadcrumbs';
 import type { BreadcrumbItem } from '@/Components/ui/Breadcrumbs';
+import { completeBreadcrumbTrail } from '@/lib/breadcrumbs';
+import type { BreadcrumbTrail } from '@/lib/breadcrumbs';
 import { cn } from '@/lib/utils';
 
 /**
  * Layout-derived breadcrumb trail.
  * --------------------------------
  * Pages that never pass `breadcrumbs` would otherwise have no way back and no
- * indication of depth. `AppLayout` derives a trail from the current URL plus
- * `NAV_CONFIG` and publishes it through this context, so `<PageHeader>` can
- * fall back to it without a single page being touched.
+ * indication of depth. Each layout derives the trail from the current URL plus
+ * its own navigation config and publishes it through this context, so
+ * `<PageHeader>` renders `module › page` without a single page being touched.
  *
  * Precedence inside PageHeader:
- *   1. the `breadcrumbs` prop (explicit, always wins)
+ *   1. the `breadcrumbs` prop (explicit, completed with module › page)
  *   2. the nearest `BreadcrumbTrailProvider` value (layout-derived)
  *   3. nothing — the header simply omits the trail
  */
-const BreadcrumbTrailContext = createContext<BreadcrumbItem[] | null>(null);
+const BreadcrumbTrailContext = createContext<BreadcrumbTrail | null>(null);
 
 export const BreadcrumbTrailProvider = BreadcrumbTrailContext.Provider;
 
 /** The layout-derived trail for the current URL, if any. */
-export function useDerivedBreadcrumbs(): BreadcrumbItem[] | null {
+export function useDerivedBreadcrumbs(): BreadcrumbTrail | null {
     return useContext(BreadcrumbTrailContext);
 }
 
@@ -34,14 +36,15 @@ export interface PageHeaderProps {
     actions?: ReactNode;
     /**
      * Explicit trail. When omitted the layout-derived trail is used, so a page
-     * that never declares breadcrumbs still shows module → page.
+     * that never declares breadcrumbs still shows module → page. An explicit
+     * trail is a *continuation*: the module crumb is prepended when missing and
+     * crumbs that point at a nav page inherit that page's nav label.
      */
     breadcrumbs?: BreadcrumbItem[];
     /** Set to false to suppress the trail entirely, derived or explicit. */
     showBreadcrumbs?: boolean;
     /** Inline meta row under the description (counts, timestamps, badges). */
     meta?: ReactNode;
-    icon?: ComponentType<React.SVGProps<SVGSVGElement>>;
     className?: string;
     bordered?: boolean;
 }
@@ -62,13 +65,16 @@ export function PageHeader({
     breadcrumbs,
     showBreadcrumbs = true,
     meta,
-    icon: Icon,
     className,
     bordered = true,
 }: PageHeaderProps) {
     const derived = useDerivedBreadcrumbs();
-    const trail = breadcrumbs ?? derived;
-    const hasTrail = showBreadcrumbs && trail && trail.length > 0;
+    const trail = breadcrumbs
+        ? derived
+            ? completeBreadcrumbTrail(breadcrumbs, derived)
+            : breadcrumbs
+        : (derived?.items ?? []);
+    const hasTrail = showBreadcrumbs && trail.length > 0;
 
     return (
         <header
@@ -82,11 +88,6 @@ export function PageHeader({
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex min-w-0 items-start gap-3">
-                    {Icon && (
-                        <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-muted text-accent">
-                            <Icon className="h-5 w-5" />
-                        </span>
-                    )}
                     <div className="min-w-0">
                         {eyebrow && (
                             <p className="mb-1 text-[10.5px] font-semibold tracking-[0.16em] text-ink-subtle uppercase">

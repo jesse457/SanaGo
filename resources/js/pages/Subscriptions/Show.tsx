@@ -82,7 +82,6 @@ export default function SubscriptionsShow({
                     eyebrow="Subscription"
                     title={`${subscription.plan_name} for ${subscription.tenant_name}`}
                     description="The commercial contract for this hospital. Plan changes are made from the hospital page so proration and notifications always run."
-                    icon={CreditCardIcon}
                     breadcrumbs={[
                         { label: 'Billing' },
                         { label: 'Subscriptions', href: '/subscriptions' },

@@ -42,7 +42,6 @@ export default function AnnouncementsCreate() {
                 <PageHeader
                     title="New announcement"
                     description="Compose a message that appears on every tenant's dashboard."
-                    icon={MegaphoneIcon}
                     breadcrumbs={[
                         { label: 'Announcements', href: '/announcements' },
                         { label: 'New announcement' },

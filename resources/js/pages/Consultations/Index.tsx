@@ -148,7 +148,6 @@ const PatientProfilePage = ({ patient }: Props) => {
             <PageHeader
                 title={`${patient.first_name} ${patient.last_name}`}
                 description={patient.patient_uid}
-                icon={UserIcon}
                 breadcrumbs={[
                     { label: t('patients'), href: route('patients.index') },
                     { label: `${patient.first_name} ${patient.last_name}` },

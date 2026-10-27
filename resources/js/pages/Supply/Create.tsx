@@ -87,7 +87,6 @@ export default function SupplyForm({ supply }: { supply?: Supply }) {
 
             <div className="mx-auto max-w-4xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 <PageHeader
-                    icon={ArchiveBoxIcon}
                     eyebrow={t('page.supply_create.inventory')}
                     title={
                         isEdit

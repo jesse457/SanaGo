@@ -154,7 +154,6 @@ export default function PlatformAudit({
                 <PageHeader
                     title="Audit log"
                     description="Every privileged action on the platform: who did it, to which hospital, from which address, and with what payload."
-                    icon={ShieldCheckIcon}
                     breadcrumbs={[
                         { label: 'Platform' },
                         { label: 'Audit log' },

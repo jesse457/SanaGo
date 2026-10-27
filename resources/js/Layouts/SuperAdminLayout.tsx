@@ -31,6 +31,7 @@ import React, {
 import { LocaleSwitcher } from '@/Components/LocaleSwitcher';
 import { NotificationHandler } from '@/Components/NotificationHandler';
 import { Badge } from '@/Components/ui';
+import { BreadcrumbTrailProvider } from '@/Components/ui/PageHeader';
 import { useTranslation, TranslationProvider } from '@/hooks/useTranslation';
 import { BrandMark } from '@/Layouts/components/BrandMark';
 import { DrawerHeader } from '@/Layouts/components/DrawerHeader';
@@ -41,6 +42,7 @@ import { DrawerBackdrop } from '@/Layouts/components/ShellPrimitives';
 import { ThemeToggle } from '@/Layouts/components/ThemeToggle';
 import { UserChip, UserMeta } from '@/Layouts/components/UserChip';
 import { UserMenuPanel } from '@/Layouts/components/UserMenuPanel';
+import { deriveBreadcrumbTrail } from '@/lib/breadcrumbs';
 
 interface User {
     id: number;
@@ -599,6 +601,15 @@ export default function SuperAdminLayout({
     const [notifOpen, setNotifOpen] = useState(false);
     const notificationFeed = useLandlordNotifications();
 
+    /**
+     * Landlord trails follow the same module › page shape as the hospital app
+     * (Overview › Dashboard, Billing › Plans, Access › Staff users …).
+     */
+    const derivedBreadcrumbs = useMemo(
+        () => deriveBreadcrumbTrail(url, NAV_CONFIG, t),
+        [url, t],
+    );
+
     // Dynamic ref trackers to track click-outside actions safely
     const userMenuRef = useRef<HTMLDivElement>(null);
     const notifRef = useRef<HTMLDivElement>(null);
@@ -728,198 +739,209 @@ export default function SuperAdminLayout({
 
     return (
         <TranslationProvider>
-            <NotificationHandler />
-            <div className="flex h-dvh overflow-hidden bg-canvas font-sans">
-                {/* ─── Mobile backdrop ─── */}
-                <DrawerBackdrop
-                    open={mobileMenuOpen}
-                    onClose={() => setMobileMenuOpen(false)}
-                />
-
-                {/* ─── Mobile sidebar ─── */}
-                <aside
-                    className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-line bg-surface transition-transform duration-300 ease-premium lg:hidden ${
-                        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-                    }`}
-                >
-                    <DrawerHeader onClose={() => setMobileMenuOpen(false)}>
-                        <BrandMark
-                            caption={`${platformName} · ${t('nav.super_admin')}`}
-                            href="/dashboard/super-admin"
-                        />
-                    </DrawerHeader>
-                    <SidebarNav
-                        isOpen={true}
-                        isActive={isActiveLink}
-                        openCategories={openCategories}
-                        onToggleCategory={toggleCategory}
-                        platformName={platformName}
-                        currency={currency}
-                        canManagePlatformSettings={canManagePlatformSettings}
+            <BreadcrumbTrailProvider value={derivedBreadcrumbs}>
+                <NotificationHandler />
+                <div className="flex h-dvh overflow-hidden bg-canvas font-sans">
+                    {/* ─── Mobile backdrop ─── */}
+                    <DrawerBackdrop
+                        open={mobileMenuOpen}
+                        onClose={() => setMobileMenuOpen(false)}
                     />
-                </aside>
 
-                {/* ─── Desktop sidebar ─── */}
-                <aside
-                    className={`relative hidden flex-col border-r border-line bg-surface transition-[width] duration-300 ease-premium lg:flex ${
-                        sidebarOpen ? 'w-64' : 'w-[68px]'
-                    }`}
-                >
-                    <SidebarNav
-                        isOpen={sidebarOpen}
-                        isActive={isActiveLink}
-                        openCategories={openCategories}
-                        onToggleCategory={toggleCategory}
-                        platformName={platformName}
-                        currency={currency}
-                        canManagePlatformSettings={canManagePlatformSettings}
-                    />
-                    <button
-                        type="button"
-                        onClick={() => setSidebarOpen((prev) => !prev)}
-                        className="absolute top-20 -right-3 z-30 rounded-md border border-line bg-surface p-1.5 text-ink-subtle shadow-surface transition-[color,transform] duration-200 ease-premium hover:text-ink active:scale-95"
-                        title={
-                            sidebarOpen
-                                ? t('common.collapse_sidebar')
-                                : t('common.expand_sidebar')
-                        }
+                    {/* ─── Mobile sidebar ─── */}
+                    <aside
+                        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-line bg-surface transition-transform duration-300 ease-premium lg:hidden ${
+                            mobileMenuOpen
+                                ? 'translate-x-0'
+                                : '-translate-x-full'
+                        }`}
                     >
-                        <ChevronLeftIcon
-                            className={`h-3.5 w-3.5 transition-transform duration-300 ease-premium ${
-                                !sidebarOpen && 'rotate-180'
-                            }`}
-                        />
-                    </button>
-                </aside>
-
-                {/* ─── Main content area ─── */}
-                <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                    {/* ─── Top header ─── */}
-                    <header className="chrome-blur sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-line px-4 lg:px-6">
-                        <div className="flex min-w-0 flex-1 items-center gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setMobileMenuOpen(true)}
-                                aria-label="Open navigation"
-                                className="-ml-1.5 rounded-md p-1.5 text-ink-muted transition-colors duration-150 ease-premium hover:bg-surface-hover hover:text-ink lg:hidden"
-                            >
-                                <Bars3Icon className="h-[18px] w-[18px]" />
-                            </button>
-                            <div className="min-w-0">
-                                <h1 className="truncate text-[14px] font-semibold tracking-tight text-ink">
-                                    {resolvedTitle}
-                                </h1>
-                                <p className="hidden truncate text-[11.5px] text-ink-subtle sm:block">
-                                    {resolvedSubtitle}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 lg:gap-2">
-                            <Badge
-                                tone="muted"
-                                variant="outline"
-                                className="hidden font-mono md:inline-flex"
-                                title={t('nav.billing_currency')}
-                            >
-                                {currency}
-                            </Badge>
-
-                            {platform?.maintenance_mode && (
-                                <Badge
-                                    tone="warning"
-                                    dot
-                                    className="hidden sm:inline-flex"
-                                >
-                                    {t('nav.maintenance_mode')}
-                                </Badge>
-                            )}
-
-                            <LocaleSwitcher variant="full" />
-
-                            <ThemeToggle
-                                isDark={isDark}
-                                onToggle={toggleTheme}
+                        <DrawerHeader onClose={() => setMobileMenuOpen(false)}>
+                            <BrandMark
+                                caption={`${platformName} · ${t('nav.super_admin')}`}
+                                href="/dashboard/super-admin"
                             />
+                        </DrawerHeader>
+                        <SidebarNav
+                            isOpen={true}
+                            isActive={isActiveLink}
+                            openCategories={openCategories}
+                            onToggleCategory={toggleCategory}
+                            platformName={platformName}
+                            currency={currency}
+                            canManagePlatformSettings={
+                                canManagePlatformSettings
+                            }
+                        />
+                    </aside>
 
-                            {/* Notifications */}
-                            <div className="relative" ref={notifRef}>
+                    {/* ─── Desktop sidebar ─── */}
+                    <aside
+                        className={`relative hidden flex-col border-r border-line bg-surface transition-[width] duration-300 ease-premium lg:flex ${
+                            sidebarOpen ? 'w-64' : 'w-[68px]'
+                        }`}
+                    >
+                        <SidebarNav
+                            isOpen={sidebarOpen}
+                            isActive={isActiveLink}
+                            openCategories={openCategories}
+                            onToggleCategory={toggleCategory}
+                            platformName={platformName}
+                            currency={currency}
+                            canManagePlatformSettings={
+                                canManagePlatformSettings
+                            }
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setSidebarOpen((prev) => !prev)}
+                            className="absolute top-20 -right-3 z-30 rounded-md border border-line bg-surface p-1.5 text-ink-subtle shadow-surface transition-[color,transform] duration-200 ease-premium hover:text-ink active:scale-95"
+                            title={
+                                sidebarOpen
+                                    ? t('common.collapse_sidebar')
+                                    : t('common.expand_sidebar')
+                            }
+                        >
+                            <ChevronLeftIcon
+                                className={`h-3.5 w-3.5 transition-transform duration-300 ease-premium ${
+                                    !sidebarOpen && 'rotate-180'
+                                }`}
+                            />
+                        </button>
+                    </aside>
+
+                    {/* ─── Main content area ─── */}
+                    <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                        {/* ─── Top header ─── */}
+                        <header className="chrome-blur sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-line px-4 lg:px-6">
+                            <div className="flex min-w-0 flex-1 items-center gap-3">
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        setNotifOpen((prev) => !prev);
-                                        setUserMenuOpen(false);
-                                    }}
-                                    aria-label={t('common.notifications')}
-                                    aria-expanded={notifOpen}
-                                    className="relative rounded-md p-1.5 text-ink-subtle transition-colors duration-150 ease-premium hover:bg-surface-hover hover:text-ink"
+                                    onClick={() => setMobileMenuOpen(true)}
+                                    aria-label="Open navigation"
+                                    className="-ml-1.5 rounded-md p-1.5 text-ink-muted transition-colors duration-150 ease-premium hover:bg-surface-hover hover:text-ink lg:hidden"
                                 >
-                                    <BellIcon className="h-[18px] w-[18px]" />
-                                    {notificationFeed.unreadCount > 0 && (
-                                        <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-accent-ink tabular-nums">
-                                            {notificationFeed.unreadCount > 99
-                                                ? '99+'
-                                                : notificationFeed.unreadCount}
-                                        </span>
-                                    )}
+                                    <Bars3Icon className="h-[18px] w-[18px]" />
                                 </button>
-
-                                {notifOpen && (
-                                    <NotificationsDropdown
-                                        feed={notificationFeed}
-                                        onClose={closeAllDropdowns}
-                                    />
-                                )}
+                                <div className="min-w-0">
+                                    <h1 className="truncate text-[14px] font-semibold tracking-tight text-ink">
+                                        {resolvedTitle}
+                                    </h1>
+                                    <p className="hidden truncate text-[11.5px] text-ink-subtle sm:block">
+                                        {resolvedSubtitle}
+                                    </p>
+                                </div>
                             </div>
 
-                            {/* User menu */}
-                            <div
-                                className="ml-1 flex items-center border-l border-line pl-2.5"
-                                ref={userMenuRef}
-                            >
-                                <div className="relative">
+                            <div className="flex items-center gap-1.5 lg:gap-2">
+                                <Badge
+                                    tone="muted"
+                                    variant="outline"
+                                    className="hidden font-mono md:inline-flex"
+                                    title={t('nav.billing_currency')}
+                                >
+                                    {currency}
+                                </Badge>
+
+                                {platform?.maintenance_mode && (
+                                    <Badge
+                                        tone="warning"
+                                        dot
+                                        className="hidden sm:inline-flex"
+                                    >
+                                        {t('nav.maintenance_mode')}
+                                    </Badge>
+                                )}
+
+                                <LocaleSwitcher variant="full" />
+
+                                <ThemeToggle
+                                    isDark={isDark}
+                                    onToggle={toggleTheme}
+                                />
+
+                                {/* Notifications */}
+                                <div className="relative" ref={notifRef}>
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setUserMenuOpen((prev) => !prev);
-                                            setNotifOpen(false);
+                                            setNotifOpen((prev) => !prev);
+                                            setUserMenuOpen(false);
                                         }}
-                                        aria-label={t('common.user_menu')}
-                                        aria-expanded={userMenuOpen}
-                                        className="group flex cursor-pointer items-center gap-2.5 rounded-md focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none"
+                                        aria-label={t('common.notifications')}
+                                        aria-expanded={notifOpen}
+                                        className="relative rounded-md p-1.5 text-ink-subtle transition-colors duration-150 ease-premium hover:bg-surface-hover hover:text-ink"
                                     >
-                                        <UserMeta
-                                            name={
-                                                user?.name ||
-                                                t('common.staff_user')
-                                            }
-                                            role={t('nav.super_admin')}
-                                        />
-                                        <UserChip name={user?.name} />
+                                        <BellIcon className="h-[18px] w-[18px]" />
+                                        {notificationFeed.unreadCount > 0 && (
+                                            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-accent-ink tabular-nums">
+                                                {notificationFeed.unreadCount >
+                                                99
+                                                    ? '99+'
+                                                    : notificationFeed.unreadCount}
+                                            </span>
+                                        )}
                                     </button>
 
-                                    {userMenuOpen && (
-                                        <UserMenuDropdown
-                                            user={user}
-                                            canManagePlatformSettings={
-                                                canManagePlatformSettings
-                                            }
+                                    {notifOpen && (
+                                        <NotificationsDropdown
+                                            feed={notificationFeed}
                                             onClose={closeAllDropdowns}
                                         />
                                     )}
                                 </div>
-                            </div>
-                        </div>
-                    </header>
 
-                    {/* ─── Page content ─── */}
-                    <main className="flex-1 overflow-y-auto bg-canvas">
-                        <div className="mx-auto w-full max-w-[1560px] px-4 py-5 sm:px-6 lg:px-8">
-                            {children}
-                        </div>
-                    </main>
+                                {/* User menu */}
+                                <div
+                                    className="ml-1 flex items-center border-l border-line pl-2.5"
+                                    ref={userMenuRef}
+                                >
+                                    <div className="relative">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setUserMenuOpen(
+                                                    (prev) => !prev,
+                                                );
+                                                setNotifOpen(false);
+                                            }}
+                                            aria-label={t('common.user_menu')}
+                                            aria-expanded={userMenuOpen}
+                                            className="group flex cursor-pointer items-center gap-2.5 rounded-md focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none"
+                                        >
+                                            <UserMeta
+                                                name={
+                                                    user?.name ||
+                                                    t('common.staff_user')
+                                                }
+                                                role={t('nav.super_admin')}
+                                            />
+                                            <UserChip name={user?.name} />
+                                        </button>
+
+                                        {userMenuOpen && (
+                                            <UserMenuDropdown
+                                                user={user}
+                                                canManagePlatformSettings={
+                                                    canManagePlatformSettings
+                                                }
+                                                onClose={closeAllDropdowns}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </header>
+
+                        {/* ─── Page content ─── */}
+                        <main className="flex-1 overflow-y-auto bg-canvas">
+                            <div className="mx-auto w-full max-w-[1560px] px-4 py-5 sm:px-6 lg:px-8">
+                                {children}
+                            </div>
+                        </main>
+                    </div>
                 </div>
-            </div>
+            </BreadcrumbTrailProvider>
         </TranslationProvider>
     );
 }

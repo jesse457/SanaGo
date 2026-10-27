@@ -262,7 +262,7 @@ export default function RevenueAnalytics() {
         >
             <Head title={t('page.analytics.head_title')} />
 
-            <div className="mx-auto max-w-7xl space-y-5 pb-12">
+            <div className="space-y-6 pb-12">
                 <PageHeader
                     eyebrow={t('nav.category.insights')}
                     title={t('page.analytics.title')}

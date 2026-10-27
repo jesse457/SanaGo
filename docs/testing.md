@@ -117,7 +117,7 @@ beforeEach(function () {
 });
 ```
 
-Use `Plan::factory()->basic()`, `->professional()`, and `->enterprise()` to get consistent capability sets.
+Use `Plan::factory()->basic()`, `->professional()`, `->hospital()`, and `->enterprise()` to get consistent capability sets. `hospital()` grants every capability except `api_access` and `sms_notifications`.
 
 ## Testing plan and subscription gates
 
@@ -167,7 +167,7 @@ Tenant service tests still need `migrateTenantTables()` and usually `withoutMidd
 Factories live in `database/factories`. Prefer named states where they exist:
 
 - `TenantFactory`
-- `PlanFactory` with `basic()`, `professional()`, `enterprise()`
+- `PlanFactory` with `basic()`, `professional()`, `hospital()`, `enterprise()`
 - `SubscriptionFactory`
 - Domain factories: `PatientFactory`, `AppointmentFactory`, `AdmissionFactory`, `InvoiceFactory`, `LabRequestFactory`, `RadiologyRequestFactory`, etc.
 

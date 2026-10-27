@@ -57,7 +57,6 @@ const Dashboard = ({
             <PageHeader
                 title={t('page.doctor_dashboard.title')}
                 description={t('page.doctor_dashboard.subtitle')}
-                icon={CalendarDaysIcon}
             />
 
             <StatGrid columns={3}>

@@ -25,7 +25,6 @@ export default function SupportIndex({ tickets }: { tickets: Ticket[] }) {
                     title="Support"
                     eyebrow="Help desk"
                     description="Every ticket you have raised, and the conversation attached to it."
-                    icon={TicketIcon}
                     breadcrumbs={[{ label: 'Support' }]}
                     actions={
                         <Button href="/support/create" icon={PlusIcon}>

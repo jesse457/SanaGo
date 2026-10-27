@@ -1,4 +1,4 @@
-import { BeakerIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import { UserCircleIcon } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -165,7 +165,6 @@ export default function DispenseMedications({ patients, medications }: Props) {
 
             <div className="mx-auto max-w-7xl space-y-5 px-4 pb-12 sm:px-6 lg:px-8">
                 <PageHeader
-                    icon={BeakerIcon}
                     eyebrow={t('pharmacyDispensing')}
                     title={t('agnosticDispensing')}
                     actions={

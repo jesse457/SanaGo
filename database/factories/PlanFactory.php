@@ -70,12 +70,27 @@ class PlanFactory extends Factory
         ]);
     }
 
+    public function hospital(): static
+    {
+        return $this->state(fn () => [
+            'slug' => 'hospital',
+            'name' => 'Hospital',
+            'sort_order' => 3,
+            'monthly_price' => 75000,
+            'yearly_price' => 750000,
+            'max_users_per_tenant' => 150,
+            'max_patients_per_tenant' => 100000,
+            'storage_gb' => 150,
+            'feature_flags_json' => PlanFeature::forPlanSlug('hospital'),
+        ]);
+    }
+
     public function enterprise(): static
     {
         return $this->state(fn () => [
             'slug' => 'enterprise',
             'name' => 'Enterprise',
-            'sort_order' => 3,
+            'sort_order' => 4,
             'monthly_price' => 90000,
             'yearly_price' => 900000,
             'max_users_per_tenant' => 500,

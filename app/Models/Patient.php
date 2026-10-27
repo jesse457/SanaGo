@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -79,6 +80,11 @@ class Patient extends Model implements HasMedia
     public function labRequests(): HasMany
     {
         return $this->hasMany(LabRequest::class);
+    }
+
+    public function labResults(): HasManyThrough
+    {
+        return $this->hasManyThrough(LabResult::class, LabRequest::class);
     }
 
     public function medicalRecords(): HasMany

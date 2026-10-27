@@ -118,9 +118,8 @@ export default function EmergenciesIndex({ emergencies }: Props) {
             headerSubtitle={t('urgentClinicalCareRegistry')}
         >
             <Head title={t('emergencies')} />
-            <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
+            <div className="space-y-6 pb-12">
                 <PageHeader
-                    icon={HeartIcon}
                     eyebrow={t('emergencies')}
                     title={t('emergencyCases')}
                     description={t('urgentClinicalCareRegistry')}

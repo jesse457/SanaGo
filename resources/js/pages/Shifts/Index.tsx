@@ -268,7 +268,7 @@ export default function ShiftsIndex({ shifts, users }: Props) {
         >
             <Head title={t('page.shifts_index.head_title')} />
 
-            <div className="mx-auto max-w-7xl space-y-5 pb-12">
+            <div className="space-y-6 pb-12">
                 <PageHeader
                     title={t('page.shifts_index.title')}
                     description={t('page.shifts_index.subtitle')}

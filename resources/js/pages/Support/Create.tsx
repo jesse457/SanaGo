@@ -1,4 +1,4 @@
-import { CheckCircleIcon, TicketIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import {
@@ -44,7 +44,6 @@ export default function SupportCreate() {
                     title={t('support.newTicket')}
                     eyebrow={t('support.title')}
                     description={t('support.reportIssue')}
-                    icon={TicketIcon}
                     breadcrumbs={[
                         { label: t('support.title'), href: '/support' },
                         { label: t('support.newTicket') },

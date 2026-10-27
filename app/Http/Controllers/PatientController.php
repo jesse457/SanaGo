@@ -95,42 +95,87 @@ class PatientController extends Controller
      *
      * A patient used to be reachable only through list rows; five screens
      * link to `patients.show`, which had no implementation at all.
+     *
+     * History sections are optional props: the page shell renders immediately
+     * and each tab requests its own section (eight rows at a time) on demand.
      */
     public function show(Patient $patient)
     {
         $patient->load([
             'latestAdmission.bed.ward',
             'latestAdmission.attendingDoctor:id,name',
-            'admissions' => fn ($query) => $query->with(['bed.ward', 'attendingDoctor:id,name'])->latest('admission_date')->limit(10),
-            'vitals' => fn ($query) => $query->with('recordedBy:id,name')->latest('recorded_at')->limit(20),
-            'medicalRecords' => fn ($query) => $query->latest('record_date')->limit(10),
-            'appointments' => fn ($query) => $query->latest('appointment_date')->limit(10),
-            'invoices' => fn ($query) => $query->latest('invoice_date')->limit(10),
-            'prescriptions' => fn ($query) => $query->latest()->limit(10),
         ]);
 
-        $patient->invoices->each->makeHidden([
-            'total_paid',
-            'remaining_balance',
-            'is_fully_paid',
+        $patient->loadCount([
+            'admissions as admissions_count',
+            'vitals as vitals_count',
+            'medicalRecords as medical_records_count',
+            'prescriptions as prescriptions_count',
+            'appointments as appointments_count',
+            'invoices as invoices_count',
+            'labResults as lab_results_count',
+        ]);
+
+        $outstanding = (float) $patient->invoices()
+            ->whereNotIn('status', [InvoiceStatus::PAID->value, InvoiceStatus::CANCELLED->value])
+            ->sum('total_amount');
+
+        $stats = [
+            'admissions' => $patient->admissions_count,
+            'vitals' => $patient->vitals_count,
+            'consultations' => $patient->medical_records_count,
+            'prescriptions' => $patient->prescriptions_count,
+            'appointments' => $patient->appointments_count,
+            'invoices' => $patient->invoices_count,
+            'labResults' => $patient->lab_results_count,
+            'outstanding' => $outstanding,
+        ];
+
+        $patient->makeHidden([
+            'admissions_count',
+            'vitals_count',
+            'medical_records_count',
+            'prescriptions_count',
+            'appointments_count',
+            'invoices_count',
+            'lab_results_count',
         ]);
 
         return Inertia::render('Patients/Profile', [
             'patient' => $patient,
-            'stats' => [
-                'admissions' => $patient->admissions->count(),
-                'vitals' => $patient->vitals->count(),
-                'consultations' => $patient->medicalRecords->count(),
-                'outstanding' => (float) $patient->invoices
-                    ->whereNotIn('status', [InvoiceStatus::PAID->value, InvoiceStatus::CANCELLED->value])
-                    ->sum('total_amount'),
-            ],
-            'admissions' => $patient->admissions,
-            'vitals' => $patient->vitals,
-            'medicalRecords' => $patient->medicalRecords,
-            'appointments' => $patient->appointments,
-            'invoices' => $patient->invoices,
-            'prescriptions' => $patient->prescriptions,
+            'stats' => $stats,
+            'admissions' => Inertia::optional(fn () => $patient->admissions()
+                ->with(['bed.ward', 'attendingDoctor:id,name'])
+                ->latest('admission_date')
+                ->paginate(8, ['*'], 'admissions_page')),
+            'vitals' => Inertia::optional(fn () => $patient->vitals()
+                ->with('recordedBy:id,name')
+                ->latest('recorded_at')
+                ->paginate(8, ['*'], 'vitals_page')),
+            'medicalRecords' => Inertia::optional(fn () => $patient->medicalRecords()
+                ->with('doctor:id,name')
+                ->latest('record_date')
+                ->paginate(8, ['*'], 'consultations_page')),
+            'prescriptions' => Inertia::optional(fn () => $patient->prescriptions()
+                ->with('doctor:id,name')
+                ->latest('prescription_date')
+                ->paginate(8, ['*'], 'prescriptions_page')),
+            'appointments' => Inertia::optional(fn () => $patient->appointments()
+                ->with('doctor:id,name')
+                ->latest('appointment_date')
+                ->paginate(8, ['*'], 'appointments_page')),
+            'invoices' => Inertia::optional(fn () => $patient->invoices()
+                ->latest('invoice_date')
+                ->paginate(8, ['*'], 'invoices_page')
+                ->through(fn ($invoice) => $invoice->makeHidden([
+                    'total_paid',
+                    'remaining_balance',
+                    'is_fully_paid',
+                ]))),
+            'labResults' => Inertia::optional(fn () => $patient->labResults()
+                ->with(['labRequest.testDefinition', 'labRequest.doctor:id,name'])
+                ->latest('result_date')
+                ->paginate(8, ['*'], 'lab_results_page')),
         ]);
     }
 

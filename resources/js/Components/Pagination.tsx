@@ -17,6 +17,10 @@ interface Props {
         total: number;
     };
     className?: string;
+    /** When provided, page clicks are handled locally instead of a full visit. */
+    onNavigate?: (page: number) => void;
+    /** Query parameter the paginator uses for the page number. */
+    pageParam?: string;
 }
 
 type RenderItem =
@@ -30,12 +34,33 @@ const baseButton =
  * Pagination — Laravel paginator renderer. Quiet hairline buttons, ink-solid
  * current page, tabular figures.
  */
-export const Pagination = ({ links, meta, className }: Props) => {
+export const Pagination = ({
+    links,
+    meta,
+    className,
+    onNavigate,
+    pageParam = 'page',
+}: Props) => {
     const { t } = useTranslation();
 
     if (!links || links.length <= 3) {
         return null;
     }
+
+    const getPageNumber = (url: string | null): number => {
+        if (!url) {
+            return 1;
+        }
+
+        try {
+            const parsed = new URL(url, 'http://localhost');
+            const page = Number(parsed.searchParams.get(pageParam) ?? 1);
+
+            return Number.isFinite(page) && page > 0 ? page : 1;
+        } catch {
+            return 1;
+        }
+    };
 
     const getLabel = (label: string) => {
         if (label.includes('Previous')) {
@@ -214,17 +239,37 @@ export const Pagination = ({ links, meta, className }: Props) => {
                         );
                     }
 
+                    const linkClassName = cn(
+                        baseButton,
+                        link.active
+                            ? 'border-transparent bg-ink text-ink-inverse shadow-surface'
+                            : 'border-line bg-surface text-ink-muted hover:border-line-strong hover:bg-surface-hover hover:text-ink',
+                    );
+
+                    if (onNavigate) {
+                        return (
+                            <button
+                                key={`${link.label}-${index}`}
+                                type="button"
+                                aria-current={link.active ? 'page' : undefined}
+                                onClick={() => {
+                                    if (!link.active) {
+                                        onNavigate(getPageNumber(link.url));
+                                    }
+                                }}
+                                className={linkClassName}
+                            >
+                                {getLabel(link.label)}
+                            </button>
+                        );
+                    }
+
                     return (
                         <Link
                             key={`${link.label}-${index}`}
                             href={link.url}
                             preserveScroll
-                            className={cn(
-                                baseButton,
-                                link.active
-                                    ? 'border-transparent bg-ink text-ink-inverse shadow-surface'
-                                    : 'border-line bg-surface text-ink-muted hover:border-line-strong hover:bg-surface-hover hover:text-ink',
-                            )}
+                            className={linkClassName}
                         >
                             {getLabel(link.label)}
                         </Link>

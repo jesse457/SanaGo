@@ -1,4 +1,3 @@
-import { ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { PageHeader } from '@/Components/ui';
@@ -57,7 +56,6 @@ export default function LandlordRolesEdit({
                     eyebrow="Access control"
                     title={role.name}
                     description="Rename this role or adjust the permissions its members inherit."
-                    icon={ShieldCheckIcon}
                     breadcrumbs={[
                         { label: 'Roles', href: '/landlord-roles' },
                         { label: role.name },

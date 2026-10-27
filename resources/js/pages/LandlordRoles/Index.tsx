@@ -74,7 +74,6 @@ export default function LandlordRolesIndex({ roles }: { roles: Role[] }) {
                     eyebrow="Access control"
                     title="Roles & permissions"
                     description="Each role is a named bundle of permissions granted to landlord staff accounts."
-                    icon={ShieldCheckIcon}
                     breadcrumbs={[{ label: 'Roles & permissions' }]}
                     actions={
                         <Button href="/landlord-roles/create" icon={PlusIcon}>

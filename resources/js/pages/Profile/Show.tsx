@@ -81,7 +81,6 @@ export default function ProfileShow() {
                 <PageHeader
                     title={t('page.profile_show.title')}
                     description={t('page.profile_show.subtitle')}
-                    icon={UserCircleIcon}
                     breadcrumbs={[{ label: t('page.profile_show.title') }]}
                     actions={
                         canOpenSettings ? (

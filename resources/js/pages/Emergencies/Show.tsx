@@ -3,7 +3,6 @@ import {
     ClipboardDocumentListIcon,
     CurrencyDollarIcon,
     DocumentTextIcon,
-    HeartIcon,
     MapPinIcon,
     PencilSquareIcon,
     UserIcon,
@@ -63,7 +62,6 @@ export default function EmergencyShow({ emergency }: Props) {
             <Head title={title} />
             <div className="mx-auto max-w-6xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 <PageHeader
-                    icon={HeartIcon}
                     eyebrow={t('emergencies')}
                     title={title}
                     description={t('caseDetails')}

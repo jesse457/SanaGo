@@ -122,7 +122,6 @@ export default function SubscriptionsIndex({
                 <PageHeader
                     title="Subscriptions"
                     description="Every plan contract across the platform, with recurring revenue and expiry pressure in one view."
-                    icon={QueueListIcon}
                     breadcrumbs={[
                         { label: 'Billing' },
                         { label: 'Subscriptions' },

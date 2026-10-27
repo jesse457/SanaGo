@@ -30,7 +30,6 @@ export default function SupportTicketsIndex({
                     title="Support tickets"
                     eyebrow="Landlord"
                     description="Support requests raised by every tenant, with their current status and priority."
-                    icon={TicketIcon}
                     breadcrumbs={[{ label: 'Support tickets' }]}
                     actions={
                         <Button href="/support-tickets/create" icon={PlusIcon}>

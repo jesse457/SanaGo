@@ -79,7 +79,6 @@ export default function LandlordUsersIndex({ users }: { users: UserItem[] }) {
                     eyebrow="Organization"
                     title="Staff users"
                     description="Everyone with a landlord-level account, and the role that scopes what they can reach."
-                    icon={UserGroupIcon}
                     breadcrumbs={[{ label: 'Staff users' }]}
                     actions={
                         <Button href="/landlord-users/create" icon={PlusIcon}>

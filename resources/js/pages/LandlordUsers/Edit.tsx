@@ -1,4 +1,4 @@
-import { CheckIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { CheckIcon } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { PageHeader } from '@/Components/ui';
@@ -46,7 +46,6 @@ export default function LandlordUsersEdit({
                     eyebrow="Organization"
                     title={user.name}
                     description="Update this staff account's identity and role."
-                    icon={UserGroupIcon}
                     breadcrumbs={[
                         { label: 'Staff users', href: '/landlord-users' },
                         { label: user.name },

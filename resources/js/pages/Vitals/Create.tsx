@@ -64,7 +64,6 @@ export default function VitalsForm({ patient }: { patient: Patient }) {
 
             <div className="max-w-8xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8">
                 <PageHeader
-                    icon={HeartIcon}
                     eyebrow={t('page.vitals_create.patient_records')}
                     title={t('page.vitals_create.vitals_entry')}
                     description={t('page.vitals_create.subtitle', {

@@ -1,5 +1,4 @@
 import {
-    BeakerIcon,
     CheckCircleIcon,
     ClipboardDocumentListIcon,
     CurrencyDollarIcon,
@@ -69,7 +68,6 @@ export default function CreateLabTest() {
 
             <div className="mx-auto max-w-4xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 <PageHeader
-                    icon={BeakerIcon}
                     eyebrow={t('lab_tests.create.lab_definitions')}
                     title={t('lab_tests.create.title')}
                     description={t('lab_tests.create.subtitle')}

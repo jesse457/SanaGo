@@ -1,4 +1,3 @@
-import { TicketIcon } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import {
@@ -54,7 +53,6 @@ export default function SupportShow({ ticket }: { ticket: Ticket }) {
                 <PageHeader
                     title={ticket.subject}
                     eyebrow={`Ticket #${ticket.id}`}
-                    icon={TicketIcon}
                     breadcrumbs={[
                         { label: 'Support', href: '/support' },
                         { label: ticket.subject },

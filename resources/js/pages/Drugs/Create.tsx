@@ -105,7 +105,6 @@ export default function CreateDrug() {
 
             <div className="mx-auto max-w-5xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 <PageHeader
-                    icon={CubeIcon}
                     eyebrow={t('manageDrugs')}
                     title={t('addNewDrug')}
                     description={t('createNewMedicationEntry')}

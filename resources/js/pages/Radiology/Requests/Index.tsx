@@ -127,9 +127,8 @@ export default function RadiologyRequestsIndex({
         >
             <Head title={t('radiology.requests.head_title')} />
 
-            <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
+            <div className="space-y-6 pb-12">
                 <PageHeader
-                    icon={CameraIcon}
                     eyebrow={t('radiology.requests.imaging_requests')}
                     title={t('radiology.requests.title')}
                     description={t('radiology.requests.subtitle')}

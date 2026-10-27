@@ -149,7 +149,7 @@ export default function BedIndex({ beds, wards, bedTypes }: Props) {
         >
             <Head title={t('page.beds.head_title')} />
 
-            <div className="mx-auto max-w-7xl space-y-5 px-4 pb-12 sm:px-6 lg:px-8">
+            <div className="space-y-6 pb-12">
                 <PageHeader
                     eyebrow={t('page.beds.title')}
                     title={t('page.beds.beds_heading')}

@@ -219,9 +219,8 @@ export default function RadiologyResultsIndex({
         >
             <Head title={t('radiology.results.index.head_title')} />
 
-            <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
+            <div className="space-y-6 pb-12">
                 <PageHeader
-                    icon={CameraIcon}
                     eyebrow={t('radiology.results.index.archive')}
                     title={t('radiology.results.index.title')}
                     description={t('radiology.results.index.subtitle')}

@@ -119,7 +119,6 @@ export default function CreateUser({ departments, roles }: Props) {
 
             <div className="max-w-8xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8">
                 <PageHeader
-                    icon={UserCircleIcon}
                     eyebrow={t('page.users_create.user_management')}
                     title={t('page.users_create.new_registration')}
                     description={t('page.users_create.subtitle')}

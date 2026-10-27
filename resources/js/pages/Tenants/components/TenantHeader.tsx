@@ -1,6 +1,5 @@
 import {
     ArchiveBoxIcon,
-    BuildingOfficeIcon,
     ArrowPathRoundedSquareIcon,
     GlobeAltIcon,
     PauseCircleIcon,
@@ -124,7 +123,6 @@ export function TenantHeader({
             <PageHeader
                 eyebrow="Hospital"
                 title={tenant.name}
-                icon={BuildingOfficeIcon}
                 breadcrumbs={[
                     { label: 'Hospitals', href: '/tenants' },
                     { label: tenant.name },

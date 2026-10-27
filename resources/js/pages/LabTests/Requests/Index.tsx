@@ -106,9 +106,8 @@ export default function LabRequests({ requests, filters, stats }: Props) {
         >
             <Head title={t('lab_tests.requests.head_title')} />
 
-            <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
+            <div className="space-y-6 pb-12">
                 <PageHeader
-                    icon={ClipboardDocumentListIcon}
                     eyebrow={t('lab_tests.requests.lab_requests')}
                     title={t('lab_tests.requests.title')}
                     description={t('lab_tests.requests.subtitle')}

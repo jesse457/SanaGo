@@ -91,7 +91,7 @@ export default function BedTypeIndex({ bedTypes }: Props) {
         >
             <Head title={t('page.bed_type.head_title')} />
 
-            <div className="mx-auto max-w-7xl space-y-5 px-4 pb-12 sm:px-6 lg:px-8">
+            <div className="space-y-6 pb-12">
                 <PageHeader
                     eyebrow={t('page.bed_type.title')}
                     title={t('page.bed_type.heading')}

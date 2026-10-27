@@ -128,7 +128,6 @@ export default function NotificationsIndex({
                     description={t(
                         'Stay updated on patient care, lab results, and system events',
                     )}
-                    icon={BellIcon}
                     breadcrumbs={[{ label: t('Notifications') }]}
                 />
 

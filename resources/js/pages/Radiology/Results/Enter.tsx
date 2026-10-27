@@ -1,5 +1,4 @@
 import {
-    CameraIcon,
     ChatBubbleLeftEllipsisIcon,
     CheckIcon,
     CloudArrowUpIcon,
@@ -112,17 +111,9 @@ export default function EnterRadiologyResult({
 
             <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 <PageHeader
-                    icon={CameraIcon}
                     eyebrow={t('radiology.results.enter.breadcrumb')}
                     title={title}
                     description={t('radiology.results.enter.subtitle')}
-                    breadcrumbs={[
-                        {
-                            label: t('radiology.requests.imaging_requests'),
-                            href: route('radiology.requests.index'),
-                        },
-                        { label: t('radiology.results.enter.breadcrumb') },
-                    ]}
                     meta={
                         <RadiologyStatusBadge
                             status={data.status}

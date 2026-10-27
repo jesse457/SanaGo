@@ -1,4 +1,4 @@
-import { CheckIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { CheckIcon } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { PageHeader } from '@/Components/ui';
@@ -39,7 +39,6 @@ export default function LandlordUsersCreate({ roles }: { roles: string[] }) {
                     eyebrow="Organization"
                     title={t('addStaffUser')}
                     description={t('createNewLandlordMember')}
-                    icon={UserGroupIcon}
                     breadcrumbs={[
                         { label: 'Staff users', href: '/landlord-users' },
                         { label: t('addStaffUser') },

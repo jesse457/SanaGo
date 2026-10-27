@@ -135,7 +135,6 @@ export default function TenantsCreate({
                 <PageHeader
                     title="New hospital"
                     description="Provision a hospital: its slug and domain route all of its traffic, and the administrator account is created inside its own database."
-                    icon={BuildingOfficeIcon}
                     breadcrumbs={[
                         { label: 'Hospitals', href: '/tenants' },
                         { label: 'New hospital' },

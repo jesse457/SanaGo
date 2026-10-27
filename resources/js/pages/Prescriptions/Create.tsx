@@ -110,7 +110,6 @@ export default function PrescriptionsCreate({ patients, medications }: Props) {
 
             <div className="mx-auto max-w-5xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
                 <PageHeader
-                    icon={DocumentTextIcon}
                     eyebrow={t('prescriptions')}
                     title={t('New Prescription')}
                     description={t(

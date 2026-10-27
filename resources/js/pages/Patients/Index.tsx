@@ -142,7 +142,7 @@ export default function PatientManagement({ patients, filters }: Props) {
     };
 
     const navigateToProfile = (patient: Patient) => {
-        router.get(`patients/${patient.id}/consultations`);
+        router.get(route('patients.show', patient.id));
     };
 
     const handleSubmit = (event: FormEvent) => {

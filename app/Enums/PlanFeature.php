@@ -107,6 +107,27 @@ enum PlanFeature: string
     }
 
     /**
+     * Every capability the platform has, minus the given exclusions.
+     *
+     * For plans that sell the whole product and only carve out what the
+     * licence does not cover (API access, SMS credit, …).
+     *
+     * @param  array<int, PlanFeature|string>  $excluded
+     * @return array<string, bool>
+     */
+    public static function allExcept(array $excluded = []): array
+    {
+        $keys = array_map(
+            static fn (PlanFeature|string $feature): string => $feature instanceof PlanFeature
+                ? $feature->value
+                : $feature,
+            $excluded,
+        );
+
+        return array_fill_keys(array_values(array_diff(self::values(), $keys)), true);
+    }
+
+    /**
      * Feature flags for a seeded plan, keyed by plan slug.
      *
      * @return array<string, bool>
@@ -138,8 +159,17 @@ enum PlanFeature: string
             self::CustomBranding->value => true,
         ];
 
+        // A full hospital floor: every module, minus the two capabilities that
+        // carry metered infrastructure behind them (machine-to-machine API
+        // access) or per-message cost (SMS). Nothing else is withheld.
+        $hospital = self::allExcept([
+            self::ApiAccess,
+            self::SmsNotifications,
+        ]);
+
         return match ($slug) {
             'enterprise' => $enterprise,
+            'hospital' => $hospital,
             'professional' => $professional,
             default => $basic,
         };

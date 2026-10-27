@@ -161,7 +161,7 @@ export default function LabTestManagement({ tests, filters }: Props) {
         >
             <Head title={t('lab_tests.index.head_title')} />
 
-            <div className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6 lg:px-8">
+            <div className="space-y-6 pb-12">
                 <PageHeader
                     eyebrow={t('lab_tests.index.test_definitions')}
                     title={t('lab_tests.index.title')}

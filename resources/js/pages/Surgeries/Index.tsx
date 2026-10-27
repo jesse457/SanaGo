@@ -148,7 +148,7 @@ export default function SurgeriesIndex({ surgeries }: Props) {
         >
             <Head title={t('surgeries.index.head_title')} />
 
-            <div className="mx-auto max-w-7xl space-y-5">
+            <div className="space-y-6 pb-12">
                 <PageHeader
                     title={t('surgeries.index.title')}
                     description={t('surgeries.index.subtitle')}

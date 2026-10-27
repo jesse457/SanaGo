@@ -1,4 +1,3 @@
-import { ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { PageHeader } from '@/Components/ui';
@@ -39,7 +38,6 @@ export default function LandlordRolesCreate({
                     eyebrow="Access control"
                     title={t('createRole')}
                     description={t('defineNewLandlordRole')}
-                    icon={ShieldCheckIcon}
                     breadcrumbs={[
                         { label: 'Roles', href: '/landlord-roles' },
                         { label: t('createRole') },

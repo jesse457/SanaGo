@@ -79,8 +79,6 @@ export default function SuperAdminDashboard({
                     eyebrow="Platform"
                     title="Overview"
                     description="The state of the platform: how many hospitals are live, what they are worth and what needs an operator today."
-                    icon={ShieldCheckIcon}
-                    breadcrumbs={[{ label: 'Platform' }, { label: 'Overview' }]}
                     actions={
                         <>
                             <Button

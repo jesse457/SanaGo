@@ -110,7 +110,6 @@ export default function PlansIndex({ plans, featureOptions }: PlansIndexProps) {
                 <PageHeader
                     title="Plans"
                     description="Subscription tiers: pricing, the quotas each tenant gets and the modules each plan unlocks."
-                    icon={CreditCardIcon}
                     breadcrumbs={[{ label: 'Billing' }, { label: 'Plans' }]}
                     actions={
                         <Button href="/plans/create" icon={PlusIcon}>

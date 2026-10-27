@@ -1,4 +1,3 @@
-import { CreditCardIcon } from '@heroicons/react/24/outline';
 import { Head } from '@inertiajs/react';
 import { Badge, PageHeader } from '@/Components/ui';
 import SuperAdminLayout from '@/Layouts/SuperAdminLayout';
@@ -56,10 +55,9 @@ export default function PlansEdit({
                     title={plan.name}
                     eyebrow="Edit plan"
                     description="Update pricing, quotas and the capabilities this plan unlocks. Existing subscriptions keep their agreed price."
-                    icon={CreditCardIcon}
                     breadcrumbs={[
                         { label: 'Plans', href: '/plans' },
-                        { label: plan.name, href: '/plans' },
+                        { label: plan.name },
                         { label: 'Edit' },
                     ]}
                     meta={
